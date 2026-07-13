@@ -9,9 +9,9 @@ Frontend desarrollado con **React** y **Vite**, siguiendo una arquitectura **SPA
 | Tecnología | Versión |
 |------------|---------|
 | Node.js | 22 LTS o superior |
-| pnpm | 11 o superior |
-| React | 19.x |
-| Vite | 7.x |
+| npm | 10 o superior |
+| React | 19.2.7 |
+| Vite | 8.1.1 |
 | JavaScript (ES2024) | Última versión estable |
 | React Router | Última versión estable |
 
