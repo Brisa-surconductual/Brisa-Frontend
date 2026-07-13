@@ -69,7 +69,7 @@ Aquí se centralizan aspectos globales como:
 - Configuración del Router
 - Providers
 - Layouts principales
-- Estado global (si aplica)
+- Estado global
 - Configuración general de la aplicación
 
 ---
@@ -80,16 +80,17 @@ Contiene las funcionalidades del sistema.
 
 Cada carpeta representa un módulo del negocio.
 
-Ejemplo:
-
 ```text
 features/
 
-├── auth/
-├── users/
-├── inventory/
-├── products/
-└── orders/
+├── usuarios/
+├── cronograma/
+├── chat/
+├── diario/
+├── segumiento/
+├── notificacion/
+├── gamificacion/
+└── administartivo/
 ```
 
 Cada feature es independiente de las demás.
@@ -209,22 +210,7 @@ Funciones auxiliares utilizadas únicamente dentro de la feature.
 
 # Shared
 
-Contiene recursos reutilizables por toda la aplicación.
-
-Ejemplo:
-
-```text
-shared/
-
-├── components/
-├── hooks/
-├── services/
-├── utils/
-├── constants/
-└── types/
-```
-
-Aquí se encuentran elementos como:
+Contiene recursos reutilizables por toda la aplicación. Aquí se encuentran elementos como:
 
 - Botones
 - Inputs
@@ -240,9 +226,6 @@ Aquí se encuentran elementos como:
 # Assets
 
 Contiene los recursos estáticos del proyecto.
-
-Ejemplos:
-
 - Imágenes
 - Iconos
 - Logos
@@ -252,11 +235,7 @@ Ejemplos:
 
 # Styles
 
-Contiene los estilos globales de la aplicación.
-
-Ejemplos:
-
-- Variables CSS
+Contiene los estilos globales de la aplicación:
 - Temas
 - Estilos globales
 
@@ -301,7 +280,7 @@ git clone <url-del-repositorio>
 ## Instalar dependencias
 
 ```bash
-pnpm install
+npm install
 ```
 
 ---
@@ -311,7 +290,7 @@ pnpm install
 Modo desarrollo
 
 ```bash
-pnpm dev
+npm dev
 ```
 
 ---
@@ -319,7 +298,7 @@ pnpm dev
 ## Compilar para producción
 
 ```bash
-pnpm build
+npm build
 ```
 
 ---
@@ -327,7 +306,7 @@ pnpm build
 ## Vista previa de producción
 
 ```bash
-pnpm preview
+npm preview
 ```
 
 ---
@@ -341,7 +320,3 @@ pnpm preview
 - La estructura del proyecto debe reflejar el dominio del negocio y no la tecnología utilizada.
 
 ---
-
-# Equipo de desarrollo
-
-Proyecto desarrollado por el equipo de Ingeniería de Software.
