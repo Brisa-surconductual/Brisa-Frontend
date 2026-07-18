@@ -1,0 +1,29 @@
+.page {
+  display: flex;
+  min-height: 100vh;
+  justify-content: center;
+  background-color: var(--surface-bg);
+}
+
+.container {
+  width: 100%;
+  max-width: 760px;
+  min-height: 100vh;
+  padding: var(--space-7) var(--space-5) var(--space-9);
+  background-color: var(--surface-card);
+}
+
+@media (min-width: 768px) {
+  .page {
+    align-items: center;
+    padding: var(--space-8);
+  }
+
+  .container {
+    min-height: auto;
+    padding: var(--space-7);
+    border: 1px solid var(--surface-border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
+  }
+}
