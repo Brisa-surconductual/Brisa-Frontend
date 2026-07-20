@@ -1,0 +1,1 @@
+export { BrisaLogo } from './BrisaLogo.jsx';

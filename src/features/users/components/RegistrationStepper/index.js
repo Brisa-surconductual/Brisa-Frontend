@@ -1,0 +1,1 @@
+export { RegistrationStepper } from './RegistrationStepper.jsx';

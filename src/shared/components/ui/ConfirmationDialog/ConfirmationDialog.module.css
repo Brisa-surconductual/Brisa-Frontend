@@ -1,0 +1,62 @@
+.dialog {
+  width: min(calc(100% - 32px), 400px);
+  max-width: 400px;
+  padding: 0;
+  color: var(--text-primary);
+  background: transparent;
+  border: 0;
+  overflow: visible;
+}
+
+.dialog::backdrop {
+  background-color: rgb(22 21 16 / 68%);
+  backdrop-filter: blur(2px);
+}
+
+.card {
+  padding: var(--space-6);
+  text-align: center;
+  background-color: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-lg);
+}
+
+.icon {
+  display: inline-flex;
+  width: 52px;
+  height: 52px;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-4);
+  color: var(--danger-text);
+  background-color: var(--danger-bg);
+  border-radius: var(--radius-full);
+}
+
+.title {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.description {
+  margin: var(--space-3) 0 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+
+@media (max-width: 370px) {
+  .actions {
+    grid-template-columns: 1fr;
+  }
+}
