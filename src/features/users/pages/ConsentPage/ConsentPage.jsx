@@ -1,7 +1,5 @@
-import { useState } from 'react';
 import {
   Navigate,
-  useNavigate,
 } from 'react-router-dom';
 
 import {
@@ -10,14 +8,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 
-import { Button } from '../../../../shared/components/ui/Button/index.js';
-import { Checkbox } from '../../../../shared/components/ui/Checkbox/index.js';
 import { ConfirmationDialog } from '../../../../shared/components/ui/ConfirmationDialog/index.js';
-
-import {
-  acceptConsent,
-  deleteProvisionalAccount,
-} from '../../api/registrationApi.js';
 
 import {
   CONSENT_VERSION,
@@ -25,35 +16,30 @@ import {
 } from '../../components/ConsentDocument/index.js';
 
 import { RegistrationStepper } from '../../components/RegistrationStepper/index.js';
-import { useRegistration } from '../../hooks/useRegistration.js';
+
+import { ConsentAuthorizationForm } from './components/ConsentAuthorizationForm.jsx';
+import { useConsentPage } from './hooks/useConsentPage.js';
 
 import styles from './ConsentPage.module.css';
 
 export function ConsentPage() {
-  const navigate = useNavigate();
-
   const {
     account,
-    saveConsent,
-    resetRegistration,
-  } = useRegistration();
-
-  const [personalDataAccepted, setPersonalDataAccepted] =
-    useState(false);
-
-  const [
-    consumptionHistoryAccepted,
-    setConsumptionHistoryAccepted,
-  ] = useState(false);
-
-  const [attemptedSubmit, setAttemptedSubmit] =
-    useState(false);
-
-  const [submitError, setSubmitError] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [cancelDialogOpen, setCancelDialogOpen] =
-    useState(false);
-  const [isCancelling, setIsCancelling] = useState(false);
+    authorizations,
+    attemptedSubmit,
+    submitError,
+    isSubmitting,
+    cancelDialogOpen,
+    isCancelling,
+    consentIsComplete,
+    handleAuthorizationChange,
+    handleSubmit,
+    handleCancelRegistration,
+    openCancelDialog,
+    closeCancelDialog,
+  } = useConsentPage({
+    consentVersion: CONSENT_VERSION,
+  });
 
   if (!account) {
     return (
@@ -64,73 +50,13 @@ export function ConsentPage() {
     );
   }
 
-  const consentIsComplete =
-    personalDataAccepted &&
-    consumptionHistoryAccepted;
-
-  async function handleSubmit(event) {
-    event.preventDefault();
-    setAttemptedSubmit(true);
-
-    if (!consentIsComplete) {
-      return;
-    }
-
-    setIsSubmitting(true);
-    setSubmitError('');
-
-    try {
-      const consent = await acceptConsent({
-        userId: account.userId,
-        personalDataAccepted,
-        consumptionHistoryAccepted,
-        consentVersion: CONSENT_VERSION,
-      });
-
-      saveConsent(consent);
-
-      navigate('/registro/linea-base');
-    } catch {
-      setSubmitError(
-        'No pudimos guardar tu consentimiento. Intenta nuevamente.',
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
-  async function handleCancelRegistration() {
-    setIsCancelling(true);
-    setSubmitError('');
-
-    try {
-      await deleteProvisionalAccount({
-        userId: account.userId,
-      });
-
-      resetRegistration();
-      setCancelDialogOpen(false);
-
-      navigate('/registro/cuenta', {
-        replace: true,
-      });
-    } catch {
-      setCancelDialogOpen(false);
-      setSubmitError(
-        'No pudimos cancelar el registro. Intenta nuevamente.',
-      );
-    } finally {
-      setIsCancelling(false);
-    }
-  }
-
   return (
     <div className={styles.page}>
       <header className={styles.topBar}>
         <button
           type="button"
           className={styles.backButton}
-          onClick={() => setCancelDialogOpen(true)}
+          onClick={openCancelDialog}
           aria-label="Cancelar registro y volver"
         >
           <ArrowLeft
@@ -157,8 +83,9 @@ export function ConsentPage() {
         </h1>
 
         <p className={styles.description}>
-          Lee el consentimiento y selecciona ambas
-          autorizaciones para continuar con tu registro.
+          Lee el consentimiento y selecciona
+          ambas autorizaciones para continuar
+          con tu registro.
         </p>
       </section>
 
@@ -181,7 +108,10 @@ export function ConsentPage() {
       </div>
 
       {submitError && (
-        <div className={styles.alert} role="alert">
+        <div
+          className={styles.alert}
+          role="alert"
+        >
           <AlertTriangle
             size={20}
             strokeWidth={1.8}
@@ -192,6 +122,7 @@ export function ConsentPage() {
             <strong>
               No pudimos completar la acción
             </strong>
+
             <p>{submitError}</p>
           </div>
         </div>
@@ -199,91 +130,19 @@ export function ConsentPage() {
 
       <ConsentDocument />
 
-      <form
-        className={styles.form}
+      <ConsentAuthorizationForm
+        authorizations={authorizations}
+        attemptedSubmit={attemptedSubmit}
+        consentIsComplete={consentIsComplete}
+        isSubmitting={isSubmitting}
+        onAuthorizationChange={
+          handleAuthorizationChange
+        }
         onSubmit={handleSubmit}
-        noValidate
-      >
-        <fieldset className={styles.fieldset}>
-          <legend className={styles.legend}>
-            Autorizaciones obligatorias
-          </legend>
-
-          <Checkbox
-            id="personalDataAccepted"
-            name="personalDataAccepted"
-            checked={personalDataAccepted}
-            error={
-              attemptedSubmit &&
-              !personalDataAccepted
-            }
-            onChange={(event) => {
-              setPersonalDataAccepted(
-                event.target.checked,
-              );
-              setSubmitError('');
-            }}
-          >
-            Acepto el{' '}
-            <strong>
-              tratamiento de mis datos personales
-            </strong>{' '}
-            según lo descrito.
-          </Checkbox>
-
-          <Checkbox
-            id="consumptionHistoryAccepted"
-            name="consumptionHistoryAccepted"
-            checked={consumptionHistoryAccepted}
-            error={
-              attemptedSubmit &&
-              !consumptionHistoryAccepted
-            }
-            onChange={(event) => {
-              setConsumptionHistoryAccepted(
-                event.target.checked,
-              );
-              setSubmitError('');
-            }}
-          >
-            Acepto el{' '}
-            <strong>
-              registro de mi historial de consumo
-            </strong>{' '}
-            para fines de seguimiento del programa.
-          </Checkbox>
-        </fieldset>
-
-        {attemptedSubmit && !consentIsComplete && (
-          <p className={styles.validationError} role="alert">
-            Debes aceptar ambas autorizaciones para
-            continuar.
-          </p>
-        )}
-
-        <div className={styles.actions}>
-          <Button
-            type="submit"
-            size="large"
-            fullWidth
-            loading={isSubmitting}
-            loadingText="Guardando consentimiento..."
-            disabled={!consentIsComplete}
-          >
-            Aceptar y continuar
-          </Button>
-
-          <Button
-            type="button"
-            variant="ghost"
-            fullWidth
-            onClick={() => setCancelDialogOpen(true)}
-            disabled={isSubmitting}
-          >
-            Cancelar registro
-          </Button>
-        </div>
-      </form>
+        onCancelRegistration={
+          openCancelDialog
+        }
+      />
 
       <ConfirmationDialog
         open={cancelDialogOpen}
@@ -292,7 +151,7 @@ export function ConsentPage() {
         confirmText="Sí, cancelar"
         cancelText="Continuar aquí"
         loading={isCancelling}
-        onCancel={() => setCancelDialogOpen(false)}
+        onCancel={closeCancelDialog}
         onConfirm={handleCancelRegistration}
       />
     </div>

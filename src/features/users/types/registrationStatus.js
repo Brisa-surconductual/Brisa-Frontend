@@ -1,0 +1,20 @@
+export const REGISTRATION_STATUS = Object.freeze({
+  PENDING_CONSENT:
+    'PENDIENTE_CONSENTIMIENTO',
+
+  PENDING_REVIEW:
+    'PENDIENTE_REVISION',
+
+  COMPLETED:
+    'REGISTRO_COMPLETO',
+});
+
+export const CONSENT_STATUS = Object.freeze({
+  VALID: 'VIGENTE',
+  INVALID: 'NO_VIGENTE',
+});
+
+export const CONSENT_ACCEPTANCE_TYPE =
+  Object.freeze({
+    RENEWAL: 'RECONSENTIMIENTO',
+  });

@@ -5,20 +5,28 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 
-import { BrisaLogo } from '../../../../shared/components/brand/BrisaLogo/index.js';
+import {
+  BrisaLogo,
+} from '../../../../shared/components/brand/BrisaLogo/index.js';
 
-import { useRegistration } from '../../hooks/useRegistration.js';
+import {
+  useRegistration,
+} from '../../hooks/useRegistration.js';
+
+import {
+  REGISTRATION_STATUS,
+} from '../../types/registrationStatus.js';
 
 import styles from './RegistrationCompletedPage.module.css';
 
 export function RegistrationCompletedPage() {
   const { account } = useRegistration();
 
-  if (
-    !account ||
-    account.registrationStatus !==
-      'REGISTRO_COMPLETO'
-  ) {
+  const registrationIsComplete =
+    account?.registrationStatus ===
+    REGISTRATION_STATUS.COMPLETED;
+
+  if (!registrationIsComplete) {
     return (
       <Navigate
         to="/registro/cuenta"
@@ -31,7 +39,10 @@ export function RegistrationCompletedPage() {
     <div className={styles.page}>
       <BrisaLogo />
 
-      <span className={styles.icon} aria-hidden="true">
+      <span
+        className={styles.icon}
+        aria-hidden="true"
+      >
         <CheckCircle2
           size={44}
           strokeWidth={1.6}
@@ -42,8 +53,8 @@ export function RegistrationCompletedPage() {
         <h1>Registro completado</h1>
 
         <p>
-          Tu cuenta y la información de línea base fueron
-          confirmadas correctamente.
+          Tu cuenta y la información de línea base
+          fueron confirmadas correctamente.
         </p>
       </section>
 
@@ -61,12 +72,12 @@ export function RegistrationCompletedPage() {
       </div>
 
       <span className={styles.status}>
-        REGISTRO_COMPLETO
+        Registro completo
       </span>
 
-      <p className={styles.integrationNote}>
-        Esta pantalla será conectada posteriormente con el
-        inicio del participante.
+      <p className={styles.completionNote}>
+        Tu información quedó registrada de acuerdo
+        con las autorizaciones aceptadas.
       </p>
     </div>
   );

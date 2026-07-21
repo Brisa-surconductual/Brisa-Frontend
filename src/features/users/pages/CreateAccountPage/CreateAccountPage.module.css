@@ -44,51 +44,6 @@
   line-height: 1.6;
 }
 
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-5);
-}
-
-.visibilityButton {
-  display: inline-flex;
-  width: 34px;
-  height: 34px;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  color: var(--text-muted);
-  background-color: transparent;
-  border: 0;
-  border-radius: var(--radius-md);
-}
-
-.visibilityButton:hover {
-  color: var(--text-primary);
-  background-color: var(--surface-hover);
-}
-
-.privacyNotice {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-3);
-  padding: var(--space-4);
-  color: var(--info-text);
-  background-color: var(--info-bg);
-  border: 1px solid var(--info-border);
-  border-radius: var(--radius-md);
-}
-
-.privacyNotice svg {
-  flex-shrink: 0;
-  margin-top: 1px;
-}
-
-.privacyNotice p {
-  margin: 0;
-  font-size: 12px;
-  line-height: 1.55;
-}
 
 .alert {
   display: flex;
