@@ -1,0 +1,27 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.privacyNotice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  color: var(--text-secondary);
+  background-color: var(--surface-hover);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+}
+
+.privacyNotice svg {
+  flex-shrink: 0;
+  color: var(--brand-600);
+}
+
+.privacyNotice p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.55;
+}

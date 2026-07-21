@@ -1,58 +1,61 @@
-import { useState } from 'react';
-import {
-  Navigate,
-  useNavigate,
-} from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 
 import {
   AlertTriangle,
   ArrowLeft,
-  ShieldAlert,
 } from 'lucide-react';
 
-import { Button } from '../../../../shared/components/ui/Button/index.js';
-import { Checkbox } from '../../../../shared/components/ui/Checkbox/index.js';
-
-import { renewRegistrationConsent } from '../../api/registrationApi.js';
 import {
   CONSENT_VERSION,
   ConsentDocument,
 } from '../../components/ConsentDocument/index.js';
-import { useRegistration } from '../../hooks/useRegistration.js';
+
 import {
-  getModifiedFieldLabels,
-  getSensitiveModifiedFields,
-} from '../../services/registrationReview.js';
+  ReconsentAuthorizationForm,
+} from './components/ReconsentAuthorizationForm.jsx';
+
+import {
+  SensitiveChangesNotice,
+} from './components/SensitiveChangesNotice.jsx';
+
+import {
+  useReconsentPage,
+} from './hooks/useReconsentPage.js';
 
 import styles from './ReconsentPage.module.css';
 
 export function ReconsentPage() {
-  const navigate = useNavigate();
-
   const {
     account,
     consent,
     baseline,
-    modifiedFields,
-    renewConsent,
-  } = useRegistration();
-
-  const [personalDataAccepted, setPersonalDataAccepted] =
-    useState(false);
-
-  const [
-    consumptionHistoryAccepted,
-    setConsumptionHistoryAccepted,
-  ] = useState(false);
-
-  const [submitError, setSubmitError] = useState('');
-  const [isSubmitting, setIsSubmitting] =
-    useState(false);
+    authorizations,
+    attemptedSubmit,
+    submitError,
+    isSubmitting,
+    sensitiveFieldLabels,
+    consentIsComplete,
+    shouldRedirectToReview,
+    handleAuthorizationChange,
+    handleBack,
+    handleSubmit,
+  } = useReconsentPage({
+    consentVersion: CONSENT_VERSION,
+  });
 
   if (!account) {
     return (
       <Navigate
         to="/registro/cuenta"
+        replace
+      />
+    );
+  }
+
+  if (!consent) {
+    return (
+      <Navigate
+        to="/registro/consentimiento"
         replace
       />
     );
@@ -67,11 +70,7 @@ export function ReconsentPage() {
     );
   }
 
-  if (
-    consent?.status === 'VIGENTE' ||
-    getSensitiveModifiedFields(modifiedFields)
-      .length === 0
-  ) {
+  if (shouldRedirectToReview) {
     return (
       <Navigate
         to="/registro/revision"
@@ -80,60 +79,13 @@ export function ReconsentPage() {
     );
   }
 
-  const sensitiveFields =
-    getModifiedFieldLabels(
-      getSensitiveModifiedFields(modifiedFields),
-    );
-
-  const consentIsComplete =
-    personalDataAccepted &&
-    consumptionHistoryAccepted;
-
-  async function handleSubmit(event) {
-    event.preventDefault();
-
-    if (!consentIsComplete) {
-      return;
-    }
-
-    setIsSubmitting(true);
-    setSubmitError('');
-
-    try {
-      const renewedConsent =
-        await renewRegistrationConsent({
-          userId: account.userId,
-          personalDataAccepted,
-          consumptionHistoryAccepted,
-          consentVersion: CONSENT_VERSION,
-        });
-
-      renewConsent(renewedConsent);
-
-      navigate('/registro/revision', {
-        replace: true,
-        state: {
-          consentRenewed: true,
-        },
-      });
-    } catch {
-      setSubmitError(
-        'No pudimos actualizar el consentimiento. Intenta nuevamente.',
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
   return (
     <div className={styles.page}>
       <header className={styles.topBar}>
         <button
           type="button"
           className={styles.backButton}
-          onClick={() =>
-            navigate('/registro/revision')
-          }
+          onClick={handleBack}
           aria-label="Volver a revisión"
         >
           <ArrowLeft
@@ -148,30 +100,9 @@ export function ReconsentPage() {
         </span>
       </header>
 
-      <div className={styles.warning}>
-        <ShieldAlert
-          size={22}
-          strokeWidth={1.8}
-          aria-hidden="true"
-        />
-
-        <div>
-          <strong>
-            Modificaste información sensible
-          </strong>
-
-          <p>
-            Los siguientes cambios requieren una nueva
-            aceptación:
-          </p>
-
-          <ul>
-            {sensitiveFields.map((field) => (
-              <li key={field}>{field}</li>
-            ))}
-          </ul>
-        </div>
-      </div>
+      <SensitiveChangesNotice
+        fields={sensitiveFieldLabels}
+      />
 
       <section className={styles.introduction}>
         <h1 className={styles.title}>
@@ -180,12 +111,16 @@ export function ReconsentPage() {
 
         <p className={styles.description}>
           Lee el documento vigente y acepta ambas
-          autorizaciones antes de finalizar el registro.
+          autorizaciones antes de finalizar el
+          registro.
         </p>
       </section>
 
       {submitError && (
-        <div className={styles.error} role="alert">
+        <div
+          className={styles.error}
+          role="alert"
+        >
           <AlertTriangle
             size={20}
             strokeWidth={1.8}
@@ -198,59 +133,16 @@ export function ReconsentPage() {
 
       <ConsentDocument />
 
-      <form
-        className={styles.form}
+      <ReconsentAuthorizationForm
+        authorizations={authorizations}
+        attemptedSubmit={attemptedSubmit}
+        consentIsComplete={consentIsComplete}
+        isSubmitting={isSubmitting}
+        onAuthorizationChange={
+          handleAuthorizationChange
+        }
         onSubmit={handleSubmit}
-      >
-        <fieldset className={styles.fieldset}>
-          <legend className={styles.legend}>
-            Renovación de autorizaciones
-          </legend>
-
-          <Checkbox
-            id="renewPersonalData"
-            checked={personalDataAccepted}
-            onChange={(event) =>
-              setPersonalDataAccepted(
-                event.target.checked,
-              )
-            }
-          >
-            Confirmo el{' '}
-            <strong>
-              tratamiento de mis datos actualizados
-            </strong>
-            .
-          </Checkbox>
-
-          <Checkbox
-            id="renewConsumptionHistory"
-            checked={consumptionHistoryAccepted}
-            onChange={(event) =>
-              setConsumptionHistoryAccepted(
-                event.target.checked,
-              )
-            }
-          >
-            Confirmo el{' '}
-            <strong>
-              registro de mi historial actualizado
-            </strong>
-            .
-          </Checkbox>
-        </fieldset>
-
-        <Button
-          type="submit"
-          size="large"
-          fullWidth
-          disabled={!consentIsComplete}
-          loading={isSubmitting}
-          loadingText="Actualizando consentimiento..."
-        >
-          Aceptar y volver a revisión
-        </Button>
-      </form>
+      />
     </div>
   );
 }

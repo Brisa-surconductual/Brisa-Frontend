@@ -1,54 +1,39 @@
-import { useState } from 'react';
-import {
-  Navigate,
-  useLocation,
-  useNavigate,
-} from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 
-import {
-  AlertTriangle,
-  ArrowLeft,
-  CheckCircle2,
-  Info,
-  ShieldAlert,
-} from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 
 import { Button } from '../../../../shared/components/ui/Button/index.js';
 
-import { confirmRegistration } from '../../api/registrationApi.js';
 import { RegistrationStepper } from '../../components/RegistrationStepper/index.js';
 import { ReviewCard } from '../../components/ReviewCard/index.js';
-import { useRegistration } from '../../hooks/useRegistration.js';
-import {
-  getModifiedFieldLabels,
-  getSensitiveModifiedFields,
-} from '../../services/registrationReview.js';
+
+import { ReviewStatusMessages } from './components/ReviewStatusMessages.jsx';
+import { useReviewPage } from './hooks/useReviewPage.js';
 
 import {
-  formatAcademicLevel,
-  formatConsumptionFrequency,
-  formatConsumptionReason,
-  formatDate,
-} from '../../utils/registrationFormatters.js';
+  createAcademicRows,
+  createAccountRows,
+  createConsumptionRows,
+} from './utils/reviewRows.js';
 
 import styles from './ReviewPage.module.css';
 
 export function ReviewPage() {
-  const navigate = useNavigate();
-  const location = useLocation();
-
   const {
     account,
     consent,
     baseline,
     modifiedFields,
-    saveAccount,
-    startReviewEdit,
-  } = useRegistration();
-
-  const [submitError, setSubmitError] = useState('');
-  const [isSubmitting, setIsSubmitting] =
-    useState(false);
+    consentIsValid,
+    consentRenewed,
+    sensitiveModifiedLabels,
+    submitError,
+    isSubmitting,
+    handleBack,
+    editSection,
+    goToReconsent,
+    handleConfirmation,
+  } = useReviewPage();
 
   if (!account) {
     return (
@@ -77,148 +62,20 @@ export function ReviewPage() {
     );
   }
 
-  const consentIsValid =
-    consent.status === 'VIGENTE';
+  const accountRows =
+    createAccountRows(account);
 
-  const sensitiveModifiedFields =
-    getSensitiveModifiedFields(modifiedFields);
-
-  const sensitiveModifiedLabels =
-    getModifiedFieldLabels(
-      sensitiveModifiedFields,
+  const academicRows =
+    createAcademicRows(
+      baseline,
+      modifiedFields,
     );
 
-  function fieldWasModified(field) {
-    return modifiedFields.includes(field);
-  }
-
-  function editSection(section) {
-    startReviewEdit(section);
-    navigate('/registro/linea-base');
-  }
-
-  async function handleConfirmation() {
-    if (!consentIsValid) {
-      navigate('/registro/reconsentimiento');
-
-      return;
-    }
-
-    setIsSubmitting(true);
-    setSubmitError('');
-
-    try {
-      const completedAccount =
-        await confirmRegistration({
-          userId: account.userId,
-        });
-
-      saveAccount({
-        ...account,
-        ...completedAccount,
-      });
-
-      navigate('/registro/completado', {
-        replace: true,
-      });
-    } catch (error) {
-      if (error.code === 'CONSENT_NOT_VALID') {
-        navigate('/registro/reconsentimiento');
-
-        return;
-      }
-
-      setSubmitError(
-        'No pudimos confirmar el registro. Intenta nuevamente.',
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
-  const accountRows = [
-    {
-      label: 'Correo electrónico',
-      value: account.email,
-    },
-  ];
-
-  const academicRows = [
-    {
-      field: 'age',
-      label: 'Edad',
-      value: `${baseline.age} años`,
-    },
-    {
-      field: 'city',
-      label: 'Ciudad',
-      value: baseline.city,
-    },
-    {
-      field: 'educationalInstitution',
-      label: 'Entidad educativa',
-      value: baseline.educationalInstitution,
-    },
-    {
-      field: 'academicProgram',
-      label: 'Programa académico',
-      value: baseline.academicProgram,
-    },
-    {
-      field: 'semester',
-      label: 'Semestre cursado',
-      value: baseline.semester,
-    },
-    {
-      field: 'academicLevel',
-      label: 'Nivel académico',
-      value: formatAcademicLevel(
-        baseline.academicLevel,
-      ),
-    },
-  ].map((row) => ({
-    ...row,
-    modified: fieldWasModified(row.field),
-  }));
-
-  const consumptionRows = [
-    {
-      field: 'consumptionStartDate',
-      label: 'Inicio de consumo',
-      value: formatDate(
-        baseline.consumptionStartDate,
-      ),
-    },
-    {
-      field: 'lastConsumptionDate',
-      label: 'Último consumo',
-      value: formatDate(
-        baseline.lastConsumptionDate,
-      ),
-    },
-    {
-      field: 'consumptionReason',
-      label: 'Motivo principal',
-      value: formatConsumptionReason(
-        baseline.consumptionReason,
-      ),
-    },
-    {
-      field: 'consumptionFrequency',
-      label: 'Frecuencia aproximada',
-      value: formatConsumptionFrequency(
-        baseline.consumptionFrequency,
-      ),
-    },
-  ].map((row) => ({
-    ...row,
-    modified: fieldWasModified(row.field),
-  }));
-
-  /*
-   * Evita advertencias de variables no utilizadas y documenta
-   * qué campos pertenecen a cada sección.
-   */
+  const consumptionRows =
+    createConsumptionRows(
+      baseline,
+      modifiedFields,
+    );
 
   return (
     <div className={styles.page}>
@@ -226,9 +83,7 @@ export function ReviewPage() {
         <button
           type="button"
           className={styles.backButton}
-          onClick={() =>
-            navigate('/registro/linea-base')
-          }
+          onClick={handleBack}
           aria-label="Volver a línea base"
         >
           <ArrowLeft
@@ -256,110 +111,23 @@ export function ReviewPage() {
 
         <p className={styles.description}>
           Verifica que la información sea correcta.
-          Puedes editar las secciones habilitadas antes
-          de finalizar.
+          Puedes editar las secciones habilitadas
+          antes de finalizar.
         </p>
       </section>
 
-      {location.state?.consentRenewed && (
-        <div
-          className={styles.successAlert}
-          role="status"
-        >
-          <CheckCircle2
-            size={20}
-            strokeWidth={1.8}
-            aria-hidden="true"
-          />
-
-          <div>
-            <strong>
-              Consentimiento actualizado
-            </strong>
-
-            <p>
-              Ya puedes confirmar el registro.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {!consentIsValid && (
-        <div
-          className={styles.warningAlert}
-          role="alert"
-        >
-          <ShieldAlert
-            size={21}
-            strokeWidth={1.8}
-            aria-hidden="true"
-          />
-
-          <div>
-            <strong>
-              Debes aceptar nuevamente el consentimiento
-            </strong>
-
-            <p>
-              Modificaste información sensible:
-              {' '}
-              {sensitiveModifiedLabels.join(', ')}.
-            </p>
-
-            <Button
-              type="button"
-              variant="secondary"
-              size="small"
-              onClick={() =>
-                navigate(
-                  '/registro/reconsentimiento',
-                )
-              }
-            >
-              Actualizar consentimiento
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {modifiedFields.length > 0 &&
-        consentIsValid && (
-          <div className={styles.infoAlert}>
-            <Info
-              size={20}
-              strokeWidth={1.8}
-              aria-hidden="true"
-            />
-
-            <div>
-              <strong>
-                Cambios guardados
-              </strong>
-
-              <p>
-                Los campos modificados están identificados
-                en las tarjetas de revisión.
-              </p>
-            </div>
-          </div>
-        )}
-
-      {submitError && (
-        <div className={styles.errorAlert} role="alert">
-          <AlertTriangle
-            size={20}
-            strokeWidth={1.8}
-            aria-hidden="true"
-          />
-
-          <div>
-            <strong>
-              No pudimos finalizar el registro
-            </strong>
-            <p>{submitError}</p>
-          </div>
-        </div>
-      )}
+      <ReviewStatusMessages
+        consentRenewed={consentRenewed}
+        consentIsValid={consentIsValid}
+        sensitiveModifiedLabels={
+          sensitiveModifiedLabels
+        }
+        hasModifiedFields={
+          modifiedFields.length > 0
+        }
+        submitError={submitError}
+        onRenewConsent={goToReconsent}
+      />
 
       <div className={styles.cards}>
         <ReviewCard
@@ -370,19 +138,23 @@ export function ReviewPage() {
         <ReviewCard
           title="Datos académicos"
           rows={academicRows}
-          onEdit={() => editSection('academic')}
+          onEdit={() =>
+            editSection('academic')
+          }
         />
 
         <ReviewCard
           title="Datos de consumo"
           rows={consumptionRows}
-          onEdit={() => editSection('consumption')}
+          onEdit={() =>
+            editSection('consumption')
+          }
         />
       </div>
 
       <div className={styles.privacyNote}>
-        La contraseña no se muestra ni puede consultarse
-        desde esta pantalla.
+        La contraseña no se muestra ni puede
+        consultarse desde esta pantalla.
       </div>
 
       <Button

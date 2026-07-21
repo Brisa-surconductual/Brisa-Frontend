@@ -13,3 +13,6 @@ export {
 export { PasswordStrength } from './components/PasswordStrength/index.js';
 export { RegistrationStepper } from './components/RegistrationStepper/index.js';
 export { ReviewCard } from './components/ReviewCard/index.js';
+export {
+  RegistrationProvider,
+} from './context/index.js';

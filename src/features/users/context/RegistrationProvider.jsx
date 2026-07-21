@@ -1,63 +1,45 @@
 import {
   useCallback,
   useMemo,
-  useState,
+  useReducer,
 } from 'react';
 
 import { RegistrationContext } from './registrationContext.js';
 
-const INITIAL_REGISTRATION = {
-  account: null,
-  consent: null,
-  baseline: null,
+import {
+  createInitialRegistrationState,
+  REGISTRATION_ACTION,
+  registrationReducer,
+} from './registrationReducer.js';
 
-  /*
-   * Primera versión de la línea base que llegó a revisión.
-   * Se utiliza como referencia para detectar modificaciones.
-   */
-  baselineSnapshot: null,
-
-  modifiedFields: [],
-  isEditingFromReview: false,
-  reviewEditSection: null,
-};
-
-export function RegistrationProvider({ children }) {
-  const [registration, setRegistration] = useState(
-    INITIAL_REGISTRATION,
+export function RegistrationProvider({
+  children,
+}) {
+  const [registration, dispatch] = useReducer(
+    registrationReducer,
+    undefined,
+    createInitialRegistrationState,
   );
 
   const saveAccount = useCallback((account) => {
-    setRegistration((currentRegistration) => ({
-      ...currentRegistration,
-      account,
-    }));
+    dispatch({
+      type: REGISTRATION_ACTION.SAVE_ACCOUNT,
+      payload: account,
+    });
   }, []);
 
   const saveConsent = useCallback((consent) => {
-    setRegistration((currentRegistration) => ({
-      ...currentRegistration,
-      consent,
-    }));
+    dispatch({
+      type: REGISTRATION_ACTION.SAVE_CONSENT,
+      payload: consent,
+    });
   }, []);
 
   const saveBaseline = useCallback((baseline) => {
-    setRegistration((currentRegistration) => ({
-      ...currentRegistration,
-      baseline,
-
-      /*
-       * Solo guardamos el snapshot la primera vez.
-       * Las ediciones posteriores no deben reemplazarlo hasta
-       * que el consentimiento sea renovado.
-       */
-      baselineSnapshot:
-        currentRegistration.baselineSnapshot ?? baseline,
-
-      modifiedFields: [],
-      isEditingFromReview: false,
-      reviewEditSection: null,
-    }));
+    dispatch({
+      type: REGISTRATION_ACTION.SAVE_BASELINE,
+      payload: baseline,
+    });
   }, []);
 
   const saveEditedBaseline = useCallback(
@@ -66,60 +48,57 @@ export function RegistrationProvider({ children }) {
       modifiedFields,
       consentIsValid,
     }) => {
-      setRegistration((currentRegistration) => ({
-        ...currentRegistration,
-        baseline,
-        modifiedFields,
-        isEditingFromReview: false,
-        reviewEditSection: null,
+      dispatch({
+        type:
+          REGISTRATION_ACTION
+            .SAVE_EDITED_BASELINE,
 
-        consent: currentRegistration.consent
-          ? {
-              ...currentRegistration.consent,
-              status: consentIsValid
-                ? 'VIGENTE'
-                : 'NO_VIGENTE',
-            }
-          : null,
-      }));
+        payload: {
+          baseline,
+          modifiedFields,
+          consentIsValid,
+        },
+      });
     },
     [],
   );
 
-  const startReviewEdit = useCallback((section) => {
-    setRegistration((currentRegistration) => ({
-      ...currentRegistration,
-      isEditingFromReview: true,
-      reviewEditSection: section,
-    }));
-  }, []);
+  const startReviewEdit = useCallback(
+    (section) => {
+      dispatch({
+        type:
+          REGISTRATION_ACTION
+            .START_REVIEW_EDIT,
+
+        payload: section,
+      });
+    },
+    [],
+  );
 
   const cancelReviewEdit = useCallback(() => {
-    setRegistration((currentRegistration) => ({
-      ...currentRegistration,
-      isEditingFromReview: false,
-      reviewEditSection: null,
-    }));
+    dispatch({
+      type:
+        REGISTRATION_ACTION
+          .CANCEL_REVIEW_EDIT,
+    });
   }, []);
 
   const renewConsent = useCallback((consent) => {
-    setRegistration((currentRegistration) => ({
-      ...currentRegistration,
-      consent,
+    dispatch({
+      type:
+        REGISTRATION_ACTION.RENEW_CONSENT,
 
-      /*
-       * Después del reconsentimiento, la versión actual de los
-       * datos se convierte en la nueva referencia vigente.
-       */
-      baselineSnapshot: currentRegistration.baseline,
-      modifiedFields: [],
-      isEditingFromReview: false,
-      reviewEditSection: null,
-    }));
+      payload: consent,
+    });
   }, []);
 
   const resetRegistration = useCallback(() => {
-    setRegistration(INITIAL_REGISTRATION);
+    dispatch({
+      type:
+        REGISTRATION_ACTION
+          .RESET_REGISTRATION,
+    });
   }, []);
 
   const contextValue = useMemo(
@@ -148,7 +127,9 @@ export function RegistrationProvider({ children }) {
   );
 
   return (
-    <RegistrationContext.Provider value={contextValue}>
+    <RegistrationContext.Provider
+      value={contextValue}
+    >
       {children}
     </RegistrationContext.Provider>
   );
