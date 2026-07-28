@@ -1,0 +1,1751 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brisa · Prototipo M01 · Gestión de Usuario</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ══ TOKENS (heredados del Design System) ══════════════════════ */
+:root {
+  --brand-50:#EAF6F5;--brand-100:#CFECE9;--brand-200:#9ED9D2;--brand-300:#69BFB5;
+  --brand-400:#3CA399;--brand-500:#1D8378;--brand-600:#156A61;--brand-700:#11534C;
+  --brand-800:#0C3C37;--brand-900:#082724;
+  --accent-50:#FFF0E9;--accent-100:#FFD9C7;--accent-200:#FFB494;--accent-300:#FB8E5F;
+  --accent-400:#E96F3B;--accent-500:#C8501F;--accent-600:#A03D15;--accent-700:#782D10;
+  --accent-800:#531F0A;--accent-900:#311206;
+  --n0:#FFFFFF;--n50:#FAF9F6;--n100:#F0EEE8;--n200:#E1DED5;--n300:#C7C3B6;
+  --n400:#A19C8C;--n500:#726C5A;--n600:#595549;--n700:#403D34;--n800:#282620;--n900:#161510;
+  --success:#2E7D4F;--success-bg:#E8F5ED;--success-text:#1F5C3A;--success-border:#8FCBA3;
+  --warning:#B07A12;--warning-bg:#FBF1DC;--warning-text:#7A5208;--warning-border:#E6C878;
+  --danger:#C13B30;--danger-bg:#FBEAE7;--danger-text:#8E2A21;--danger-border:#E8A99E;
+  --info:#1E6FA8;--info-bg:#E7F1FA;--info-text:#1E6FA8;--info-border:#A8CBE6;
+  --bg:var(--n50);--card:var(--n0);--border:var(--n200);--hover:var(--n100);
+  --tp:var(--n900);--ts:var(--n600);--tm:var(--n500);--ti:var(--n0);
+  --btn-pt:var(--n0);--btn-at:var(--n0);
+  --font:'Manrope',sans-serif;--mono:'IBM Plex Mono',monospace;
+  --r-sm:4px;--r-md:8px;--r-lg:12px;--r-xl:16px;--r-2xl:20px;--r-full:9999px;
+  --sh-sm:0 1px 2px rgba(22,21,16,.06);
+  --sh-md:0 2px 8px rgba(22,21,16,.09),0 1px 2px rgba(22,21,16,.06);
+  --sh-lg:0 8px 24px rgba(22,21,16,.10),0 2px 6px rgba(22,21,16,.06);
+}
+[data-theme="dark"] {
+  --brand-50:#082724;--brand-100:#0C3C37;--brand-200:#11534C;--brand-300:#156A61;
+  --brand-400:#1D8378;--brand-500:#3CA399;--brand-600:#69BFB5;--brand-700:#9ED9D2;
+  --brand-800:#CFECE9;--brand-900:#EAF6F5;
+  --accent-50:#311206;--accent-100:#531F0A;--accent-200:#782D10;--accent-300:#A03D15;
+  --accent-400:#C8501F;--accent-500:#E96F3B;--accent-600:#FB8E5F;
+  --success-bg:#13261B;--success-text:#9ED9AE;--success-border:#2F5C41;
+  --warning-bg:#2B2008;--warning-text:#F0C77A;--warning-border:#6B4D14;
+  --danger-bg:#2B1310;--danger-text:#F0A89E;--danger-border:#6B2A20;
+  --info-bg:#0E2233;--info-text:#9BC8E8;--info-border:#1F4566;
+  --bg:#100F0C;--card:#1E1C17;--border:#332F27;--hover:#262319;
+  --tp:#EDEAE2;--ts:#B8B3A4;--tm:#8C8676;
+  --btn-pt:var(--n900);--btn-at:var(--n900);
+  --sh-sm:0 1px 2px rgba(0,0,0,.35);--sh-md:0 2px 8px rgba(0,0,0,.45);--sh-lg:0 8px 24px rgba(0,0,0,.55);
+}
+/* ══ RESET ══ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-family:var(--font);background:#0e0e0e;color:var(--tp)}
+body{min-height:100vh;display:flex;flex-direction:column;align-items:center;background:#111}
+:focus-visible{outline:2.5px solid var(--brand-500);outline-offset:2px;border-radius:var(--r-sm)}
+
+/* ══ DEMO BAR ══ */
+.demo-bar{
+  width:100%;background:#0a0a0a;border-bottom:1px solid #222;
+  padding:8px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  font-family:var(--mono);font-size:10px;color:#888;position:sticky;top:0;z-index:1000;
+}
+.demo-bar strong{color:#aaa;margin-right:4px}
+.demo-btn{
+  background:#1a1a1a;border:1px solid #333;color:#bbb;border-radius:4px;
+  padding:3px 8px;font-size:9px;font-family:var(--mono);cursor:pointer;transition:all .1s;
+}
+.demo-btn:hover{background:#2a2a2a;color:#fff;border-color:#555}
+.demo-btn.active{background:#1D8378;border-color:#1D8378;color:#fff}
+.demo-sep{color:#333;user-select:none}
+.demo-screen-pill{
+  background:#222;border:1px solid #333;border-radius:var(--r-full);
+  padding:2px 8px;color:#6BC4B8;font-size:9px;
+}
+.demo-spacer{flex:1}
+.role-badge{
+  padding:2px 7px;border-radius:var(--r-full);font-size:9px;font-weight:600;
+}
+.role-badge.student{background:rgba(29,131,120,.25);color:#6BC4B8;border:1px solid rgba(29,131,120,.4)}
+.role-badge.admin{background:rgba(200,80,31,.25);color:#FFC09E;border:1px solid rgba(200,80,31,.4)}
+
+/* ══ FRAME OUTER ══ */
+.frame-outer{
+  display:flex;justify-content:center;align-items:flex-start;
+  padding:24px 16px 40px;flex:1;width:100%;
+}
+.phone{
+  width:390px;background:var(--bg);border-radius:36px;
+  overflow:hidden;position:relative;
+  box-shadow:0 0 0 10px #1a1a1a,0 30px 80px rgba(0,0,0,.7);
+  min-height:720px;max-height:820px;
+  display:flex;flex-direction:column;
+  transition:background .2s;
+}
+/* Notch */
+.phone::before{
+  content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:100px;height:28px;background:#1a1a1a;border-radius:0 0 18px 18px;z-index:50;
+}
+
+/* ══ SCREENS SYSTEM ══ */
+.screens{flex:1;position:relative;overflow:hidden}
+.screen{
+  position:absolute;inset:0;overflow-y:auto;
+  background:var(--bg);opacity:0;pointer-events:none;
+  transition:opacity .25s, transform .25s;transform:translateX(20px);
+}
+.screen.active{opacity:1;pointer-events:all;transform:translateX(0)}
+.screen.slide-back{transform:translateX(-20px)}
+.screen-inner{padding:40px 24px 100px;min-height:100%}
+.screen-inner.pt-notch{padding-top:48px}
+
+/* ══ APP BAR ══ */
+.app-bar{
+  padding:40px 20px 0;display:flex;align-items:center;gap:12px;
+  position:relative;z-index:10;flex-shrink:0;
+  pointer-events:all;
+}
+.app-bar-back{
+  width:36px;height:36px;border-radius:50%;background:var(--hover);border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;color:var(--tp);font-size:18px;
+  transition:background .12s;flex-shrink:0;
+}
+.app-bar-back:hover{background:var(--border)}
+.app-bar-title{font-size:13px;font-weight:700;color:var(--ts)}
+.app-bar-spacer{flex:1}
+
+/* ══ BOTTOM NAV ══ */
+.bottom-nav{
+  display:none;background:var(--card);border-top:1px solid var(--border);
+  padding:8px 0 16px;z-index:20;flex-shrink:0;
+}
+.bottom-nav.visible{display:flex}
+.bnav-item{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;
+  padding:6px 0;cursor:pointer;border:none;background:none;
+  color:var(--tm);font-size:9.5px;font-family:var(--font);font-weight:600;
+  transition:color .12s;
+}
+.bnav-item:hover{color:var(--brand-500)}
+.bnav-item.active{color:var(--brand-500)}
+.bnav-icon{font-size:20px;line-height:1}
+
+/* ══ BUTTONS ══ */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  font-family:var(--font);font-weight:700;font-size:14px;border-radius:var(--r-md);
+  border:1.5px solid transparent;padding:11px 20px;cursor:pointer;transition:all .12s;
+  line-height:1.2;text-decoration:none;
+}
+.btn-primary{background:var(--brand-500);color:var(--btn-pt)}
+.btn-primary:hover:not(:disabled){background:var(--brand-600)}
+[data-theme="dark"] .btn-primary:hover:not(:disabled){background:var(--brand-400)}
+.btn-secondary{background:var(--card);color:var(--tp);border-color:var(--border)}
+.btn-secondary:hover:not(:disabled){background:var(--hover)}
+.btn-ghost{background:transparent;color:var(--ts);border-color:transparent}
+.btn-ghost:hover:not(:disabled){background:var(--hover)}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-danger:hover:not(:disabled){background:var(--danger-text)}
+.btn-block{width:100%;margin-top:8px}
+.btn:disabled{opacity:.42;cursor:not-allowed}
+.btn-sm{padding:7px 14px;font-size:12.5px}
+.btn-link{background:none;border:none;color:var(--brand-600);font-weight:600;font-size:12.5px;cursor:pointer;font-family:var(--font);padding:0;text-decoration:none;transition:color .12s}
+.btn-link:hover{color:var(--brand-500)}
+
+/* ══ INPUTS ══ */
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.field-label{font-size:12.5px;font-weight:700;color:var(--tp)}
+.input-wrap{position:relative}
+.iico{position:absolute;top:50%;transform:translateY(-50%);color:var(--tm);font-size:16px;pointer-events:none}
+.iico.clickable{pointer-events:all;cursor:pointer;transition:color .12s}
+.iico.clickable:hover{color:var(--tp)}
+.iico-l{left:12px}.iico-r{right:12px}
+.input,.select{
+  font-family:var(--font);font-size:14px;color:var(--tp);background:var(--card);
+  border:1.5px solid var(--border);border-radius:var(--r-md);padding:11px 14px;width:100%;
+  transition:border-color .12s,box-shadow .12s;appearance:none;
+}
+.input:focus,.select:focus{border-color:var(--brand-400);box-shadow:0 0 0 3px rgba(29,131,120,.12);outline:none}
+.input.has-l{padding-left:40px}.input.has-r{padding-right:40px}
+.input.err,.select.err{border-color:var(--danger);box-shadow:0 0 0 3px rgba(193,59,48,.08)}
+.input.ok{border-color:var(--success)}
+.input:disabled{background:var(--hover);color:var(--tm);cursor:not-allowed}
+.ferr{font-size:11px;color:var(--danger-text);font-weight:600;display:flex;align-items:center;gap:4px;margin-top:2px}
+.fok{font-size:11px;color:var(--success-text);font-weight:600;margin-top:2px}
+.fhint{font-size:11px;color:var(--tm);margin-top:2px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* ══ PASSWORD STRENGTH ══ */
+.pw-meter{display:flex;gap:3px;margin-top:5px}
+.pw-bar{height:3px;flex:1;border-radius:2px;background:var(--border)}
+.pw-label{font-size:10.5px;font-weight:600;margin-top:4px}
+.pw-rules{margin-top:8px;display:flex;flex-direction:column;gap:2px}
+.pw-rule{font-size:10.5px;color:var(--tm);display:flex;align-items:center;gap:5px}
+.pw-rule.met{color:var(--success-text)}
+.pw-rule span{font-size:10px}
+
+/* ══ CHECKBOX ══ */
+.check-row{display:flex;align-items:flex-start;gap:10px;padding:8px 0;cursor:pointer}
+.check-box{
+  width:20px;height:20px;flex-shrink:0;margin-top:1px;
+  border:1.5px solid var(--border);border-radius:5px;background:var(--card);
+  display:flex;align-items:center;justify-content:center;transition:all .12s;cursor:pointer;
+}
+.check-box.checked{background:var(--brand-500);border-color:var(--brand-500)}
+.check-box svg{width:12px;height:12px;opacity:0;transition:opacity .1s}
+.check-box.checked svg{opacity:1}
+.check-label{font-size:12.5px;color:var(--tp);line-height:1.55;user-select:none}
+
+/* ══ BADGES ══ */
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:var(--r-full);border:1px solid;white-space:nowrap}
+.bdot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.b-success{background:var(--success-bg);border-color:var(--success-border);color:var(--success-text)}
+.b-warning{background:var(--warning-bg);border-color:var(--warning-border);color:var(--warning-text)}
+.b-danger{background:var(--danger-bg);border-color:var(--danger-border);color:var(--danger-text)}
+.b-info{background:var(--info-bg);border-color:var(--info-border);color:var(--info-text)}
+.b-neutral{background:var(--hover);border-color:var(--border);color:var(--tm)}
+
+/* ══ ALERTS ══ */
+.alert{display:flex;gap:10px;padding:12px;border-radius:var(--r-md);border:1px solid;font-size:12.5px;line-height:1.5;margin-bottom:12px}
+.alert-icon{font-size:15px;flex-shrink:0;margin-top:1px}
+.alert-body{display:flex;flex-direction:column;gap:2px}
+.alert-title{font-weight:700;font-size:12.5px}
+.alert-desc{font-size:11.5px;opacity:.85}
+.alert-success{background:var(--success-bg);border-color:var(--success-border);color:var(--success-text)}
+.alert-warning{background:var(--warning-bg);border-color:var(--warning-border);color:var(--warning-text)}
+.alert-error{background:var(--danger-bg);border-color:var(--danger-border);color:var(--danger-text)}
+.alert-info{background:var(--info-bg);border-color:var(--info-border);color:var(--info-text)}
+.alert.hidden{display:none}
+
+/* ══ STEPPER ══ */
+.stepper{display:flex;align-items:flex-start;margin-bottom:24px}
+.step{display:flex;flex-direction:column;align-items:center;gap:5px;flex:1;position:relative}
+.step-dot{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;font-weight:600;border:1.5px solid var(--border);background:var(--card);color:var(--tm);z-index:2;transition:all .2s}
+.step.done .step-dot{background:var(--brand-500);border-color:var(--brand-500);color:#fff}
+.step.active .step-dot{border-color:var(--brand-500);color:var(--brand-600);box-shadow:0 0 0 3px rgba(29,131,120,.15)}
+[data-theme="dark"] .step.active .step-dot{color:var(--brand-400)}
+.step-label{font-size:9.5px;color:var(--tm);text-align:center;max-width:70px;line-height:1.3}
+.step.active .step-label{color:var(--tp);font-weight:700}
+.step-line{position:absolute;top:13px;left:-50%;width:100%;height:1.5px;background:var(--border);z-index:1;transition:background .3s}
+.step.done .step-line{background:var(--brand-500)}
+.step:first-child .step-line{display:none}
+
+/* ══ REVIEW CARDS ══ */
+.review-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px 16px;margin-bottom:12px;box-shadow:var(--sh-sm)}
+.review-card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.review-card-title{font-size:12.5px;font-weight:700;color:var(--tp)}
+.review-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--hover);font-size:12px}
+.review-row:last-child{border-bottom:none}
+.review-row-label{color:var(--tm)}
+.review-row-value{color:var(--tp);font-weight:600;text-align:right;max-width:55%}
+
+/* ══ USER LIST (admin) ══ */
+.user-item{display:flex;align-items:center;gap:10px;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);margin-bottom:8px;cursor:pointer;transition:background .12s,box-shadow .12s}
+.user-item:hover{background:var(--hover);box-shadow:var(--sh-sm)}
+.user-avatar{width:36px;height:36px;border-radius:50%;background:var(--brand-200);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--brand-700);flex-shrink:0;overflow:hidden}
+[data-theme="dark"] .user-avatar{background:var(--brand-200);color:var(--n900)}
+.user-info{flex:1;min-width:0}
+.user-name{font-size:13px;font-weight:700;color:var(--tp);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-meta{font-size:10.5px;color:var(--tm);margin-top:1px}
+
+/* ══ STAT CARDS ══ */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px;box-shadow:var(--sh-sm)}
+.stat-value{font-size:26px;font-weight:800;color:var(--brand-500);line-height:1.1}
+.stat-label{font-size:11px;color:var(--tm);margin-top:2px}
+
+/* ══ CODE INPUT ══ */
+.code-input{
+  font-family:var(--mono);font-size:22px;letter-spacing:.35em;text-align:center;
+  padding:12px 14px;
+}
+
+/* ══ CONSENT SCROLL ══ */
+.consent-text{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r-md);
+  padding:14px;max-height:130px;overflow-y:auto;
+  font-size:11.5px;line-height:1.65;color:var(--ts);margin-bottom:16px;
+  position:relative;
+}
+.consent-text::after{
+  content:'';position:sticky;bottom:0;left:0;right:0;height:28px;
+  background:linear-gradient(transparent,var(--card));display:block;margin-top:-28px;
+  pointer-events:none;border-radius:0 0 var(--r-md) var(--r-md);
+}
+
+/* ══ DIVIDER ══ */
+.divider{height:1px;background:var(--border);margin:16px 0}
+.section-label{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--tm);margin-bottom:12px;margin-top:20px}
+
+/* ══ HOME SPLASH ══ */
+.splash-bg{
+  min-height:100%;background:linear-gradient(160deg,var(--brand-700) 0%,var(--brand-500) 60%,var(--brand-400) 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:60px 32px 48px;gap:0;
+}
+.splash-icon{width:72px;height:72px;border-radius:20px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;margin-bottom:20px;backdrop-filter:blur(4px)}
+.splash-title{font-size:30px;font-weight:800;color:#fff;letter-spacing:-.02em;margin-bottom:6px}
+.splash-subtitle{font-size:13px;color:rgba(255,255,255,.7);text-align:center;margin-bottom:40px;line-height:1.5}
+.splash-actions{display:flex;flex-direction:column;gap:10px;width:100%}
+.btn-white{background:#fff;color:var(--brand-700);border:none}
+.btn-white:hover:not(:disabled){background:rgba(255,255,255,.9)}
+.btn-outline-white{background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,.4)}
+.btn-outline-white:hover:not(:disabled){background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.7)}
+
+/* ══ STUDENT HOME ══ */
+.home-header{background:var(--brand-500);padding:42px 20px 18px;display:flex;align-items:center;justify-content:space-between}
+.home-header-logo{display:flex;align-items:center;gap:8px}
+.home-header-name{font-size:13px;font-weight:800;color:#fff}
+.home-header-sub{font-size:10px;color:rgba(255,255,255,.7)}
+.home-action-btn{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.18);border:none;color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .12s}
+.home-action-btn:hover{background:rgba(255,255,255,.28)}
+.welcome-card{background:var(--card);border-radius:var(--r-xl);padding:16px;box-shadow:var(--sh-md);margin-bottom:16px}
+.module-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
+.module-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-xl);padding:16px;display:flex;flex-direction:column;gap:6px;opacity:.55;cursor:not-allowed;transition:box-shadow .12s}
+.module-icon{font-size:22px}
+.module-name{font-size:12.5px;font-weight:700;color:var(--tp)}
+.module-desc{font-size:10.5px;color:var(--tm)}
+.module-soon{font-size:9.5px;font-family:var(--mono);color:var(--brand-500);font-weight:600}
+
+/* ══ ADMIN SHELL ══ */
+.admin-header{background:var(--n900);padding:42px 16px 10px;display:flex;align-items:center;gap:10px}
+[data-theme="dark"] .admin-header{background:#0A0907;border-bottom:1px solid #1e1c17}
+.admin-logo-chip{background:var(--brand-500);padding:3px 10px;border-radius:var(--r-full);font-size:10px;font-weight:800;color:#fff;letter-spacing:.04em}
+.admin-role-chip{background:rgba(200,80,31,.25);border:1px solid rgba(200,80,31,.4);color:#FFC09E;font-size:9px;font-family:var(--mono);padding:2px 7px;border-radius:var(--r-full)}
+.admin-tab-bar{display:flex;background:var(--card);border-bottom:1px solid var(--border)}
+.admin-tab{flex:1;padding:10px;text-align:center;font-size:12px;font-weight:700;color:var(--tm);cursor:pointer;border-bottom:2px solid transparent;transition:all .12s}
+.admin-tab:hover{color:var(--tp);background:var(--hover)}
+.admin-tab.active{color:var(--brand-500);border-bottom-color:var(--brand-500)}
+
+/* ══ PROFILE SCREEN ══ */
+.profile-header{background:linear-gradient(160deg,var(--brand-700),var(--brand-500));padding:48px 24px 24px;text-align:center}
+.profile-avatar{width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;color:#fff;margin:0 auto 12px;backdrop-filter:blur(4px)}
+.profile-email{font-size:12px;color:rgba(255,255,255,.7);margin-top:2px}
+
+/* ══ SESSION MODAL ══ */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:2000;
+  display:none;align-items:center;justify-content:center;padding:20px;
+}
+.modal-overlay.visible{display:flex}
+.modal-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-2xl);padding:28px 24px;max-width:320px;width:100%;text-align:center;box-shadow:var(--sh-lg)}
+.modal-icon{font-size:36px;margin-bottom:12px}
+.modal-title{font-size:16px;font-weight:800;color:var(--tp);margin-bottom:6px}
+.modal-desc{font-size:12.5px;color:var(--ts);line-height:1.5;margin-bottom:8px}
+.modal-countdown{font-family:var(--mono);font-size:28px;font-weight:700;color:var(--warning-text);margin:8px 0 20px}
+.modal-actions{display:flex;gap:10px}
+.modal-actions .btn{flex:1;font-size:13px;padding:9px}
+
+/* ══ TOAST ══ */
+.toast-wrap{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:3000;
+  display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;
+}
+.toast{
+  background:var(--n900);color:var(--n0);border-radius:var(--r-full);
+  padding:9px 18px;font-size:12.5px;font-weight:600;font-family:var(--font);
+  box-shadow:var(--sh-lg);display:flex;align-items:center;gap:7px;
+  animation:toastin .25s ease,toastout .25s ease .3s forwards;
+  white-space:nowrap;max-width:340px;
+}
+[data-theme="dark"] .toast{background:var(--n100);color:var(--n900)}
+.toast.t-success{background:var(--success);color:#fff}
+.toast.t-error{background:var(--danger);color:#fff}
+.toast.t-warning{background:var(--warning);color:#fff}
+@keyframes toastin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes toastout{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(10px)}}
+
+/* ══ UTILS ══ */
+.mt4{margin-top:4px}.mt8{margin-top:8px}.mt12{margin-top:12px}.mt16{margin-top:16px}.mt20{margin-top:20px}
+.mb8{margin-bottom:8px}.mb16{margin-bottom:16px}
+.text-center{text-align:center}
+.text-sm{font-size:11.5px;color:var(--ts)}
+.mono-sm{font-family:var(--mono);font-size:10px;color:var(--tm)}
+.bold{font-weight:700}
+.brand-text{color:var(--brand-600)}
+[data-theme="dark"] .brand-text{color:var(--brand-500)}
+.hidden{display:none!important}
+.scroll-body{overflow-y:auto}
+</style>
+</head>
+<body>
+
+<!-- DEMO BAR -->
+<div class="demo-bar">
+  <strong>Brisa · M01</strong>
+  <span class="demo-sep">|</span>
+  <span class="demo-screen-pill" id="dp-screen">splash</span>
+  <span id="dp-role" style="display:none"></span>
+  <span class="demo-sep">|</span>
+  <button class="demo-btn" onclick="prefill('student')" title="Rellena credenciales de estudiante">👤 Estudiante</button>
+  <button class="demo-btn" onclick="prefill('admin')" title="Rellena credenciales de admin">🔑 Admin</button>
+  <button class="demo-btn" onclick="prefill('pending')" title="Cuenta con registro pendiente (PENDIENTE_CONSENTIMIENTO)">⏳ Pendiente</button>
+  <span class="demo-sep">|</span>
+  <button class="demo-btn" id="btn-timeout" onclick="triggerTimeoutWarning()" style="display:none" title="Simula expiración de sesión">⏱ Simular timeout</button>
+  <span class="demo-spacer"></span>
+  <button class="demo-btn active" id="btn-dark" onclick="toggleDark()">☀ Claro</button>
+</div>
+
+<!-- PHONE FRAME -->
+<div class="frame-outer">
+<div class="phone" id="phone">
+
+  <!-- ════════════════════════════ SCREENS ════════════════════════════ -->
+  <div class="screens" id="screens">
+
+    <!-- ── SPLASH ── -->
+    <div class="screen active" id="s-splash" data-name="splash">
+      <div class="splash-bg">
+        <div class="splash-icon">
+          <svg width="38" height="38" viewBox="0 0 32 32" fill="none">
+            <path d="M4 22 C7 21, 9 18, 11 19 C13 20, 14 15, 17 13 C19.5 11.3,21 11.5,23 10" stroke="white" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+            <circle cx="23" cy="10" r="2.4" fill="white"/>
+            <path d="M7 25 C7 23.5,8.5 22.5,10 22.5" stroke="rgba(255,255,255,.5)" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+          </svg>
+        </div>
+        <div class="splash-title">Brisa</div>
+        <div class="splash-subtitle">Apoyo psicoeducativo para reducir el consumo de vapeo en estudiantes universitarios</div>
+        <div class="splash-actions">
+          <button class="btn btn-white btn-block" onclick="goToConsent()">Crear cuenta</button>
+          <button class="btn btn-outline-white btn-block" onclick="go('s-login')">Iniciar sesión</button>
+        </div>
+        <div class="text-center mt16" style="font-size:10.5px;color:rgba(255,255,255,.45);">
+          v1.0.0 · Universidad Surcolombiana
+        </div>
+      </div>
+    </div>
+
+    <!-- ── LOGIN ── -->
+    <div class="screen" id="s-login" data-name="login">
+      <div class="app-bar">
+        <button class="app-bar-back" onclick="back('s-splash')">←</button>
+        <span class="app-bar-title">Iniciar sesión</span>
+      </div>
+      <div class="screen-inner">
+        <div style="font-size:22px;font-weight:800;color:var(--tp);margin-bottom:4px">Bienvenido de nuevo</div>
+        <div class="text-sm mb16">Ingresa con tu correo electrónico</div>
+
+        <div class="alert alert-error hidden" id="login-alert">
+          <span class="alert-icon">⚠</span>
+          <div class="alert-body"><div class="alert-title">Correo o contraseña incorrectos</div><div class="alert-desc">Verifica tus datos e intenta de nuevo.</div></div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Correo electrónico</label>
+          <div class="input-wrap">
+            <span class="iico iico-l">✉</span>
+            <input id="login-email" class="input has-l" type="email" placeholder="tucorreo@ejemplo.com" oninput="clearErr('login-alert');clearInputErr(this)">
+          </div>
+          <div class="ferr hidden" id="login-email-err">Ingresa un correo válido</div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Contraseña</label>
+          <div class="input-wrap">
+            <span class="iico iico-l">🔒</span>
+            <input id="login-pass" class="input has-l has-r" type="password" placeholder="Tu contraseña" oninput="clearInputErr(this)">
+            <span class="iico iico-r clickable" onclick="togglePw('login-pass',this)">👁</span>
+          </div>
+          <div class="ferr hidden" id="login-pass-err">Ingresa tu contraseña</div>
+        </div>
+
+        <div class="text-center mt4 mb16">
+          <button class="btn-link" onclick="go('s-recover1')">¿Olvidaste tu contraseña?</button>
+        </div>
+
+        <button class="btn btn-primary btn-block" onclick="doLogin()">Iniciar sesión</button>
+        <div class="text-center mt16 text-sm">¿No tienes cuenta? <button class="btn-link" onclick="go('s-register')">Crear cuenta</button></div>
+      </div>
+    </div>
+
+    <!-- ── REGISTER ── -->
+    <div class="screen" id="s-register" data-name="registro">
+      <div class="app-bar">
+        <button class="app-bar-back" onclick="back('s-consent')">←</button>
+        <span class="app-bar-title">Crear cuenta</span>
+      </div>
+      <div class="screen-inner">
+        <div class="stepper" style="margin-bottom:20px">
+          <div class="step done"><div class="step-dot">✓</div><div class="step-label">Consentimiento</div></div>
+          <div class="step active"><div class="step-line"></div><div class="step-dot">2</div><div class="step-label">Cuenta</div></div>
+          <div class="step"><div class="step-line"></div><div class="step-dot">3</div><div class="step-label">Línea base</div></div>
+          <div class="step"><div class="step-line"></div><div class="step-dot">4</div><div class="step-label">Revisión</div></div>
+        </div>
+        <div style="font-size:22px;font-weight:800;color:var(--tp);margin-bottom:4px">Crea tu cuenta</div>
+        <div class="text-sm mb16">Usa cualquier correo electrónico para empezar</div>
+
+        <div class="alert alert-error hidden" id="reg-dup-alert">
+          <span class="alert-icon">⚠</span>
+          <div class="alert-body"><div class="alert-title">Este correo ya está registrado</div><div class="alert-desc">Inicia sesión o recupera tu contraseña.</div></div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Correo electrónico</label>
+          <div class="input-wrap">
+            <span class="iico iico-l">✉</span>
+            <input id="reg-email" class="input has-l" type="email" placeholder="tucorreo@ejemplo.com" oninput="clearErr('reg-dup-alert');clearInputErr(this)">
+          </div>
+          <div class="ferr hidden" id="reg-email-err">Ingresa un correo válido</div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Contraseña</label>
+          <div class="input-wrap">
+            <span class="iico iico-l">🔒</span>
+            <input id="reg-pass" class="input has-l has-r" type="password" placeholder="Mínimo 8 caracteres" oninput="onPassInput(this);clearInputErr(this)">
+            <span class="iico iico-r clickable" onclick="togglePw('reg-pass',this)">👁</span>
+          </div>
+          <div class="pw-meter" id="pw-meter"><div class="pw-bar" id="pb1"></div><div class="pw-bar" id="pb2"></div><div class="pw-bar" id="pb3"></div></div>
+          <div class="pw-label" id="pw-label" style="color:var(--tm)"></div>
+          <div class="pw-rules">
+            <div class="pw-rule" id="r-len"><span>○</span> Mínimo 8 caracteres</div>
+            <div class="pw-rule" id="r-up"><span>○</span> Al menos 1 mayúscula</div>
+            <div class="pw-rule" id="r-num"><span>○</span> Al menos 1 número</div>
+            <div class="pw-rule" id="r-spc"><span>○</span> Al menos 1 carácter especial</div>
+          </div>
+          <div class="ferr hidden" id="reg-pass-err">La contraseña no cumple la política de seguridad</div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Confirmar contraseña</label>
+          <div class="input-wrap">
+            <span class="iico iico-l">🔒</span>
+            <input id="reg-pass2" class="input has-l has-r" type="password" placeholder="Repite tu contraseña" oninput="clearInputErr(this)">
+            <span class="iico iico-r clickable" onclick="togglePw('reg-pass2',this)">👁</span>
+          </div>
+          <div class="ferr hidden" id="reg-pass2-err">Las contraseñas no coinciden</div>
+        </div>
+
+        <button class="btn btn-primary btn-block mt8" onclick="doRegister()">Crear mi cuenta</button>
+        <div class="text-center mt16 text-sm">¿Ya tienes cuenta? <button class="btn-link" onclick="go('s-login')">Iniciar sesión</button></div>
+      </div>
+    </div>
+
+    <!-- ── RECOVER PASO 1 ── -->
+    <div class="screen" id="s-recover1" data-name="recuperar (paso 1)">
+      <div class="app-bar">
+        <button class="app-bar-back" onclick="back('s-login')">←</button>
+        <span class="app-bar-title">Recuperar contraseña</span>
+      </div>
+      <div class="screen-inner">
+        <div style="font-size:22px;font-weight:800;color:var(--tp);margin-bottom:4px">Recupera tu acceso</div>
+        <div class="text-sm mb16">Ingresa tu correo y te enviaremos un código de verificación</div>
+
+        <div class="alert alert-error hidden" id="rec1-err">
+          <span class="alert-icon">⚠</span>
+          <div class="alert-body"><div class="alert-title">Correo inválido</div><div class="alert-desc">Ingresa un correo con formato válido.</div></div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Correo electrónico</label>
+          <div class="input-wrap">
+            <span class="iico iico-l">✉</span>
+            <input id="rec1-email" class="input has-l" type="email" placeholder="tucorreo@ejemplo.com" oninput="clearErr('rec1-err');clearInputErr(this)">
+          </div>
+          <div class="ferr hidden" id="rec1-email-err">Ingresa un correo válido</div>
+        </div>
+
+        <div id="rec1-attempts-bar" class="hidden" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:11px;color:var(--tm)">
+          <span>Solicitudes enviadas:</span>
+          <span style="font-family:var(--mono);font-weight:700;color:var(--warning-text)" id="rec1-attempt-count">0 / 3</span>
+        </div>
+        <div class="alert alert-error hidden" id="rec1-locked">
+          <span class="alert-icon">⚠</span>
+          <div class="alert-body"><div class="alert-title">Se alcanzó el límite de solicitudes de recuperación</div><div class="alert-desc">Intente nuevamente más tarde.</div></div>
+        </div>
+        <button class="btn btn-primary btn-block mt8" id="rec1-send-btn" onclick="doRecover1()">Enviar código</button>
+        <div class="text-center mt12 text-sm">
+          <span style="color:var(--tm);font-size:11px">Por seguridad, no confirmamos si el correo existe en el sistema.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── RECOVER PASO 2 ── -->
+    <div class="screen" id="s-recover2" data-name="recuperar (paso 2)">
+      <div class="app-bar">
+        <button class="app-bar-back" onclick="back('s-recover1')">←</button>
+        <span class="app-bar-title">Nueva contraseña</span>
+      </div>
+      <div class="screen-inner">
+        <div style="font-size:22px;font-weight:800;color:var(--tp);margin-bottom:4px">Restablece tu contraseña</div>
+        <div class="text-sm mb16">Ingresa el código que recibiste en tu correo</div>
+
+        <div id="rec2-timer-bar" style="background:var(--hover);border:1px solid var(--border);border-radius:var(--r-md);padding:8px 12px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;font-size:11.5px">
+          <span style="color:var(--tm)">⏱ Código válido por:</span>
+          <span style="font-family:var(--mono);font-weight:700;color:var(--brand-500)" id="rec2-countdown">2:00</span>
+        </div>
+        <div class="alert alert-warning hidden" id="rec2-expired">
+          <span class="alert-icon">⏱</span>
+          <div class="alert-body"><div class="alert-title">El código ha expirado</div><div class="alert-desc">Solicita un nuevo código de verificación.</div></div>
+        </div>
+
+        <div class="alert alert-error hidden" id="rec2-err">
+          <span class="alert-icon">⚠</span>
+          <div class="alert-body"><div class="alert-title" id="rec2-err-msg">Código incorrecto</div><div class="alert-desc">Verifica el código e intenta de nuevo.</div></div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Código de verificación</label>
+          <input id="rec2-code" class="input code-input" placeholder="0 0 0 0 0 0" maxlength="7" oninput="clearErr('rec2-err');clearInputErr(this)">
+          <div class="ferr hidden" id="rec2-code-err">Ingresa el código de 6 dígitos</div>
+          <div class="fhint">Prueba con <span style="font-family:var(--mono);font-weight:700">1 2 3 4 5 6</span></div>
+        </div>
+
+        <div class="field mt8">
+          <label class="field-label">Nueva contraseña</label>
+          <div class="input-wrap">
+            <span class="iico iico-l">🔒</span>
+            <input id="rec2-pass" class="input has-l has-r" type="password" placeholder="Mínimo 8 caracteres" oninput="clearInputErr(this)">
+            <span class="iico iico-r clickable" onclick="togglePw('rec2-pass',this)">👁</span>
+          </div>
+          <div class="ferr hidden" id="rec2-pass-err">La contraseña no cumple la política</div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Confirmar nueva contraseña</label>
+          <div class="input-wrap">
+            <span class="iico iico-l">🔒</span>
+            <input id="rec2-pass2" class="input has-l has-r" type="password" placeholder="Repite la contraseña" oninput="clearInputErr(this)">
+            <span class="iico iico-r clickable" onclick="togglePw('rec2-pass2',this)">👁</span>
+          </div>
+          <div class="ferr hidden" id="rec2-pass2-err">Las contraseñas no coinciden</div>
+        </div>
+
+        <button class="btn btn-primary btn-block mt8" onclick="doRecover2()">Restablecer contraseña</button>
+      </div>
+    </div>
+
+    <!-- ── CONSENTIMIENTO ── -->
+    <div class="screen" id="s-consent" data-name="consentimiento">
+      <div class="screen-inner" style="padding-top:44px">
+        <div class="stepper" id="consent-stepper">
+          <div class="step active"><div class="step-dot">1</div><div class="step-label">Consentimiento</div></div>
+          <div class="step"><div class="step-line"></div><div class="step-dot">2</div><div class="step-label">Cuenta</div></div>
+          <div class="step"><div class="step-line"></div><div class="step-dot">3</div><div class="step-label">Línea base</div></div>
+          <div class="step"><div class="step-line"></div><div class="step-dot">4</div><div class="step-label">Revisión</div></div>
+        </div>
+
+        <div style="font-size:20px;font-weight:800;color:var(--tp);margin-bottom:4px">Antes de registrarte</div>
+        <div class="text-sm mb16">Lee y acepta los términos para crear tu cuenta</div>
+
+        <div class="consent-text">
+          Le invitamos a participar de manera voluntaria. Antes de decidir, lea atentamente la siguiente información:<br><br>
+          <ul style="padding-left:16px;display:flex;flex-direction:column;gap:6px;margin-bottom:8px;">
+            <li>La aplicación de las pruebas tiene fines <strong>académicos, formativos y de investigación</strong>, según los objetivos del proyecto institucional.</li>
+            <li>Sus respuestas y resultados serán manejados con <strong>estricta confidencialidad</strong>, siguiendo los lineamientos éticos y legales vigentes.</li>
+            <li>Su participación es <strong>voluntaria</strong>; puede retirarse en cualquier momento, sin que ello genere consecuencias negativas para usted.</li>
+            <li>La información recolectada será utilizada exclusivamente con propósitos pedagógicos y de investigación, de forma <strong>agregada y sin identificar</strong> a los participantes.</li>
+            <li>Si tiene dudas, puede comunicarse con el equipo responsable del proyecto.</li>
+          </ul>
+          Al continuar, usted declara que ha comprendido la información anterior y otorga su consentimiento para participar de manera libre y voluntaria.
+        </div>
+
+        <div class="check-row" onclick="toggleConsent(1)">
+          <div class="check-box" id="c1-box"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <label class="check-label">Acepto el <strong>tratamiento de mis datos personales</strong> según lo descrito.</label>
+        </div>
+
+        <div class="check-row" onclick="toggleConsent(2)">
+          <div class="check-box" id="c2-box"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <label class="check-label">Acepto el <strong>registro de mi historial de consumo</strong> para fines del programa.</label>
+        </div>
+
+        <div class="alert alert-error hidden mt8" id="consent-err">
+          <span class="alert-icon">⚠</span>
+          <div class="alert-body"><div class="alert-title">Debes aceptar ambas casillas para continuar</div></div>
+        </div>
+
+        <button class="btn btn-primary btn-block mt16" id="consent-btn" disabled onclick="doConsent()">Aceptar y crear mi cuenta</button>
+        <div class="text-center mt12 text-sm"><button class="btn-link" style="color:var(--tm);font-size:11px" onclick="showCancelModal()">Volver al inicio</button></div>
+      </div>
+    </div>
+
+    <!-- ── LÍNEA BASE ── -->
+    <div class="screen" id="s-baseline" data-name="línea base">
+      <div class="app-bar" id="baseline-bar">
+        <button class="app-bar-back" id="baseline-back" onclick="baselineBack()">←</button>
+        <span class="app-bar-title">Línea base</span>
+      </div>
+      <div class="screen-inner" style="padding-top:8px">
+        <div class="stepper">
+          <div class="step done"><div class="step-dot">✓</div><div class="step-label">Consentimiento</div></div>
+          <div class="step done"><div class="step-line"></div><div class="step-dot">✓</div><div class="step-label">Cuenta</div></div>
+          <div class="step active"><div class="step-line"></div><div class="step-dot">3</div><div class="step-label">Línea base</div></div>
+          <div class="step"><div class="step-line"></div><div class="step-dot">4</div><div class="step-label">Revisión</div></div>
+        </div>
+
+        <div style="font-size:20px;font-weight:800;color:var(--tp);margin-bottom:4px">Cuéntanos sobre ti</div>
+        <div class="text-sm mb16">Esta información personaliza tu acompañamiento</div>
+
+        <div class="alert alert-error hidden" id="baseline-err">
+          <span class="alert-icon">⚠</span>
+          <div class="alert-body"><div class="alert-title">Hay campos obligatorios sin completar</div><div class="alert-desc">Revisa los campos marcados en rojo.</div></div>
+        </div>
+
+        <div class="section-label">Datos académicos</div>
+        <div class="grid2">
+          <div class="field">
+            <label class="field-label">Edad</label>
+            <input id="b-edad" class="input" type="number" placeholder="18" min="15" max="60" oninput="clearInputErr(this)">
+            <div class="ferr hidden" id="b-edad-err">Requerido</div>
+          </div>
+          <div class="field">
+            <label class="field-label">Ciudad</label>
+            <input id="b-ciudad" class="input" placeholder="Bogotá" oninput="clearInputErr(this)">
+            <div class="ferr hidden" id="b-ciudad-err">Requerido</div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Entidad educativa</label>
+          <input id="b-entidad" class="input" placeholder="Nombre de tu universidad" oninput="clearInputErr(this)">
+          <div class="ferr hidden" id="b-entidad-err">Requerido</div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Programa académico</label>
+          <input id="b-programa" class="input" placeholder="Ej: Ingeniería de Sistemas" oninput="clearInputErr(this)">
+          <div class="ferr hidden" id="b-programa-err">Requerido</div>
+        </div>
+
+        <div class="grid2">
+          <div class="field">
+            <label class="field-label">Semestre</label>
+            <input id="b-semestre" class="input" type="number" placeholder="5" min="1" max="12" oninput="clearInputErr(this)">
+            <div class="ferr hidden" id="b-semestre-err">Requerido</div>
+          </div>
+          <div class="field">
+            <label class="field-label">Nivel académico</label>
+            <select id="b-nivel" class="select">
+              <option value="PREGRADO">Pregrado</option>
+              <option value="POSGRADO">Posgrado</option>
+              <option value="TECNICO">Técnico / Tecnólogo</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="section-label">Datos de consumo</div>
+
+        <div class="grid2">
+          <div class="field">
+            <label class="field-label">Inicio de consumo</label>
+            <input id="b-inicio" class="input" type="date" oninput="clearInputErr(this)">
+            <div class="ferr hidden" id="b-inicio-err">Requerido</div>
+          </div>
+          <div class="field">
+            <label class="field-label">Último consumo</label>
+            <input id="b-ultimo" class="input" type="date" oninput="clearInputErr(this)">
+            <div class="ferr hidden" id="b-ultimo-err">Requerido</div>
+          <div class="ferr hidden" id="b-date-err">Se detectaron inconsistencias en las fechas de consumo.</div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Motivo de inicio</label>
+          <select id="b-motivo" class="select">
+            <option value="">Selecciona un motivo</option>
+            <option value="CURIOSIDAD">Curiosidad</option>
+            <option value="PRESION_SOCIAL">Presión social</option>
+            <option value="ESTRES_ANSIEDAD">Estrés o ansiedad</option>
+            <option value="REEMPLAZO">Reemplazo de cigarrillo</option>
+            <option value="PLACER">Placer</option>
+            <option value="OTRO">Otro</option>
+          </select>
+          <div class="ferr hidden" id="b-motivo-err">Selecciona un motivo</div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Frecuencia diaria de consumo (veces al día)</label>
+          <input id="b-frecuencia" class="input" type="number" placeholder="ej. 10" min="0" oninput="clearInputErr(this)">
+          <div class="ferr hidden" id="b-frecuencia-err">Ingresa un número mayor o igual a 0</div>
+        </div>
+
+        <button class="btn btn-primary btn-block mt8" onclick="doBaseline()">Continuar a revisión</button>
+      </div>
+    </div>
+
+    <!-- ── REVISIÓN ── -->
+    <div class="screen" id="s-review" data-name="revisión">
+      <div class="app-bar">
+        <button class="app-bar-back" onclick="back('s-baseline')">←</button>
+        <span class="app-bar-title">Revisión</span>
+      </div>
+      <div class="screen-inner" style="padding-top:8px">
+        <div class="stepper">
+          <div class="step done"><div class="step-dot">✓</div><div class="step-label">Consentimiento</div></div>
+          <div class="step done"><div class="step-line"></div><div class="step-dot">✓</div><div class="step-label">Cuenta</div></div>
+          <div class="step done"><div class="step-line"></div><div class="step-dot">✓</div><div class="step-label">Línea base</div></div>
+          <div class="step active"><div class="step-line"></div><div class="step-dot">4</div><div class="step-label">Revisión</div></div>
+        </div>
+
+        <div style="font-size:20px;font-weight:800;color:var(--tp);margin-bottom:4px">Revisa antes de confirmar</div>
+        <div class="text-sm mb16">Puedes editar cualquier sección antes de finalizar</div>
+
+        <div class="alert alert-info hidden" id="review-sensitive-alert">
+          <span class="alert-icon">ℹ</span>
+          <div class="alert-body"><div class="alert-title">Editaste un dato de consumo</div><div class="alert-desc">Necesitarás confirmar tu consentimiento nuevamente antes de guardar.</div></div>
+        </div>
+
+        <div class="review-card">
+          <div class="review-card-head">
+            <div class="review-card-title">Cuenta</div>
+            <button class="btn-link" style="font-size:11px" onclick="editSection('s-register','cuenta')">Editar</button>
+          </div>
+          <div class="review-row"><span class="review-row-label">Correo</span><span class="review-row-value" id="rv-email">—</span></div>
+        </div>
+
+        <div class="review-card">
+          <div class="review-card-head">
+            <div class="review-card-title">Datos académicos</div>
+            <button class="btn-link" style="font-size:11px" onclick="editSection('s-baseline','academico')">Editar</button>
+          </div>
+          <div class="review-row"><span class="review-row-label">Edad</span><span class="review-row-value" id="rv-edad">—</span></div>
+          <div class="review-row"><span class="review-row-label">Ciudad</span><span class="review-row-value" id="rv-ciudad">—</span></div>
+          <div class="review-row"><span class="review-row-label">Entidad educativa</span><span class="review-row-value" id="rv-entidad">—</span></div>
+          <div class="review-row"><span class="review-row-label">Programa</span><span class="review-row-value" id="rv-programa">—</span></div>
+          <div class="review-row"><span class="review-row-label">Semestre / Nivel</span><span class="review-row-value" id="rv-semestre">—</span></div>
+        </div>
+
+        <div class="review-card">
+          <div class="review-card-head">
+            <div class="review-card-title">Datos de consumo</div>
+            <button class="btn-link" style="font-size:11px" onclick="editSection('s-baseline','consumo')">Editar</button>
+          </div>
+          <div class="review-row"><span class="review-row-label">Inicio de consumo</span><span class="review-row-value" id="rv-inicio">—</span></div>
+          <div class="review-row"><span class="review-row-label">Último consumo</span><span class="review-row-value" id="rv-ultimo">—</span></div>
+          <div class="review-row"><span class="review-row-label">Motivo</span><span class="review-row-value" id="rv-motivo">—</span></div>
+          <div class="review-row"><span class="review-row-label">Frecuencia</span><span class="review-row-value" id="rv-frecuencia">—</span></div>
+        </div>
+
+        <button class="btn btn-primary btn-block mt8" id="review-confirm-btn" onclick="doConfirm()">Confirmar y finalizar registro</button>
+      </div>
+    </div>
+
+    <!-- ── RE-CONSENTIMIENTO ── -->
+    <div class="screen" id="s-reconsent" data-name="re-consentimiento">
+      <div class="app-bar">
+        <button class="app-bar-back" onclick="back('s-review')">←</button>
+        <span class="app-bar-title">Confirmar consentimiento</span>
+      </div>
+      <div class="screen-inner">
+        <div class="alert alert-warning">
+          <span class="alert-icon">⚠</span>
+          <div class="alert-body"><div class="alert-title">Modificaste un dato de consumo</div><div class="alert-desc">Para guardar los cambios, debes confirmar de nuevo tu consentimiento.</div></div>
+        </div>
+
+        <div class="consent-text mt8">
+          <strong>Registro de información de consumo</strong><br>
+          Autorizas el registro y almacenamiento de la información actualizada sobre tu consumo de vapeo (fechas, frecuencia, contextos) con fines de seguimiento del programa.
+        </div>
+
+        <div class="check-row" onclick="toggleReConsent(1)">
+          <div class="check-box" id="rc1-box"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <label class="check-label">Confirmo el <strong>tratamiento de mis datos actualizados</strong>.</label>
+        </div>
+
+        <div class="check-row" onclick="toggleReConsent(2)">
+          <div class="check-box" id="rc2-box"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <label class="check-label">Confirmo el <strong>registro de mi historial actualizado</strong>.</label>
+        </div>
+
+        <button class="btn btn-primary btn-block mt16" id="reconsent-btn" disabled onclick="doReConsent()">Guardar cambios</button>
+        <button class="btn btn-ghost btn-block" onclick="back('s-review')">Cancelar</button>
+      </div>
+    </div>
+
+    <!-- ── STUDENT HOME ── -->
+    <div class="screen" id="s-student-home" data-name="inicio (estudiante)">
+      <div id="sh-tab-home" class="sh-tab" style="display:flex;flex-direction:column;min-height:100%">
+        <div class="home-header">
+          <div class="home-header-logo">
+            <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+              <path d="M4 22 C7 21,9 18,11 19 C13 20,14 15,17 13 C19.5 11.3,21 11.5,23 10" stroke="white" stroke-width="2" stroke-linecap="round" fill="none"/>
+              <circle cx="23" cy="10" r="2.2" fill="white"/>
+            </svg>
+            <div><div class="home-header-name">Brisa</div><div class="home-header-sub" id="sh-user-greeting">Hola, estudiante</div></div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="home-action-btn" onclick="showToast('Sin notificaciones nuevas','info')">🔔</button>
+            <button class="home-action-btn" onclick="switchStudentTab('perfil')">👤</button>
+          </div>
+        </div>
+
+        <div style="padding:16px 16px 0">
+          <div class="alert alert-success mb8">
+            <span class="alert-icon">✓</span>
+            <div class="alert-body"><div class="alert-title">¡Registro completado!</div><div class="alert-desc">Tu programa psicoeducativo está listo. Los módulos se habilitarán según tu progreso.</div></div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <div style="font-size:13px;font-weight:700;color:var(--tp)">Estado de tu cuenta</div>
+            <span class="badge b-success"><span class="bdot" style="background:var(--success)"></span>REGISTRO_COMPLETO</span>
+          </div>
+
+          <div class="module-grid">
+            <div class="module-card">
+              <div class="module-icon">💬</div>
+              <div class="module-name">Chat</div>
+              <div class="module-desc">Actividades psicoeducativas</div>
+              <div class="module-soon">M03 · próximo</div>
+            </div>
+            <div class="module-card">
+              <div class="module-icon">📓</div>
+              <div class="module-name">Diario</div>
+              <div class="module-desc">Registro libre de situaciones</div>
+              <div class="module-soon">M02 · próximo</div>
+            </div>
+            <div class="module-card">
+              <div class="module-icon">📊</div>
+              <div class="module-name">Progreso</div>
+              <div class="module-desc">Rachas y metas cumplidas</div>
+              <div class="module-soon">M05 · próximo</div>
+            </div>
+            <div class="module-card" style="opacity:.55;">
+              <div class="module-icon">🐾</div>
+              <div class="module-name">Mascota</div>
+              <div class="module-desc">Gamificación y storytelling</div>
+              <div class="module-soon">M06 · próximo</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Perfil tab -->
+      <div id="sh-tab-perfil" class="sh-tab" style="display:none;flex-direction:column;min-height:100%">
+        <div class="profile-header">
+          <div class="profile-avatar" id="sh-avatar-letter">E</div>
+          <div style="font-size:16px;font-weight:800;color:#fff" id="sh-profile-email">—</div>
+          <div class="profile-email">Estudiante · Universidad Surcolombiana</div>
+          <div style="margin-top:10px"><span class="badge b-success"><span class="bdot" style="background:var(--success)"></span>REGISTRO_COMPLETO</span></div>
+        </div>
+        <div style="padding:20px 16px">
+          <div class="section-label">Sesión</div>
+          <div class="review-card" style="margin-bottom:10px">
+            <div class="review-row"><span class="review-row-label">Rol</span><span class="review-row-value">Estudiante</span></div>
+            <div class="review-row"><span class="review-row-label">Tiempo inactivo</span><span class="review-row-value mono-sm" id="sh-inactivity">0s (máx. 20s demo)</span></div>
+          </div>
+          <button class="btn btn-secondary btn-block" onclick="doLogout()">Cerrar sesión</button>
+          <div class="text-center mt8 text-sm" style="font-size:10px;color:var(--tm)">La sesión se cierra automáticamente tras 15 min de inactividad</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ADMIN HOME ── -->
+    <div class="screen" id="s-admin-home" data-name="panel (admin)">
+      <div class="admin-header">
+        <span class="admin-logo-chip">Brisa</span>
+        <span class="admin-role-chip">ADMINISTRATIVO</span>
+        <div style="flex:1"></div>
+        <button class="home-action-btn" style="background:rgba(255,255,255,.08)" onclick="doLogout()">⇠</button>
+      </div>
+      <div class="admin-tab-bar">
+        <div class="admin-tab active" id="atab-dash" onclick="switchAdminTab('dashboard')">Dashboard</div>
+        <div class="admin-tab" id="atab-users" onclick="switchAdminTab('users')">Usuarios</div>
+        <div class="admin-tab" id="atab-config" onclick="switchAdminTab('config')">Ajustes</div>
+      </div>
+
+      <!-- dashboard tab -->
+      <div id="at-dashboard" style="padding:16px">
+        <div class="stat-grid">
+          <div class="stat-card"><div class="stat-value">4</div><div class="stat-label">Estudiantes inscritos</div></div>
+          <div class="stat-card"><div class="stat-value" style="color:var(--success)">3</div><div class="stat-label">Registro completo</div></div>
+          <div class="stat-card"><div class="stat-value" style="color:var(--warning-text)">1</div><div class="stat-label">Registro pendiente</div></div>
+          <div class="stat-card"><div class="stat-value" style="color:var(--info)">7</div><div class="stat-label">Días del programa</div></div>
+        </div>
+        <div style="font-size:12px;color:var(--tm);text-align:center;padding:8px">
+          Los módulos de reportes y métricas estarán disponibles en M04 y M08.
+        </div>
+      </div>
+
+      <!-- users tab -->
+      <div id="at-users" style="padding:16px;display:none">
+        <div class="alert alert-info" style="margin-bottom:12px;font-size:11px">
+          <span class="alert-icon">ℹ</span>
+          <div class="alert-body"><div class="alert-title">Vista anonimizada</div><div class="alert-desc">El acceso a datos individuales identificables requiere consentimiento específico (M08).</div></div>
+        </div>
+        <div class="user-item" onclick="showToast('Acceso individual disponible en M08','info')">
+          <div class="user-avatar" style="font-size:11px;font-weight:800">EST-001</div>
+          <div class="user-info">
+            <div class="user-name">EST-001</div>
+            <div class="user-meta">Ciencias de la Salud · Semestre 6</div>
+          </div>
+          <span class="badge b-success" style="font-size:9px">COMPLETO</span>
+        </div>
+        <div class="user-item" onclick="showToast('Acceso individual disponible en M08','info')">
+          <div class="user-avatar" style="font-size:11px;font-weight:800">EST-002</div>
+          <div class="user-info">
+            <div class="user-name">EST-002</div>
+            <div class="user-meta">Ingenierías · Semestre 4</div>
+          </div>
+          <span class="badge b-success" style="font-size:9px">COMPLETO</span>
+        </div>
+        <div class="user-item" onclick="showToast('Acceso individual disponible en M08','info')">
+          <div class="user-avatar" style="font-size:11px;font-weight:800">EST-003</div>
+          <div class="user-info">
+            <div class="user-name">EST-003</div>
+            <div class="user-meta">Ciencias de la Salud · Semestre 3</div>
+          </div>
+          <span class="badge b-success" style="font-size:9px">COMPLETO</span>
+        </div>
+        <div class="user-item" onclick="showToast('Acceso individual disponible en M08','info')">
+          <div class="user-avatar" style="font-size:11px;font-weight:800">EST-004</div>
+          <div class="user-info">
+            <div class="user-name">EST-004</div>
+            <div class="user-meta">Ciencias Sociales · Semestre 5</div>
+          </div>
+          <span class="badge b-warning" style="font-size:9px">PENDIENTE</span>
+        </div>
+      </div>
+
+      <!-- config tab -->
+      <div id="at-config" style="padding:16px;display:none">
+        <div class="review-card">
+          <div class="review-row"><span class="review-row-label">Rol</span><span class="review-row-value">Administrativo</span></div>
+          <div class="review-row"><span class="review-row-label">Correo</span><span class="review-row-value" id="admin-email-rv" style="font-size:11px">—</span></div>
+        </div>
+        <button class="btn btn-secondary btn-block mt8" onclick="doLogout()">Cerrar sesión</button>
+      </div>
+    </div>
+
+  </div><!-- /screens -->
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav" id="bottom-nav">
+    <button class="bnav-item active" id="bn-home" onclick="switchStudentTab('home')"><div class="bnav-icon">🏠</div>Inicio</button>
+    <button class="bnav-item" id="bn-chat" onclick="showToast('Chat disponible en M03','info')"><div class="bnav-icon">💬</div>Chat</button>
+    <button class="bnav-item" id="bn-diario" onclick="showToast('Diario disponible en M02','info')"><div class="bnav-icon">📓</div>Diario</button>
+    <button class="bnav-item" id="bn-prog" onclick="showToast('Progreso disponible en M05','info')"><div class="bnav-icon">📊</div>Progreso</button>
+    <button class="bnav-item" id="bn-perfil" onclick="switchStudentTab('perfil')"><div class="bnav-icon">👤</div>Perfil</button>
+  </div>
+
+</div><!-- /phone -->
+</div><!-- /frame-outer -->
+
+<!-- CANCEL CONSENT MODAL -->
+<div class="modal-overlay" id="cancel-modal">
+  <div class="modal-card" data-theme="">
+    <div class="modal-icon">🗑</div>
+    <div class="modal-title">¿Cancelar el registro?</div>
+    <div class="modal-desc">Si sales ahora, los datos provisionales de tu cuenta serán eliminados permanentemente. Tendrás que iniciar el proceso de nuevo.</div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeCancelModal()">Quedarme aquí</button>
+      <button class="btn btn-danger" onclick="confirmCancelConsent()">Sí, cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- SESSION TIMEOUT MODAL -->
+<div class="modal-overlay" id="session-modal">
+  <div class="modal-card" data-theme="">
+    <div class="modal-icon">⏱</div>
+    <div class="modal-title">Tu sesión está por cerrarse</div>
+    <div class="modal-desc">Por inactividad, tu sesión se cerrará en:</div>
+    <div class="modal-countdown" id="modal-count">5</div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="doLogout()">Cerrar sesión</button>
+      <button class="btn btn-primary" onclick="extendSession()">Seguir aquí</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-wrap" id="toast-container"></div>
+
+<script>
+/* ══ STATE ══════════════════════════════════════════════════════════ */
+const S = {
+  dark: false,
+  role: null,
+  email: '',
+  consent1: false, consent2: false,
+  rc1: false, rc2: false,
+  formData: {},
+  savedFormData: {},
+  editingFromReview: false,
+  sensitiveEdited: false,
+  sessionActive: false,
+  recoverAttempts: 0,
+  recoverCodeTimer: null,
+  recoverCodeExpiry: null,
+  inactivityTimer: null,
+  warningTimer: null,
+  countdownInterval: null,
+  inactivitySecs: 0,
+  inactivityTick: null,
+  TIMEOUT_WARN: 15,  // seconds (demo mode)
+  TIMEOUT_KILL: 20,
+};
+
+/* ══ ACCOUNTS (demo) ══ */
+const ACCOUNTS = {
+  'admin@usco.edu.co':      { pw:'Admin2026#', role:'admin' },
+  'psicologia@usco.edu.co': { pw:'Admin2026#', role:'admin' },
+};
+/* Cuentas demo con estado_registro — RF-02 */
+const STUDENT_ACCOUNTS = {
+  'estudiante@usco.edu.co': { pw:'Brisa2026#', estado:'REGISTRO_COMPLETO' },
+  'estudiante@brisa.co':    { pw:'Brisa2026#', estado:'REGISTRO_COMPLETO' },
+  'pendiente@brisa.co':     { pw:'Brisa2026#', estado:'PENDIENTE_CONSENTIMIENTO' },
+  'revision@brisa.co':      { pw:'Brisa2026#', estado:'PENDIENTE_REVISION' },
+};
+/* Datos pre-llenados para la cuenta PENDIENTE_REVISION */
+const DEMO_REVISION_DATA = {
+  edad:'23', ciudad:'Neiva', entidad:'Universidad Surcolombiana',
+  programa:'Psicología', semestre:'5', nivel:'PREGRADO',
+  inicio:'2022-06-15', ultimo:'2024-11-20',
+  motivo:'Estrés o ansiedad', motivoValue:'ESTRES_ANSIEDAD', frecuencia:'8',
+};
+/* Cuentas creadas en runtime durante esta sesión: email → password */
+const REGISTERED = new Map();
+
+/* ══ NAVIGATION ══════════════════════════════════════════════════ */
+let _history = ['s-splash'];
+
+function goToConsent() {
+  // Resetear checkboxes si el usuario volvió atrás desde el registro
+  S.consent1 = false; S.consent2 = false;
+  document.getElementById('c1-box').classList.remove('checked');
+  document.getElementById('c2-box').classList.remove('checked');
+  document.getElementById('consent-btn').disabled = true;
+  hideErr('consent-err');
+  go('s-consent');
+}
+
+function go(id, back=false) {
+  const prev = document.querySelector('.screen.active');
+  const next = document.getElementById(id);
+  if (!next || prev === next) return;
+  if (prev) { prev.classList.remove('active'); if (back) prev.classList.add('slide-back'); }
+  next.classList.remove('slide-back');
+  next.classList.add('active');
+  if (!back) _history.push(id);
+  document.getElementById('dp-screen').textContent = next.dataset.name || id;
+  updateDemoBar(id);
+  resetActivity();
+}
+
+function back(defaultTarget) {
+  if (_history.length > 1) _history.pop();
+  const target = _history[_history.length - 1] || defaultTarget;
+  go(target, true);
+}
+
+function updateDemoBar(screenId) {
+  const onHome = screenId === 's-student-home' || screenId === 's-admin-home';
+  document.getElementById('btn-timeout').style.display = S.sessionActive ? 'inline-block' : 'none';
+  const rolePill = document.getElementById('dp-role');
+  if (S.role) {
+    rolePill.style.display = 'inline-block';
+    rolePill.className = `role-badge ${S.role === 'admin' ? 'admin' : 'student'}`;
+    rolePill.textContent = S.role === 'admin' ? '🔑 admin' : '👤 estudiante';
+  } else {
+    rolePill.style.display = 'none';
+  }
+  document.getElementById('bottom-nav').className = (S.role === 'student' && onHome) ? 'bottom-nav visible' : 'bottom-nav';
+}
+
+/* ══ DARK MODE ══ */
+function toggleDark() {
+  S.dark = !S.dark;
+  document.getElementById('phone').setAttribute('data-theme', S.dark ? 'dark' : '');
+  document.querySelectorAll('.modal-card').forEach(m => m.setAttribute('data-theme', S.dark ? 'dark' : ''));
+  const btn = document.getElementById('btn-dark');
+  btn.textContent = S.dark ? '☽ Oscuro' : '☀ Claro';
+  btn.className = S.dark ? 'demo-btn active' : 'demo-btn';
+}
+
+/* ══ PASSWORD SHOW/HIDE ══ */
+function togglePw(inputId, btn) {
+  const inp = document.getElementById(inputId);
+  const isPass = inp.type === 'password';
+  inp.type = isPass ? 'text' : 'password';
+  btn.textContent = isPass ? '🙈' : '👁';
+}
+
+/* ══ PASSWORD STRENGTH ══ */
+function pwStrength(v) {
+  const r = { len: v.length >= 8, up: /[A-Z]/.test(v), num: /[0-9]/.test(v), spc: /[^A-Za-z0-9]/.test(v) };
+  const score = [r.len, r.up, r.num, r.spc].filter(Boolean).length;
+  return { rules: r, score, level: score <= 2 ? 'weak' : score === 3 ? 'fair' : 'strong' };
+}
+
+function onPassInput(inp) {
+  const { rules, score, level } = pwStrength(inp.value);
+  const cols = { weak: ['#C13B30','',''], fair: ['#B07A12','#B07A12',''], strong: ['#2E7D4F','#2E7D4F','#2E7D4F'] };
+  const labels = { weak: 'Débil', fair: 'Aceptable', strong: 'Fuerte ✓' };
+  const lColors = { weak: 'var(--danger-text)', fair: 'var(--warning-text)', strong: 'var(--success-text)' };
+  ['pb1','pb2','pb3'].forEach((id, i) => {
+    document.getElementById(id).style.background = cols[level][i] || 'var(--border)';
+  });
+  const lbl = document.getElementById('pw-label');
+  lbl.textContent = inp.value ? labels[level] : '';
+  lbl.style.color = lColors[level];
+  const map = { 'r-len': rules.len, 'r-up': rules.up, 'r-num': rules.num, 'r-spc': rules.spc };
+  Object.entries(map).forEach(([id, met]) => {
+    const el = document.getElementById(id);
+    el.classList.toggle('met', met);
+    el.querySelector('span').textContent = met ? '✓' : '○';
+  });
+}
+
+/* ══ VALIDATION HELPERS ══ */
+function isValidEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()); }
+function isValidPw(v) { const s = pwStrength(v); return s.rules.len && s.rules.up && s.rules.num && s.rules.spc; }
+function showErr(id) { document.getElementById(id).classList.remove('hidden'); }
+function hideErr(id) { document.getElementById(id)?.classList.add('hidden'); }
+function clearErr(id) { hideErr(id); }
+function setInputErr(inp) { inp.classList.add('err'); inp.classList.remove('ok'); }
+function setInputOk(inp) { inp.classList.remove('err'); inp.classList.add('ok'); }
+function clearInputErr(inp) { inp.classList.remove('err'); }
+function markRequired(fields) {
+  // fields: array of {inputId, errId, check}
+  let ok = true;
+  fields.forEach(f => {
+    const inp = document.getElementById(f.inputId);
+    const passes = typeof f.check === 'function' ? f.check(inp.value) : inp.value.trim() !== '';
+    if (!passes) { setInputErr(inp); showErr(f.errId); ok = false; }
+    else { clearInputErr(inp); hideErr(f.errId); }
+  });
+  return ok;
+}
+
+/* ══ AUTH ACTIONS ══ */
+function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-pass').value;
+  let ok = true;
+  if (!isValidEmail(email)) { setInputErr(document.getElementById('login-email')); showErr('login-email-err'); ok = false; }
+  if (!pass) { setInputErr(document.getElementById('login-pass')); showErr('login-pass-err'); ok = false; }
+  if (!ok) return;
+
+  // 1. Cuenta admin
+  const adminAcc = ACCOUNTS[email];
+  if (adminAcc && adminAcc.pw === pass) {
+    S.email = email; S.role = 'admin';
+    document.getElementById('admin-email-rv').textContent = email;
+    startSession(); go('s-admin-home'); return;
+  }
+
+  // 2. Cuentas demo de estudiante con estado_registro
+  const studentAcc = STUDENT_ACCOUNTS[email];
+  if (studentAcc && studentAcc.pw === pass) {
+    S.email = email; S.role = 'student';
+    handleStudentLogin(studentAcc.estado, email); return;
+  }
+
+  // 3. Cuentas creadas en esta sesión (REGISTRO_COMPLETO por defecto)
+  if (REGISTERED.has(email) && REGISTERED.get(email) === pass) {
+    S.email = email; S.role = 'student';
+    handleStudentLogin('REGISTRO_COMPLETO', email); return;
+  }
+
+  // 4. Credenciales incorrectas
+  showErr('login-alert');
+  setInputErr(document.getElementById('login-email'));
+  setInputErr(document.getElementById('login-pass'));
+}
+
+function handleStudentLogin(estado, email) {
+  loginAsStudent();
+  startSession();
+  if (estado === 'PENDIENTE_CONSENTIMIENTO') {
+    S.consent1 = false; S.consent2 = false;
+    document.getElementById('c1-box').classList.remove('checked');
+    document.getElementById('c2-box').classList.remove('checked');
+    document.getElementById('consent-btn').disabled = true;
+    showToast('Debes completar el consentimiento para continuar.', 'warning');
+    _history = ['s-splash','s-login'];
+    go('s-consent');
+  } else if (estado === 'PENDIENTE_REVISION') {
+    S.formData = {
+      edad:      DEMO_REVISION_DATA.edad,
+      ciudad:    DEMO_REVISION_DATA.ciudad,
+      entidad:   DEMO_REVISION_DATA.entidad,
+      programa:  DEMO_REVISION_DATA.programa,
+      semestre:  DEMO_REVISION_DATA.semestre,
+      nivel:     DEMO_REVISION_DATA.nivel,
+      inicio:    DEMO_REVISION_DATA.inicio,
+      ultimo:    DEMO_REVISION_DATA.ultimo,
+      motivo:    DEMO_REVISION_DATA.motivo,
+      frecuencia:DEMO_REVISION_DATA.frecuencia,
+    };
+    populateBaseline();
+    populateReview();
+    showToast('Debes completar la revisión para continuar.', 'warning');
+    _history = ['s-splash','s-login'];
+    go('s-review');
+  } else {
+    go('s-student-home');
+  }
+}
+
+function populateBaseline() {
+  const d = DEMO_REVISION_DATA;
+  document.getElementById('b-edad').value      = d.edad;
+  document.getElementById('b-ciudad').value    = d.ciudad;
+  document.getElementById('b-entidad').value   = d.entidad;
+  document.getElementById('b-programa').value  = d.programa;
+  document.getElementById('b-semestre').value  = d.semestre;
+  document.getElementById('b-nivel').value     = d.nivel;
+  document.getElementById('b-inicio').value    = d.inicio;
+  document.getElementById('b-ultimo').value    = d.ultimo;
+  document.getElementById('b-motivo').value    = d.motivoValue;
+  document.getElementById('b-frecuencia').value= d.frecuencia;
+}
+
+function doRegister() {
+  const email = document.getElementById('reg-email').value.trim();
+  const pass  = document.getElementById('reg-pass').value;
+  const pass2 = document.getElementById('reg-pass2').value;
+  let ok = true;
+  if (!isValidEmail(email)) { setInputErr(document.getElementById('reg-email')); showErr('reg-email-err'); ok = false; }
+  if (!isValidPw(pass)) { setInputErr(document.getElementById('reg-pass')); showErr('reg-pass-err'); ok = false; }
+  if (pass !== pass2) { setInputErr(document.getElementById('reg-pass2')); showErr('reg-pass2-err'); ok = false; }
+  if (!ok) return;
+  if (REGISTERED.has(email) || STUDENT_ACCOUNTS[email]) { showErr('reg-dup-alert'); return; }
+  // Cuenta creada. El consentimiento ya fue aceptado en el paso anterior.
+  REGISTERED.set(email, pass); S.email = email; S.role = 'student';
+  _history = ['s-splash','s-consent','s-register'];
+  go('s-baseline');
+}
+
+function doRecover1() {
+  // RF-07: máx 3 solicitudes por sesión
+  if (S.recoverAttempts >= 3) { showErr('rec1-locked'); return; }
+  const email = document.getElementById('rec1-email').value.trim();
+  if (!isValidEmail(email)) { setInputErr(document.getElementById('rec1-email')); showErr('rec1-email-err'); showErr('rec1-err'); return; }
+  S.recoverAttempts++;
+  const bar = document.getElementById('rec1-attempts-bar');
+  bar.style.display = 'flex'; bar.classList.remove('hidden');
+  document.getElementById('rec1-attempt-count').textContent = S.recoverAttempts + ' / 3';
+  if (S.recoverAttempts >= 3) {
+    document.getElementById('rec1-send-btn').disabled = true;
+  }
+  showToast('Si el correo está registrado, recibirás un código','info');
+  startRecoverCodeTimer();
+  go('s-recover2');
+}
+
+function startRecoverCodeTimer() {
+  clearInterval(S.recoverCodeTimer);
+  const DEMO_MS = 2 * 60 * 1000; // 2 minutos en demo (15 min en producción)
+  S.recoverCodeExpiry = Date.now() + DEMO_MS;
+  // Rehabilitar campos al iniciar nuevo código
+  ['rec2-code','rec2-pass','rec2-pass2'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.disabled = false;
+  });
+  hideErr('rec2-expired');
+  const submitBtn = document.querySelector('#s-recover2 .btn-primary');
+  if (submitBtn) submitBtn.disabled = false;
+
+  S.recoverCodeTimer = setInterval(() => {
+    const remaining = S.recoverCodeExpiry - Date.now();
+    const countEl = document.getElementById('rec2-countdown');
+    const timerBar = document.getElementById('rec2-timer-bar');
+    if (!countEl) { clearInterval(S.recoverCodeTimer); return; }
+    if (remaining <= 0) {
+      clearInterval(S.recoverCodeTimer);
+      countEl.textContent = '0:00';
+      if (timerBar) timerBar.style.borderColor = 'var(--danger-border)';
+      countEl.style.color = 'var(--danger-text)';
+      showErr('rec2-expired');
+      ['rec2-code','rec2-pass','rec2-pass2'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.disabled = true;
+      });
+      const btn = document.querySelector('#s-recover2 .btn-primary');
+      if (btn) btn.disabled = true;
+      return;
+    }
+    const mins = Math.floor(remaining / 60000);
+    const secs = Math.floor((remaining % 60000) / 1000);
+    countEl.textContent = `${mins}:${secs.toString().padStart(2,'0')}`;
+    // Avisar cuando queden menos de 30 segundos
+    if (remaining < 30000) { countEl.style.color = 'var(--warning-text)'; }
+  }, 500);
+}
+
+function doRecover2() {
+  const code  = document.getElementById('rec2-code').value.replace(/\s/g,'');
+  const pass  = document.getElementById('rec2-pass').value;
+  const pass2 = document.getElementById('rec2-pass2').value;
+  let ok = true;
+  if (code !== '123456') { setInputErr(document.getElementById('rec2-code')); showErr('rec2-code-err'); document.getElementById('rec2-err-msg').textContent = 'Código incorrecto'; showErr('rec2-err'); ok = false; }
+  if (!isValidPw(pass)) { setInputErr(document.getElementById('rec2-pass')); showErr('rec2-pass-err'); ok = false; }
+  if (pass !== pass2) { setInputErr(document.getElementById('rec2-pass2')); showErr('rec2-pass2-err'); ok = false; }
+  if (!ok) return;
+  showToast('Contraseña restablecida','success');
+  _history = ['s-splash']; go('s-login');
+}
+
+/* ══ CONSENT ══ */
+function toggleConsent(n) {
+  if (n === 1) { S.consent1 = !S.consent1; document.getElementById('c1-box').classList.toggle('checked', S.consent1); }
+  else { S.consent2 = !S.consent2; document.getElementById('c2-box').classList.toggle('checked', S.consent2); }
+  document.getElementById('consent-btn').disabled = !(S.consent1 && S.consent2);
+  if (S.consent1 && S.consent2) hideErr('consent-err');
+}
+function doConsent() {
+  if (!S.consent1 || !S.consent2) { showErr('consent-err'); return; }
+  // El consentimiento se acepta ANTES de crear la cuenta.
+  // Se almacenará vinculado al id_usuario en el momento en que se complete el registro.
+  go('s-register');
+}
+
+/* ══ BASELINE ══ */
+function baselineBack() {
+  if (S.editingFromReview) {
+    S.editingFromReview = false;
+    S.sensitiveEdited = false;
+    // restore saved
+    Object.entries(S.savedFormData).forEach(([k,v]) => {
+      const el = document.getElementById(k);
+      if (el) el.value = v;
+    });
+    back('s-review');
+  } else {
+    back('s-register');
+  }
+}
+
+const SENSITIVE_FIELDS = ['b-inicio','b-ultimo','b-motivo','b-frecuencia'];
+
+function doBaseline() {
+  const fields = [
+    {inputId:'b-edad',      errId:'b-edad-err',      check: v => v.trim() !== '' && +v >= 15 && +v <= 60},
+    {inputId:'b-ciudad',    errId:'b-ciudad-err'},
+    {inputId:'b-entidad',   errId:'b-entidad-err'},
+    {inputId:'b-programa',  errId:'b-programa-err'},
+    {inputId:'b-semestre',  errId:'b-semestre-err',  check: v => v.trim() !== '' && +v >= 1 && +v <= 12},
+    {inputId:'b-inicio',    errId:'b-inicio-err'},
+    {inputId:'b-ultimo',    errId:'b-ultimo-err'},
+    {inputId:'b-motivo',    errId:'b-motivo-err',    check: v => v !== ''},
+    {inputId:'b-frecuencia',errId:'b-frecuencia-err',check: v => v.trim() !== '' && +v >= 0},
+  ];
+  if (!markRequired(fields)) { showErr('baseline-err'); return; }
+
+  /* RF-05: Coherencia de fechas de consumo */
+  const fechaInicio = document.getElementById('b-inicio').value;
+  const fechaUltimo = document.getElementById('b-ultimo').value;
+  if (fechaInicio && fechaUltimo && new Date(fechaUltimo) < new Date(fechaInicio)) {
+    setInputErr(document.getElementById('b-ultimo'));
+    document.getElementById('b-ultimo-err').classList.add('hidden');
+    showErr('b-date-err');
+    showErr('baseline-err');
+    return;
+  }
+  hideErr('b-date-err');
+  hideErr('baseline-err');
+
+  // check sensitive changes
+  if (S.editingFromReview) {
+    S.sensitiveEdited = SENSITIVE_FIELDS.some(id => {
+      const el = document.getElementById(id);
+      return el && el.value !== (S.savedFormData[id] || '');
+    });
+  }
+
+  // save form data
+  S.formData = {
+    edad: document.getElementById('b-edad').value,
+    ciudad: document.getElementById('b-ciudad').value,
+    entidad: document.getElementById('b-entidad').value,
+    programa: document.getElementById('b-programa').value,
+    semestre: document.getElementById('b-semestre').value,
+    nivel: document.getElementById('b-nivel').value,
+    inicio: document.getElementById('b-inicio').value,
+    ultimo: document.getElementById('b-ultimo').value,
+    motivo: document.getElementById('b-motivo').options[document.getElementById('b-motivo').selectedIndex]?.text || '',
+    frecuencia: document.getElementById('b-frecuencia').value,
+  };
+
+  populateReview();
+  S.editingFromReview = false;
+
+  if (S.sensitiveEdited) {
+    // reset reconsent
+    S.rc1 = false; S.rc2 = false;
+    document.getElementById('rc1-box').classList.remove('checked');
+    document.getElementById('rc2-box').classList.remove('checked');
+    document.getElementById('reconsent-btn').disabled = true;
+    go('s-reconsent');
+  } else {
+    go('s-review');
+  }
+}
+
+/* ══ REVIEW ══ */
+function populateReview() {
+  document.getElementById('rv-email').textContent = S.email || '—';
+  document.getElementById('rv-edad').textContent = S.formData.edad || '—';
+  document.getElementById('rv-ciudad').textContent = S.formData.ciudad || '—';
+  document.getElementById('rv-entidad').textContent = S.formData.entidad || '—';
+  document.getElementById('rv-programa').textContent = S.formData.programa || '—';
+  document.getElementById('rv-semestre').textContent = `${S.formData.semestre} · ${S.formData.nivel || 'PREGRADO'}`;
+  document.getElementById('rv-inicio').textContent = S.formData.inicio || '—';
+  document.getElementById('rv-ultimo').textContent = S.formData.ultimo || '—';
+  document.getElementById('rv-motivo').textContent = S.formData.motivo || '—';
+  document.getElementById('rv-frecuencia').textContent = S.formData.frecuencia ? `${S.formData.frecuencia} veces al día` : '—';
+  const alertEl = document.getElementById('review-sensitive-alert');
+  alertEl.classList.toggle('hidden', !S.sensitiveEdited);
+}
+
+function editSection(screenId, section) {
+  S.editingFromReview = true;
+  S.sensitiveEdited = false;
+  // save current form data for cancel
+  SENSITIVE_FIELDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) S.savedFormData[id] = el.value;
+  });
+  document.getElementById('baseline-back').style.display = 'flex';
+  go(screenId);
+}
+
+function doConfirm() {
+  if (S.sensitiveEdited) {
+    go('s-reconsent');
+    return;
+  }
+  finishRegistration();
+}
+
+/* ══ RE-CONSENT ══ */
+function toggleReConsent(n) {
+  if (n === 1) { S.rc1 = !S.rc1; document.getElementById('rc1-box').classList.toggle('checked', S.rc1); }
+  else { S.rc2 = !S.rc2; document.getElementById('rc2-box').classList.toggle('checked', S.rc2); }
+  document.getElementById('reconsent-btn').disabled = !(S.rc1 && S.rc2);
+}
+function doReConsent() {
+  if (!S.rc1 || !S.rc2) return;
+  S.sensitiveEdited = false;
+  document.getElementById('review-sensitive-alert').classList.add('hidden');
+  showToast('Consentimiento actualizado','success');
+  finishRegistration();
+}
+
+/* ══ FINISH REGISTRATION ══ */
+function finishRegistration() {
+  loginAsStudent();
+  startSession();
+  showToast('¡Registro completado!','success');
+  go('s-student-home');
+}
+
+function loginAsStudent() {
+  const letter = (S.email || 'E')[0].toUpperCase();
+  document.getElementById('sh-avatar-letter').textContent = letter;
+  document.getElementById('sh-profile-email').textContent = S.email || '';
+  const name = S.email ? S.email.split('@')[0] : 'estudiante';
+  document.getElementById('sh-user-greeting').textContent = `Hola, ${name}`;
+}
+
+/* ══ CANCELAR CONSENTIMIENTO ══ */
+function showCancelModal() {
+  document.getElementById('cancel-modal').classList.add('visible');
+}
+function closeCancelModal() {
+  document.getElementById('cancel-modal').classList.remove('visible');
+}
+function confirmCancelConsent() {
+  closeCancelModal();
+  // RF-05: eliminar datos provisionales al abandonar el consentimiento
+  S.email = ''; S.role = null;
+  S.consent1 = false; S.consent2 = false;
+  _history = ['s-splash'];
+  go('s-splash');
+  showToast('El proceso fue cancelado y los datos provisionales fueron eliminados.', 'info');
+}
+
+/* ══ LOGOUT ══ */
+function doLogout() {
+  stopSession();
+  S.role = null; S.email = '';
+  S.consent1 = S.consent2 = false;
+  S.formData = {}; S.savedFormData = {};
+  S.editingFromReview = S.sensitiveEdited = false;
+  document.getElementById('session-modal').classList.remove('visible');
+  document.getElementById('bottom-nav').className = 'bottom-nav';
+  _history = ['s-splash'];
+  go('s-splash');
+  showToast('Sesión cerrada','info');
+}
+
+/* ══ SESSION MANAGEMENT ══ */
+function startSession() {
+  S.sessionActive = true;
+  S.inactivitySecs = 0;
+  document.getElementById('btn-timeout').style.display = 'inline-block';
+  stopSession(true); // clear any existing timers
+  scheduleInactivityCheck();
+  S.inactivityTick = setInterval(() => {
+    S.inactivitySecs++;
+    const el = document.getElementById('sh-inactivity');
+    if (el) el.textContent = `${S.inactivitySecs}s (máx. ${S.TIMEOUT_KILL}s demo)`;
+  }, 1000);
+}
+
+function stopSession(timersOnly=false) {
+  clearTimeout(S.inactivityTimer);
+  clearTimeout(S.warningTimer);
+  clearInterval(S.countdownInterval);
+  clearInterval(S.inactivityTick);
+  if (!timersOnly) {
+    S.sessionActive = false;
+    document.getElementById('btn-timeout').style.display = 'none';
+  }
+}
+
+function scheduleInactivityCheck() {
+  clearTimeout(S.inactivityTimer);
+  clearTimeout(S.warningTimer);
+  S.warningTimer = setTimeout(showSessionWarning, S.TIMEOUT_WARN * 1000);
+  S.inactivityTimer = setTimeout(() => {
+    document.getElementById('session-modal').classList.remove('visible');
+    clearInterval(S.countdownInterval);
+    doLogout();
+    showToast('Sesión cerrada por inactividad','warning');
+  }, S.TIMEOUT_KILL * 1000);
+}
+
+function showSessionWarning() {
+  const modal = document.getElementById('session-modal');
+  modal.classList.add('visible');
+  let count = S.TIMEOUT_KILL - S.TIMEOUT_WARN;
+  document.getElementById('modal-count').textContent = count;
+  clearInterval(S.countdownInterval);
+  S.countdownInterval = setInterval(() => {
+    count--;
+    document.getElementById('modal-count').textContent = Math.max(0, count);
+  }, 1000);
+}
+
+function extendSession() {
+  document.getElementById('session-modal').classList.remove('visible');
+  clearInterval(S.countdownInterval);
+  resetActivity();
+  showToast('Sesión extendida','success');
+}
+
+function resetActivity() {
+  if (!S.sessionActive) return;
+  S.inactivitySecs = 0;
+  document.getElementById('session-modal').classList.remove('visible');
+  clearInterval(S.countdownInterval);
+  scheduleInactivityCheck();
+}
+
+function triggerTimeoutWarning() {
+  if (!S.sessionActive) return;
+  clearTimeout(S.warningTimer);
+  clearTimeout(S.inactivityTimer);
+  showSessionWarning();
+  S.inactivityTimer = setTimeout(() => {
+    document.getElementById('session-modal').classList.remove('visible');
+    clearInterval(S.countdownInterval);
+    doLogout();
+    showToast('Sesión cerrada por inactividad','warning');
+  }, 5000);
+}
+
+// Reset inactivity on any phone interaction
+document.getElementById('phone').addEventListener('pointerdown', resetActivity);
+document.getElementById('phone').addEventListener('keydown', resetActivity);
+
+/* ══ STUDENT TABS ══ */
+function switchStudentTab(tab) {
+  ['home','perfil'].forEach(t => {
+    const el = document.getElementById(`sh-tab-${t}`);
+    if (el) el.style.display = 'none';
+  });
+  document.getElementById(`sh-tab-${tab}`).style.display = 'flex';
+  // update bottom nav
+  document.querySelectorAll('.bnav-item').forEach(b => b.classList.remove('active'));
+  if (tab === 'home') document.getElementById('bn-home')?.classList.add('active');
+  if (tab === 'perfil') document.getElementById('bn-perfil')?.classList.add('active');
+}
+
+/* ══ ADMIN TABS ══ */
+function switchAdminTab(tab) {
+  ['dashboard','users','config'].forEach(t => {
+    const map = {dashboard:'at-dashboard', users:'at-users', config:'at-config'};
+    document.getElementById(map[t]).style.display = 'none';
+    const tabEl = document.getElementById(`atab-${t === 'dashboard' ? 'dash' : t}`);
+    if (tabEl) tabEl.classList.remove('active');
+  });
+  const map2 = {dashboard:'at-dashboard', users:'at-users', config:'at-config'};
+  document.getElementById(map2[tab]).style.display = 'block';
+  const tabKey = tab === 'dashboard' ? 'dash' : tab;
+  document.getElementById(`atab-${tabKey}`)?.classList.add('active');
+}
+
+/* ══ DEMO PREFILL ══ */
+function prefill(role) {
+  const currentScreen = document.querySelector('.screen.active')?.id;
+  if (role === 'student') {
+    if (currentScreen === 's-login' || currentScreen === 's-splash' || currentScreen === 's-consent') {
+      if (currentScreen === 's-splash') go('s-login');
+      if (currentScreen === 's-consent') go('s-login');
+      setTimeout(() => {
+        document.getElementById('login-email').value = 'estudiante@usco.edu.co';
+        document.getElementById('login-pass').value = 'Brisa2026#';
+      }, 150);
+    } else if (currentScreen === 's-register') {
+      document.getElementById('reg-email').value = 'nuevo@usco.edu.co';
+      document.getElementById('reg-pass').value = 'Brisa2026#';
+      document.getElementById('reg-pass2').value = 'Brisa2026#';
+      onPassInput(document.getElementById('reg-pass'));
+    } else if (currentScreen === 's-baseline') {
+      document.getElementById('b-edad').value = '21';
+      document.getElementById('b-ciudad').value = 'Neiva';
+      document.getElementById('b-entidad').value = 'Universidad Surcolombiana';
+      document.getElementById('b-programa').value = 'Psicología';
+      document.getElementById('b-semestre').value = '4';
+      document.getElementById('b-nivel').value = 'PREGRADO';
+      document.getElementById('b-inicio').value = '2023-03-15';
+      document.getElementById('b-ultimo').value = new Date().toISOString().slice(0,10);
+      document.getElementById('b-motivo').value = 'CURIOSIDAD';
+      document.getElementById('b-frecuencia').value = '4';
+    }
+    showToast('Datos de demo rellenados','info');
+  } else {
+    if (currentScreen !== 's-login') {
+      if (currentScreen === 's-splash') go('s-login');
+      setTimeout(() => {
+        document.getElementById('login-email').value = 'admin@usco.edu.co';
+        document.getElementById('login-pass').value = 'Admin2026#';
+      }, 150);
+    } else {
+      document.getElementById('login-email').value = 'admin@usco.edu.co';
+      document.getElementById('login-pass').value = 'Admin2026#';
+    }
+    showToast('Credenciales admin rellenadas','info');
+  } else if (role === 'pending') {
+    const cur = document.querySelector('.screen.active')?.id;
+    if (cur !== 's-login') go('s-login');
+    setTimeout(() => {
+      document.getElementById('login-email').value = 'pendiente@brisa.co';
+      document.getElementById('login-pass').value = 'Brisa2026#';
+    }, 150);
+    showToast('Cuenta con PENDIENTE_CONSENTIMIENTO rellenada','info');
+  }
+}
+
+/* ══ TOAST ══ */
+function showToast(msg, type='') {
+  const wrap = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast${type ? ' t-'+type : ''}`;
+  const icon = {success:'✓', error:'✗', warning:'⚠', info:'ℹ'}[type] || '';
+  t.textContent = (icon ? icon+' ' : '') + msg;
+  wrap.appendChild(t);
+  setTimeout(() => t.remove(), 2800);
+}
+</script>
+</body>
+</html>

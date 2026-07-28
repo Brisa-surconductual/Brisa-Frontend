@@ -1,0 +1,1463 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brisa · Design System</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ─── TOKENS · MODO CLARO ───────────────────────────── */
+:root {
+  /* Brand "Brisa" — teal calmo, deliberadamente distinto del verde semantico de exito */
+  --brand-50:  #EAF6F5; --brand-100: #CFECE9; --brand-200: #9ED9D2;
+  --brand-300: #69BFB5; --brand-400: #3CA399; --brand-500: #1D8378;
+  --brand-600: #156A61; --brand-700: #11534C; --brand-800: #0C3C37; --brand-900: #082724;
+
+  /* Accent "Ember" — coral calido, exclusivo de gamificacion/logros/mascota */
+  --accent-50:  #FFF0E9; --accent-100: #FFD9C7; --accent-200: #FFB494;
+  --accent-300: #FB8E5F; --accent-400: #E96F3B; --accent-500: #C8501F;
+  --accent-600: #A03D15; --accent-700: #782D10; --accent-800: #531F0A; --accent-900: #311206;
+
+  --neutral-0: #FFFFFF; --neutral-50: #FAF9F6; --neutral-100: #F0EEE8;
+  --neutral-200: #E1DED5; --neutral-300: #C7C3B6; --neutral-400: #A19C8C;
+  --neutral-500: #726C5A; --neutral-600: #595549; --neutral-700: #403D34;
+  --neutral-800: #282620; --neutral-900: #161510;
+
+  /* Semantica — independiente de marca y de acento */
+  --success: #2E7D4F; --success-bg: #E8F5ED; --success-text: #1F5C3A; --success-border: #8FCBA3;
+  --warning: #B07A12; --warning-bg: #FBF1DC; --warning-text: #7A5208; --warning-border: #E6C878;
+  --danger:  #C13B30; --danger-bg:  #FBEAE7; --danger-text:  #8E2A21; --danger-border:  #E8A99E;
+  --info:    #1E6FA8; --info-bg:    #E7F1FA; --info-text:    #1E6FA8; --info-border:    #A8CBE6;
+
+  /* Dirección (swipe) — actividades de acercamiento/alejamiento · mapean a semánticos */
+  --dir-aleja:        var(--danger);        /* rojo · swipe izquierda · "me aleja de mis valores" */
+  --dir-aleja-bg:     var(--danger-bg);
+  --dir-aleja-text:   var(--danger-text);
+  --dir-aleja-border: var(--danger-border);
+  --dir-acerca:       var(--info);          /* azul · swipe derecha · "me acerca a mis valores" */
+  --dir-acerca-bg:    var(--info-bg);
+  --dir-acerca-text:  var(--info-text);
+  --dir-acerca-border:var(--info-border);
+
+  /* Superficies */
+  --surface-bg: var(--neutral-50);
+  --surface-card: var(--neutral-0);
+  --surface-border: var(--neutral-200);
+  --surface-hover: var(--neutral-100);
+  --text-primary: var(--neutral-900);
+  --text-secondary: var(--neutral-600);
+  --text-muted: var(--neutral-500);
+  --text-inverse: var(--neutral-0);
+  --btn-primary-text: var(--neutral-0);
+  --btn-accent-text: var(--neutral-0);
+
+  --font-sans: 'Manrope', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:20px;
+  --s6:24px; --s7:32px; --s8:40px; --s9:48px; --s10:64px;
+
+  --r-sm:4px; --r-md:8px; --r-lg:12px; --r-xl:16px; --r-2xl:20px; --r-full:9999px;
+
+  --shadow-sm: 0 1px 2px rgba(22,21,16,.06);
+  --shadow-md: 0 2px 8px rgba(22,21,16,.09), 0 1px 2px rgba(22,21,16,.06);
+  --shadow-lg: 0 8px 24px rgba(22,21,16,.10), 0 2px 6px rgba(22,21,16,.06);
+
+  --sidebar-w: 240px;
+}
+
+/* ─── TOKENS · MODO OSCURO ──────────────────────────── */
+/* Las rampas de marca y acento se invierten (50<->900) para conservar el
+   significado "tinte claro / tinte oscuro" sin reescribir CSS de componentes. */
+[data-theme="dark"] {
+  --brand-50:#082724; --brand-100:#0C3C37; --brand-200:#11534C; --brand-300:#156A61;
+  --brand-400:#1D8378; --brand-500:#3CA399; --brand-600:#69BFB5; --brand-700:#9ED9D2;
+  --brand-800:#CFECE9; --brand-900:#EAF6F5;
+
+  --accent-50:#311206; --accent-100:#531F0A; --accent-200:#782D10; --accent-300:#A03D15;
+  --accent-400:#C8501F; --accent-500:#E96F3B; --accent-600:#FB8E5F; --accent-700:#FFB494;
+  --accent-800:#FFD9C7; --accent-900:#FFF0E9;
+
+  --success-bg: #13261B; --success-text: #9ED9AE; --success-border: #2F5C41;
+  --warning-bg: #2B2008; --warning-text: #F0C77A; --warning-border: #6B4D14;
+  --danger-bg:  #2B1310; --danger-text:  #F0A89E; --danger-border:  #6B2A20;
+  --info-bg:    #0E2233; --info-text:    #9BC8E8; --info-border:    #1F4566;
+
+  --surface-bg: #100F0C;
+  --surface-card: #1E1C17;
+  --surface-border: #332F27;
+  --surface-hover: #262319;
+  --text-primary: #EDEAE2;
+  --text-secondary: #B8B3A4;
+  --text-muted: #8C8676;
+  --text-inverse: #161510;
+  /* el swap aclara brand-500/accent-500: el texto del boton relleno
+     pasa a oscuro para no perder contraste (ver nota en "Modo oscuro") */
+  --btn-primary-text: var(--neutral-900);
+  --btn-accent-text: var(--neutral-900);
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.35);
+  --shadow-md: 0 2px 8px rgba(0,0,0,.45);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,.55);
+}
+
+/* ─── RESET ─────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+:focus-visible { outline: 2.5px solid var(--brand-500); outline-offset: 2px; border-radius: var(--r-sm); }
+
+body {
+  font-family: var(--font-sans);
+  background: var(--surface-bg);
+  color: var(--text-primary);
+  display: flex;
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.5;
+  transition: background .2s, color .2s;
+}
+
+/* ─── SIDEBAR ────────────────────────────────────────── */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--neutral-900);
+  color: var(--neutral-300);
+  position: fixed; top:0; left:0; bottom:0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+}
+[data-theme="dark"] .sidebar { background: #0A0907; border-right: 1px solid #211F19; }
+
+.sidebar-header { padding: var(--s4) var(--s5); border-bottom: 1px solid rgba(255,255,255,.07); }
+.brand-mark { display: flex; align-items: center; gap: var(--s3); margin-bottom: var(--s3); }
+.brand-logo-sm { width: 32px; height: 32px; flex-shrink: 0; }
+.brand-name { font-size: 14px; font-weight: 800; color: #fff; line-height: 1.1; }
+.brand-sub  { font-family: var(--font-mono); font-size: 9px; color: var(--neutral-500); letter-spacing:.04em; }
+.ds-version {
+  font-family: var(--font-mono); font-size: 9px;
+  background: rgba(60,163,153,.18); border: 1px solid rgba(60,163,153,.35); color: #7eccc1;
+  padding: 2px 7px; border-radius: var(--r-full); display: inline-block; letter-spacing:.04em;
+}
+.nav-group-label {
+  font-family: var(--font-mono); font-size: 9px; text-transform: uppercase; letter-spacing:.12em;
+  color: var(--neutral-600); padding: var(--s3) var(--s5) var(--s2);
+}
+.nav-item {
+  display: flex; align-items: center; gap: var(--s2);
+  padding: var(--s2) var(--s5); font-size: 12.5px; color: var(--neutral-400);
+  cursor: pointer; border-left: 2px solid transparent; text-decoration: none; transition: all .12s;
+}
+.nav-item:hover { color: var(--neutral-100); background: rgba(255,255,255,.04); }
+.nav-item.active { color: #fff; border-left-color: var(--brand-400); background: rgba(60,163,153,.12); }
+.nav-icon { width: 14px; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+
+/* ─── MAIN ───────────────────────────────────────────── */
+.main { margin-left: var(--sidebar-w); flex:1; min-width:0; }
+.topbar {
+  background: var(--surface-card); border-bottom: 1px solid var(--surface-border);
+  padding: var(--s5) var(--s8); position: sticky; top:0; z-index:50;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.topbar-left h1 { font-size: 17px; font-weight: 800; color: var(--text-primary); }
+.topbar-left p  { font-size: 11px; color: var(--text-muted); margin-top:2px; }
+.theme-toggle {
+  display: flex; align-items: center; gap: var(--s2);
+  background: var(--surface-hover); border: 1px solid var(--surface-border); border-radius: var(--r-full);
+  padding: 5px 12px; cursor: pointer; font-size: 11px; font-family: var(--font-mono); color: var(--text-secondary);
+  transition: all .12s;
+}
+.theme-toggle:hover { background: var(--surface-border); }
+.theme-icon { font-size: 13px; }
+
+.content { max-width: 860px; margin: 0 auto; padding: var(--s8); }
+.section { margin-bottom: var(--s10); }
+.section-header { margin-bottom: var(--s6); padding-bottom: var(--s4); border-bottom: 1.5px solid var(--surface-border); }
+.section-eye   { font-family:var(--font-mono); font-size:10px; text-transform:uppercase; letter-spacing:.12em; color:var(--text-muted); margin-bottom:var(--s2); }
+.section-title { font-size:20px; font-weight:800; color:var(--text-primary); }
+.section-desc  { font-size:13px; color:var(--text-secondary); margin-top:var(--s2); line-height:1.65; }
+.subsection-title {
+  font-size:13px; font-weight:700; color:var(--text-secondary); margin-bottom:var(--s4); margin-top:var(--s6);
+  padding-bottom:var(--s2); border-bottom:1px dashed var(--surface-border); display:flex; align-items:center; gap:var(--s2);
+}
+.tag { font-family:var(--font-mono); font-size:9px; background:var(--surface-hover); color:var(--text-muted); padding:2px 6px; border-radius:var(--r-sm); }
+
+/* ─── COMPONENT BLOCK ───────────────────────────────── */
+.cb { background: var(--surface-card); border: 1px solid var(--surface-border); border-radius: var(--r-lg); overflow: hidden; margin-bottom: var(--s5); box-shadow: var(--shadow-sm); }
+.cb-header { padding: var(--s3) var(--s5); background: var(--surface-hover); border-bottom: 1px solid var(--surface-border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--s2); }
+.cb-label { font-family:var(--font-mono); font-size:11px; font-weight:600; color:var(--text-secondary); letter-spacing:.04em; }
+.cb-note  { font-family:var(--font-mono); font-size:9px; color:var(--text-muted); }
+.cb-preview { padding: var(--s7) var(--s6); display:flex; flex-wrap:wrap; gap:var(--s4); align-items:flex-start; }
+.cb-preview-col { padding: var(--s7) var(--s6); }
+.do-dont { display:grid; grid-template-columns:1fr 1fr; gap:var(--s4); padding:var(--s5) var(--s6) var(--s6); }
+.do, .dont { border-radius:var(--r-md); padding:var(--s4); font-size:12px; line-height:1.6; }
+.do   { background:var(--success-bg); border:1px solid var(--success-border); color:var(--success-text); }
+.dont { background:var(--danger-bg);  border:1px solid var(--danger-border);  color:var(--danger-text); }
+.do-label   { font-weight:700; font-size:11px; margin-bottom:6px; color:var(--success); }
+.dont-label { font-weight:700; font-size:11px; margin-bottom:6px; color:var(--danger); }
+@media (max-width: 700px) { .do-dont { grid-template-columns: 1fr; } }
+
+/* ─── LOGO ───────────────────────────────────────────── */
+.logo-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:var(--s4); }
+.logo-card { background:var(--surface-hover); border:1px solid var(--surface-border); border-radius:var(--r-md); display:flex; flex-direction:column; overflow:hidden; }
+.logo-bg { height:100px; display:flex; align-items:center; justify-content:center; padding:var(--s5); }
+.logo-bg-white { background:#ffffff; }
+.logo-bg-dark  { background:#100F0C; }
+.logo-bg-brand { background:var(--brand-500); }
+.logo-bg-color { background:var(--neutral-50); }
+.logo-card-label { padding:var(--s3) var(--s4); font-family:var(--font-mono); font-size:10px; color:var(--text-muted); border-top:1px solid var(--surface-border); }
+.logo-card-name { font-weight:600; color:var(--text-secondary); font-size:11px; }
+
+.brisa-logo-full { display:flex; align-items:center; gap:10px; }
+.brisa-icon-lg { width:40px; height:40px; border-radius:10px; background:var(--brand-500); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.brisa-icon-only { width:48px; height:48px; border-radius:12px; background:var(--brand-500); display:flex; align-items:center; justify-content:center; }
+.brisa-wordmark-primary   { font-size:17px; font-weight:800; letter-spacing:-.02em; color:#181712; line-height:1.1; }
+.brisa-wordmark-secondary { font-size:10px; font-weight:500; color:#5b6a64; letter-spacing:.02em; }
+.brisa-on-dark .brisa-wordmark-primary { color:#eaf6f5; }
+.brisa-on-dark .brisa-wordmark-secondary { color:#7eccc1; }
+.brisa-on-brand .brisa-wordmark-primary { color:#ffffff; }
+.brisa-on-brand .brisa-wordmark-secondary { color:rgba(255,255,255,.75); }
+
+/* ─── TOKENS GRID / TYPE / SPACING / SEMAPHORE ──────── */
+.token-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:var(--s3); }
+.token-card { background:var(--surface-card); border:1px solid var(--surface-border); border-radius:var(--r-md); overflow:hidden; box-shadow:var(--shadow-sm); }
+.token-swatch { height:48px; }
+.token-info { padding:var(--s2) var(--s3); border-top:1px solid var(--surface-border); }
+.token-name  { font-family:var(--font-mono); font-size:10px; color:var(--text-secondary); font-weight:500; }
+.token-value { font-family:var(--font-mono); font-size:9px; color:var(--text-muted); margin-top:1px; }
+
+.type-row { padding:var(--s4) 0; border-bottom:1px solid var(--surface-border); display:flex; flex-direction:column; gap:var(--s1); }
+.type-row:last-child { border-bottom:none; }
+.type-meta { display:flex; flex-wrap:wrap; gap:var(--s3); margin-top:4px; }
+
+.spacing-row { display:flex; align-items:center; gap:var(--s4); padding:var(--s2) 0; border-bottom:1px solid var(--surface-hover); }
+.sp-bar  { background:var(--brand-200); height:20px; border-radius:2px; flex-shrink:0; }
+.sp-name { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); min-width:36px; }
+.sp-val  { font-family:var(--font-mono); font-size:10px; color:var(--text-muted); }
+.sp-use  { font-size:11px; color:var(--text-muted); margin-left:var(--s2); }
+
+.sem-row { display:flex; align-items:center; gap:var(--s4); padding:var(--s4); border-radius:var(--r-md); border:1px solid; margin-bottom:var(--s3); }
+.sem-dot { width:12px;height:12px;border-radius:50%;flex-shrink:0; }
+.sem-text { display:flex;flex-direction:column;gap:2px; }
+.sem-label { font-size:13px;font-weight:700; }
+.sem-desc  { font-size:11px;opacity:.75; }
+
+/* ─── BUTTONS ────────────────────────────────────────── */
+.btn { display:inline-flex; align-items:center; justify-content:center; gap:7px; font-family:var(--font-sans); font-weight:700; font-size: 13.5px; border-radius:var(--r-md); border:1.5px solid transparent; padding: 9px 18px; cursor:pointer; transition: all .12s; line-height: 1.2; }
+.btn-primary  { background: var(--brand-500); color: var(--btn-primary-text); }
+.btn-primary:hover { background: var(--brand-600); }
+[data-theme="dark"] .btn-primary:hover { background: var(--brand-400); }
+.btn-accent   { background: var(--accent-500); color: var(--btn-accent-text); }
+.btn-accent:hover { background: var(--accent-600); }
+[data-theme="dark"] .btn-accent:hover { background: var(--accent-400); }
+.btn-secondary{ background: var(--surface-card); color: var(--text-primary); border-color: var(--surface-border); }
+.btn-secondary:hover { background: var(--surface-hover); }
+.btn-danger   { background: var(--danger); color: #fff; }
+.btn-danger:hover { background: var(--danger-text); }
+.btn-ghost    { background: transparent; color: var(--text-secondary); }
+.btn-ghost:hover { background: var(--surface-hover); color: var(--text-primary); }
+.btn-sm { padding: 6px 13px; font-size: 12px; }
+.btn-lg { padding: 12px 24px; font-size: 15px; width: 100%; }
+.btn:disabled { opacity:.45; cursor:not-allowed; }
+.btn-block { width: 100%; }
+
+/* ─── INPUTS ─────────────────────────────────────────── */
+.field { display:flex; flex-direction:column; gap:6px; margin-bottom: var(--s4); }
+.field-label { font-size:12.5px; font-weight:600; color:var(--text-primary); display:flex; align-items:center; gap:5px; }
+.field-hint { font-size:11px; color:var(--text-muted); }
+.input, .select, .textarea {
+  font-family: var(--font-sans); font-size: 13.5px; color: var(--text-primary); background: var(--surface-card);
+  border: 1.5px solid var(--surface-border); border-radius: var(--r-md); padding: 10px 13px; width:100%;
+  transition: border-color .12s, box-shadow .12s; appearance: none;
+}
+.input:focus, .select:focus, .textarea:focus { border-color: var(--brand-400); box-shadow: 0 0 0 3px rgba(29,131,120,.12); outline:none; }
+.input.err, .textarea.err { border-color: var(--danger); box-shadow: 0 0 0 3px rgba(193,59,48,.08); }
+.input.ok  { border-color: var(--success); }
+.input:disabled, .select:disabled { background: var(--surface-hover); color: var(--text-muted); cursor:not-allowed; }
+.textarea { resize: vertical; min-height: 84px; font-family: var(--font-sans); }
+.input-wrap { position:relative; }
+.iico { position:absolute; top:50%;transform:translateY(-50%); color:var(--text-muted); font-size:14px; }
+.iico-l { left:12px; } .iico-r { right:12px; cursor:pointer; }
+.has-l { padding-left:38px; } .has-r { padding-right:38px; }
+.ferr { font-size:11px; color:var(--danger-text); font-weight:600; display:flex; align-items:center; gap:5px; }
+.fok  { font-size:11px; color:var(--success-text); font-weight:600; display:flex; align-items:center; gap:5px; }
+.select { background-image: none; cursor:pointer; }
+
+/* ─── CHECKBOX (consentimiento) ─────────────────────── */
+.check-row { display:flex; align-items:flex-start; gap:10px; padding: var(--s3) 0; }
+.check-box { width:19px; height:19px; flex-shrink:0; margin-top:1px; border:1.5px solid var(--surface-border); border-radius:5px; background:var(--surface-card); display:flex; align-items:center; justify-content:center; cursor:pointer; transition: all .12s; }
+.check-box.checked { background: var(--brand-500); border-color: var(--brand-500); }
+.check-box svg { width:12px; height:12px; opacity:0; }
+.check-box.checked svg { opacity:1; }
+.check-label { font-size:12.5px; color: var(--text-primary); line-height:1.55; cursor:pointer; }
+.check-label b { font-weight:700; }
+
+/* ─── BADGES ─────────────────────────────────────────── */
+.badge { display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:700; padding:3px 9px; border-radius:var(--r-full); border:1px solid; white-space:nowrap; }
+.bdot { width:6px;height:6px;border-radius:50%;flex-shrink:0; }
+.b-success { background:var(--success-bg); border-color:var(--success-border); color:var(--success-text); }
+.b-warning { background:var(--warning-bg); border-color:var(--warning-border); color:var(--warning-text); }
+.b-danger  { background:var(--danger-bg);  border-color:var(--danger-border);  color:var(--danger-text); }
+.b-info    { background:var(--info-bg);    border-color:var(--info-border);    color:var(--info-text); }
+.b-neutral { background:var(--surface-hover); border-color:var(--surface-border); color:var(--text-muted); }
+.b-accent  { background:var(--accent-50); border-color:var(--accent-200); color:var(--accent-700); }
+
+/* ─── ALERTS ─────────────────────────────────────────── */
+.alert { display:flex; gap:var(--s3); padding:var(--s4); border-radius:var(--r-md); border:1px solid; font-size:13px; line-height:1.5; }
+.alert-icon { font-size:16px; flex-shrink:0; margin-top:1px; }
+.alert-body { display:flex;flex-direction:column;gap:2px; }
+.alert-title { font-weight:700; font-size:13px; }
+.alert-desc  { font-size:12px; }
+.alert-success { background:var(--success-bg); border-color:var(--success-border); color:var(--success-text); }
+.alert-warning { background:var(--warning-bg); border-color:var(--warning-border); color:var(--warning-text); }
+.alert-error   { background:var(--danger-bg);  border-color:var(--danger-border);  color:var(--danger-text); }
+.alert-info    { background:var(--info-bg);    border-color:var(--info-border);    color:var(--info-text); }
+
+/* ─── STEPPER ──────────────────────────────────────────── */
+.stepper { display:flex; align-items:flex-start; }
+.step { display:flex; flex-direction:column; align-items:center; gap:6px; flex:1; position:relative; }
+.step-dot { width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-size:11px; font-weight:600; border:1.5px solid var(--surface-border); background:var(--surface-card); color:var(--text-muted); z-index:2; }
+.step.done .step-dot { background:var(--brand-500); border-color:var(--brand-500); color:#fff; }
+.step.active .step-dot { border-color:var(--brand-500); color:var(--brand-600); box-shadow:0 0 0 3px rgba(29,131,120,.15); }
+.step-label { font-size:10.5px; color:var(--text-muted); text-align:center; max-width:90px; }
+.step.active .step-label { color:var(--text-primary); font-weight:600; }
+.step-line { position:absolute; top:13px; left:-50%; width:100%; height:1.5px; background:var(--surface-border); z-index:1; }
+.step.done .step-line { background:var(--brand-500); }
+.step:first-child .step-line { display:none; }
+
+/* ─── MEDIDOR DE FUERZA DE CONTRASEÑA ───────────────── */
+.pw-meter { display:flex; gap:4px; margin-top:6px; }
+.pw-bar { height:4px; flex:1; border-radius:2px; background:var(--surface-border); }
+.pw-meter.weak .pw-bar:nth-child(1) { background:var(--danger); }
+.pw-meter.fair .pw-bar:nth-child(1), .pw-meter.fair .pw-bar:nth-child(2) { background:var(--warning); }
+.pw-meter.strong .pw-bar { background:var(--success); }
+.pw-rule { font-size:11px; color:var(--text-muted); display:flex; align-items:center; gap:6px; padding:2px 0; }
+.pw-rule.met { color:var(--success-text); }
+
+/* ─── TABLA DE TOKENS / WCAG ─────────────────────────── */
+.token-table { width:100%; border-collapse:collapse; }
+.token-table th { text-align:left; padding:var(--s2) var(--s4); font-family:var(--font-mono); font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); background:var(--surface-hover); border-bottom:1px solid var(--surface-border); }
+.token-table td { padding:var(--s3) var(--s4); font-size:12px; color:var(--text-secondary); border-bottom:1px solid var(--surface-hover); vertical-align:middle; }
+.token-table tr:last-child td { border-bottom:none; }
+.swatch-inline { width:20px;height:20px;border-radius:4px; border:1px solid rgba(0,0,0,.08); display:inline-block;vertical-align:middle;margin-right:8px; }
+.mono { font-family:var(--font-mono); font-size:10px; color:var(--text-muted); }
+
+/* ─── CARD DE RESUMEN (revision) ────────────────────── */
+.review-card { background:var(--surface-card); border:1px solid var(--surface-border); border-radius:var(--r-lg); padding:var(--s5); margin-bottom:var(--s4); }
+.review-card-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--s3); }
+.review-card-title { font-size:13px; font-weight:700; color:var(--text-primary); }
+.review-row { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--surface-hover); font-size:12.5px; }
+.review-row:last-child { border-bottom:none; }
+.review-row-label { color:var(--text-muted); }
+.review-row-value { color:var(--text-primary); font-weight:600; text-align:right; }
+
+.screen-preview { max-width:360px; margin:0 auto; background:var(--surface-bg); border:1px solid var(--surface-border); border-radius:var(--r-2xl); padding:var(--s6) var(--s5); box-shadow: var(--shadow-md); }
+.screen-preview-label { text-align:center; font-family:var(--font-mono); font-size:9px; color:var(--text-muted); margin-bottom:var(--s4); text-transform:uppercase; letter-spacing:.08em; }
+.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:var(--s5); }
+.flex-wrap { display:flex; flex-wrap:wrap; gap:var(--s3); align-items:flex-start; }
+@media (max-width: 700px) { .grid-2 { grid-template-columns: 1fr; } }
+
+/* ─── TOKENS DIRECCIÓN ─────────────────────────────────────── */
+.dir-aleja  { background:var(--dir-aleja-bg);border:1.5px solid var(--dir-aleja-border);color:var(--dir-aleja-text); }
+.dir-acerca { background:var(--dir-acerca-bg);border:1.5px solid var(--dir-acerca-border);color:var(--dir-acerca-text); }
+.dir-label  { font-size:11px;font-weight:700;padding:4px 12px;border-radius:var(--r-full);display:inline-flex;align-items:center;gap:5px; }
+
+/* ─── TARJETA SWIPEABLE ────────────────────────────────────── */
+.swipe-arena { position:relative;height:200px;display:flex;align-items:center;justify-content:center;overflow:hidden; }
+.swipe-zone  { position:absolute;top:0;bottom:0;width:35%;display:flex;align-items:center;justify-content:center;border-radius:var(--r-lg);font-size:11px;font-weight:700;opacity:.45;transition:opacity .2s; }
+.swipe-zone.left  { left:0;background:var(--dir-aleja-bg);color:var(--dir-aleja-text); }
+.swipe-zone.right { right:0;background:var(--dir-acerca-bg);color:var(--dir-acerca-text); }
+.swipe-card-demo  { background:var(--surface-card);border:1.5px solid var(--surface-border);border-radius:var(--r-xl);padding:var(--s5) var(--s6);font-size:13px;font-weight:600;color:var(--text-primary);max-width:200px;text-align:center;box-shadow:var(--shadow-md);position:relative;z-index:2;cursor:grab;user-select:none; }
+.swipe-card-demo.swiped-left  { transform:translateX(-120px) rotate(-8deg);border-color:var(--dir-aleja-border);background:var(--dir-aleja-bg);transition:all .3s; }
+.swipe-card-demo.swiped-right { transform:translateX(120px) rotate(8deg);border-color:var(--dir-acerca-border);background:var(--dir-acerca-bg);transition:all .3s; }
+
+/* ─── DRAG A COLUMNAS ──────────────────────────────────────── */
+.drag-cols { display:grid;gap:var(--s3); }
+.drag-cols-2 { grid-template-columns:1fr 1fr; }
+.drag-cols-4 { grid-template-columns:1fr 1fr;gap:var(--s2); }
+.drag-zone-box { background:var(--surface-hover);border:1.5px dashed var(--surface-border);border-radius:var(--r-lg);min-height:80px;padding:var(--s3);display:flex;flex-direction:column;gap:var(--s2);transition:border-color .12s,background .12s; }
+.drag-zone-box:hover { border-color:var(--brand-400);background:var(--brand-50); }
+.drag-zone-label { font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted); }
+.drag-item { background:var(--surface-card);border:1px solid var(--surface-border);border-radius:var(--r-md);padding:6px 10px;font-size:11.5px;cursor:grab;transition:box-shadow .12s; }
+.drag-item:hover { box-shadow:var(--shadow-md); }
+
+/* ─── GRID DE SELECCIÓN ────────────────────────────────────── */
+.value-grid { display:grid;grid-template-columns:1fr 1fr;gap:var(--s3); }
+.value-card { background:var(--surface-card);border:1.5px solid var(--surface-border);border-radius:var(--r-lg);padding:var(--s4);cursor:pointer;transition:all .12s;text-align:center; }
+.value-card:hover { border-color:var(--brand-400);background:var(--brand-50); }
+.value-card.selected { border-color:var(--brand-500);background:var(--brand-50);color:var(--brand-600); }
+[data-theme="dark"] .value-card:hover { background:var(--brand-100); }
+[data-theme="dark"] .value-card.selected { background:var(--brand-100);color:var(--brand-700); }
+.value-card-icon { font-size:20px;margin-bottom:4px; }
+.value-card-label { font-size:11.5px;font-weight:700;color:var(--text-primary); }
+.value-card.selected .value-card-label { color:var(--brand-600); }
+.value-counter { font-size:11px;color:var(--text-muted);margin-top:6px; }
+.value-counter b { color:var(--brand-500); }
+
+/* ─── CONSTRUCTOR DE TEXTO ─────────────────────────────────── */
+.text-builder { background:var(--surface-hover);border:1.5px solid var(--surface-border);border-radius:var(--r-md);padding:var(--s4);font-size:14px;color:var(--text-primary);line-height:1.8;min-height:48px; }
+.text-builder .tslot { border-bottom:1.5px solid var(--brand-400);color:var(--brand-600);font-weight:700; }
+.builder-chips { display:flex;flex-wrap:wrap;gap:var(--s2);margin-top:var(--s3); }
+.builder-chip { padding:4px 12px;border-radius:var(--r-full);border:1.5px solid var(--brand-400);background:transparent;font-size:12px;font-weight:700;color:var(--brand-600);cursor:pointer;transition:all .12s; }
+.builder-chip:hover,.builder-chip.used { background:var(--brand-500);color:var(--btn-primary-text);border-color:var(--brand-500); }
+
+/* ─── ESCALA CONTINUA ──────────────────────────────────────── */
+.continuum-wrap { padding:var(--s4) 0; }
+.continuum-labels { display:flex;justify-content:space-between;font-size:10.5px;color:var(--text-muted);margin-bottom:4px; }
+.continuum-track { position:relative;height:6px;background:var(--surface-border);border-radius:var(--r-full);margin:0 0 12px; }
+.continuum-fill { position:absolute;top:0;left:0;height:100%;background:var(--brand-500);border-radius:var(--r-full);transition:width .2s; }
+.continuum-thumb { position:absolute;top:50%;transform:translate(-50%,-50%);width:20px;height:20px;border-radius:50%;background:var(--brand-500);border:2.5px solid var(--surface-card);box-shadow:var(--shadow-md);cursor:pointer; }
+.continuum-ticks { display:flex;justify-content:space-between;padding:0 2px; }
+.continuum-tick { font-family:var(--font-mono);font-size:9px;color:var(--text-muted); }
+
+/* ─── SILUETA CORPORAL ─────────────────────────────────────── */
+.body-map-wrap { display:flex;flex-direction:column;align-items:center;gap:var(--s3); }
+.body-zone-tag { font-size:10.5px;font-weight:700;padding:3px 10px;border-radius:var(--r-full);background:var(--surface-hover);color:var(--text-muted);border:1px solid var(--surface-border);cursor:pointer;transition:all .15s; }
+.body-zone-tag:hover { background:var(--brand-50);border-color:var(--brand-400);color:var(--brand-600); }
+.body-zone-tag.active { background:var(--brand-500);color:var(--btn-primary-text);border-color:var(--brand-500); }
+
+/* ─── TEMPORIZADOR DE EJERCICIO ────────────────────────────── */
+.ex-timer-box { background:var(--surface-card);border:1px solid var(--surface-border);border-radius:var(--r-xl);padding:var(--s5);text-align:center;box-shadow:var(--shadow-sm); }
+.ex-timer-display { font-family:var(--font-mono);font-size:36px;font-weight:700;color:var(--brand-500);margin:8px 0; }
+.ex-timer-bar { height:6px;background:var(--surface-border);border-radius:var(--r-full);overflow:hidden;margin:8px 0 12px; }
+.ex-timer-fill { height:100%;background:var(--brand-500);border-radius:var(--r-full);transition:width .5s linear; }
+.ex-timer-msg { font-size:12.5px;color:var(--text-secondary);font-style:italic;line-height:1.5; }
+.ex-phase-dot { display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--surface-border);margin:0 2px;transition:background .2s; }
+.ex-phase-dot.done { background:var(--brand-500); }
+.ex-phase-dot.active { background:var(--brand-400);box-shadow:0 0 0 3px rgba(29,131,120,.2); }
+
+/* ─── PANEL TIPO CÓMIC ─────────────────────────────────────── */
+.comic-strip { display:flex;gap:var(--s3);overflow-x:auto;padding-bottom:var(--s2); }
+.comic-panel { min-width:160px;background:var(--surface-card);border:1.5px solid var(--surface-border);border-radius:var(--r-lg);padding:var(--s4);flex-shrink:0; }
+.comic-panel.active { border-color:var(--brand-500);box-shadow:0 0 0 3px rgba(29,131,120,.1); }
+.comic-num { font-family:var(--font-mono);font-size:9px;font-weight:700;color:var(--text-muted);margin-bottom:6px; }
+.comic-illus { height:64px;background:var(--surface-hover);border-radius:var(--r-md);margin-bottom:8px;display:flex;align-items:center;justify-content:center;font-size:28px; }
+.comic-text { font-size:11px;line-height:1.55;color:var(--text-secondary); }
+
+/* ─── GRÁFICO BARRAS CSS ───────────────────────────────────── */
+.bar-chart { display:flex;align-items:flex-end;gap:var(--s3);height:100px;padding:0 4px; }
+.bar-group { display:flex;flex-direction:column;align-items:center;gap:4px;flex:1; }
+.bar { width:100%;border-radius:var(--r-sm) var(--r-sm) 0 0;transition:height .4s ease; }
+.bar.b-a { background:var(--brand-500); }
+.bar.b-b { background:var(--brand-200); }
+.bar-label { font-size:9px;color:var(--text-muted);text-align:center;line-height:1.3; }
+.bar-chart-legend { display:flex;gap:var(--s4);justify-content:center;margin-top:6px; }
+.bar-legend-dot { width:8px;height:8px;border-radius:2px;flex-shrink:0; }
+
+/* ─── BOTÓN FLOTANTE SOS ───────────────────────────────────── */
+.fab-sos { position:relative;display:inline-flex;align-items:center;gap:8px;background:var(--danger);color:#fff;border-radius:var(--r-full);padding:10px 20px;font-size:13px;font-weight:800;box-shadow:var(--shadow-lg),0 0 0 0 rgba(193,59,48,.4);border:none;cursor:pointer;transition:all .15s; }
+.fab-sos:hover { background:var(--danger-text);transform:scale(1.03); }
+.fab-sos-pulse { animation:sosPulse 2s infinite; }
+@keyframes sosPulse { 0%,100%{box-shadow:var(--shadow-lg),0 0 0 0 rgba(193,59,48,.4)} 50%{box-shadow:var(--shadow-lg),0 0 0 8px rgba(193,59,48,.0)} }
+.fab-sos-context { font-size:10px;color:var(--text-muted);margin-top:6px;display:block;text-align:center; }
+
+/* ─── AVATAR ────────────────────────────────────────────────── */
+.avatar-wrap { display:flex;flex-direction:column;align-items:center;gap:var(--s2); }
+.avatar-body { width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;border:2.5px solid;transition:all .3s; }
+.avatar-chat   { background:var(--brand-50);border-color:var(--brand-200); }
+.avatar-mascot { background:var(--accent-50);border-color:var(--accent-200); }
+.avatar-state  { font-size:10.5px;font-weight:700;padding:2px 10px;border-radius:var(--r-full);border:1px solid; }
+.av-chat-approval  { background:var(--success-bg);border-color:var(--success-border);color:var(--success-text); }
+.av-chat-reflect   { background:var(--info-bg);border-color:var(--info-border);color:var(--info-text); }
+.av-chat-idle      { background:var(--surface-hover);border-color:var(--surface-border);color:var(--text-muted); }
+.av-mas-energico   { background:var(--success-bg);border-color:var(--success-border);color:var(--success-text); }
+.av-mas-aburrido   { background:var(--surface-hover);border-color:var(--surface-border);color:var(--text-muted); }
+.av-mas-asustado   { background:var(--warning-bg);border-color:var(--warning-border);color:var(--warning-text); }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <div class="brand-mark">
+      <svg class="brand-logo-sm" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="32" height="32" rx="9" fill="#1D8378"/>
+        <path d="M6 22 C9 21, 11 18, 13 19 C15 20, 16 15, 19 13 C21.5 11.3, 23 11.5, 25 10" stroke="white" stroke-width="2" stroke-linecap="round" fill="none"/>
+        <circle cx="25" cy="10" r="2.3" fill="white"/>
+        <path d="M9 25 C9 23.5, 10.5 22.5, 12 22.5" stroke="#a8e0d8" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+      </svg>
+      <div>
+        <div class="brand-name">Brisa</div>
+        <div class="brand-sub">Design System</div>
+      </div>
+    </div>
+    <span class="ds-version">v0.1</span>
+  </div>
+  <nav style="flex:1;padding:var(--s3) 0;overflow-y:auto;">
+    <div class="nav-group-label">Identidad</div>
+    <a class="nav-item active" href="#logo"><span class="nav-icon">◈</span> Logo y marca</a>
+    <a class="nav-item" href="#icons"><span class="nav-icon">◻</span> Iconografía</a>
+
+    <div class="nav-group-label">Tokens</div>
+    <a class="nav-item" href="#colors"><span class="nav-icon">●</span> Color</a>
+    <a class="nav-item" href="#dark-mode"><span class="nav-icon">◑</span> Modo oscuro</a>
+    <a class="nav-item" href="#typography"><span class="nav-icon">Aa</span> Tipografía</a>
+    <a class="nav-item" href="#spacing"><span class="nav-icon">↔</span> Espaciado y radios</a>
+    <a class="nav-item" href="#shadows"><span class="nav-icon">▦</span> Sombras y elevación</a>
+    <a class="nav-item" href="#breakpoints"><span class="nav-icon">⬚</span> Layout y breakpoints</a>
+
+    <div class="nav-group-label">Estado y accesibilidad</div>
+    <a class="nav-item" href="#semaphore"><span class="nav-icon">▲</span> Semáforo de estado</a>
+    <a class="nav-item" href="#wcag"><span class="nav-icon">♿</span> Contraste WCAG</a>
+
+    <div class="nav-group-label">Componentes base</div>
+    <a class="nav-item" href="#buttons"><span class="nav-icon">▣</span> Botones</a>
+    <a class="nav-item" href="#inputs"><span class="nav-icon">▭</span> Campos de entrada</a>
+    <a class="nav-item" href="#checkbox"><span class="nav-icon">☑</span> Checkbox y consentimiento</a>
+    <a class="nav-item" href="#badges"><span class="nav-icon">◉</span> Badges</a>
+    <a class="nav-item" href="#alerts"><span class="nav-icon">⚑</span> Alerts</a>
+    <a class="nav-item" href="#stepper"><span class="nav-icon">→</span> Indicador de progreso</a>
+    <a class="nav-item" href="#pwmeter"><span class="nav-icon">▮</span> Fuerza de contraseña</a>
+
+    <div class="nav-group-label">Componentes del chat</div>
+    <a class="nav-item" href="#dir-tokens"><span class="nav-icon">↔</span> Tokens de dirección</a>
+    <a class="nav-item" href="#swipe-card"><span class="nav-icon">↯</span> Tarjeta swipeable</a>
+    <a class="nav-item" href="#drag-cols"><span class="nav-icon">⊞</span> Arrastrar a columnas</a>
+    <a class="nav-item" href="#value-grid"><span class="nav-icon">▦</span> Grid de selección</a>
+    <a class="nav-item" href="#text-builder"><span class="nav-icon">✎</span> Constructor de texto</a>
+    <a class="nav-item" href="#continuum"><span class="nav-icon">─</span> Escala continua</a>
+    <a class="nav-item" href="#body-map"><span class="nav-icon">◎</span> Silueta corporal</a>
+    <a class="nav-item" href="#ex-timer"><span class="nav-icon">⏱</span> Temporizador de ejercicio</a>
+    <a class="nav-item" href="#comic-panel"><span class="nav-icon">▣</span> Panel tipo cómic</a>
+    <a class="nav-item" href="#bar-chart"><span class="nav-icon">▰</span> Gráfico de barras CSS</a>
+    <a class="nav-item" href="#fab-sos"><span class="nav-icon">⊕</span> Botón flotante SOS</a>
+    <a class="nav-item" href="#avatar"><span class="nav-icon">◕</span> Avatar · dos contextos</a>
+
+    <div class="nav-group-label">Contenido</div>
+    <a class="nav-item" href="#consent-text"><span class="nav-icon">☑</span> Texto de consentimiento</a>
+    <a class="nav-item" href="#program-structure"><span class="nav-icon">◈</span> Estructura del programa</a>
+
+
+  </nav>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <h1>Brisa</h1>
+      <p>Design System · PWA de apoyo psicoeducativo · Mobile-first</p>
+    </div>
+    <button class="theme-toggle" onclick="toggleTheme()">
+      <span class="theme-icon" id="theme-icon">☀</span>
+      <span id="theme-label">Modo claro</span>
+    </button>
+  </div>
+
+  <div class="content">
+<!-- SECTIONS_START -->
+
+<!-- ══ LOGO ══ -->
+<section class="section" id="logo">
+  <div class="section-header">
+    <div class="section-eye">01 · Identidad</div>
+    <div class="section-title">Logo y marca · Brisa</div>
+    <div class="section-desc">Nombre propuesto para el aplicativo: <b>Brisa</b>. La marca evita nombrar el vapeo directamente y en cambio nombra lo que el programa busca devolver: aire, respiración tranquila. El isotipo es una línea de respiración (una curva suave, como una exhalación) que asciende hasta un punto luminoso — la idea de que cada interacción pequeña suma a un progreso visible. Es un nombre de marcador de posición: todo el sistema de tokens funciona igual si más adelante se reemplaza por otro nombre, solo cambia el wordmark.</div>
+  </div>
+
+  <div class="subsection-title">Versiones del logo</div>
+  <div class="logo-grid">
+    <div class="logo-card">
+      <div class="logo-bg logo-bg-white" style="justify-content:flex-start;padding-left:24px;">
+        <div class="brisa-logo-full">
+          <div class="brisa-icon-lg">
+            <svg width="22" height="22" viewBox="0 0 32 32" fill="none">
+              <path d="M6 22 C9 21, 11 18, 13 19 C15 20, 16 15, 19 13 C21.5 11.3, 23 11.5, 25 10" stroke="white" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+              <circle cx="25" cy="10" r="2.4" fill="white"/>
+            </svg>
+          </div>
+          <div>
+            <div class="brisa-wordmark-primary">Brisa</div>
+            <div class="brisa-wordmark-secondary">Apoyo psicoeducativo</div>
+          </div>
+        </div>
+      </div>
+      <div class="logo-card-label"><div class="logo-card-name">Horizontal — fondo claro</div><div style="font-size:9px;margin-top:2px;color:var(--text-muted);">Uso principal · login, onboarding</div></div>
+    </div>
+
+    <div class="logo-card">
+      <div class="logo-bg logo-bg-dark" style="justify-content:flex-start;padding-left:24px;">
+        <div class="brisa-logo-full brisa-on-dark">
+          <div class="brisa-icon-lg">
+            <svg width="22" height="22" viewBox="0 0 32 32" fill="none">
+              <path d="M6 22 C9 21, 11 18, 13 19 C15 20, 16 15, 19 13 C21.5 11.3, 23 11.5, 25 10" stroke="white" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+              <circle cx="25" cy="10" r="2.4" fill="white"/>
+            </svg>
+          </div>
+          <div>
+            <div class="brisa-wordmark-primary">Brisa</div>
+            <div class="brisa-wordmark-secondary">Apoyo psicoeducativo</div>
+          </div>
+        </div>
+      </div>
+      <div class="logo-card-label"><div class="logo-card-name">Horizontal — fondo oscuro</div><div style="font-size:9px;margin-top:2px;color:var(--text-muted);">Modo oscuro · splash screen</div></div>
+    </div>
+
+    <div class="logo-card">
+      <div class="logo-bg logo-bg-color">
+        <div class="brisa-icon-only">
+          <svg width="26" height="26" viewBox="0 0 32 32" fill="none">
+            <path d="M6 22 C9 21, 11 18, 13 19 C15 20, 16 15, 19 13 C21.5 11.3, 23 11.5, 25 10" stroke="white" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+            <circle cx="25" cy="10" r="2.4" fill="white"/>
+          </svg>
+        </div>
+      </div>
+      <div class="logo-card-label"><div class="logo-card-name">Isotipo solo</div><div style="font-size:9px;margin-top:2px;color:var(--text-muted);">Favicon · notificación push · avatar</div></div>
+    </div>
+
+    <div class="logo-card">
+      <div class="logo-bg logo-bg-brand">
+        <div class="brisa-icon-only" style="background:rgba(255,255,255,.16);">
+          <svg width="26" height="26" viewBox="0 0 32 32" fill="none">
+            <path d="M6 22 C9 21, 11 18, 13 19 C15 20, 16 15, 19 13 C21.5 11.3, 23 11.5, 25 10" stroke="white" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+            <circle cx="25" cy="10" r="2.4" fill="white"/>
+          </svg>
+        </div>
+      </div>
+      <div class="logo-card-label"><div class="logo-card-name">Sobre color de marca</div><div style="font-size:9px;margin-top:2px;color:var(--text-muted);">Encabezados · banner SOS craving</div></div>
+    </div>
+  </div>
+
+  <div class="subsection-title" style="margin-top:var(--s7);">Reglas de uso</div>
+  <div class="do-dont">
+    <div class="do">
+      <div class="do-label">✓ Hacer</div>
+      Usar el logo completo (isotipo + wordmark) en login, onboarding y splash screen.<br><br>
+      Usar el isotipo solo cuando el ancho disponible es menor a 120px (favicon, notificaciones, ícono de instalación de la PWA).<br><br>
+      Mantener un área de protección mínima equivalente a la altura de la "B" del wordmark en todos los lados.
+    </div>
+    <div class="dont">
+      <div class="dont-label">✗ No hacer</div>
+      No usar emoji de cigarrillo, humo o similares en ningún punto de la interfaz, ni como sustituto del logo: el lenguaje visual del programa nunca representa el objeto que se busca dejar de consumir.<br><br>
+      No cambiar el color del isotipo: brand-500 es el único fondo aprobado.<br><br>
+      No aplicar sombras, biseles o efectos 3D sobre el logo.
+    </div>
+  </div>
+</section>
+
+<!-- ══ ICONS ══ -->
+<section class="section" id="icons">
+  <div class="section-header">
+    <div class="section-eye">02 · Identidad</div>
+    <div class="section-title">Iconografía</div>
+    <div class="section-desc">Estilo <b>Lucide</b> (trazo 1.5px, esquinas redondeadas, sin relleno), tamaño base 20px en UI y 24px en navegación. Es el mismo lenguaje de trazo que el ícono de marca, para que la interfaz se sienta de una sola pieza. No se mezcla con emoji del sistema operativo: en una app que trabaja con datos sensibles de salud, el emoji introduce un tono casual que compite con la seriedad del contenido.</div>
+  </div>
+  <div class="cb">
+    <div class="cb-header"><span class="cb-label">ÍCONOS BASE (UI de formularios y estado)</span><span class="cb-note">stroke-width: 1.5 · size: 20px</span></div>
+    <div class="cb-preview" style="gap:var(--s3);">
+      <div class="icon-card" style="background:var(--surface-card);border:1px solid var(--surface-border);border-radius:var(--r-md);padding:var(--s4) var(--s3);display:flex;flex-direction:column;align-items:center;gap:var(--s2);width:96px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-secondary);"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-muted);">Mail</div>
+      </div>
+      <div class="icon-card" style="background:var(--surface-card);border:1px solid var(--surface-border);border-radius:var(--r-md);padding:var(--s4) var(--s3);display:flex;flex-direction:column;align-items:center;gap:var(--s2);width:96px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-secondary);"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-muted);">Lock</div>
+      </div>
+      <div class="icon-card" style="background:var(--surface-card);border:1px solid var(--surface-border);border-radius:var(--r-md);padding:var(--s4) var(--s3);display:flex;flex-direction:column;align-items:center;gap:var(--s2);width:96px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-secondary);"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-muted);">Eye</div>
+      </div>
+      <div class="icon-card" style="background:var(--surface-card);border:1px solid var(--surface-border);border-radius:var(--r-md);padding:var(--s4) var(--s3);display:flex;flex-direction:column;align-items:center;gap:var(--s2);width:96px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-secondary);"><polyline points="20 6 9 17 4 12"/></svg>
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-muted);">Check</div>
+      </div>
+      <div class="icon-card" style="background:var(--surface-card);border:1px solid var(--surface-border);border-radius:var(--r-md);padding:var(--s4) var(--s3);display:flex;flex-direction:column;align-items:center;gap:var(--s2);width:96px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-secondary);"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-muted);">Alert</div>
+      </div>
+      <div class="icon-card" style="background:var(--surface-card);border:1px solid var(--surface-border);border-radius:var(--r-md);padding:var(--s4) var(--s3);display:flex;flex-direction:column;align-items:center;gap:var(--s2);width:96px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-secondary);"><polyline points="6 9 12 15 18 9"/></svg>
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-muted);">Chevron</div>
+      </div>
+      <div class="icon-card" style="background:var(--surface-card);border:1px solid var(--surface-border);border-radius:var(--r-md);padding:var(--s4) var(--s3);display:flex;flex-direction:column;align-items:center;gap:var(--s2);width:96px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-secondary);"><path d="M9 12l2 2 4-4"/><path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9c1.49 0 2.89.37 4.12 1.02"/></svg>
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-muted);">ShieldCheck</div>
+      </div>
+      <div class="icon-card" style="background:var(--surface-card);border:1px solid var(--surface-border);border-radius:var(--r-md);padding:var(--s4) var(--s3);display:flex;flex-direction:column;align-items:center;gap:var(--s2);width:96px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-secondary);"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg>
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-muted);">Clock</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ COLOR ══ -->
+<section class="section" id="colors">
+  <div class="section-header">
+    <div class="section-eye">03 · Tokens</div>
+    <div class="section-title">Color</div>
+    <div class="section-desc">Tres rampas independientes. <b>Brand (teal)</b> es el color de marca: navegación, botones primarios, enlaces. <b>Accent (ember)</b> es un color cálido exclusivo de gamificación, rachas y la mascota — nunca se usa en acciones primarias de los módulos clínicos/administrativos. Esta separación es deliberada: si el mismo verde significara "marca" y "éxito" a la vez (como ocurre en muchos sistemas), el usuario no podría distinguir un botón de marca de una confirmación real. Aquí nunca se confunden.</div>
+  </div>
+
+  <div class="subsection-title">Brand · Brisa <span class="tag">teal calmo</span></div>
+  <div class="token-grid">
+    <div class="token-card"><div class="token-swatch" style="background:#EAF6F5;"></div><div class="token-info"><div class="token-name">brand-50</div><div class="token-value">#EAF6F5</div></div></div>
+    <div class="token-card"><div class="token-swatch" style="background:#CFECE9;"></div><div class="token-info"><div class="token-name">brand-100</div><div class="token-value">#CFECE9</div></div></div>
+    <div class="token-card"><div class="token-swatch" style="background:#9ED9D2;"></div><div class="token-info"><div class="token-name">brand-200</div><div class="token-value">#9ED9D2</div></div></div>
+    <div class="token-card"><div class="token-swatch" style="background:#69BFB5;"></div><div class="token-info"><div class="token-name">brand-300</div><div class="token-value">#69BFB5</div></div></div>
+    <div class="token-card"><div class="token-swatch" style="background:#3CA399;"></div><div class="token-info"><div class="token-name">brand-400</div><div class="token-value">#3CA399</div></div></div>
+    <div class="token-card"><div class="token-swatch" style="background:#1D8378;"></div><div class="token-info"><div class="token-name">brand-500</div><div class="token-value">#1D8378 · base</div></div></div>
+    <div class="token-card"><div class="token-swatch" style="background:#156A61;"></div><div class="token-info"><div class="token-name">brand-600</div><div class="token-value">#156A61</div></div></div>
+    <div class="token-card"><div class="token-swatch" style="background:#11534C;"></div><div class="token-info"><div class="token-name">brand-700</div><div class="token-value">#11534C</div></div></div>
+    <div class="token-card"><div class="token-swatch" style="background:#0C3C37;"></div><div class="token-info"><div class="token-name">brand-800</div><div class="token-value">#0C3C37</div></div></div>
+    <div class="token-card"><div class="token-swatch" style="background:#082724;"></div><div class="token-info"><div class="token-name">brand-900</div><div class="token-value">#082724</div></div></div>
+  </div>
+
+  <div class="subsection-title">Accent · Ember <span class="tag">solo gamificación</span></div>
+  <div class="token-grid">
+    <div class="token-card"><div class="token-swatch" style="background:#FFF0E9;"></div><div class="token-info"><div class="token-name">accent-50</div><div class="token-value">#FFF0E9</div></div></div>
+    <div class="token-card"><div class="token-swatch" style="background:#FFD9C7;"></div><div class="token-info"><div class="token-name">accent-100</div><div class="token-value">#FFD9C7</div></div></div>
+    <div class="token-card"><div class="token-swatch" style="background:#FFB494;"></div><div class="token-info"><div class="token-name">accent-200</div><div class="token-value">#FFB494</div></div></div>
+    <div class="token-card"><div class="token-swatch" style="background:#FB8E5F;"></div><div class="token-info"><div class="token-name">accent-300</div><div class="token-value">#FB8E5F</div></div></div>
+    <div class="token-card"><div class="token-swatch" style="background:#E96F3B;"></div><div class="token-info"><div class="token-name">accent-400</div><div class="token-value">#E96F3B</div></div></div>
+    <div class="token-card"><div class="token-swatch" style="background:#C8501F;"></div><div class="token-info"><div class="token-name">accent-500</div><div class="token-value">#C8501F · base</div></div></div>
+    <div class="token-card"><div class="token-swatch" style="background:#A03D15;"></div><div class="token-info"><div class="token-name">accent-600</div><div class="token-value">#A03D15</div></div></div>
+    <div class="token-card"><div class="token-swatch" style="background:#782D10;"></div><div class="token-info"><div class="token-name">accent-700</div><div class="token-value">#782D10</div></div></div>
+    <div class="token-card"><div class="token-swatch" style="background:#531F0A;"></div><div class="token-info"><div class="token-name">accent-800</div><div class="token-value">#531F0A</div></div></div>
+    <div class="token-card"><div class="token-swatch" style="background:#311206;"></div><div class="token-info"><div class="token-name">accent-900</div><div class="token-value">#311206</div></div></div>
+  </div>
+
+  <div class="subsection-title">Neutral <span class="tag">gris cálido</span></div>
+  <div class="token-grid">
+    <div class="token-card"><div class="token-swatch" style="background:#FFFFFF;border-bottom:1px solid var(--surface-border);"></div><div class="token-info"><div class="token-name">neutral-0</div><div class="token-value">#FFFFFF</div></div></div>
+    <div class="token-card"><div class="token-swatch" style="background:#FAF9F6;"></div><div class="token-info"><div class="token-name">neutral-50</div><div class="token-value">#FAF9F6</div></div></div>
+    <div class="token-card"><div class="token-swatch" style="background:#F0EEE8;"></div><div class="token-info"><div class="token-name">neutral-100</div><div class="token-value">#F0EEE8</div></div></div>
+    <div class="token-card"><div class="token-swatch" style="background:#E1DED5;"></div><div class="token-info"><div class="token-name">neutral-200</div><div class="token-value">#E1DED5</div></div></div>
+    <div class="token-card"><div class="token-swatch" style="background:#C7C3B6;"></div><div class="token-info"><div class="token-name">neutral-300</div><div class="token-value">#C7C3B6</div></div></div>
+    <div class="token-card"><div class="token-swatch" style="background:#A19C8C;"></div><div class="token-info"><div class="token-name">neutral-400</div><div class="token-value">solo borde/decor</div></div></div>
+    <div class="token-card"><div class="token-swatch" style="background:#726C5A;"></div><div class="token-info"><div class="token-name">neutral-500</div><div class="token-value">mínimo p/ texto</div></div></div>
+    <div class="token-card"><div class="token-swatch" style="background:#595549;"></div><div class="token-info"><div class="token-name">neutral-600</div><div class="token-value">#595549</div></div></div>
+    <div class="token-card"><div class="token-swatch" style="background:#403D34;"></div><div class="token-info"><div class="token-name">neutral-700</div><div class="token-value">#403D34</div></div></div>
+    <div class="token-card"><div class="token-swatch" style="background:#282620;"></div><div class="token-info"><div class="token-name">neutral-800</div><div class="token-value">#282620</div></div></div>
+    <div class="token-card"><div class="token-swatch" style="background:#161510;"></div><div class="token-info"><div class="token-name">neutral-900</div><div class="token-value">#161510</div></div></div>
+  </div>
+
+  <div class="do-dont" style="margin-top:var(--s5);">
+    <div class="do"><div class="do-label">✓ Hacer</div>neutral-400 (#A19C8C) solo en bordes, divisores o iconografía decorativa: contra blanco da 2.75:1, no alcanza texto. Para texto silenciado, el mínimo es neutral-500.</div>
+    <div class="dont"><div class="dont-label">✗ No hacer</div>No usar accent (ember) en botones de "Guardar", "Continuar" o "Enviar" de los módulos clínicos. Accent queda reservado para insignias de racha, logros y la mascota (M06), donde su calidez tiene sentido narrativo.</div>
+  </div>
+</section>
+
+<!-- ══ DARK MODE ══ -->
+<section class="section" id="dark-mode">
+  <div class="section-header">
+    <div class="section-eye">04 · Tokens</div>
+    <div class="section-title">Modo oscuro</div>
+    <div class="section-desc">Las rampas de <b>brand</b> y <b>accent</b> se invierten en bloque (50↔900, 100↔800…) bajo <code class="mono">[data-theme="dark"]</code>. Así, cualquier componente que use <code class="mono">var(--brand-600)</code> para un enlace sigue resolviendo a un tono legible en ambos modos, sin duplicar reglas de componente.</div>
+  </div>
+
+  <div class="cb">
+    <div class="cb-header"><span class="cb-label">HALLAZGO CLAVE · TEXTO DE BOTÓN RELLENO</span><span class="cb-note">verificado con cálculo de luminancia relativa</span></div>
+    <div class="cb-preview" style="gap:var(--s6);">
+      <div style="text-align:center;">
+        <button class="btn btn-primary" style="margin-bottom:8px;">Continuar</button>
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-muted);">claro: texto blanco / brand-500<br>4.60:1 · AA ✓</div>
+      </div>
+      <div data-theme="dark" style="background:#100F0C;padding:var(--s5);border-radius:var(--r-lg);text-align:center;">
+        <button class="btn btn-primary" style="margin-bottom:8px;">Continuar</button>
+        <div style="font-family:var(--font-mono);font-size:9px;color:#8C8676;">oscuro: texto oscuro / brand-500<br>6.00:1 · AA ✓</div>
+      </div>
+    </div>
+    <div style="padding:0 var(--s6) var(--s5);font-size:12px;color:var(--text-secondary);line-height:1.6;">
+      Al invertir la rampa, <code class="mono">brand-500</code> pasa de #1D8378 (oscuro) a #3CA399 (más claro) en modo oscuro. Texto blanco sobre ese tono más claro cae a <b>3.05:1</b> — no pasa AA. Por eso <code class="mono">--btn-primary-text</code> y <code class="mono">--btn-accent-text</code> son tokens que cambian de blanco a <code class="mono">neutral-900</code> exactamente en el punto de quiebre del tema, en vez de quedar fijos en blanco.
+    </div>
+  </div>
+
+  <div class="subsection-title">Rampa brand invertida</div>
+  <div class="token-grid">
+    <div class="token-card"><div class="token-swatch" style="background:#082724;"></div><div class="token-info"><div class="token-name">brand-50</div><div class="token-value">#082724</div></div></div>
+    <div class="token-card"><div class="token-swatch" style="background:#0C3C37;"></div><div class="token-info"><div class="token-name">brand-100</div><div class="token-value">#0C3C37</div></div></div>
+    <div class="token-card"><div class="token-swatch" style="background:#11534C;"></div><div class="token-info"><div class="token-name">brand-200</div><div class="token-value">#11534C</div></div></div>
+    <div class="token-card"><div class="token-swatch" style="background:#3CA399;"></div><div class="token-info"><div class="token-name">brand-500</div><div class="token-value">#3CA399 · base</div></div></div>
+    <div class="token-card"><div class="token-swatch" style="background:#9ED9D2;"></div><div class="token-info"><div class="token-name">brand-700</div><div class="token-value">#9ED9D2 · enlaces</div></div></div>
+    <div class="token-card"><div class="token-swatch" style="background:#EAF6F5;"></div><div class="token-info"><div class="token-name">brand-900</div><div class="token-value">#EAF6F5</div></div></div>
+  </div>
+</section>
+
+<!-- ══ TYPOGRAPHY ══ -->
+<section class="section" id="typography">
+  <div class="section-header">
+    <div class="section-eye">05 · Tokens</div>
+    <div class="section-title">Tipografía</div>
+    <div class="section-desc"><b>Manrope</b> para toda la interfaz — geométrica, cálida, con buena legibilidad en formularios largos como la línea base. <b>IBM Plex Mono</b> reservada para datos: fechas ISO, códigos de recuperación, identificadores y esta misma documentación.</div>
+  </div>
+  <div class="cb">
+    <div class="cb-preview-col" style="width:100%;">
+      <div class="type-row"><div style="font-family:var(--font-sans);font-weight:800;font-size:28px;">Aa Línea base</div><div class="type-meta"><span class="tag">H1 · 28px · 800</span><span class="tag">títulos de pantalla</span></div></div>
+      <div class="type-row"><div style="font-family:var(--font-sans);font-weight:700;font-size:21px;">Datos de consumo</div><div class="type-meta"><span class="tag">H2 · 21px · 700</span><span class="tag">encabezado de sección</span></div></div>
+      <div class="type-row"><div style="font-family:var(--font-sans);font-weight:700;font-size:16px;">Programa académico</div><div class="type-meta"><span class="tag">H3 · 16px · 700</span><span class="tag">etiqueta de grupo</span></div></div>
+      <div class="type-row"><div style="font-family:var(--font-sans);font-weight:500;font-size:14px;">Texto de cuerpo y campos de formulario, con interlineado 1.5 para lectura cómoda en consentimiento informado.</div><div class="type-meta"><span class="tag">Body · 14px · 500</span></div></div>
+      <div class="type-row"><div style="font-family:var(--font-sans);font-weight:500;font-size:12px;color:var(--text-muted);">Texto de ayuda y notas debajo de campos</div><div class="type-meta"><span class="tag">Caption · 12px · 500</span></div></div>
+      <div class="type-row"><div style="font-family:var(--font-mono);font-size:13px;color:var(--text-secondary);">2026-06-17 · COD-48291</div><div class="type-meta"><span class="tag">Mono · 13px · datos/IDs</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ SPACING ══ -->
+<section class="section" id="spacing">
+  <div class="section-header">
+    <div class="section-eye">06 · Tokens</div>
+    <div class="section-title">Espaciado y radios</div>
+    <div class="section-desc">Escala de 4px, igual para márgenes, paddings y gaps. Los radios crecen con el tamaño del componente: chips y badges más redondeados, tarjetas y modales más sobrios.</div>
+  </div>
+  <div class="cb"><div class="cb-preview-col" style="width:100%;">
+    <div class="spacing-row"><div class="sp-bar" style="width:4px;"></div><div class="sp-name">s1</div><div class="sp-val">4px</div><div class="sp-use">separación mínima entre ícono y texto</div></div>
+    <div class="spacing-row"><div class="sp-bar" style="width:8px;"></div><div class="sp-name">s2</div><div class="sp-val">8px</div><div class="sp-use">gap entre elementos relacionados</div></div>
+    <div class="spacing-row"><div class="sp-bar" style="width:12px;"></div><div class="sp-name">s3</div><div class="sp-val">12px</div><div class="sp-use">padding de inputs y chips</div></div>
+    <div class="spacing-row"><div class="sp-bar" style="width:16px;"></div><div class="sp-name">s4</div><div class="sp-val">16px</div><div class="sp-use">padding de tarjetas, margen entre campos</div></div>
+    <div class="spacing-row"><div class="sp-bar" style="width:24px;"></div><div class="sp-name">s6</div><div class="sp-val">24px</div><div class="sp-use">separación entre bloques de un formulario</div></div>
+    <div class="spacing-row"><div class="sp-bar" style="width:32px;"></div><div class="sp-name">s7</div><div class="sp-val">32px</div><div class="sp-use">padding de contenedor de pantalla</div></div>
+    <div class="spacing-row"><div class="sp-bar" style="width:64px;"></div><div class="sp-name">s10</div><div class="sp-val">64px</div><div class="sp-use">separación entre secciones de la documentación</div></div>
+  </div></div>
+  <div class="cb"><div class="cb-preview" style="gap:var(--s5);">
+    <div style="text-align:center;"><div style="width:48px;height:48px;background:var(--brand-200);border-radius:4px;margin:0 auto 6px;"></div><div class="mono">r-sm · 4px</div></div>
+    <div style="text-align:center;"><div style="width:48px;height:48px;background:var(--brand-200);border-radius:8px;margin:0 auto 6px;"></div><div class="mono">r-md · 8px</div></div>
+    <div style="text-align:center;"><div style="width:48px;height:48px;background:var(--brand-200);border-radius:12px;margin:0 auto 6px;"></div><div class="mono">r-lg · 12px</div></div>
+    <div style="text-align:center;"><div style="width:48px;height:48px;background:var(--brand-200);border-radius:16px;margin:0 auto 6px;"></div><div class="mono">r-xl · 16px</div></div>
+    <div style="text-align:center;"><div style="width:48px;height:48px;background:var(--brand-200);border-radius:9999px;margin:0 auto 6px;"></div><div class="mono">r-full</div></div>
+  </div></div>
+</section>
+
+<!-- ══ SHADOWS ══ -->
+<section class="section" id="shadows">
+  <div class="section-header">
+    <div class="section-eye">07 · Tokens</div>
+    <div class="section-title">Sombras y elevación</div>
+    <div class="section-desc">Tres niveles. En modo oscuro la opacidad sube (la sombra se vuelve menos útil sobre fondos oscuros, así que se compensa con más intensidad).</div>
+  </div>
+  <div class="cb"><div class="cb-preview" style="gap:var(--s7);padding:var(--s8) var(--s6);">
+    <div style="text-align:center;"><div style="width:90px;height:60px;background:var(--surface-card);border-radius:var(--r-md);box-shadow:var(--shadow-sm);margin-bottom:10px;"></div><div class="mono">shadow-sm</div></div>
+    <div style="text-align:center;"><div style="width:90px;height:60px;background:var(--surface-card);border-radius:var(--r-md);box-shadow:var(--shadow-md);margin-bottom:10px;"></div><div class="mono">shadow-md</div></div>
+    <div style="text-align:center;"><div style="width:90px;height:60px;background:var(--surface-card);border-radius:var(--r-md);box-shadow:var(--shadow-lg);margin-bottom:10px;"></div><div class="mono">shadow-lg</div></div>
+  </div></div>
+</section>
+
+<!-- ══ BREAKPOINTS ══ -->
+<section class="section" id="breakpoints">
+  <div class="section-header">
+    <div class="section-eye">08 · Tokens</div>
+    <div class="section-title">Layout y breakpoints</div>
+    <div class="section-desc">Brisa es una <b>PWA mobile-first</b>: se instala desde el navegador y su flujo de estudiante está diseñado para una sola columna en pantallas pequeñas. El panel administrativo (futuro) sí asume escritorio. Las previsualizaciones de este documento usan un marco de 360px, equivalente a un teléfono de gama media.</div>
+  </div>
+  <table class="token-table">
+    <tr><th>Breakpoint</th><th>Rango</th><th>Uso en Brisa</th></tr>
+    <tr><td class="mono">xs</td><td>&lt; 480px</td><td>App estudiante — layout por defecto, navegación inferior</td></tr>
+    <tr><td class="mono">sm</td><td>480 – 767px</td><td>Teléfonos grandes / PWA en modo standalone</td></tr>
+    <tr><td class="mono">md</td><td>768 – 1023px</td><td>Tablet — formularios de línea base en dos columnas (grid-2)</td></tr>
+    <tr><td class="mono">lg</td><td>≥ 1024px</td><td>Panel administrativo (futuro) — sidebar fijo + tabla de datos</td></tr>
+  </table>
+</section>
+
+<!-- ══ SEMAPHORE ══ -->
+<section class="section" id="semaphore">
+  <div class="section-header">
+    <div class="section-eye">09 · Estado y accesibilidad</div>
+    <div class="section-title">Semáforo de estado</div>
+    <div class="section-desc">Cuatro colores semánticos, independientes de brand y accent, para que nunca se confunda "esto es de la marca" con "esto significa algo sobre tu progreso o tu cuenta".</div>
+  </div>
+  <div class="sem-row" style="background:var(--success-bg);border-color:var(--success-border);"><div class="sem-dot" style="background:var(--success);"></div><div class="sem-text"><div class="sem-label" style="color:var(--success-text);">Éxito</div><div class="sem-desc" style="color:var(--success-text);">Registro completo, consentimiento aceptado, acción guardada</div></div></div>
+  <div class="sem-row" style="background:var(--warning-bg);border-color:var(--warning-border);"><div class="sem-dot" style="background:var(--warning);"></div><div class="sem-text"><div class="sem-label" style="color:var(--warning-text);">Advertencia</div><div class="sem-desc" style="color:var(--warning-text);">Sesión por expirar, dato sensible que requiere reconfirmación</div></div></div>
+  <div class="sem-row" style="background:var(--danger-bg);border-color:var(--danger-border);"><div class="sem-dot" style="background:var(--danger);"></div><div class="sem-text"><div class="sem-label" style="color:var(--danger-text);">Error / crítico</div><div class="sem-desc" style="color:var(--danger-text);">Credenciales inválidas, correo ya registrado, falla de servidor</div></div></div>
+  <div class="sem-row" style="background:var(--info-bg);border-color:var(--info-border);"><div class="sem-dot" style="background:var(--info);"></div><div class="sem-text"><div class="sem-label" style="color:var(--info-text);">Informativo</div><div class="sem-desc" style="color:var(--info-text);">Aviso neutro, ayuda contextual, recordatorio</div></div></div>
+</section>
+
+<!-- ══ WCAG ══ -->
+<section class="section" id="wcag">
+  <div class="section-header">
+    <div class="section-eye">10 · Estado y accesibilidad</div>
+    <div class="section-title">Contraste WCAG</div>
+    <div class="section-desc">Ratios calculados con la fórmula de luminancia relativa de WCAG 2.1 (no estimados). Mínimo aceptado en todo el sistema: <b>4.5:1</b> (AA, texto normal). Ninguna combinación de texto del sistema baja de ese umbral.</div>
+  </div>
+  <table class="token-table">
+    <tr><th>Combinación</th><th>Muestra</th><th>Ratio</th><th>Nivel</th></tr>
+    <tr><td>Texto primario / superficie</td><td><span class="swatch-inline" style="background:#161510;"></span><span class="mono">#161510 / #FFFFFF</span></td><td class="mono">18.28:1</td><td><span class="badge b-success">AAA</span></td></tr>
+    <tr><td>Texto secundario / superficie</td><td><span class="swatch-inline" style="background:#595549;"></span><span class="mono">#595549 / #FFFFFF</span></td><td class="mono">7.45:1</td><td><span class="badge b-success">AAA</span></td></tr>
+    <tr><td>Texto muted / fondo de página</td><td><span class="swatch-inline" style="background:#726C5A;"></span><span class="mono">#726C5A / #FAF9F6</span></td><td class="mono">4.98:1</td><td><span class="badge b-info">AA</span></td></tr>
+    <tr><td>Botón primario (texto / brand-500)</td><td><span class="swatch-inline" style="background:#1D8378;"></span><span class="mono">#FFFFFF / #1D8378</span></td><td class="mono">4.60:1</td><td><span class="badge b-info">AA</span></td></tr>
+    <tr><td>Enlace brand-600 / blanco</td><td><span class="swatch-inline" style="background:#156A61;"></span><span class="mono">#156A61 / #FFFFFF</span></td><td class="mono">6.43:1</td><td><span class="badge b-success">AAA*</span></td></tr>
+    <tr><td>Botón accent (texto / accent-600)</td><td><span class="swatch-inline" style="background:#A03D15;"></span><span class="mono">#FFFFFF / #A03D15</span></td><td class="mono">6.62:1</td><td><span class="badge b-success">AAA*</span></td></tr>
+    <tr><td>Badge éxito (texto / fondo)</td><td><span class="swatch-inline" style="background:#E8F5ED;border-color:#8FCBA3;"></span><span class="mono">#1F5C3A / #E8F5ED</span></td><td class="mono">7.06:1</td><td><span class="badge b-success">AAA</span></td></tr>
+    <tr><td>Badge advertencia (texto / fondo)</td><td><span class="swatch-inline" style="background:#FBF1DC;border-color:#E6C878;"></span><span class="mono">#7A5208 / #FBF1DC</span></td><td class="mono">6.16:1</td><td><span class="badge b-info">AA</span></td></tr>
+    <tr><td>Badge error (texto / fondo)</td><td><span class="swatch-inline" style="background:#FBEAE7;border-color:#E8A99E;"></span><span class="mono">#8E2A21 / #FBEAE7</span></td><td class="mono">7.20:1</td><td><span class="badge b-success">AAA</span></td></tr>
+    <tr><td>Badge info (texto / fondo)</td><td><span class="swatch-inline" style="background:#E7F1FA;border-color:#A8CBE6;"></span><span class="mono">#1E6FA8 / #E7F1FA</span></td><td class="mono">4.71:1</td><td><span class="badge b-info">AA</span></td></tr>
+    <tr><td>Texto primario · modo oscuro</td><td><span class="swatch-inline" style="background:#1E1C17;"></span><span class="mono">#EDEAE2 / #1E1C17</span></td><td class="mono">14.16:1</td><td><span class="badge b-success">AAA</span></td></tr>
+    <tr><td>Texto secundario · modo oscuro</td><td><span class="swatch-inline" style="background:#1E1C17;"></span><span class="mono">#B8B3A4 / #1E1C17</span></td><td class="mono">8.12:1</td><td><span class="badge b-success">AAA</span></td></tr>
+    <tr><td>Texto muted · modo oscuro</td><td><span class="swatch-inline" style="background:#1E1C17;"></span><span class="mono">#8C8676 / #1E1C17</span></td><td class="mono">4.69:1</td><td><span class="badge b-info">AA</span></td></tr>
+    <tr><td>Enlace brand · modo oscuro</td><td><span class="swatch-inline" style="background:#1E1C17;"></span><span class="mono">#9ED9D2 / #1E1C17</span></td><td class="mono">10.79:1</td><td><span class="badge b-success">AAA</span></td></tr>
+  </table>
+  <div class="do-dont" style="margin-top:var(--s5);">
+    <div class="do"><div class="do-label">✓ Hacer</div>El color nunca es el único portador de significado: todo estado (error, éxito, advertencia) lleva también texto o ícono.</div>
+    <div class="dont"><div class="dont-label">✗ No hacer</div>No usar warning (#B07A12) ni success-icon (#2E7D4F) como color de texto pequeño directo sobre blanco fuera de badge/alert: en ese uso puntual caen a 3.7–5.0:1. Usar siempre la variante <code class="mono">-text</code> del token.</div>
+  </div>
+</section>
+
+<!-- ══ BUTTONS ══ -->
+<section class="section" id="buttons">
+  <div class="section-header">
+    <div class="section-eye">11 · Componentes base</div>
+    <div class="section-title">Botones</div>
+  </div>
+  <div class="cb">
+    <div class="cb-header"><span class="cb-label">VARIANTES</span></div>
+    <div class="cb-preview">
+      <button class="btn btn-primary">Continuar</button>
+      <button class="btn btn-accent">Ver mi racha</button>
+      <button class="btn btn-secondary">Cancelar</button>
+      <button class="btn btn-danger">Eliminar cuenta</button>
+      <button class="btn btn-ghost">Omitir por ahora</button>
+    </div>
+    <div class="cb-header"><span class="cb-label">TAMAÑOS Y ESTADOS</span></div>
+    <div class="cb-preview">
+      <button class="btn btn-primary btn-sm">Pequeño</button>
+      <button class="btn btn-primary">Mediano</button>
+      <button class="btn btn-primary" disabled>Deshabilitado</button>
+    </div>
+    <div class="cb-preview-col" style="width:100%;padding-top:0;">
+      <button class="btn btn-primary btn-lg">Crear mi cuenta</button>
+    </div>
+  </div>
+  <div class="do-dont">
+    <div class="do"><div class="do-label">✓ Hacer</div>Usar <code class="mono">btn-primary</code> para una sola acción principal por pantalla (Continuar, Guardar, Confirmar).</div>
+    <div class="dont"><div class="dont-label">✗ No hacer</div>No usar <code class="mono">btn-accent</code> fuera de gamificación — confundiría "logro" con "acción del sistema".</div>
+  </div>
+</section>
+
+<!-- ══ INPUTS ══ -->
+<section class="section" id="inputs">
+  <div class="section-header">
+    <div class="section-eye">12 · Componentes base</div>
+    <div class="section-title">Campos de entrada</div>
+  </div>
+  <div class="cb"><div class="cb-preview-col" style="width:100%;max-width:380px;">
+    <div class="field">
+      <label class="field-label">Correo institucional</label>
+      <div class="input-wrap">
+        <span class="iico iico-l">✉</span>
+        <input class="input has-l" placeholder="nombre@universidad.edu.co">
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label">Contraseña</label>
+      <div class="input-wrap">
+        <span class="iico iico-l">🔒</span>
+        <input class="input has-l has-r" type="password" value="••••••••••">
+        <span class="iico iico-r">👁</span>
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label">Correo</label>
+      <input class="input err" value="nombre@gmail.com">
+      <div class="ferr">⚠ Usa tu correo institucional, no uno personal</div>
+    </div>
+    <div class="field">
+      <label class="field-label">Correo</label>
+      <input class="input ok" value="nombre@universidad.edu.co">
+      <div class="fok">✓ Correo institucional válido</div>
+    </div>
+    <div class="field">
+      <label class="field-label">Nivel académico</label>
+      <select class="select">
+        <option>Pregrado</option><option>Posgrado</option><option>Técnico / Tecnólogo</option>
+      </select>
+    </div>
+    <div class="grid-2">
+      <div class="field"><label class="field-label">Fecha inicio de consumo</label><input class="input" type="date"></div>
+      <div class="field"><label class="field-label">Frecuencia (días/semana)</label><input class="input" type="number" placeholder="0–7"></div>
+    </div>
+  </div></div>
+  <div class="do-dont">
+    <div class="do"><div class="do-label">✓ Hacer</div>Acompañar todo borde rojo con un mensaje de texto (<code class="mono">.ferr</code>): el color solo no es suficiente para usuarios con baja visión del color.</div>
+    <div class="dont"><div class="dont-label">✗ No hacer</div>No dejar el campo de contraseña sin opción de mostrar/ocultar: en un formulario de registro largo, el usuario necesita verificar lo que escribió.</div>
+  </div>
+</section>
+
+<!-- ══ CHECKBOX ══ -->
+<section class="section" id="checkbox">
+  <div class="section-header">
+    <div class="section-eye">13 · Componentes base</div>
+    <div class="section-title">Checkbox y consentimiento</div>
+  </div>
+  <div class="cb"><div class="cb-preview-col" style="width:100%;">
+    <div class="check-row"><div class="check-box" onclick="toggleCheck(this)"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div><label class="check-label">Sin marcar — clic para alternar</label></div>
+    <div class="check-row"><div class="check-box checked"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div><label class="check-label">Marcado</label></div>
+    <div class="check-row" style="opacity:.5;"><div class="check-box"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div><label class="check-label">Deshabilitado</label></div>
+  </div></div>
+  <div class="do-dont">
+    <div class="do"><div class="do-label">✓ Hacer</div>El consentimiento informado siempre usa <b>dos checkboxes explícitos e independientes</b> (tratamiento de datos + registro de consumo). El botón "Continuar" permanece deshabilitado hasta que ambos estén marcados (RF-05).</div>
+    <div class="dont"><div class="dont-label">✗ No hacer</div>No usar un solo checkbox genérico de "Acepto todo": cada consentimiento cubre un uso de datos distinto y debe poder otorgarse por separado.</div>
+  </div>
+
+  <div class="subsection-title">Texto oficial de consentimiento <span class="tag">equipo de psicología · junio 2026</span></div>
+  <div class="cb">
+    <div class="cb-header"><span class="cb-label">TEXTO VERBATIM APROBADO</span><span class="cb-note">Usar exactamente en la app — no parafrasear</span></div>
+    <div class="cb-preview-col" style="width:100%;">
+      <div style="background:var(--surface-hover);border:1px solid var(--surface-border);border-radius:var(--r-md);padding:var(--s5);font-size:12px;line-height:1.75;color:var(--text-secondary);">
+        <p style="margin-bottom:10px;">Le invitamos a participar de manera voluntaria. Antes de decidir, lea atentamente la siguiente información:</p>
+        <ul style="list-style:disc;padding-left:20px;display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">
+          <li>La aplicación de las pruebas tiene fines <b>académicos, formativos y de investigación</b>, según los objetivos del proyecto institucional.</li>
+          <li>Sus respuestas y resultados serán manejados con <b>estricta confidencialidad</b>, siguiendo los lineamientos éticos y legales vigentes.</li>
+          <li>Su participación es <b>voluntaria</b>; puede retirarse en cualquier momento, sin que ello genere consecuencias negativas para usted.</li>
+          <li>La información recolectada será utilizada exclusivamente con propósitos pedagógicos y de investigación, de forma <b>agregada y sin identificar</b> a los participantes.</li>
+          <li>Si tiene dudas o requiere información adicional, puede comunicarse con el equipo responsable del proyecto.</li>
+        </ul>
+        <p style="font-size:11px;color:var(--text-muted);">Al continuar, usted declara que ha comprendido la información anterior y otorga su consentimiento para participar de manera libre y voluntaria.</p>
+      </div>
+      <div style="margin-top:var(--s4);display:flex;flex-direction:column;gap:2px;">
+        <div class="check-row"><div class="check-box checked"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div><label class="check-label">Acepto el <b>tratamiento de mis datos personales</b> según lo descrito.</label></div>
+        <div class="check-row"><div class="check-box"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div><label class="check-label">Acepto el <b>registro de mi historial de consumo</b> para fines de seguimiento del programa.</label></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ BADGES ══ -->
+<section class="section" id="badges">
+  <div class="section-header">
+    <div class="section-eye">14 · Componentes base</div>
+    <div class="section-title">Badges</div>
+  </div>
+  <div class="cb">
+    <div class="cb-header"><span class="cb-label">SEMÁNTICOS GENÉRICOS</span></div>
+    <div class="cb-preview">
+      <span class="badge b-success"><span class="bdot" style="background:var(--success);"></span>Completo</span>
+      <span class="badge b-warning"><span class="bdot" style="background:var(--warning);"></span>Pendiente</span>
+      <span class="badge b-danger"><span class="bdot" style="background:var(--danger);"></span>Error</span>
+      <span class="badge b-info"><span class="bdot" style="background:var(--info);"></span>Informativo</span>
+      <span class="badge b-neutral">Inactivo</span>
+      <span class="badge b-accent">🔥 Racha · 7 días</span>
+    </div>
+    <div class="cb-header"><span class="cb-label">ESTADOS DE REGISTRO</span></div>
+    <div class="cb-preview">
+      <span class="badge b-warning"><span class="bdot" style="background:var(--warning);"></span>PENDIENTE_CONSENTIMIENTO</span>
+      <span class="badge b-info"><span class="bdot" style="background:var(--info);"></span>PENDIENTE_REVISION</span>
+      <span class="badge b-success"><span class="bdot" style="background:var(--success);"></span>REGISTRO_COMPLETO</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══ ALERTS ══ -->
+<section class="section" id="alerts">
+  <div class="section-header">
+    <div class="section-eye">15 · Componentes base</div>
+    <div class="section-title">Alerts</div>
+    <div class="section-desc">Ejemplos con mensajes reales del sistema — flujos de acceso y cuenta.</div>
+  </div>
+  <div class="cb"><div class="cb-preview-col" style="width:100%;display:flex;flex-direction:column;gap:var(--s4);">
+    <div class="alert alert-error"><span class="alert-icon">⚠</span><div class="alert-body"><div class="alert-title">No pudimos crear tu cuenta</div><div class="alert-desc">Este correo ya está registrado. Inicia sesión o recupera tu contraseña.</div></div></div>
+    <div class="alert alert-warning"><span class="alert-icon">⏱</span><div class="alert-body"><div class="alert-title">Tu sesión está por expirar</div><div class="alert-desc">Por inactividad, cerraremos tu sesión en 2 minutos.</div></div></div>
+    <div class="alert alert-success"><span class="alert-icon">✓</span><div class="alert-body"><div class="alert-title">Cuenta creada</div><div class="alert-desc">Revisa tu correo institucional para confirmar tu dirección.</div></div></div>
+    <div class="alert alert-info"><span class="alert-icon">ℹ</span><div class="alert-body"><div class="alert-title">Modificaste un dato sensible</div><div class="alert-desc">Como cambiaste tu fecha de último consumo, necesitamos que confirmes tu consentimiento nuevamente.</div></div></div>
+  </div></div>
+</section>
+
+<!-- ══ STEPPER ══ -->
+<section class="section" id="stepper">
+  <div class="section-header">
+    <div class="section-eye">16 · Componentes base</div>
+    <div class="section-title">Indicador de progreso</div>
+    <div class="section-desc">Las cuatro etapas del flujo de acceso: Cuenta → Consentimiento → Línea base → Revisión.</div>
+  </div>
+  <div class="cb"><div class="cb-preview-col" style="width:100%;">
+    <div class="stepper">
+      <div class="step done"><div class="step-dot">✓</div><div class="step-label">Cuenta</div></div>
+      <div class="step active"><div class="step-line"></div><div class="step-dot">2</div><div class="step-label">Consentimiento</div></div>
+      <div class="step"><div class="step-line"></div><div class="step-dot">3</div><div class="step-label">Línea base</div></div>
+      <div class="step"><div class="step-line"></div><div class="step-dot">4</div><div class="step-label">Revisión</div></div>
+    </div>
+  </div></div>
+</section>
+
+<!-- ══ PWMETER ══ -->
+<section class="section" id="pwmeter">
+  <div class="section-header">
+    <div class="section-eye">17 · Componentes base</div>
+    <div class="section-title">Fuerza de contraseña</div>
+    <div class="section-desc">Política RF-01: mínimo 8 caracteres, 1 mayúscula, 1 número, 1 carácter especial.</div>
+  </div>
+  <div class="cb"><div class="cb-preview-col" style="width:100%;max-width:380px;">
+    <div class="field">
+      <input class="input" value="abc12345">
+      <div class="pw-meter weak"><div class="pw-bar"></div><div class="pw-bar"></div><div class="pw-bar"></div></div>
+      <div style="font-size:11px;color:var(--danger-text);margin-top:4px;">Débil</div>
+    </div>
+    <div class="field">
+      <input class="input" value="Abrisa2026">
+      <div class="pw-meter fair"><div class="pw-bar"></div><div class="pw-bar"></div><div class="pw-bar"></div></div>
+      <div style="font-size:11px;color:var(--warning-text);margin-top:4px;">Aceptable</div>
+    </div>
+    <div class="field">
+      <input class="input ok" value="Br1sa!2026#edu">
+      <div class="pw-meter strong"><div class="pw-bar"></div><div class="pw-bar"></div><div class="pw-bar"></div></div>
+      <div style="margin-top:8px;">
+        <div class="pw-rule met">✓ Mínimo 8 caracteres</div>
+        <div class="pw-rule met">✓ Al menos 1 mayúscula</div>
+        <div class="pw-rule met">✓ Al menos 1 número</div>
+        <div class="pw-rule met">✓ Al menos 1 carácter especial</div>
+      </div>
+    </div>
+  </div></div>
+</section>
+
+
+<!-- ══ TOKENS DE DIRECCIÓN ══ -->
+<section class="section" id="dir-tokens">
+  <div class="section-header">
+    <div class="section-eye">18 · Componentes del chat</div>
+    <div class="section-title">Tokens de dirección</div>
+    <div class="section-desc">Para actividades con swipe izquierda/derecha donde la dirección tiene significado semántico (acercar a valores vs alejar de valores). Mapean a los colores semánticos existentes — <b>no se introducen colores nuevos</b>. El equipo de psicología especificó rojo para "Me aleja" y azul para "Me acerca"; estas elecciones son culturalmente coherentes con danger (advertencia/rechazo) e info (información/acercamiento).</div>
+  </div>
+  <div class="cb">
+    <div class="cb-header"><span class="cb-label">TOKENS</span></div>
+    <div class="cb-preview" style="gap:var(--s5);">
+      <div>
+        <div class="dir-label dir-aleja" style="margin-bottom:6px;">← Me aleja</div>
+        <div class="token-table" style="width:auto">
+          <tr><td class="mono">--dir-aleja</td><td><span class="swatch-inline" style="background:var(--danger)"></span><span class="mono">#C13B30</span></td></tr>
+          <tr><td class="mono">--dir-aleja-bg</td><td><span class="swatch-inline" style="background:var(--danger-bg)"></span><span class="mono">#FBEAE7</span></td></tr>
+          <tr><td class="mono">--dir-aleja-text</td><td><span class="swatch-inline" style="background:var(--danger-text)"></span><span class="mono">#8E2A21</span></td></tr>
+        </div>
+      </div>
+      <div>
+        <div class="dir-label dir-acerca" style="margin-bottom:6px;">Me acerca →</div>
+        <div class="token-table" style="width:auto">
+          <tr><td class="mono">--dir-acerca</td><td><span class="swatch-inline" style="background:var(--info)"></span><span class="mono">#1E6FA8</span></td></tr>
+          <tr><td class="mono">--dir-acerca-bg</td><td><span class="swatch-inline" style="background:var(--info-bg)"></span><span class="mono">#E7F1FA</span></td></tr>
+          <tr><td class="mono">--dir-acerca-text</td><td><span class="swatch-inline" style="background:var(--info-text)"></span><span class="mono">#1E6FA8</span></td></tr>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ TARJETA SWIPEABLE ══ -->
+<section class="section" id="swipe-card">
+  <div class="section-header">
+    <div class="section-eye">19 · Componentes del chat</div>
+    <div class="section-title">Tarjeta swipeable</div>
+    <div class="section-desc">Usada en actividades de clasificación de valores (M03, Módulo 1 Día 2). El usuario arrastra la tarjeta: izquierda = "Me aleja", derecha = "Me acerca". Al soltarla, vuela hacia la zona correspondiente con rotación. El avatar reacciona según la dirección.</div>
+  </div>
+  <div class="cb">
+    <div class="cb-header"><span class="cb-label">ESTADO EN REPOSO</span></div>
+    <div class="cb-preview" style="justify-content:center;padding:var(--s7);">
+      <div class="swipe-arena" style="width:100%;max-width:340px;">
+        <div class="swipe-zone left">← Me aleja</div>
+        <div class="swipe-zone right">Me acerca →</div>
+        <div class="swipe-card-demo" onclick="this.classList.toggle('swiped-left')">Salud física</div>
+      </div>
+    </div>
+    <div class="cb-header"><span class="cb-label">ESTADOS POST-SWIPE</span></div>
+    <div class="cb-preview" style="gap:var(--s6);justify-content:center;">
+      <div class="swipe-card-demo swiped-left" style="transform:none;transition:none;">← Me aleja</div>
+      <div class="swipe-card-demo swiped-right" style="transform:none;transition:none;">Me acerca →</div>
+    </div>
+  </div>
+  <div class="do-dont">
+    <div class="do"><div class="do-label">✓ Hacer</div>El avatar debe reaccionar en tiempo real a cada decisión: aprobación sutil (postura relajada) cuando el usuario desliza "Me acerca", expresión reflexiva (inclinación leve) cuando desliza "Me aleja".</div>
+    <div class="dont"><div class="dont-label">✗ No hacer</div>No generar juicio negativo explícito cuando el usuario desliza hacia "Me aleja". La actividad registra, no evalúa.</div>
+  </div>
+</section>
+
+<!-- ══ ARRASTRAR A COLUMNAS ══ -->
+<section class="section" id="drag-cols">
+  <div class="section-header">
+    <div class="section-eye">20 · Componentes del chat</div>
+    <div class="section-title">Arrastrar a columnas</div>
+    <div class="section-desc">Dos variantes: <b>2 zonas</b> (pros/contras, M1D1) y <b>4 zonas</b> (clasificación pensamiento/emoción/sensación/conducta, M3D3). Las tarjetas flotan desde el centro y se anclan en la zona elegida.</div>
+  </div>
+  <div class="cb">
+    <div class="cb-header"><span class="cb-label">VARIANTE 2 ZONAS · PROS / CONTRAS</span></div>
+    <div class="cb-preview-col" style="max-width:360px;">
+      <div class="drag-cols drag-cols-2">
+        <div class="drag-zone-box">
+          <div class="drag-zone-label">✓ Pros</div>
+          <div class="drag-item">"Me relaja cuando estoy ansioso."</div>
+          <div class="drag-item">"Me ayuda a escapar del estrés."</div>
+        </div>
+        <div class="drag-zone-box">
+          <div class="drag-zone-label">✗ Contras</div>
+          <div class="drag-item">"Aumenta mi ansiedad con el tiempo."</div>
+        </div>
+      </div>
+    </div>
+    <div class="cb-header"><span class="cb-label">VARIANTE 4 ZONAS · CLASIFICACIÓN</span></div>
+    <div class="cb-preview-col" style="max-width:360px;">
+      <div class="drag-cols drag-cols-4">
+        <div class="drag-zone-box"><div class="drag-zone-label">💭 Pensamiento</div><div class="drag-item">"Necesito vapear para calmarme."</div></div>
+        <div class="drag-zone-box"><div class="drag-zone-label">💙 Emoción</div></div>
+        <div class="drag-zone-box"><div class="drag-zone-label">⚡ Sensación</div><div class="drag-item">"Presión en el pecho."</div></div>
+        <div class="drag-zone-box"><div class="drag-zone-label">🏃 Conducta</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ GRID DE SELECCIÓN ══ -->
+<section class="section" id="value-grid">
+  <div class="section-header">
+    <div class="section-eye">21 · Componentes del chat</div>
+    <div class="section-title">Grid de selección con restricciones</div>
+    <div class="section-desc">Para actividades de elección de valores (M1D2): mínimo 3, máximo 5. Las tarjetas se resaltan en brand al seleccionarse. El botón "Continuar" permanece deshabilitado hasta cumplir el mínimo.</div>
+  </div>
+  <div class="cb">
+    <div class="cb-preview-col" style="max-width:380px;">
+      <div class="value-grid" onclick="this.querySelector('.value-card:not(.selected)')?.classList.add('selected')">
+        <div class="value-card selected"><div class="value-card-icon">🧠</div><div class="value-card-label">Bienestar emocional</div></div>
+        <div class="value-card selected"><div class="value-card-icon">📚</div><div class="value-card-label">Rendimiento académico</div></div>
+        <div class="value-card"><div class="value-card-icon">🤝</div><div class="value-card-label">Relaciones personales</div></div>
+        <div class="value-card selected"><div class="value-card-icon">🌱</div><div class="value-card-label">Crecimiento personal</div></div>
+        <div class="value-card"><div class="value-card-icon">⚡</div><div class="value-card-label">Vitalidad y energía</div></div>
+        <div class="value-card"><div class="value-card-icon">🕊</div><div class="value-card-label">Tranquilidad mental</div></div>
+      </div>
+      <div class="value-counter">Seleccionados: <b>3</b> de 5 máximo · mínimo requerido: 3</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ CONSTRUCTOR DE TEXTO ══ -->
+<section class="section" id="text-builder">
+  <div class="section-header">
+    <div class="section-eye">22 · Componentes del chat</div>
+    <div class="section-title">Constructor de texto asistido</div>
+    <div class="section-desc">El usuario construye frases propias tocando palabras clave sugeridas. Usada en la reformulación de metas (M1D3) y en el compromiso de cambio (M1D7). Las palabras se insertan en slots marcados.</div>
+  </div>
+  <div class="cb">
+    <div class="cb-preview-col" style="max-width:380px;">
+      <div class="text-builder">Esta semana <span class="tslot">intentaré</span> <span class="tslot">reducir</span> mi consumo cuando esté <span class="tslot">estresado</span>.</div>
+      <div class="builder-chips">
+        <div class="builder-chip used">intentaré</div>
+        <div class="builder-chip used">reducir</div>
+        <div class="builder-chip">observar</div>
+        <div class="builder-chip">progresivamente</div>
+        <div class="builder-chip used">estresado</div>
+        <div class="builder-chip">con amigos</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ ESCALA CONTINUA ══ -->
+<section class="section" id="continuum">
+  <div class="section-header">
+    <div class="section-eye">23 · Componentes del chat</div>
+    <div class="section-title">Escala continua con etiquetas</div>
+    <div class="section-desc">Diferente al campo numérico: muestra un track horizontal con etiquetas en los extremos. Usada en actividades de evitación/afrontamiento (M2D5) y urgencia de impulso. El pulgar se arrastra táctilmente.</div>
+  </div>
+  <div class="cb">
+    <div class="cb-preview-col" style="max-width:380px;">
+      <div class="continuum-wrap">
+        <div class="continuum-labels"><span>Evito completamente</span><span>Afronto activamente</span></div>
+        <div class="continuum-track">
+          <div class="continuum-fill" style="width:35%"></div>
+          <div class="continuum-thumb" style="left:35%"></div>
+        </div>
+        <div class="continuum-ticks">
+          <span class="continuum-tick">0</span><span class="continuum-tick">2</span><span class="continuum-tick">4</span><span class="continuum-tick">6</span><span class="continuum-tick">8</span><span class="continuum-tick">10</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ SILUETA CORPORAL ══ -->
+<section class="section" id="body-map">
+  <div class="section-header">
+    <div class="section-eye">24 · Componentes del chat</div>
+    <div class="section-title">Silueta corporal interactiva</div>
+    <div class="section-desc">Para actividades de interoceptividad (M3D1, M5D2). El usuario toca zonas del cuerpo que se iluminan al activarse. Implementada en SVG inline con zonas como elementos clicables. El mapa tiene vista frontal y posterior.</div>
+  </div>
+  <div class="cb">
+    <div class="cb-preview" style="gap:var(--s7);align-items:flex-start;justify-content:center;">
+      <div class="body-map-wrap">
+        <svg width="80" height="160" viewBox="0 0 80 160" fill="none" style="overflow:visible">
+          <circle cx="40" cy="16" r="14" fill="var(--surface-hover)" stroke="var(--surface-border)" stroke-width="1.5"/>
+          <rect x="20" y="34" width="40" height="55" rx="10" fill="var(--surface-hover)" stroke="var(--surface-border)" stroke-width="1.5"/>
+          <rect x="5" y="36" width="14" height="40" rx="7" fill="var(--surface-hover)" stroke="var(--surface-border)" stroke-width="1.5"/>
+          <rect x="61" y="36" width="14" height="40" rx="7" fill="var(--surface-hover)" stroke="var(--surface-border)" stroke-width="1.5"/>
+          <rect x="22" y="92" width="15" height="52" rx="7" fill="var(--surface-hover)" stroke="var(--surface-border)" stroke-width="1.5"/>
+          <rect x="43" y="92" width="15" height="52" rx="7" fill="var(--surface-hover)" stroke="var(--surface-border)" stroke-width="1.5"/>
+          <!-- Zona activa: pecho -->
+          <ellipse cx="40" cy="52" rx="14" ry="10" fill="rgba(29,131,120,.25)" stroke="var(--brand-500)" stroke-width="1.5"/>
+          <!-- Zona activa: cabeza -->
+          <circle cx="40" cy="16" r="14" fill="rgba(30,111,168,.18)" stroke="var(--info)" stroke-width="1.5"/>
+        </svg>
+        <div class="body-map-wrap" style="gap:4px;">
+          <div class="body-zone-tag active">Pecho ✓</div>
+          <div class="body-zone-tag active">Cabeza ✓</div>
+          <div class="body-zone-tag">Garganta</div>
+          <div class="body-zone-tag">Abdomen</div>
+          <div class="body-zone-tag">Manos</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="do-dont">
+    <div class="do"><div class="do-label">✓ Hacer</div>Cada zona activada muestra una etiqueta descriptiva automática ("Presión en el pecho", "Nudo en la garganta") que el equipo de psicología aprueba por módulo.</div>
+    <div class="dont"><div class="dont-label">✗ No hacer</div>No mostrar retroalimentación correcta/incorrecta. La actividad registra sin evaluar.</div>
+  </div>
+</section>
+
+<!-- ══ TEMPORIZADOR ══ -->
+<section class="section" id="ex-timer">
+  <div class="section-header">
+    <div class="section-eye">25 · Componentes del chat</div>
+    <div class="section-title">Temporizador de ejercicio</div>
+    <div class="section-desc">Para ejercicios guiados con fases y duración específica (M5D4: respiración rápida 30s, tensión muscular 15s, recuperación 10s). Muestra cuenta regresiva, barra de progreso, fase actual y mensajes de acompañamiento del avatar.</div>
+  </div>
+  <div class="cb">
+    <div class="cb-preview-col" style="max-width:360px;">
+      <div class="ex-timer-box">
+        <div style="font-size:10.5px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;">Fase 1 de 3 · Respiración</div>
+        <div class="ex-timer-display">00:18</div>
+        <div class="ex-timer-bar"><div class="ex-timer-fill" style="width:40%"></div></div>
+        <div class="ex-timer-msg">"Observa lo que sientes en tu cuerpo"</div>
+        <div style="margin-top:10px;display:flex;justify-content:center;gap:4px;">
+          <span class="ex-phase-dot done"></span>
+          <span class="ex-phase-dot active"></span>
+          <span class="ex-phase-dot"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ PANEL TIPO CÓMIC ══ -->
+<section class="section" id="comic-panel">
+  <div class="section-header">
+    <div class="section-eye">26 · Componentes del chat</div>
+    <div class="section-title">Panel tipo cómic / psicoeducativo</div>
+    <div class="section-desc">Para contenido psicoeducativo secuencial (M2D6: "La trampa de la evitación"). 4 viñetas que el usuario avanza tocando "Siguiente". No tiene retroalimentación, solo progresión.</div>
+  </div>
+  <div class="cb">
+    <div class="cb-preview-col" style="width:100%;">
+      <div class="comic-strip">
+        <div class="comic-panel"><div class="comic-num">Viñeta 1</div><div class="comic-illus">😟</div><div class="comic-text">"Sientes algo desagradable: ansiedad, estrés, aburrimiento…"</div></div>
+        <div class="comic-panel active"><div class="comic-num">Viñeta 2</div><div class="comic-illus">😌</div><div class="comic-text">"Vapeas. El alivio es casi inmediato… ¡funcionó!"</div></div>
+        <div class="comic-panel"><div class="comic-num">Viñeta 3</div><div class="comic-illus">😰</div><div class="comic-text">"Pero la emoción vuelve… a veces más fuerte."</div></div>
+        <div class="comic-panel"><div class="comic-num">Viñeta 4</div><div class="comic-illus">🕳</div><div class="comic-text">"El vapeo no resolvió la emoción, solo la pospuso."</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ GRÁFICO BARRAS CSS ══ -->
+<section class="section" id="bar-chart">
+  <div class="section-header">
+    <div class="section-eye">27 · Componentes del chat</div>
+    <div class="section-title">Gráfico de barras comparativo en CSS</div>
+    <div class="section-desc">Sin librerías externas. Barras CSS con altura proporcional. Usada para comparar alivio inmediato vs diferido (M2D2). Máximo 5 grupos. Las alturas se calculan en JavaScript como porcentaje del valor máximo.</div>
+  </div>
+  <div class="cb">
+    <div class="cb-preview-col" style="max-width:380px;">
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">Alivio percibido por escenario</div>
+      <div class="bar-chart">
+        <div class="bar-group"><div class="bar b-a" style="height:78px"></div><div class="bar b-b" style="height:32px"></div><div class="bar-label">Estrés laboral</div></div>
+        <div class="bar-group"><div class="bar b-a" style="height:60px"></div><div class="bar b-b" style="height:45px"></div><div class="bar-label">Aburrimiento</div></div>
+        <div class="bar-group"><div class="bar b-a" style="height:90px"></div><div class="bar b-b" style="height:20px"></div><div class="bar-label">Presión social</div></div>
+      </div>
+      <div class="bar-chart-legend">
+        <div style="display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--text-muted)"><div class="bar-legend-dot" style="background:var(--brand-500)"></div>Alivio inmediato</div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--text-muted)"><div class="bar-legend-dot" style="background:var(--brand-200)"></div>Alivio 1 h después</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ BOTÓN FLOTANTE SOS ══ -->
+<section class="section" id="fab-sos">
+  <div class="section-header">
+    <div class="section-eye">28 · Componentes del chat</div>
+    <div class="section-title">Botón flotante de impulso (SOS Craving)</div>
+    <div class="section-desc">Accesible desde la <b>pantalla principal</b> de la app, no solo desde dentro del chat (M5D5). El usuario lo activa cuando tiene ganas de vapear. Inicia un ejercicio guiado de 3 minutos de observación del impulso sin actuar. Posición fija, esquina inferior derecha.</div>
+  </div>
+  <div class="cb">
+    <div class="cb-preview" style="justify-content:center;padding:var(--s8) var(--s6);">
+      <div style="text-align:center;">
+        <button class="fab-sos fab-sos-pulse">⚡ Tengo ganas de vapear</button>
+        <span class="fab-sos-context">Siempre visible · esquina inferior derecha</span>
+      </div>
+    </div>
+  </div>
+  <div class="do-dont">
+    <div class="do"><div class="do-label">✓ Hacer</div>Accesible en cualquier momento dentro de la app una vez que el estudiante tiene el registro completo. Al activarlo, inicia la pantalla de intervención en tiempo real sin navegar fuera de la pantalla actual.</div>
+    <div class="dont"><div class="dont-label">✗ No hacer</div>No ocultar el botón durante el chat ni durante otras actividades. El impulso puede aparecer en cualquier momento.</div>
+  </div>
+</section>
+
+<!-- ══ AVATAR ══ -->
+<section class="section" id="avatar">
+  <div class="section-header">
+    <div class="section-eye">29 · Componentes del chat</div>
+    <div class="section-title">Avatar · dos contextos</div>
+    <div class="section-desc">El mismo elemento visual cumple dos roles distintos con comportamientos y paletas diferentes. <b>No mezclar</b>: el avatar de acompañamiento del chat usa brand (teal), el de gamificación usa accent (ember).</div>
+  </div>
+  <div class="grid-2">
+    <div class="cb">
+      <div class="cb-header"><span class="cb-label">ACOMPAÑANTE · M03 CHAT</span><span class="cb-note">paleta: brand</span></div>
+      <div class="cb-preview-col" style="width:100%;">
+        <div style="display:flex;gap:var(--s5);flex-wrap:wrap;justify-content:center;">
+          <div class="avatar-wrap"><div class="avatar-body avatar-chat">😊</div><div class="avatar-state av-chat-approval">Aprobación</div></div>
+          <div class="avatar-wrap"><div class="avatar-body avatar-chat">🤔</div><div class="avatar-state av-chat-reflect">Reflexivo</div></div>
+          <div class="avatar-wrap"><div class="avatar-body avatar-chat">👁</div><div class="avatar-state av-chat-idle">Atento</div></div>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:10px;line-height:1.6;">Reacciona en tiempo real a cada decisión: postura relajada cuando el usuario se acerca a sus valores, expresión reflexiva cuando se aleja. Microanimaciones de atención si el usuario tarda.</div>
+      </div>
+    </div>
+    <div class="cb">
+      <div class="cb-header"><span class="cb-label">MASCOTA · M06 GAMIFICACIÓN</span><span class="cb-note">paleta: accent</span></div>
+      <div class="cb-preview-col" style="width:100%;">
+        <div style="display:flex;gap:var(--s5);flex-wrap:wrap;justify-content:center;">
+          <div class="avatar-wrap"><div class="avatar-body avatar-mascot">🌟</div><div class="avatar-state av-mas-energico">Enérgico</div></div>
+          <div class="avatar-wrap"><div class="avatar-body avatar-mascot">😴</div><div class="avatar-state av-mas-aburrido">Aburrido</div></div>
+          <div class="avatar-wrap"><div class="avatar-body avatar-mascot">😨</div><div class="avatar-state av-mas-asustado">Asustado</div></div>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:10px;line-height:1.6;">Estado determinado por el comportamiento del usuario: <b>Enérgico</b> = sesión de chat completada hoy · <b>Aburrido</b> = sin interacción 2+ días · <b>Asustado</b> = craving elevado reciente.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ TEXTO DE CONSENTIMIENTO ══ -->
+<section class="section" id="consent-text">
+  <div class="section-header">
+    <div class="section-eye">30 · Contenido</div>
+    <div class="section-title">Texto oficial de consentimiento</div>
+    <div class="section-desc">Proporcionado por el equipo de psicología (junio 2026). Se muestra al abrir la app <b>antes del registro</b>, no después. Requiere confirmación activa del usuario para continuar.</div>
+  </div>
+  <div class="callout c-warn" style="background:var(--warning-bg);border:1px solid var(--warning-border);color:var(--warning-text);padding:10px 14px;border-radius:var(--r-md);font-size:12px;margin-bottom:14px;">
+    <b>⚠ Este texto no debe parafrasearse.</b> El equipo de psicología aprobó el lenguaje exacto por razones éticas y legales. El correo de contacto (actualmente en blanco) debe ser completado antes del lanzamiento.
+  </div>
+  <table class="token-table">
+    <tr><th>Elemento</th><th>Contenido aprobado</th></tr>
+    <tr><td>Intro</td><td>"Le invitamos a participar de manera voluntaria. Antes de decidir, lea atentamente la siguiente información:"</td></tr>
+    <tr><td>Punto 1</td><td>"La aplicación de las pruebas tiene fines académicos, formativos y de investigación, según los objetivos del proyecto institucional."</td></tr>
+    <tr><td>Punto 2</td><td>"Sus respuestas y resultados serán manejados con estricta confidencialidad, siguiendo los lineamientos éticos y legales vigentes."</td></tr>
+    <tr><td>Punto 3</td><td>"Su participación es voluntaria; puede retirarse en cualquier momento, sin que ello genere consecuencias negativas para usted."</td></tr>
+    <tr><td>Punto 4</td><td>"La información recolectada será utilizada exclusivamente con propósitos pedagógicos y de investigación, de forma agregada y sin identificar a los participantes."</td></tr>
+    <tr><td>Punto 5</td><td>"Si tiene dudas o requiere información adicional, puede comunicarse con el equipo responsable del proyecto al correo: _________"</td></tr>
+    <tr><td>Cierre</td><td>"Al continuar, usted declara que ha comprendido la información anterior y otorga su consentimiento para participar de manera libre y voluntaria."</td></tr>
+    <tr><td>Acción</td><td>Botón de confirmación + dos checkboxes independientes (ver sección Checkbox y consentimiento)</td></tr>
+  </table>
+</section>
+
+<!-- ══ ESTRUCTURA DEL PROGRAMA ══ -->
+<section class="section" id="program-structure">
+  <div class="section-header">
+    <div class="section-eye">31 · Contenido</div>
+    <div class="section-title">Estructura del programa psicoeducativo</div>
+    <div class="section-desc">El equipo de psicología define 5 módulos de contenido de 7 días cada uno. Estos <b>módulos de contenido</b> (numerados por el equipo de psicología) son el árbol conversacional que vive dentro del M03 Chat técnico. M04 (técnico) administra el cronograma semana a semana.</div>
+  </div>
+  <div class="callout c-info" style="background:var(--info-bg);border:1px solid var(--info-border);color:var(--info-text);padding:10px 14px;border-radius:var(--r-md);font-size:12px;margin-bottom:14px;"><b>Nomenclatura:</b> Los "módulos" del equipo de psicología (1–5) ≠ los módulos técnicos (M01–M08). Para evitar confusión en el código y en las reuniones de equipo, llamarlos siempre <b>"semanas"</b> o <b>"fases"</b> del programa cuando se habla del contenido.</div>
+  <table class="token-table">
+    <tr><th>Semana</th><th>Nombre del equipo de psicología</th><th>Marco teórico</th><th>Interacciones nuevas</th></tr>
+    <tr><td>1</td><td>Flexibilidad cognitiva y motivación para el cambio</td><td>MTT · Balance decisional · Metas SMART</td><td>Drag pros/contras · Swipe valores · Constructor de meta · Slider discrepancia</td></tr>
+    <tr><td>2</td><td>Evaluación emocional y conductas de evitación</td><td>PEF · Evitación experiencial · Trampa conductual</td><td>Tarjetas de situación · Barras comparativas · Continuum evitación/afrontamiento · Cómic 4 viñetas · Drag 4 zonas</td></tr>
+    <tr><td>3</td><td>Conciencia emocional</td><td>Mindfulness · Análisis funcional</td><td>Silueta corporal · Grid de emociones · Diario libre ≥50 palabras</td></tr>
+    <tr><td>4</td><td>(No documentado aún por el equipo de psicología)</td><td>—</td><td>—</td></tr>
+    <tr><td>5</td><td>Exposición a desencadenantes</td><td>Exposición interoceptiva y proceptiva · Defusión cognitiva</td><td>Animación de ola · Temporizador de ejercicio · Silueta corporal · Botón flotante en tiempo real · Resumen de semana</td></tr>
+  </table>
+</section>
+
+  </div>
+</main>
