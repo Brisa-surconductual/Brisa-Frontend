@@ -19,9 +19,10 @@ export function AuthProvider({ children }) {
   }
 
   /*
-   * TODO(#147): definir aquí la persistencia real
-   * de la sesión cuando exista backend. Por ahora
-   * la sesión vive solo en memoria.
+   * La sesión vive SOLO en memoria: al recargar se
+   * pierde. Aquí irá la persistencia real (rehidratar
+   * al montar y limpiar en logout) cuando el backend
+   * emita el token de sesión.
    */
 
   const value = {
