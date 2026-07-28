@@ -292,7 +292,7 @@ npm install
 Modo desarrollo
 
 ```bash
-npm dev
+npm run dev
 ```
 
 ---
@@ -300,7 +300,7 @@ npm dev
 ## Compilar para producción
 
 ```bash
-npm build
+npm run build
 ```
 
 ---

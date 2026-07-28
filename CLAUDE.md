@@ -13,7 +13,7 @@ grado. Este repositorio es SOLO el frontend.
   NO agregar `useMemo` / `useCallback` manuales salvo caso justificado; el
   compilador ya memoriza.
 - Ruteo: `react-router-dom` v7.
-- Estilos: **CSS Modules** (`*.module.css`) + variables de `src/styles/tokens.css`.
+- Estilos: **CSS Modules** (`*.module.css`) + variables de `src/styles/tokens.css`
   **NO Tailwind. NO librerías de UI externas** (MUI, Chakra, etc.).
 - Iconos: **`lucide-react`** únicamente. `strokeWidth` ~1.5–1.8, `size` 20 en UI.
   **Nunca emoji** en la interfaz.
