@@ -12,8 +12,9 @@ export {
   validateLoginForm,
 } from '@/features/auth/services/authValidation.js';
 
+export { SplashPage } from '@/features/auth/pages/SplashPage/index.js';
+
 /*
- * Las páginas (SplashPage, LoginPage, RecoverPage)
- * se reexportan aquí a medida que se implementan
- * en la tarea #145.
+ * LoginPage y RecoverPage se reexportan aquí a
+ * medida que se implementan en la tarea #145.
  */

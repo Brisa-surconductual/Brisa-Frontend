@@ -1713,6 +1713,13 @@ function prefill(role) {
       document.getElementById('b-frecuencia').value = '4';
     }
     showToast('Datos de demo rellenados','info');
+  } else if (role === 'pending') {
+    if (currentScreen !== 's-login') go('s-login');
+    setTimeout(() => {
+      document.getElementById('login-email').value = 'pendiente@brisa.co';
+      document.getElementById('login-pass').value = 'Brisa2026#';
+    }, 150);
+    showToast('Cuenta con PENDIENTE_CONSENTIMIENTO rellenada','info');
   } else {
     if (currentScreen !== 's-login') {
       if (currentScreen === 's-splash') go('s-login');
@@ -1725,14 +1732,6 @@ function prefill(role) {
       document.getElementById('login-pass').value = 'Admin2026#';
     }
     showToast('Credenciales admin rellenadas','info');
-  } else if (role === 'pending') {
-    const cur = document.querySelector('.screen.active')?.id;
-    if (cur !== 's-login') go('s-login');
-    setTimeout(() => {
-      document.getElementById('login-email').value = 'pendiente@brisa.co';
-      document.getElementById('login-pass').value = 'Brisa2026#';
-    }, 150);
-    showToast('Cuenta con PENDIENTE_CONSENTIMIENTO rellenada','info');
   }
 }
 

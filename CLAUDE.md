@@ -108,7 +108,7 @@ Fuente: `docs/Especificacion_Requerimientos_0717.xlsx`.
 
 ## Referencias dentro del repo
 
-- Prototipo navegable M01: `docs/M01_prototipo_v1.2.html` (lógica ya escrita:
+- Prototipo navegable M01: `docs/M01_prototipo_v1.2.1.html` (lógica ya escrita:
   `isValidEmail`, `pwStrength`, `doLogin`, `doRecover`, timeout de inactividad).
 - Design system: `docs/Design_System_prototipo_v1.2.html`.
 - Requerimientos: `docs/Especificacion_Requerimientos_0717.xlsx`.
