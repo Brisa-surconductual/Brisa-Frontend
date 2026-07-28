@@ -1,8 +1,14 @@
-import { AUTH_API_ERROR } from '../types/authTypes.js';
+import { AUTH_API_ERROR } from '@/features/auth/types/authTypes.js';
 
-import { findAccount, isValidRecoveryCode } from './authMockStore.js';
+import {
+  findAccount,
+  isValidRecoveryCode,
+} from '@/features/auth/api/authMockStore.js';
 
-import { createApiError, simulateNetworkDelay } from './authApiUtils.js';
+import {
+  createApiError,
+  simulateNetworkDelay,
+} from '@/features/auth/api/authApiUtils.js';
 
 export async function login({ email, password }) {
   await simulateNetworkDelay();

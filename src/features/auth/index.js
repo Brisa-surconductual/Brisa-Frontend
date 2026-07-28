@@ -2,15 +2,15 @@ export {
   login,
   requestPasswordRecovery,
   resetPassword,
-} from './api/authApi.js';
+} from '@/features/auth/api/authApi.js';
 
-export { AUTH_API_ERROR, USER_ROLE } from './types/authTypes.js';
+export { AUTH_API_ERROR, USER_ROLE } from '@/features/auth/types/authTypes.js';
 
 export {
   isValidEmail,
   isValidPassword,
   validateLoginForm,
-} from './services/authValidation.js';
+} from '@/features/auth/services/authValidation.js';
 
 /*
  * Las páginas (SplashPage, LoginPage, RecoverPage)
