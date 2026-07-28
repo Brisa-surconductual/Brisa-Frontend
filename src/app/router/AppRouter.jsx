@@ -14,6 +14,8 @@ import {
 
 import { RegistrationLayout } from '@/app/layouts/RegistrationLayout/index.js';
 
+import { USER_ROLE } from '@/features/auth/types/authTypes.js';
+
 import {
   BaselinePage,
   ConsentPage,
@@ -22,6 +24,9 @@ import {
   RegistrationCompletedPage,
   ReviewPage,
 } from '@/features/users/index.js';
+
+import { RequireAuth } from './RequireAuth.jsx';
+import { RoleHomeRedirect } from './RoleHomeRedirect.jsx';
 
 export function AppRouter() {
   return (
@@ -90,6 +95,35 @@ export function AppRouter() {
             path="completado"
             element={<RegistrationCompletedPage />}
           />
+        </Route>
+
+        <Route
+          path="/app"
+          element={<RequireAuth />}
+        >
+          <Route
+            index
+            element={<RoleHomeRedirect />}
+          />
+
+          {/* Placeholders: las pantallas reales son 147.3 y 147.4. */}
+          <Route
+            element={<RequireAuth allowedRoles={[USER_ROLE.ESTUDIANTE]} />}
+          >
+            <Route
+              path="estudiante"
+              element={<div>Home estudiante</div>}
+            />
+          </Route>
+
+          <Route
+            element={<RequireAuth allowedRoles={[USER_ROLE.PSICOLOGIA]} />}
+          >
+            <Route
+              path="psicologia"
+              element={<div>Home psicología</div>}
+            />
+          </Route>
         </Route>
 
         <Route
