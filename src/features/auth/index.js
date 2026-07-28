@@ -10,12 +10,11 @@ export {
   isValidEmail,
   isValidPassword,
   validateLoginForm,
+  validateRecoverRequestForm,
+  validateRecoverResetForm,
 } from '@/features/auth/services/authValidation.js';
 
 export { SplashPage } from '@/features/auth/pages/SplashPage/index.js';
 export { LoginPage } from '@/features/auth/pages/LoginPage/index.js';
-
-/*
- * RecoverPage se reexporta aquí a medida que se
- * implementa en la tarea #145.
- */
+export { RecoverRequestPage } from '@/features/auth/pages/RecoverRequestPage/index.js';
+export { RecoverResetPage } from '@/features/auth/pages/RecoverResetPage/index.js';
