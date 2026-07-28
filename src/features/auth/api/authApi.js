@@ -1,32 +1,17 @@
-import {
-  AUTH_API_ERROR,
-} from '../types/authTypes.js';
+import { AUTH_API_ERROR } from '../types/authTypes.js';
 
-import {
-  findAccount,
-  isValidRecoveryCode,
-} from './authMockStore.js';
+import { findAccount, isValidRecoveryCode } from './authMockStore.js';
 
-import {
-  createApiError,
-  simulateNetworkDelay,
-} from './authApiUtils.js';
+import { createApiError, simulateNetworkDelay } from './authApiUtils.js';
 
-export async function login({
-  email,
-  password,
-}) {
+export async function login({ email, password }) {
   await simulateNetworkDelay();
 
-  const normalizedEmail =
-    email.trim().toLowerCase();
+  const normalizedEmail = email.trim().toLowerCase();
 
   const account = findAccount(normalizedEmail);
 
-  if (
-    !account ||
-    account.password !== password
-  ) {
+  if (!account || account.password !== password) {
     throw createApiError(
       'Correo o contraseña incorrectos.',
       AUTH_API_ERROR.INVALID_CREDENTIALS,
@@ -39,9 +24,7 @@ export async function login({
   };
 }
 
-export async function requestPasswordRecovery({
-  email,
-}) {
+export async function requestPasswordRecovery({ email }) {
   await simulateNetworkDelay();
 
   /*
@@ -53,10 +36,7 @@ export async function requestPasswordRecovery({
   return { requested: true };
 }
 
-export async function resetPassword({
-  code,
-  password,
-}) {
+export async function resetPassword({ code, password }) {
   await simulateNetworkDelay();
 
   if (!isValidRecoveryCode(code)) {

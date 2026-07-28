@@ -11,7 +11,7 @@ grado. Este repositorio es SOLO el frontend.
 - React 19.2 + Vite 8 + JavaScript (ES2024). **NO TypeScript.**
 - **React Compiler activado** (`babel-plugin-react-compiler` en `vite.config.js`).
   NO agregar `useMemo` / `useCallback` manuales salvo caso justificado; el
-  compilador ya memoiza.
+  compilador ya memoriza.
 - Ruteo: `react-router-dom` v7.
 - Estilos: **CSS Modules** (`*.module.css`) + variables de `src/styles/tokens.css`.
   **NO Tailwind. NO librerías de UI externas** (MUI, Chakra, etc.).
@@ -45,6 +45,7 @@ src/
 ```
 
 Reglas duras:
+
 - **Las features NO se importan entre sí.** Si dos features necesitan algo, va a `shared/`.
 - Un componente solo sube a `shared/` cuando lo usan **2 o más** features.
 - **Toda** comunicación con el backend vive en `features/<feature>/api/`. Ningún

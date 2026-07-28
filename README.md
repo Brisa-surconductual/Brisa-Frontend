@@ -6,14 +6,14 @@ Frontend desarrollado con **React** y **Vite**, siguiendo una arquitectura **SPA
 
 # Tecnologías
 
-| Tecnología | Versión |
-|------------|---------|
-| Node.js | 22 LTS o superior |
-| npm | 10 o superior |
-| React | 19.2.7 |
-| Vite | 8.1.1 |
+| Tecnología          | Versión                |
+| ------------------- | ---------------------- |
+| Node.js             | 22 LTS o superior      |
+| npm                 | 10 o superior          |
+| React               | 19.2.7                 |
+| Vite                | 8.1.1                  |
 | JavaScript (ES2024) | Última versión estable |
-| React Router | Última versión estable |
+| React Router        | Última versión estable |
 
 ---
 
@@ -125,11 +125,11 @@ Contiene las funciones encargadas de comunicarse con el Backend.
 Ejemplo:
 
 ```javascript
-getUsers()
+getUsers();
 
-createUser()
+createUser();
 
-updateUser()
+updateUser();
 ```
 
 ---
@@ -159,9 +159,9 @@ Hooks personalizados relacionados únicamente con la funcionalidad.
 Ejemplo:
 
 ```javascript
-useUsers()
+useUsers();
 
-useCreateUser()
+useCreateUser();
 ```
 
 ---
@@ -226,6 +226,7 @@ Contiene recursos reutilizables por toda la aplicación. Aquí se encuentran ele
 # Assets
 
 Contiene los recursos estáticos del proyecto.
+
 - Imágenes
 - Iconos
 - Logos
@@ -236,6 +237,7 @@ Contiene los recursos estáticos del proyecto.
 # Styles
 
 Contiene los estilos globales de la aplicación:
+
 - Temas
 - Estilos globales
 

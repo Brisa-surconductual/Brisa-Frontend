@@ -2,17 +2,10 @@ import { useReducer } from 'react';
 
 import { AuthContext } from './authContext.js';
 
-import {
-  AUTH_ACTION,
-  authReducer,
-  initialAuthState,
-} from './authReducer.js';
+import { AUTH_ACTION, authReducer, initialAuthState } from './authReducer.js';
 
 export function AuthProvider({ children }) {
-  const [state, dispatch] = useReducer(
-    authReducer,
-    initialAuthState,
-  );
+  const [state, dispatch] = useReducer(authReducer, initialAuthState);
 
   function login({ email, role }) {
     dispatch({
@@ -39,9 +32,5 @@ export function AuthProvider({ children }) {
     logout,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

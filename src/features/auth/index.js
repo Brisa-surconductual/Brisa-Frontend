@@ -4,10 +4,7 @@ export {
   resetPassword,
 } from './api/authApi.js';
 
-export {
-  AUTH_API_ERROR,
-  USER_ROLE,
-} from './types/authTypes.js';
+export { AUTH_API_ERROR, USER_ROLE } from './types/authTypes.js';
 
 export {
   isValidEmail,

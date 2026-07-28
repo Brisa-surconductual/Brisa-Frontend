@@ -1,8 +1,6 @@
 const NETWORK_DELAY_MS = 600;
 
-export function simulateNetworkDelay(
-  ms = NETWORK_DELAY_MS,
-) {
+export function simulateNetworkDelay(ms = NETWORK_DELAY_MS) {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });

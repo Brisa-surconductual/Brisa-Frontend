@@ -1,5 +1,4 @@
-const EMAIL_PATTERN =
-  /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function isValidEmail(value) {
   return EMAIL_PATTERN.test(value.trim());
@@ -22,13 +21,11 @@ export function validateLoginForm(form) {
   const errors = {};
 
   if (!isValidEmail(form.email)) {
-    errors.email =
-      'Ingresa un correo válido.';
+    errors.email = 'Ingresa un correo válido.';
   }
 
   if (!form.password) {
-    errors.password =
-      'Ingresa tu contraseña.';
+    errors.password = 'Ingresa tu contraseña.';
   }
 
   return errors;
