@@ -40,14 +40,21 @@ export function SplashPage() {
         </p>
 
         <div className={styles.actions}>
-          <Button variant="primary" fullWidth onClick={goToCreateAccount}>
+          <Button variant="secondary" fullWidth onClick={goToCreateAccount}>
             Crear cuenta
           </Button>
 
-          <Button variant="secondary" fullWidth onClick={goToLogin}>
+          <Button
+            variant="ghost"
+            fullWidth
+            className={styles.loginButton}
+            onClick={goToLogin}
+          >
             Iniciar sesión
           </Button>
         </div>
+
+        <p className={styles.version}>v1.0.0 · Universidad Surcolombiana</p>
       </div>
     </div>
   );
