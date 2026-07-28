@@ -5,7 +5,7 @@ import {
   Routes,
 } from 'react-router-dom';
 
-import { SplashPage } from '@/features/auth/index.js';
+import { LoginPage, SplashPage } from '@/features/auth/index.js';
 
 import { RegistrationLayout } from '@/app/layouts/RegistrationLayout/index.js';
 
@@ -25,6 +25,11 @@ export function AppRouter() {
         <Route
           path="/"
           element={<SplashPage />}
+        />
+
+        <Route
+          path="/login"
+          element={<LoginPage />}
         />
 
         <Route

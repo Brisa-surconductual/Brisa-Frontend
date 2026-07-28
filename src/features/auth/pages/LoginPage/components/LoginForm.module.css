@@ -1,0 +1,53 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.visibilityButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-1);
+  color: var(--text-muted);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.visibilityButton:hover {
+  color: var(--text-primary);
+  background-color: var(--surface-hover);
+}
+
+.visibilityButton:focus-visible {
+  outline: 2px solid var(--brand-500);
+  outline-offset: 2px;
+}
+
+.visibilityButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.forgotPasswordLink {
+  align-self: center;
+  margin: 0;
+  padding: 0;
+  color: var(--brand-600);
+  font-size: 13px;
+  font-weight: 600;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.forgotPasswordLink:hover {
+  text-decoration: underline;
+}
+
+.forgotPasswordLink:focus-visible {
+  outline: 2px solid var(--brand-500);
+  outline-offset: 2px;
+}

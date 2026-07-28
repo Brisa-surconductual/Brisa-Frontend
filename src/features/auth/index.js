@@ -13,8 +13,9 @@ export {
 } from '@/features/auth/services/authValidation.js';
 
 export { SplashPage } from '@/features/auth/pages/SplashPage/index.js';
+export { LoginPage } from '@/features/auth/pages/LoginPage/index.js';
 
 /*
- * LoginPage y RecoverPage se reexportan aquí a
- * medida que se implementan en la tarea #145.
+ * RecoverPage se reexporta aquí a medida que se
+ * implementa en la tarea #145.
  */
