@@ -16,9 +16,15 @@ import {
   getSensitiveModifiedFields,
 } from '../../../services/registrationReview.js';
 
+import {
+  useAuth,
+} from '@/app/providers/index.js';
+
 export function useReviewPage() {
   const navigate = useNavigate();
   const location = useLocation();
+
+  const { login } = useAuth();
 
   const {
     account,
@@ -95,26 +101,42 @@ export function useReviewPage() {
       return;
     }
 
+    if (isSubmitting) {
+      return;
+    }
+
     setIsSubmitting(true);
     setSubmitError('');
 
     try {
-      const completedAccount =
+      const confirmationResult =
         await confirmRegistration({
           userId: account.userId,
         });
+
+      const {
+        account: completedAccount,
+        session,
+      } = confirmationResult;
 
       saveAccount({
         ...account,
         ...completedAccount,
       });
 
+      /*
+      * Registra la sesión global antes de navegar.
+      * Así RequireAuth reconocerá al participante.
+      */
+      login(session);
+
       navigate('/registro/completado', {
         replace: true,
       });
     } catch (error) {
       if (
-        error?.code === 'CONSENT_NOT_VALID'
+        error?.code ===
+        'CONSENT_NOT_VALID'
       ) {
         goToReconsent();
         return;

@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+
 import {
   Mail,
   ShieldCheck,
@@ -100,6 +102,17 @@ export function CreateAccountForm({
       >
         Crear mi cuenta
       </Button>
+
+      <div className={styles.loginAccess}>
+        <span>¿Ya tienes una cuenta?</span>
+
+        <Link
+          to="/login"
+          className={styles.loginLink}
+        >
+          Iniciar sesión
+        </Link>
+      </div>
     </form>
   );
 }

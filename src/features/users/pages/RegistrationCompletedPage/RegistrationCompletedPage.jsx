@@ -1,4 +1,7 @@
-import { Navigate } from 'react-router-dom';
+import {
+  Navigate,
+  useNavigate,
+} from 'react-router-dom';
 
 import {
   CheckCircle2,
@@ -8,6 +11,10 @@ import {
 import {
   BrisaLogo,
 } from '../../../../shared/components/brand/BrisaLogo/index.js';
+
+import {
+  Button,
+} from '../../../../shared/components/ui/Button/index.js';
 
 import {
   useRegistration,
@@ -20,6 +27,8 @@ import {
 import styles from './RegistrationCompletedPage.module.css';
 
 export function RegistrationCompletedPage() {
+  const navigate = useNavigate();
+
   const { account } = useRegistration();
 
   const registrationIsComplete =
@@ -33,6 +42,12 @@ export function RegistrationCompletedPage() {
         replace
       />
     );
+  }
+
+  function continueToApp() {
+    navigate('/app', {
+      replace: true,
+    });
   }
 
   return (
@@ -74,6 +89,15 @@ export function RegistrationCompletedPage() {
       <span className={styles.status}>
         Registro completo
       </span>
+
+      <Button
+        type="button"
+        size="large"
+        fullWidth
+        onClick={continueToApp}
+      >
+        Continuar
+      </Button>
 
       <p className={styles.completionNote}>
         Tu información quedó registrada de acuerdo

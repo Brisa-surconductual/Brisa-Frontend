@@ -1,4 +1,12 @@
 import {
+  registerAuthAccount,
+} from '@/features/auth/api/authMockStore.js';
+
+import {
+  USER_ROLE,
+} from '@/features/auth/types/authTypes.js';
+
+import {
   CONSENT_STATUS,
   REGISTRATION_STATUS,
 } from '../../types/registrationStatus.js';
@@ -37,29 +45,69 @@ export async function confirmRegistration({
   ) {
     throw createApiError(
       'El consentimiento no se encuentra vigente.',
-      REGISTRATION_API_ERROR.CONSENT_NOT_VALID,
+      REGISTRATION_API_ERROR
+        .CONSENT_NOT_VALID,
+    );
+  }
+
+  if (!provisionalAccount.password) {
+    throw createApiError(
+      'No se encontraron las credenciales de la cuenta provisional.',
+      REGISTRATION_API_ERROR.INCOMPLETE_DATA,
     );
   }
 
   const confirmedAt = createTimestamp();
 
+  /*
+   * La contraseña se extrae antes de construir la
+   * cuenta completada para evitar conservarla en
+   * el almacén del proceso de registro.
+   */
+  const {
+    password,
+    ...provisionalAccountWithoutPassword
+  } = provisionalAccount;
+
   const completedAccount = {
-    ...provisionalAccount,
+    ...provisionalAccountWithoutPassword,
+
     registrationStatus:
       REGISTRATION_STATUS.COMPLETED,
+
     confirmedAt,
   };
 
+  /*
+   * Simula la creación definitiva de la cuenta
+   * dentro del sistema de autenticación.
+   */
+  const session = registerAuthAccount({
+    email: completedAccount.email,
+    password,
+    role: USER_ROLE.ESTUDIANTE,
+  });
+
+  /*
+   * El registro provisional se actualiza sin
+   * conservar la contraseña.
+   */
   setProvisionalAccount(
     userId,
     completedAccount,
   );
 
   return {
-    userId,
-    email: provisionalAccount.email,
-    registrationStatus:
-      REGISTRATION_STATUS.COMPLETED,
-    confirmedAt,
+    account: {
+      userId,
+      email: completedAccount.email,
+
+      registrationStatus:
+        REGISTRATION_STATUS.COMPLETED,
+
+      confirmedAt,
+    },
+
+    session,
   };
 }

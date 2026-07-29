@@ -1,11 +1,15 @@
 import { USER_ROLE } from '@/features/auth/types/authTypes.js';
 
 /*
- * Cuentas de demostración. En la implementación
- * real la autenticación la resuelve el backend;
- * este mock solo permite navegar el flujo.
+ * Almacén de cuentas simuladas.
+ *
+ * En la implementación real, estas credenciales
+ * serán administradas exclusivamente por el backend.
+ *
+ * Este Map existe únicamente para probar el flujo
+ * completo desde el frontend.
  */
-const DEMO_ACCOUNTS = new Map([
+const AUTH_ACCOUNTS = new Map([
   [
     'estudiante@usco.edu.co',
     {
@@ -24,8 +28,41 @@ const DEMO_ACCOUNTS = new Map([
 
 const DEMO_RECOVERY_CODE = '123456';
 
+function normalizeEmail(email) {
+  return email.trim().toLowerCase();
+}
+
 export function findAccount(email) {
-  return DEMO_ACCOUNTS.get(email) ?? null;
+  const normalizedEmail = normalizeEmail(email);
+
+  return AUTH_ACCOUNTS.get(normalizedEmail) ?? null;
+}
+
+export function authAccountExists(email) {
+  const normalizedEmail = normalizeEmail(email);
+
+  return AUTH_ACCOUNTS.has(normalizedEmail);
+}
+
+/*
+ * Registra en el mock de autenticación una cuenta
+ * que terminó correctamente el proceso de registro.
+ *
+ * La función devuelve una sesión con la misma
+ * estructura utilizada por authApi.login().
+ */
+export function registerAuthAccount({ email, password, role }) {
+  const normalizedEmail = normalizeEmail(email);
+
+  AUTH_ACCOUNTS.set(normalizedEmail, {
+    password,
+    role,
+  });
+
+  return {
+    email: normalizedEmail,
+    role,
+  };
 }
 
 export function isValidRecoveryCode(code) {

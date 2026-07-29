@@ -1,4 +1,8 @@
 import {
+  authAccountExists,
+} from '@/features/auth/api/authMockStore.js';
+
+import {
   REGISTRATION_STATUS,
 } from '../../types/registrationStatus.js';
 
@@ -23,19 +27,17 @@ export async function createAccount({
   const normalizedEmail =
     email.trim().toLowerCase();
 
-  if (emailExists(normalizedEmail)) {
+  const emailIsAlreadyRegistered =
+    emailExists(normalizedEmail) ||
+    authAccountExists(normalizedEmail);
+
+  if (emailIsAlreadyRegistered) {
     throw createApiError(
       'El correo ya se encuentra registrado.',
       REGISTRATION_API_ERROR
         .EMAIL_ALREADY_EXISTS,
     );
   }
-
-  /*
-   * En la implementación real, la contraseña se
-   * enviará al backend. El mock no la almacena.
-   */
-  void password;
 
   const account = {
     userId: crypto.randomUUID(),
@@ -44,8 +46,17 @@ export async function createAccount({
       REGISTRATION_STATUS.PENDING_CONSENT,
   };
 
+  /*
+   * La contraseña se almacena únicamente dentro
+   * del mock provisional para poder simular la
+   * creación posterior de una cuenta autenticable.
+   *
+   * No se retorna al componente ni se almacena en
+   * RegistrationContext.
+   */
   setProvisionalAccount(account.userId, {
     ...account,
+    password,
     consent: null,
     baseline: null,
     modifiedFields: [],
