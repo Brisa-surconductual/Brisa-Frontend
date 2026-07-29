@@ -1,0 +1,10 @@
+package-lock.json
+docs/
+dist/
+node_modules/
+*.html
+src/features/users/
+src/shared/
+src/styles/
+src/app/layouts/
+src/app/router/
