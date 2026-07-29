@@ -12,7 +12,14 @@ import {
   SplashPage,
 } from '@/features/auth/index.js';
 
+import { ProtectedLayout } from '@/app/layouts/ProtectedLayout/index.js';
 import { RegistrationLayout } from '@/app/layouts/RegistrationLayout/index.js';
+
+import { USER_ROLE } from '@/features/auth/types/authTypes.js';
+
+import { PsychologyHomePage } from '@/features/psychology/index.js';
+
+import { StudentHomePage } from '@/features/student/index.js';
 
 import {
   BaselinePage,
@@ -22,6 +29,9 @@ import {
   RegistrationCompletedPage,
   ReviewPage,
 } from '@/features/users/index.js';
+
+import { RequireAuth } from './RequireAuth.jsx';
+import { RoleHomeRedirect } from './RoleHomeRedirect.jsx';
 
 export function AppRouter() {
   return (
@@ -90,6 +100,33 @@ export function AppRouter() {
             path="completado"
             element={<RegistrationCompletedPage />}
           />
+        </Route>
+
+        <Route
+          path="/app"
+          element={<RequireAuth />}
+        >
+          <Route element={<ProtectedLayout />}>
+            <Route
+              index
+              element={<RoleHomeRedirect />}
+            />
+
+            <Route
+              element={<RequireAuth allowedRoles={[USER_ROLE.ESTUDIANTE]} />}
+            >
+              <Route
+                path="estudiante"
+                element={<StudentHomePage />}
+              />
+            </Route>
+
+            <Route
+              element={<RequireAuth allowedRoles={[USER_ROLE.PSICOLOGIA]} />}
+            >
+              <Route path="psicologia" element={<PsychologyHomePage />} />
+            </Route>
+          </Route>
         </Route>
 
         <Route

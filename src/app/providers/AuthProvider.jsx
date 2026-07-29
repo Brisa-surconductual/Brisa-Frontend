@@ -14,20 +14,29 @@ export function AuthProvider({ children }) {
     });
   }
 
-  function logout() {
-    dispatch({ type: AUTH_ACTION.LOGOUT });
+  /*
+   * `reason` es opcional (ver SESSION_END_REASON): el
+   * cierre manual desde una pantalla no necesita motivo.
+   */
+  function logout({ reason = null } = {}) {
+    dispatch({
+      type: AUTH_ACTION.LOGOUT,
+      payload: { reason },
+    });
   }
 
   /*
-   * TODO(#147): definir aquí la persistencia real
-   * de la sesión cuando exista backend. Por ahora
-   * la sesión vive solo en memoria.
+   * La sesión vive SOLO en memoria: al recargar se
+   * pierde. Aquí irá la persistencia real (rehidratar
+   * al montar y limpiar en logout) cuando el backend
+   * emita el token de sesión.
    */
 
   const value = {
     user: state.user,
     role: state.role,
     isAuthenticated: state.isAuthenticated,
+    sessionEndReason: state.endReason,
     login,
     logout,
   };

@@ -2,7 +2,10 @@ import { useState } from 'react';
 
 import { useNavigate } from 'react-router-dom';
 
-import { login } from '@/features/auth/api/authApi.js';
+import { SESSION_END_REASON } from '@/app/config/sessionConfig.js';
+import { useAuth } from '@/app/providers/index.js';
+
+import { login as loginRequest } from '@/features/auth/api/authApi.js';
 import { AUTH_API_ERROR } from '@/features/auth/types/authTypes.js';
 import { validateLoginForm } from '@/features/auth/services/authValidation.js';
 
@@ -15,6 +18,15 @@ import {
 
 export function useLoginPage() {
   const navigate = useNavigate();
+  const { login, sessionEndReason } = useAuth();
+
+  /*
+   * El motivo del cierre viaja en la sesión, no en el
+   * state de la navegación: así no depende de qué
+   * redirección llegue primero a /login.
+   */
+  const wasClosedByInactivity =
+    sessionEndReason === SESSION_END_REASON.INACTIVITY;
 
   const [form, setForm] = useState(createLoginFormState);
   const [errors, setErrors] = useState({});
@@ -52,10 +64,13 @@ export function useLoginPage() {
     setSubmitError('');
 
     try {
-      await login({
+      const session = await loginRequest({
         email: form.email,
         password: form.password,
       });
+
+      // Registra la sesión global antes de entrar a la app.
+      login(session);
 
       navigate('/app', { replace: true });
     } catch (error) {
@@ -89,6 +104,7 @@ export function useLoginPage() {
   return {
     form,
     errors,
+    wasClosedByInactivity,
     submitError,
     isSubmitting,
     handleChange,
