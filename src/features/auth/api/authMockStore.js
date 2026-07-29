@@ -1,4 +1,4 @@
-import { USER_ROLE } from '../types/authTypes.js';
+import { USER_ROLE } from '@/features/auth/types/authTypes.js';
 
 /*
  * Cuentas de demostración. En la implementación

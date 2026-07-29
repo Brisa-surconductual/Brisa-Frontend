@@ -13,7 +13,7 @@ grado. Este repositorio es SOLO el frontend.
   NO agregar `useMemo` / `useCallback` manuales salvo caso justificado; el
   compilador ya memoriza.
 - Ruteo: `react-router-dom` v7.
-- Estilos: **CSS Modules** (`*.module.css`) + variables de `src/styles/tokens.css`.
+- Estilos: **CSS Modules** (`*.module.css`) + variables de `src/styles/tokens.css`
   **NO Tailwind. NO librerías de UI externas** (MUI, Chakra, etc.).
 - Iconos: **`lucide-react`** únicamente. `strokeWidth` ~1.5–1.8, `size` 20 en UI.
   **Nunca emoji** en la interfaz.
@@ -108,7 +108,7 @@ Fuente: `docs/Especificacion_Requerimientos_0717.xlsx`.
 
 ## Referencias dentro del repo
 
-- Prototipo navegable M01: `docs/M01_prototipo_v1.2.html` (lógica ya escrita:
+- Prototipo navegable M01: `docs/M01_prototipo_v1.2.1.html` (lógica ya escrita:
   `isValidEmail`, `pwStrength`, `doLogin`, `doRecover`, timeout de inactividad).
 - Design system: `docs/Design_System_prototipo_v1.2.html`.
 - Requerimientos: `docs/Especificacion_Requerimientos_0717.xlsx`.

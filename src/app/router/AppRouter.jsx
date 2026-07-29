@@ -5,7 +5,14 @@ import {
   Routes,
 } from 'react-router-dom';
 
-import { RegistrationLayout } from '../layouts/RegistrationLayout/index.js';
+import {
+  LoginPage,
+  RecoverRequestPage,
+  RecoverResetPage,
+  SplashPage,
+} from '@/features/auth/index.js';
+
+import { RegistrationLayout } from '@/app/layouts/RegistrationLayout/index.js';
 
 import {
   BaselinePage,
@@ -14,7 +21,7 @@ import {
   ReconsentPage,
   RegistrationCompletedPage,
   ReviewPage,
-} from '../../features/users/index.js';
+} from '@/features/users/index.js';
 
 export function AppRouter() {
   return (
@@ -22,12 +29,22 @@ export function AppRouter() {
       <Routes>
         <Route
           path="/"
-          element={
-            <Navigate
-              to="/registro/cuenta"
-              replace
-            />
-          }
+          element={<SplashPage />}
+        />
+
+        <Route
+          path="/login"
+          element={<LoginPage />}
+        />
+
+        <Route
+          path="/recuperar"
+          element={<RecoverRequestPage />}
+        />
+
+        <Route
+          path="/recuperar/nueva"
+          element={<RecoverResetPage />}
         />
 
         <Route

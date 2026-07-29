@@ -30,3 +30,33 @@ export function validateLoginForm(form) {
 
   return errors;
 }
+
+export function validateRecoverRequestForm(form) {
+  const errors = {};
+
+  if (!isValidEmail(form.email)) {
+    errors.email = 'Ingresa un correo válido.';
+  }
+
+  return errors;
+}
+
+const RECOVERY_CODE_PATTERN = /^\d{6}$/;
+
+export function validateRecoverResetForm(form) {
+  const errors = {};
+
+  if (!RECOVERY_CODE_PATTERN.test(form.code.trim())) {
+    errors.code = 'Ingresa el código de 6 dígitos.';
+  }
+
+  if (!isValidPassword(form.password)) {
+    errors.password = 'La contraseña no cumple la política de seguridad.';
+  }
+
+  if (form.password !== form.confirmPassword) {
+    errors.confirmPassword = 'Las contraseñas no coinciden.';
+  }
+
+  return errors;
+}
