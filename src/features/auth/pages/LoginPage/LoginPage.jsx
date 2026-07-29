@@ -1,4 +1,4 @@
-import { AlertTriangle, ArrowLeft } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Clock } from 'lucide-react';
 
 import { LoginForm } from './components/LoginForm.jsx';
 import { useLoginPage } from './hooks/useLoginPage.js';
@@ -9,6 +9,7 @@ export function LoginPage() {
   const {
     form,
     errors,
+    wasClosedByInactivity,
     submitError,
     isSubmitting,
     handleChange,
@@ -41,6 +42,18 @@ export function LoginPage() {
             Ingresa con tu correo electrónico
           </p>
         </section>
+
+        {wasClosedByInactivity && (
+          <div className={styles.notice} role="status">
+            <Clock size={20} strokeWidth={1.8} aria-hidden="true" />
+
+            <div>
+              <strong>Cerramos tu sesión por inactividad</strong>
+
+              <p>Ingresa de nuevo para continuar donde ibas.</p>
+            </div>
+          </div>
+        )}
 
         {submitError && (
           <div className={styles.alert} role="alert">

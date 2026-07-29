@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import { useNavigate } from 'react-router-dom';
 
+import { SESSION_END_REASON } from '@/app/config/sessionConfig.js';
 import { useAuth } from '@/app/providers/index.js';
 
 import { login as loginRequest } from '@/features/auth/api/authApi.js';
@@ -17,7 +18,15 @@ import {
 
 export function useLoginPage() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, sessionEndReason } = useAuth();
+
+  /*
+   * El motivo del cierre viaja en la sesión, no en el
+   * state de la navegación: así no depende de qué
+   * redirección llegue primero a /login.
+   */
+  const wasClosedByInactivity =
+    sessionEndReason === SESSION_END_REASON.INACTIVITY;
 
   const [form, setForm] = useState(createLoginFormState);
   const [errors, setErrors] = useState({});
@@ -95,6 +104,7 @@ export function useLoginPage() {
   return {
     form,
     errors,
+    wasClosedByInactivity,
     submitError,
     isSubmitting,
     handleChange,

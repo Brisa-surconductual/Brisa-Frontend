@@ -108,6 +108,33 @@
   line-height: 1.5;
 }
 
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  color: var(--warning-text);
+  background-color: var(--warning-bg);
+  border: 1px solid var(--warning-border);
+  border-radius: var(--radius-md);
+}
+
+.notice svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.notice strong {
+  display: block;
+  font-size: 13px;
+}
+
+.notice p {
+  margin: 3px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .registerLink {
   margin: 0;
   color: var(--text-secondary);

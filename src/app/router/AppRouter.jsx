@@ -12,6 +12,7 @@ import {
   SplashPage,
 } from '@/features/auth/index.js';
 
+import { ProtectedLayout } from '@/app/layouts/ProtectedLayout/index.js';
 import { RegistrationLayout } from '@/app/layouts/RegistrationLayout/index.js';
 
 import { USER_ROLE } from '@/features/auth/types/authTypes.js';
@@ -105,24 +106,26 @@ export function AppRouter() {
           path="/app"
           element={<RequireAuth />}
         >
-          <Route
-            index
-            element={<RoleHomeRedirect />}
-          />
-
-          <Route
-            element={<RequireAuth allowedRoles={[USER_ROLE.ESTUDIANTE]} />}
-          >
+          <Route element={<ProtectedLayout />}>
             <Route
-              path="estudiante"
-              element={<StudentHomePage />}
+              index
+              element={<RoleHomeRedirect />}
             />
-          </Route>
 
-          <Route
-            element={<RequireAuth allowedRoles={[USER_ROLE.PSICOLOGIA]} />}
-          >
-            <Route path="psicologia" element={<PsychologyHomePage />} />
+            <Route
+              element={<RequireAuth allowedRoles={[USER_ROLE.ESTUDIANTE]} />}
+            >
+              <Route
+                path="estudiante"
+                element={<StudentHomePage />}
+              />
+            </Route>
+
+            <Route
+              element={<RequireAuth allowedRoles={[USER_ROLE.PSICOLOGIA]} />}
+            >
+              <Route path="psicologia" element={<PsychologyHomePage />} />
+            </Route>
           </Route>
         </Route>
 

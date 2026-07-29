@@ -2,6 +2,14 @@ export const initialAuthState = Object.freeze({
   user: null,
   role: null,
   isAuthenticated: false,
+
+  /*
+   * Por qué terminó la última sesión. Vive aquí y no en
+   * el state de navegación porque el cierre y el redirect
+   * son dos actualizaciones distintas: quien redirija, el
+   * motivo sigue disponible.
+   */
+  endReason: null,
 });
 
 export const AUTH_ACTION = Object.freeze({
@@ -22,10 +30,14 @@ export function authReducer(state, action) {
         user: { email: action.payload.email },
         role: action.payload.role,
         isAuthenticated: true,
+        endReason: null,
       };
 
     case AUTH_ACTION.LOGOUT:
-      return initialAuthState;
+      return {
+        ...initialAuthState,
+        endReason: action.payload?.reason ?? null,
+      };
 
     default:
       return state;

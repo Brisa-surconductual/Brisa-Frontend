@@ -14,8 +14,15 @@ export function AuthProvider({ children }) {
     });
   }
 
-  function logout() {
-    dispatch({ type: AUTH_ACTION.LOGOUT });
+  /*
+   * `reason` es opcional (ver SESSION_END_REASON): el
+   * cierre manual desde una pantalla no necesita motivo.
+   */
+  function logout({ reason = null } = {}) {
+    dispatch({
+      type: AUTH_ACTION.LOGOUT,
+      payload: { reason },
+    });
   }
 
   /*
@@ -29,6 +36,7 @@ export function AuthProvider({ children }) {
     user: state.user,
     role: state.role,
     isAuthenticated: state.isAuthenticated,
+    sessionEndReason: state.endReason,
     login,
     logout,
   };
