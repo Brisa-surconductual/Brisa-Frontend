@@ -41,7 +41,15 @@
     "prettier --write",
     "eslint --fix"
   ],
-  "src/app/providers/**/*.{js,jsx}": [
+  "src/features/student/**/*.{js,jsx}": [
+    "prettier --write",
+    "eslint --fix"
+  ],
+  "src/features/psychology/**/*.{js,jsx}": [
+    "prettier --write",
+    "eslint --fix"
+  ],
+  "src/app/**/*.{js,jsx}": [
     "prettier --write",
     "eslint --fix"
   ]
