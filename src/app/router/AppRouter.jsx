@@ -16,6 +16,8 @@ import { RegistrationLayout } from '@/app/layouts/RegistrationLayout/index.js';
 
 import { USER_ROLE } from '@/features/auth/types/authTypes.js';
 
+import { PsychologyHomePage } from '@/features/psychology/index.js';
+
 import { StudentHomePage } from '@/features/student/index.js';
 
 import {
@@ -117,14 +119,10 @@ export function AppRouter() {
             />
           </Route>
 
-          {/* Placeholder: la pantalla real es 147.4. */}
           <Route
             element={<RequireAuth allowedRoles={[USER_ROLE.PSICOLOGIA]} />}
           >
-            <Route
-              path="psicologia"
-              element={<div>Home psicología</div>}
-            />
+            <Route path="psicologia" element={<PsychologyHomePage />} />
           </Route>
         </Route>
 

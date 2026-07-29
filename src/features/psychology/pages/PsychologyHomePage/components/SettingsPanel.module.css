@@ -1,0 +1,50 @@
+.list {
+  margin: 0 0 var(--space-4);
+  padding: var(--space-2) var(--space-4);
+  background-color: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--surface-hover);
+  font-size: 12px;
+}
+
+.row:last-child {
+  border-bottom: 0;
+}
+
+.rowLabel {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.rowValue {
+  color: var(--text-primary);
+  font-weight: 600;
+  text-align: right;
+}
+
+.rowEmail {
+  overflow: hidden;
+  color: var(--text-primary);
+  font-size: 11px;
+  font-weight: 600;
+  text-align: right;
+  text-overflow: ellipsis;
+}
+
+.note {
+  margin: 0 0 var(--space-4);
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.5;
+}

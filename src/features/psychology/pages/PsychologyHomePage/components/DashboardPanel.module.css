@@ -1,0 +1,54 @@
+.grid {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  gap: var(--space-3);
+  grid-template-columns: repeat(2, 1fr);
+  list-style: none;
+}
+
+.card {
+  padding: var(--space-4);
+  background-color: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.value {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.brand {
+  color: var(--brand-600);
+}
+
+.success {
+  color: var(--success);
+}
+
+.warning {
+  color: var(--warning);
+}
+
+.info {
+  color: var(--info);
+}
+
+.label {
+  margin: var(--space-1) 0 0;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.note {
+  margin: var(--space-4) 0 0;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.5;
+  text-align: center;
+}

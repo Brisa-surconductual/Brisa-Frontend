@@ -1,0 +1,61 @@
+/*
+ * La cabecera administrativa es oscura en ambos temas:
+ * usa la escala neutral, que no se invierte con el tema.
+ */
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-6) var(--space-4) var(--space-3);
+  color: var(--neutral-0);
+  background-color: var(--neutral-900);
+}
+
+.brandChip {
+  padding: 3px var(--space-3);
+  background-color: var(--brand-600);
+  border-radius: var(--radius-full);
+  font-weight: 800;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+
+.roleChip {
+  padding: 2px var(--space-2);
+  background-color: rgb(255 255 255 / 12%);
+  border: 1px solid rgb(255 255 255 / 24%);
+  border-radius: var(--radius-full);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  text-transform: uppercase;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.logoutButton {
+  display: inline-flex;
+  min-height: 32px;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  color: var(--neutral-0);
+  background-color: rgb(255 255 255 / 10%);
+  border: 0;
+  border-radius: var(--radius-full);
+  font-weight: 700;
+  font-size: 12px;
+  transition: background-color 120ms ease;
+}
+
+.logoutButton:hover {
+  background-color: rgb(255 255 255 / 20%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logoutButton {
+    transition: none;
+  }
+}
