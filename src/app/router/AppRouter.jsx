@@ -16,6 +16,8 @@ import { RegistrationLayout } from '@/app/layouts/RegistrationLayout/index.js';
 
 import { USER_ROLE } from '@/features/auth/types/authTypes.js';
 
+import { StudentHomePage } from '@/features/student/index.js';
+
 import {
   BaselinePage,
   ConsentPage,
@@ -106,16 +108,16 @@ export function AppRouter() {
             element={<RoleHomeRedirect />}
           />
 
-          {/* Placeholders: las pantallas reales son 147.3 y 147.4. */}
           <Route
             element={<RequireAuth allowedRoles={[USER_ROLE.ESTUDIANTE]} />}
           >
             <Route
               path="estudiante"
-              element={<div>Home estudiante</div>}
+              element={<StudentHomePage />}
             />
           </Route>
 
+          {/* Placeholder: la pantalla real es 147.4. */}
           <Route
             element={<RequireAuth allowedRoles={[USER_ROLE.PSICOLOGIA]} />}
           >

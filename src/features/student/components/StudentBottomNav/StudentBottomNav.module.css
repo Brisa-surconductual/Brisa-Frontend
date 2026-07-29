@@ -1,0 +1,53 @@
+.nav {
+  display: flex;
+  flex-shrink: 0;
+  padding: var(--space-2) 0 var(--space-4);
+  background-color: var(--surface-card);
+  border-top: 1px solid var(--surface-border);
+}
+
+.item {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) 0;
+  color: var(--text-muted);
+  background: none;
+  border: 0;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 10px;
+  transition: color 120ms ease;
+}
+
+.item:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.itemActive {
+  composes: item;
+  color: var(--brand-600);
+  opacity: 1;
+}
+
+.label {
+  line-height: 1.2;
+}
+
+.srOnly {
+  position: absolute;
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .item {
+    transition: none;
+  }
+}
