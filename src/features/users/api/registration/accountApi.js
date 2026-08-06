@@ -1,6 +1,6 @@
 import {
   authAccountExists,
-} from '@/features/auth/api/authMockStore.js';
+} from '@/features/users/api/auth/authMockStore.js';
 
 import {
   REGISTRATION_STATUS,

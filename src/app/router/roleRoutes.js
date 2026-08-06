@@ -1,4 +1,4 @@
-import { USER_ROLE } from '@/features/auth/types/authTypes.js';
+import { USER_ROLE } from '@/features/users/types/authTypes.js';
 
 export const LOGIN_PATH = '/login';
 

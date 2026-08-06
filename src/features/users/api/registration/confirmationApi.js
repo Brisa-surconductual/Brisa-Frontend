@@ -1,10 +1,10 @@
 import {
   registerAuthAccount,
-} from '@/features/auth/api/authMockStore.js';
+} from '@/features/users/api/auth/authMockStore.js';
 
 import {
   USER_ROLE,
-} from '@/features/auth/types/authTypes.js';
+} from '@/features/users/types/authTypes.js';
 
 import {
   CONSENT_STATUS,

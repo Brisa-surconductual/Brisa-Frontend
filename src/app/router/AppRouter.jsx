@@ -5,29 +5,23 @@ import {
   Routes,
 } from 'react-router-dom';
 
-import {
-  LoginPage,
-  RecoverRequestPage,
-  RecoverResetPage,
-  SplashPage,
-} from '@/features/auth/index.js';
-
 import { ProtectedLayout } from '@/app/layouts/ProtectedLayout/index.js';
 import { RegistrationLayout } from '@/app/layouts/RegistrationLayout/index.js';
-
-import { USER_ROLE } from '@/features/auth/types/authTypes.js';
-
-import { PsychologyHomePage } from '@/features/psychology/index.js';
-
-import { StudentHomePage } from '@/features/student/index.js';
 
 import {
   BaselinePage,
   ConsentPage,
   CreateAccountPage,
+  LoginPage,
+  PsychologyHomePage,
+  RecoverRequestPage,
+  RecoverResetPage,
   ReconsentPage,
   RegistrationCompletedPage,
   ReviewPage,
+  SplashPage,
+  StudentHomePage,
+  USER_ROLE,
 } from '@/features/users/index.js';
 
 import { RequireAuth } from './RequireAuth.jsx';
@@ -113,7 +107,13 @@ export function AppRouter() {
             />
 
             <Route
-              element={<RequireAuth allowedRoles={[USER_ROLE.ESTUDIANTE]} />}
+              element={
+                <RequireAuth
+                  allowedRoles={[
+                    USER_ROLE.ESTUDIANTE,
+                  ]}
+                />
+              }
             >
               <Route
                 path="estudiante"
@@ -122,9 +122,18 @@ export function AppRouter() {
             </Route>
 
             <Route
-              element={<RequireAuth allowedRoles={[USER_ROLE.PSICOLOGIA]} />}
+              element={
+                <RequireAuth
+                  allowedRoles={[
+                    USER_ROLE.PSICOLOGIA,
+                  ]}
+                />
+              }
             >
-              <Route path="psicologia" element={<PsychologyHomePage />} />
+              <Route
+                path="psicologia"
+                element={<PsychologyHomePage />}
+              />
             </Route>
           </Route>
         </Route>
