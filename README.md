@@ -238,6 +238,29 @@ Rutas útiles durante el desarrollo:
 
 > `npm run dev` no selecciona una página concreta. React Router muestra la vista correspondiente a la URL abierta en el navegador. Si la pestaña conserva una ruta anterior, escribir manualmente `/` para regresar a la pantalla inicial.
 
+### Flujo principal de rutas
+
+```text
+/
+└── SplashPage
+    ├── /login
+    └── /registro/cuenta
+
+/registro
+├── /registro/cuenta
+├── /registro/consentimiento
+├── /registro/linea-base
+├── /registro/revision
+├── /registro/reconsentimiento
+└── /registro/completado
+
+/app
+├── /app/estudiante
+└── /app/psicologia
+```
+
+Las rutas bajo `/app` requieren una sesión válida y aplican control de acceso por rol.
+
 Para detener el servidor:
 
 ```text
@@ -508,9 +531,6 @@ src/
 │   ├── providers/
 │   └── router/
 ├── features/
-│   ├── auth/
-│   ├── psychology/
-│   ├── student/
 │   └── users/
 ├── shared/
 ├── assets/
@@ -519,7 +539,28 @@ src/
 └── main.jsx
 ```
 
-La estructura puede crecer con nuevas features a medida que se implementen otros módulos.
+## Regla de organización por módulos
+
+Cada carpeta ubicada directamente dentro de `src/features` representa un **módulo funcional del proyecto**.
+
+Actualmente se está desarrollando el **Módulo 1**, por lo que existe una sola feature principal:
+
+```text
+features/
+└── users/
+```
+
+La autenticación, el registro, las vistas del estudiante y las vistas de psicología forman parte del mismo módulo. Por esta razón no deben existir como features independientes:
+
+```text
+features/auth/
+features/student/
+features/psychology/
+```
+
+Esas responsabilidades se organizan internamente dentro de `features/users`.
+
+Cuando se implemente otro módulo del proyecto, podrá agregarse una nueva carpeta al mismo nivel, siempre que represente realmente un módulo y no un rol, una página o una parte interna de otro módulo.
 
 ---
 
@@ -543,74 +584,235 @@ app/
 
 ---
 
-# Features
+# Feature `users` — Módulo 1
 
-Cada carpeta representa una funcionalidad o dominio del negocio.
+La feature `users` concentra las responsabilidades del Módulo 1:
 
-├── usuarios/
-├── cronograma/
-├── chat/
-├── diario/
-├── segumiento/
-├── notificacion/
-├── gamificacion/
-└── administartivo/
-```
+- Pantalla inicial.
+- Inicio de sesión.
+- Recuperación de contraseña.
+- Creación de cuenta.
+- Consentimiento.
+- Línea base.
+- Revisión y reconsentimiento.
+- Confirmación del registro.
+- Gestión de la sesión simulada.
+- Inicio del estudiante.
+- Inicio del perfil de psicología.
+- Control de acceso por roles.
 
-Cada feature es independiente de las demás.
-
-Esta organización facilita el mantenimiento y permite que el crecimiento del proyecto sea modular.
-
-Ejemplo de una feature:
+Su organización general es:
 
 ```text
 users/
 ├── api/
+│   ├── auth/
+│   ├── registration/
+│   ├── authApi.js
+│   └── registrationApi.js
 ├── components/
 ├── context/
 ├── hooks/
 ├── pages/
+│   ├── SplashPage/
+│   ├── LoginPage/
+│   ├── RecoverRequestPage/
+│   ├── RecoverResetPage/
+│   ├── CreateAccountPage/
+│   ├── ConsentPage/
+│   ├── BaselinePage/
+│   ├── ReviewPage/
+│   ├── ReconsentPage/
+│   ├── RegistrationCompletedPage/
+│   ├── StudentHomePage/
+│   └── PsychologyHomePage/
 ├── services/
 ├── types/
 ├── utils/
 └── index.js
 ```
 
+No todas las páginas deben tener obligatoriamente las mismas subcarpetas. Una página puede incluir `components`, `hooks`, `data` o `utils` únicamente cuando su responsabilidad lo requiera.
+
+Ejemplos:
+
+```text
+PsychologyHomePage/
+├── components/
+├── data/
+│   ├── psychologyStats.js
+│   └── psychologyTabs.js
+├── hooks/
+├── utils/
+│   └── aggregates.js
+├── PsychologyHomePage.jsx
+├── PsychologyHomePage.module.css
+└── index.js
+```
+
+```text
+StudentHomePage/
+├── components/
+├── data/
+│   └── studentModules.js
+├── hooks/
+├── utils/
+│   └── studentUser.js
+├── StudentHomePage.jsx
+├── StudentHomePage.module.css
+└── index.js
+```
+
 ## `api`
 
-Funciones que simulan o realizan la comunicación con el backend.
+Contiene las funciones que simulan o realizan la comunicación con el backend.
+
+La API pública se mantiene en archivos como:
+
+```text
+authApi.js
+registrationApi.js
+```
+
+Los detalles internos se organizan en subcarpetas:
+
+```text
+api/
+├── auth/
+│   ├── authApiUtils.js
+│   └── authMockStore.js
+└── registration/
+    ├── accountApi.js
+    ├── baselineApi.js
+    ├── confirmationApi.js
+    ├── consentApi.js
+    ├── registrationApiUtils.js
+    └── registrationMockStore.js
+```
 
 ## `components`
 
-Componentes exclusivos de la feature.
+Contiene componentes exclusivos del Módulo 1 que pueden reutilizarse en varias páginas de `users`.
+
+Ejemplos:
+
+```text
+ConsentDocument/
+PasswordStrength/
+RegistrationStepper/
+ReviewCard/
+StudentHeader/
+StudentBottomNav/
+PsychologyHeader/
+PsychologyTabBar/
+```
+
+Los componentes usados únicamente por una página deben permanecer dentro de la carpeta local `components` de esa página.
 
 ## `context`
 
-Estado compartido dentro de la feature cuando sea necesario.
+Contiene el estado compartido del proceso de registro.
+
+```text
+context/
+├── RegistrationProvider.jsx
+├── registrationContext.js
+├── registrationReducer.js
+└── index.js
+```
+
+La sesión global de autenticación se administra desde los providers de `app`, mientras que los datos provisionales del registro permanecen dentro del contexto de `users`.
 
 ## `hooks`
 
-Hooks personalizados relacionados con la funcionalidad.
+Contiene hooks reutilizados por diferentes partes del módulo.
+
+Los hooks exclusivos de una página permanecen en:
+
+```text
+pages/<NombrePage>/hooks/
+```
 
 ## `pages`
 
-Vistas principales asociadas a las rutas.
+Contiene las vistas asociadas a las rutas de React Router.
+
+Cada página debe concentrarse en la composición visual y delegar la lógica compleja a hooks, servicios o utilidades cuando sea necesario.
 
 ## `services`
 
-Reglas, validaciones, cálculos y transformaciones de datos.
+Contiene reglas de negocio, validaciones, cálculos y transformaciones del Módulo 1.
+
+Ejemplos:
+
+```text
+authValidation.js
+baselineValidation.js
+registrationReview.js
+registrationValidation.js
+```
 
 ## `types`
 
-Constantes, enumeraciones y definiciones de dominio.
+Centraliza constantes y códigos técnicos del dominio.
+
+Ejemplos:
+
+```text
+authTypes.js
+baselineCatalogs.js
+registrationFields.js
+registrationStatus.js
+```
+
+Los roles deben tener una única fuente de verdad. No se deben duplicar archivos separados de roles para estudiante y psicología.
 
 ## `utils`
 
-Funciones auxiliares sin dependencias directas de React.
+Contiene funciones auxiliares sin dependencias directas de React.
+
+Una utilidad utilizada únicamente por una página debe permanecer dentro de esa página. La carpeta `users/utils` se reserva para utilidades realmente compartidas por diferentes partes del módulo.
+
+## `data`
+
+Se utiliza dentro de páginas concretas para catálogos, configuraciones visuales o datos simulados exclusivos de esa vista.
+
+Ejemplos:
+
+```text
+PsychologyHomePage/data/psychologyStats.js
+PsychologyHomePage/data/psychologyTabs.js
+StudentHomePage/data/studentModules.js
+```
 
 ## `index.js`
 
-Punto de exportación pública de la feature.
+Es la API pública de la feature.
+
+Debe exportar principalmente:
+
+- Páginas consumidas por el router.
+- Providers requeridos fuera de la feature.
+- Tipos estrictamente necesarios desde otras capas.
+
+No debe exponer automáticamente todas las funciones, datos o utilidades internas.
+
+---
+
+# Lineamientos de páginas y layouts
+
+Las páginas principales posteriores al inicio de sesión deben renderizarse como vistas completas dentro de `ProtectedLayout`.
+
+No deben presentarse como cuadros modales, overlays o marcos de prototipo centrados sobre un fondo. La estructura esperada es:
+
+```text
+ProtectedLayout
+├── Encabezado o navegación
+├── Contenido de la ruta mediante Outlet
+└── Navegación complementaria cuando corresponda
+```
+
+Los modales se reservan para acciones puntuales que requieran atención temporal, como confirmaciones o formularios breves, y no para representar la página principal del estudiante o de psicología.
 
 ---
 
@@ -668,14 +870,20 @@ Estas capacidades deben considerarse como evolución de la arquitectura y no asu
 
 # Convenciones
 
-- Cada feature representa una funcionalidad del negocio.
-- Los componentes compartidos se ubican en `shared`.
-- Los componentes específicos permanecen dentro de su feature.
+- Cada carpeta ubicada directamente en `features` representa un módulo del proyecto.
+- Los roles, páginas o partes internas de un módulo no deben convertirse en features separadas.
+- Las responsabilidades de autenticación, registro, estudiante y psicología del Módulo 1 pertenecen a `features/users`.
+- Los componentes compartidos por varias features se ubican en `shared`.
+- Los componentes utilizados únicamente por `users` permanecen dentro de esa feature.
+- Los componentes exclusivos de una página permanecen dentro de `pages/<NombrePage>/components`.
 - La comunicación con el backend o sus simulaciones se implementa en `api`.
-- Las páginas se organizan por ruta y pueden contener subcarpetas locales de `components`, `hooks` y `utils`.
+- Las páginas pueden contener subcarpetas locales de `components`, `hooks`, `data` y `utils`.
 - No todas las páginas están obligadas a tener las mismas subcarpetas.
 - La estructura debe responder a responsabilidades reales y no crear archivos innecesarios.
-- Los códigos técnicos se centralizan en archivos de `types`.
+- Los códigos técnicos y roles se centralizan en archivos de `types`.
+- No se deben duplicar constantes de roles entre vistas de estudiante y psicología.
+- Las exportaciones públicas del módulo se consolidan en `features/users/index.js`.
+- Los imports internos de la feature deben apuntar directamente al archivo responsable para evitar dependencias circulares.
 - Antes de subir cambios se deben ejecutar `npm run lint` y `npm run build`.
 
 ---
