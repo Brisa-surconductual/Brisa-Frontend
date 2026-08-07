@@ -22,10 +22,12 @@ export function SettingsPanel({ email, roleLabel, onLogout }) {
       <p className={styles.note}>
         Los ajustes del programa y la gestión de reportes llegan en M04 y M08.
       </p>
-
-      <Button variant="secondary" fullWidth onClick={onLogout}>
+      <div>
+        <Button variant="secondary" fullWidth onClick={onLogout}>
         Cerrar sesión
-      </Button>
+        </Button>
+      </div>
+      
     </>
   );
 }

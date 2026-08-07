@@ -13,52 +13,122 @@ import {
 import styles from './PopulationPanel.module.css';
 
 export function PopulationPanel() {
-  const total = sumCounts(FACULTY_DISTRIBUTION);
+  const total = sumCounts(
+    FACULTY_DISTRIBUTION,
+  );
 
   return (
     <>
       <div className={styles.notice}>
-        <Info size={20} strokeWidth={1.8} aria-hidden="true" />
+        <Info
+          size={20}
+          strokeWidth={1.8}
+          aria-hidden="true"
+        />
 
         <div>
-          <strong>Vista agregada y anónima</strong>
+          <strong>
+            Vista agregada y anónima
+          </strong>
 
           <p>
-            El perfil administrativo solo consulta estadísticas del grupo. El
-            acceso a datos individuales identificables requiere consentimiento
-            específico y llega en M08.
+            El perfil administrativo solo
+            consulta estadísticas del grupo.
+            El acceso a datos individuales
+            identificables requiere
+            consentimiento específico y llega
+            en M08.
           </p>
         </div>
       </div>
 
-      <h3 className={styles.sectionTitle}>Distribución por facultad</h3>
+      <div className={styles.sectionsGrid}>
+        <section>
+          <h3 className={styles.sectionTitle}>
+            Distribución por facultad
+          </h3>
 
-      <ul className={styles.list}>
-        {FACULTY_DISTRIBUTION.map(({ id, label, count }) => (
-          <li key={id} className={styles.row}>
-            <span className={styles.rowLabel}>{label}</span>
+          <ul className={styles.list}>
+            {FACULTY_DISTRIBUTION.map(
+              ({
+                id,
+                label,
+                count,
+              }) => (
+                <li
+                  key={id}
+                  className={styles.row}
+                >
+                  <span
+                    className={
+                      styles.rowLabel
+                    }
+                  >
+                    {label}
+                  </span>
 
-            <span className={styles.rowValue}>
-              {count}
-              <span className={styles.rowShare}>
-                {getSharePercentage(count, total)} %
-              </span>
-            </span>
-          </li>
-        ))}
-      </ul>
+                  <span
+                    className={
+                      styles.rowValue
+                    }
+                  >
+                    {count}
 
-      <h3 className={styles.sectionTitle}>Promedios del grupo</h3>
+                    <span
+                      className={
+                        styles.rowShare
+                      }
+                    >
+                      {getSharePercentage(
+                        count,
+                        total,
+                      )}{' '}
+                      %
+                    </span>
+                  </span>
+                </li>
+              ),
+            )}
+          </ul>
+        </section>
 
-      <ul className={styles.list}>
-        {POPULATION_AVERAGES.map(({ id, label, value }) => (
-          <li key={id} className={styles.row}>
-            <span className={styles.rowLabel}>{label}</span>
+        <section>
+          <h3 className={styles.sectionTitle}>
+            Promedios del grupo
+          </h3>
 
-            <span className={styles.rowValue}>{value}</span>
-          </li>
-        ))}
-      </ul>
+          <ul className={styles.list}>
+            {POPULATION_AVERAGES.map(
+              ({
+                id,
+                label,
+                value,
+              }) => (
+                <li
+                  key={id}
+                  className={styles.row}
+                >
+                  <span
+                    className={
+                      styles.rowLabel
+                    }
+                  >
+                    {label}
+                  </span>
+
+                  <span
+                    className={
+                      styles.rowValue
+                    }
+                  >
+                    {value}
+                  </span>
+                </li>
+              ),
+            )}
+          </ul>
+        </section>
+      </div>
     </>
   );
 }

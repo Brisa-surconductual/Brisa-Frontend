@@ -1,11 +1,18 @@
 .header {
+  width: 100%;
+  color: var(--button-primary-text);
+  background-color: var(--brand-500);
+}
+
+.inner {
   display: flex;
+  width: 100%;
+  max-width: 1200px;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  padding: var(--space-6) var(--space-5) var(--space-4);
-  color: var(--button-primary-text);
-  background-color: var(--brand-500);
+  margin-inline: auto;
+  padding: var(--space-4);
 }
 
 .brand {
@@ -53,8 +60,8 @@
   background-color: rgb(255 255 255 / 18%);
   border: 0;
   border-radius: var(--radius-full);
-  font-weight: 700;
   font-size: 12px;
+  font-weight: 700;
   transition: background-color 120ms ease;
 }
 
@@ -72,6 +79,20 @@
 
 .logoutLabel {
   line-height: 1;
+}
+
+@media (min-width: 768px) {
+  .inner {
+    padding: var(--space-5) var(--space-7);
+  }
+
+  .name {
+    font-size: 15px;
+  }
+
+  .greeting {
+    font-size: 12px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
