@@ -3,11 +3,10 @@ export const initialAuthState = Object.freeze({
   role: null,
   isAuthenticated: false,
 
+  session: null,
+
   /*
-   * Por qué terminó la última sesión. Vive aquí y no en
-   * el state de navegación porque el cierre y el redirect
-   * son dos actualizaciones distintas: quien redirija, el
-   * motivo sigue disponible.
+   * Motivo por el cual terminó la última sesión.
    */
   endReason: null,
 });
@@ -19,23 +18,39 @@ export const AUTH_ACTION = Object.freeze({
 
 export function authReducer(state, action) {
   switch (action.type) {
-    /*
-     * `user` es un objeto para poder sumar nombre o
-     * identificador cuando exista backend, sin migrar
-     * a los consumidores. El rol NO va dentro: es una
-     * propiedad de la sesión, no del usuario.
-     */
     case AUTH_ACTION.LOGIN:
       return {
-        user: { email: action.payload.email },
+        user: {
+          id: action.payload.idUsuario ?? null,
+          email: action.payload.email ?? null,
+        },
+
         role: action.payload.role,
+
         isAuthenticated: true,
+
+        session: {
+          backendRole: action.payload.backendRole ?? null,
+
+          alcance: action.payload.alcance ?? null,
+
+          estadoRegistro: action.payload.estadoRegistro ?? null,
+
+          siguienteAccion: action.payload.siguienteAccion ?? null,
+
+          csrfToken: action.payload.csrfToken ?? null,
+
+          limiteInactividadMinutos:
+            action.payload.limiteInactividadMinutos ?? null,
+        },
+
         endReason: null,
       };
 
     case AUTH_ACTION.LOGOUT:
       return {
         ...initialAuthState,
+
         endReason: action.payload?.reason ?? null,
       };
 

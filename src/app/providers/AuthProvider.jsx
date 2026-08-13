@@ -7,17 +7,13 @@ import { AUTH_ACTION, authReducer, initialAuthState } from './authReducer.js';
 export function AuthProvider({ children }) {
   const [state, dispatch] = useReducer(authReducer, initialAuthState);
 
-  function login({ email, role }) {
+  function login(session) {
     dispatch({
       type: AUTH_ACTION.LOGIN,
-      payload: { email, role },
+      payload: session,
     });
   }
 
-  /*
-   * `reason` es opcional (ver SESSION_END_REASON): el
-   * cierre manual desde una pantalla no necesita motivo.
-   */
   function logout({ reason = null } = {}) {
     dispatch({
       type: AUTH_ACTION.LOGOUT,
@@ -25,18 +21,16 @@ export function AuthProvider({ children }) {
     });
   }
 
-  /*
-   * La sesión vive SOLO en memoria: al recargar se
-   * pierde. Aquí irá la persistencia real (rehidratar
-   * al montar y limpiar en logout) cuando el backend
-   * emita el token de sesión.
-   */
-
   const value = {
     user: state.user,
     role: state.role,
+
+    session: state.session,
+
     isAuthenticated: state.isAuthenticated,
+
     sessionEndReason: state.endReason,
+
     login,
     logout,
   };

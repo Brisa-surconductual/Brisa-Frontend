@@ -4,19 +4,13 @@ export const INITIAL_RECOVER_RESET_FORM = Object.freeze({
   confirmPassword: '',
 });
 
-/*
- * Vigencia del código de recuperación (demo). En
- * producción este valor lo define el backend; se
- * parametriza acá en un solo lugar en vez de
- * hardcodearlo en el hook y en la UI por separado.
- */
-export const RECOVERY_CODE_TTL_MS = 2 * 60 * 1000;
+const MINUTE_MS = 60 * 1000;
 
-/*
- * A partir de este umbral restante el conteo se marca
- * como advertencia (mismo comportamiento del prototipo).
- */
-export const RECOVERY_CODE_WARNING_THRESHOLD_MS = 30 * 1000;
+export const RECOVERY_CODE_TTL_MS =
+  15 * MINUTE_MS;
+
+export const RECOVERY_CODE_WARNING_THRESHOLD_MS =
+  2 * MINUTE_MS;
 
 export function formatRecoveryCountdown(remainingMs) {
   const totalSeconds = Math.max(0, Math.ceil(remainingMs / 1000));

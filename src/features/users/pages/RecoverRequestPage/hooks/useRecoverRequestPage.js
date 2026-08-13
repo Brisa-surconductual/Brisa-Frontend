@@ -18,9 +18,13 @@ export function useRecoverRequestPage() {
   const [form, setForm] = useState(createRecoverRequestFormState);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] =
+  useState('');
 
   function handleChange(event) {
     const { name, value } = event.target;
+
+    setSubmitError('');
 
     setForm((currentForm) => ({
       ...currentForm,
@@ -46,17 +50,26 @@ export function useRecoverRequestPage() {
     }
 
     setIsSubmitting(true);
+    setSubmitError('');
 
-    /*
-     * requestPasswordRecovery siempre resuelve (respuesta
-     * neutra por seguridad, ver authApi.js): no hay código
-     * de error que manejar acá.
-     */
-    await requestPasswordRecovery({ email: form.email });
+    try {
+      await requestPasswordRecovery({
+        email: form.email,
+      });
 
-    navigate('/recuperar/nueva', {
-      state: { requestedEmail: form.email },
-    });
+      navigate('/recuperar/nueva', {
+        state: {
+          requestedEmail:
+            form.email.trim().toLowerCase(),
+        },
+      });
+    } catch {
+      setSubmitError(
+        'No pudimos procesar la solicitud. Verifica tu conexión e intenta nuevamente.',
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   function goBack() {
@@ -66,6 +79,7 @@ export function useRecoverRequestPage() {
   return {
     form,
     errors,
+    submitError,
     isSubmitting,
     handleChange,
     handleSubmit,

@@ -16,6 +16,24 @@ import {
   hasValidationErrors,
 } from '../utils/loginForm.js';
 
+const LOGIN_DESTINATION = Object.freeze({
+  COMPLETAR_CONSENTIMIENTO:
+    '/registro/consentimiento',
+
+  REVISAR_REGISTRO:
+    '/registro/revision',
+
+  INGRESAR:
+    '/app',
+});
+
+function getLoginDestination(siguienteAccion) {
+  return (
+    LOGIN_DESTINATION[siguienteAccion] ??
+    '/app'
+  );
+}
+
 export function useLoginPage() {
   const navigate = useNavigate();
   const { login, sessionEndReason } = useAuth();
@@ -72,7 +90,14 @@ export function useLoginPage() {
       // Registra la sesión global antes de entrar a la app.
       login(session);
 
-      navigate('/app', { replace: true });
+      navigate(
+        getLoginDestination(
+          session.siguienteAccion,
+        ),
+        {
+          replace: true,
+        },
+      );
     } catch (error) {
       if (error?.code === AUTH_API_ERROR.INVALID_CREDENTIALS) {
         setSubmitError(

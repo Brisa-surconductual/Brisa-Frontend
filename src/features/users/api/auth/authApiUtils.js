@@ -1,13 +1,29 @@
-const NETWORK_DELAY_MS = 600;
+export function createApiError(
+  message,
+  code,
+  originalError = null,
+) {
+  const error = new Error(message);
 
-export function simulateNetworkDelay(ms = NETWORK_DELAY_MS) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
+  error.code = code;
+  error.status = originalError?.status ?? null;
+  error.originalError = originalError;
+
+  return error;
 }
 
-export function createApiError(message, code) {
-  const error = new Error(message);
-  error.code = code;
-  return error;
+export function hasApiStatus(error, ...statuses) {
+  return statuses.includes(error?.status);
+}
+
+export function apiErrorMessageIncludes(error, ...values) {
+  const message = String(
+    error?.data?.message ??
+      error?.message ??
+      '',
+  ).toLowerCase();
+
+  return values.some((value) =>
+    message.includes(value.toLowerCase()),
+  );
 }

@@ -1,4 +1,7 @@
-import { ArrowLeft } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowLeft,
+} from 'lucide-react';
 
 import { RecoverRequestForm } from './components/RecoverRequestForm.jsx';
 import { useRecoverRequestPage } from './hooks/useRecoverRequestPage.js';
@@ -6,8 +9,15 @@ import { useRecoverRequestPage } from './hooks/useRecoverRequestPage.js';
 import styles from './RecoverRequestPage.module.css';
 
 export function RecoverRequestPage() {
-  const { form, errors, isSubmitting, handleChange, handleSubmit, goBack } =
-    useRecoverRequestPage();
+  const {
+    form,
+    errors,
+    submitError,
+    isSubmitting,
+    handleChange,
+    handleSubmit,
+    goBack,
+  } = useRecoverRequestPage();
 
   return (
     <div className={styles.page}>
@@ -32,7 +42,23 @@ export function RecoverRequestPage() {
             Ingresa tu correo y te enviaremos un código de verificación
           </p>
         </section>
+          {submitError && (
+            <div className={styles.alert} role="alert">
+              <AlertTriangle
+                size={20}
+                strokeWidth={1.8}
+                aria-hidden="true"
+              />
 
+              <div>
+                <strong>
+                  No pudimos procesar la solicitud
+                </strong>
+
+                <p>{submitError}</p>
+              </div>
+            </div>
+          )}
         <RecoverRequestForm
           form={form}
           errors={errors}
