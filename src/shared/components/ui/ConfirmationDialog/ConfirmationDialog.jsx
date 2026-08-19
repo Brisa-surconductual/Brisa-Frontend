@@ -8,8 +8,6 @@ import { TriangleAlert } from 'lucide-react';
 
 import { Button } from '../Button';
 
-import styles from './ConfirmationDialog.module.css';
-
 export function ConfirmationDialog({
   open,
   title,
@@ -60,32 +58,29 @@ export function ConfirmationDialog({
   return (
     <dialog
       ref={dialogRef}
-      className={styles.dialog}
+      className="w-[min(calc(100%-32px),400px)] max-w-[400px] overflow-visible border-0 bg-transparent p-0 text-[var(--text-primary)] backdrop:bg-[rgb(22_21_16/68%)] backdrop:backdrop-blur-[2px]"
       aria-labelledby={titleId}
       aria-describedby={descriptionId}
       onCancel={handleCancel}
       onClick={handleBackdropClick}
     >
-      <div className={styles.card}>
-        <span className={styles.icon} aria-hidden="true">
+      <div className="rounded-[var(--radius-2xl)] border border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-6)] text-center shadow-[var(--shadow-lg)]">
+        <span className="mb-[var(--space-4)] inline-flex h-[52px] w-[52px] items-center justify-center rounded-[var(--radius-full)] bg-[var(--danger-bg)] text-[var(--danger-text)]" aria-hidden="true">
           <TriangleAlert
             size={28}
             strokeWidth={1.7}
           />
         </span>
 
-        <h2 id={titleId} className={styles.title}>
+        <h2 id={titleId} className="m-0 text-[18px] font-extrabold text-[var(--text-primary)]">
           {title}
         </h2>
 
-        <p
-          id={descriptionId}
-          className={styles.description}
-        >
+        <p id={descriptionId} className="mt-[var(--space-3)] mb-0 text-[13px] leading-[1.6] text-[var(--text-secondary)]">
           {description}
         </p>
 
-        <div className={styles.actions}>
+        <div className="mt-[var(--space-6)] grid grid-cols-2 gap-[var(--space-3)] max-[370px]:grid-cols-1">
           <Button
             variant="secondary"
             onClick={onCancel}

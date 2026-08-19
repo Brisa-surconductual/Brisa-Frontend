@@ -1,11 +1,14 @@
 import { useState } from 'react';
 
-import { Eye, EyeOff, LockKeyhole, Mail } from 'lucide-react';
+import {
+  Eye,
+  EyeOff,
+  LockKeyhole,
+  Mail,
+} from 'lucide-react';
 
 import { Button } from '@/shared/components/ui/Button/index.js';
 import { TextField } from '@/shared/components/ui/TextField/index.js';
-
-import styles from './LoginForm.module.css';
 
 export function LoginForm({
   form,
@@ -15,18 +18,27 @@ export function LoginForm({
   onSubmit,
   onForgotPassword,
 }) {
-  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [
+    isPasswordVisible,
+    setIsPasswordVisible,
+  ] = useState(false);
 
-  const visibilityLabel = isPasswordVisible
-    ? 'Ocultar contraseña'
-    : 'Mostrar contraseña';
+  const visibilityLabel =
+    isPasswordVisible
+      ? 'Ocultar contraseña'
+      : 'Mostrar contraseña';
 
   function toggleVisibility() {
-    setIsPasswordVisible((currentValue) => !currentValue);
+    setIsPasswordVisible(
+      (currentValue) => !currentValue,
+    );
   }
 
   return (
-    <form className={styles.form} onSubmit={onSubmit} noValidate>
+    <form className="flex flex-col gap-[var(--space-5)]"
+      onSubmit={onSubmit}
+      noValidate
+    >
       <TextField
         id="email"
         name="email"
@@ -41,14 +53,21 @@ export function LoginForm({
         error={errors.email}
         onChange={onChange}
         disabled={isSubmitting}
-        startIcon={<Mail size={19} strokeWidth={1.5} aria-hidden="true" />}
+        startIcon={
+          <Mail size={19} strokeWidth={1.5} aria-hidden="true"
+          />
+        }
         required
       />
 
       <TextField
         id="password"
         name="password"
-        type={isPasswordVisible ? 'text' : 'password'}
+        type={
+          isPasswordVisible
+            ? 'text'
+            : 'password'
+        }
         label="Contraseña"
         placeholder="Tu contraseña"
         autoComplete="current-password"
@@ -57,41 +76,30 @@ export function LoginForm({
         onChange={onChange}
         disabled={isSubmitting}
         startIcon={
-          <LockKeyhole size={19} strokeWidth={1.5} aria-hidden="true" />
+          <LockKeyhole size={19} strokeWidth={1.5} aria-hidden="true"
+          />
         }
         endAdornment={
-          <button
-            type="button"
-            className={styles.visibilityButton}
-            onClick={toggleVisibility}
-            aria-label={visibilityLabel}
-            aria-pressed={isPasswordVisible}
-            disabled={isSubmitting}
+          <button type="button" className="inline-flex items-center justify-center rounded-[var(--radius-sm)] border-0 bg-transparent p-[var(--space-1)] text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] disabled:cursor-not-allowed disabled:opacity-60" onClick={toggleVisibility} aria-label={visibilityLabel} aria-pressed={isPasswordVisible} disabled={isSubmitting}
           >
             {isPasswordVisible ? (
-              <EyeOff size={19} strokeWidth={1.5} aria-hidden="true" />
+              <EyeOff size={19} strokeWidth={1.5} aria-hidden="true"
+              />
             ) : (
-              <Eye size={19} strokeWidth={1.5} aria-hidden="true" />
+              <Eye size={19} strokeWidth={1.5} aria-hidden="true"
+              />
             )}
           </button>
         }
         required
       />
 
-      <button
-        type="button"
-        className={styles.forgotPasswordLink}
-        onClick={onForgotPassword}
+      <button type="button" className="self-center border-0 bg-transparent p-0 text-[13px] font-semibold text-[var(--brand-600)] hover:underline" onClick={onForgotPassword}
       >
         ¿Olvidaste tu contraseña?
       </button>
 
-      <Button
-        type="submit"
-        size="large"
-        fullWidth
-        loading={isSubmitting}
-        loadingText="Iniciando sesión..."
+      <Button type="submit" size="large" fullWidth loading={isSubmitting} loadingText="Iniciando sesión..."
       >
         Iniciar sesión
       </Button>

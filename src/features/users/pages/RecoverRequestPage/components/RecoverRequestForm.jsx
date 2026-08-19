@@ -3,8 +3,6 @@ import { Mail } from 'lucide-react';
 import { Button } from '@/shared/components/ui/Button/index.js';
 import { TextField } from '@/shared/components/ui/TextField/index.js';
 
-import styles from './RecoverRequestForm.module.css';
-
 export function RecoverRequestForm({
   form,
   errors,
@@ -13,7 +11,7 @@ export function RecoverRequestForm({
   onSubmit,
 }) {
   return (
-    <form className={styles.form} onSubmit={onSubmit} noValidate>
+    <form className="flex flex-col gap-[var(--space-5)]" onSubmit={onSubmit} noValidate>
       <TextField
         id="email"
         name="email"
@@ -28,7 +26,13 @@ export function RecoverRequestForm({
         error={errors.email}
         onChange={onChange}
         disabled={isSubmitting}
-        startIcon={<Mail size={19} strokeWidth={1.5} aria-hidden="true" />}
+        startIcon={
+          <Mail
+            size={19}
+            strokeWidth={1.5}
+            aria-hidden="true"
+          />
+        }
         required
       />
 

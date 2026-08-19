@@ -13,8 +13,6 @@ import {
 
 import { BaselineSection } from './BaselineSection.jsx';
 
-import styles from './BaselineFields.module.css';
-
 export function BaselineAcademicSection({
   form,
   errors,
@@ -32,7 +30,7 @@ export function BaselineAcademicSection({
       title="Datos académicos"
       description="Información general de tu contexto educativo."
     >
-      <div className={styles.grid}>
+      <div className="grid grid-cols-1 gap-[var(--space-4)] sm:grid-cols-2">
         <TextField
           id="age"
           name="age"
@@ -94,7 +92,7 @@ export function BaselineAcademicSection({
         required
       />
 
-      <div className={styles.grid}>
+      <div className="grid grid-cols-1 gap-[var(--space-4)] sm:grid-cols-2">
         <TextField
           id="semester"
           name="semester"

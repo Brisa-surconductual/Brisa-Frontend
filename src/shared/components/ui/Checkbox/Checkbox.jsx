@@ -1,7 +1,5 @@
 import { Check } from 'lucide-react';
 
-import styles from './Checkbox.module.css';
-
 export function Checkbox({
   id,
   checked,
@@ -11,10 +9,18 @@ export function Checkbox({
   className = '',
   ...inputProps
 }) {
+  const wrapperStateClass = error
+    ? 'border-[var(--danger-border)] bg-[var(--danger-bg)]'
+    : 'border-transparent';
+
+  const disabledClass = disabled
+    ? 'cursor-not-allowed opacity-50 hover:bg-transparent'
+    : 'cursor-pointer hover:bg-[var(--surface-hover)]';
+
   const wrapperClasses = [
-    styles.wrapper,
-    error ? styles.wrapperError : '',
-    disabled ? styles.disabled : '',
+    'relative flex items-start gap-[var(--space-3)] rounded-[var(--radius-md)] border p-[var(--space-3)] transition-[background-color,border-color] duration-[120ms]',
+    wrapperStateClass,
+    disabledClass,
     className,
   ]
     .filter(Boolean)
@@ -29,21 +35,33 @@ export function Checkbox({
         {...inputProps}
         id={id}
         type="checkbox"
-        className={styles.input}
+        className="peer absolute h-px w-px overflow-hidden opacity-0 pointer-events-none"
         checked={checked}
         disabled={disabled}
         aria-invalid={error}
       />
 
-      <span className={styles.box} aria-hidden="true">
+      <span
+        className={`mt-px inline-flex h-[21px] w-[21px] shrink-0 items-center justify-center rounded-[5px] border-[1.5px] transition-[background-color,border-color,box-shadow] duration-[120ms] peer-focus-visible:outline-[2.5px] peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--brand-500)] ${
+          checked
+            ? 'border-[var(--brand-500)] bg-[var(--brand-500)] text-[var(--neutral-0)]'
+            : 'border-[var(--surface-border)] bg-[var(--surface-card)] text-transparent'
+        }`}
+        aria-hidden="true"
+      >
         <Check
-          className={styles.check}
+          className={`transition-[opacity,transform] duration-[120ms] ${
+            checked
+              ? 'scale-100 opacity-100'
+              : 'scale-[0.7] opacity-0'
+          }`}
           size={14}
           strokeWidth={3}
+          aria-hidden="true"
         />
       </span>
 
-      <span className={styles.label}>
+      <span className="text-[13px] leading-[1.55] text-[var(--text-primary)]">
         {children}
       </span>
     </label>

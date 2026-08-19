@@ -16,8 +16,6 @@ import {
   createConsumptionRows,
 } from './utils/reviewRows.js';
 
-import styles from './ReviewPage.module.css';
-
 export function ReviewPage() {
   const {
     account,
@@ -78,11 +76,11 @@ export function ReviewPage() {
     );
 
   return (
-    <div className={styles.page}>
-      <header className={styles.topBar}>
+    <div className="mx-auto flex w-full max-w-[620px] flex-col gap-[var(--space-6)]">
+      <header className="flex items-center gap-[var(--space-3)]">
         <button
           type="button"
-          className={styles.backButton}
+          className="inline-flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-[var(--radius-full)] border-0 bg-[var(--surface-hover)] p-0 text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-border)]"
           onClick={handleBack}
           aria-label="Volver a línea base"
         >
@@ -93,23 +91,23 @@ export function ReviewPage() {
           />
         </button>
 
-        <span className={styles.topBarTitle}>
+        <span className="text-[13px] font-bold text-[var(--text-secondary)]">
           Revisión
         </span>
       </header>
 
       <RegistrationStepper currentStep={4} />
 
-      <section className={styles.introduction}>
-        <span className={styles.eyebrow}>
+      <section className="flex flex-col">
+        <span className="mb-[var(--space-2)] font-[var(--font-mono)] text-[10px] font-medium tracking-[0.08em] text-[var(--brand-600)] uppercase">
           Paso 4 de 4
         </span>
 
-        <h1 className={styles.title}>
+        <h1 className="m-0 text-[28px] leading-[1.2] font-extrabold tracking-[-0.025em] text-[var(--text-primary)] max-[370px]:text-[24px]">
           Revisa antes de confirmar
         </h1>
 
-        <p className={styles.description}>
+        <p className="mt-[var(--space-2)] mb-0 text-[14px] leading-[1.6] text-[var(--text-secondary)]">
           Verifica que la información sea correcta.
           Puedes editar las secciones habilitadas
           antes de finalizar.
@@ -129,7 +127,7 @@ export function ReviewPage() {
         onRenewConsent={goToReconsent}
       />
 
-      <div className={styles.cards}>
+      <div className="flex flex-col gap-[var(--space-4)]">
         <ReviewCard
           title="Cuenta"
           rows={accountRows}
@@ -152,9 +150,8 @@ export function ReviewPage() {
         />
       </div>
 
-      <div className={styles.privacyNote}>
-        La contraseña no se muestra ni puede
-        consultarse desde esta pantalla.
+      <div className="rounded-[var(--radius-md)] border border-[var(--surface-border)] bg-[var(--surface-hover)] px-[var(--space-4)] py-[var(--space-3)] text-[11px] leading-[1.5] text-[var(--text-muted)]">
+        La contraseña no se muestra ni puede consultarse desde esta pantalla.
       </div>
 
       <Button

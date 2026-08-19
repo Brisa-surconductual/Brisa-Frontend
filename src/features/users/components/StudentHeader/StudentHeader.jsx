@@ -1,20 +1,15 @@
 import { LogOut } from 'lucide-react';
 
-import styles from './StudentHeader.module.css';
-
 export function StudentHeader({
   displayName,
   roleLabel,
   onLogout,
 }) {
   return (
-    <header className={styles.header}>
-      <div className={styles.inner}>
-        <div className={styles.brand}>
-          <span
-            className={styles.mark}
-            aria-hidden="true"
-          >
+    <header className="w-full bg-[var(--brand-500)] text-[var(--button-primary-text)]">
+      <div className="mx-auto flex w-full max-w-[1200px] items-center justify-between gap-[var(--space-3)] p-[var(--space-4)] md:px-[var(--space-7)] md:py-[var(--space-5)]">
+        <div className="flex min-w-0 items-center gap-[var(--space-2)]">
+          <span className="flex shrink-0 text-[var(--button-primary-text)]" aria-hidden="true">
             <svg
               width="28"
               height="28"
@@ -38,12 +33,12 @@ export function StudentHeader({
             </svg>
           </span>
 
-          <span className={styles.identity}>
-            <strong className={styles.name}>
+          <span className="flex min-w-0 flex-col">
+            <strong className="text-[13px] leading-[1.3] font-extrabold md:text-[15px]">
               Brisa
             </strong>
 
-            <span className={styles.greeting}>
+            <span className="overflow-hidden text-[11px] leading-[1.4] text-ellipsis whitespace-nowrap opacity-78 md:text-[12px]">
               Hola, {displayName}
               {roleLabel && ` · ${roleLabel}`}
             </span>
@@ -52,7 +47,7 @@ export function StudentHeader({
 
         <button
           type="button"
-          className={styles.logoutButton}
+          className="inline-flex min-h-[34px] shrink-0 items-center gap-[var(--space-2)] rounded-[var(--radius-full)] border-0 bg-[rgb(255_255_255/18%)] px-[var(--space-3)] py-[var(--space-2)] text-[12px] font-bold text-[var(--button-primary-text)] transition-[background-color] duration-120 hover:bg-[rgb(255_255_255/28%)] motion-reduce:transition-none [html[data-theme='dark']_&]:bg-[rgb(0_0_0/20%)] [html[data-theme='dark']_&]:hover:bg-[rgb(0_0_0/32%)]"
           onClick={onLogout}
         >
           <LogOut
@@ -61,7 +56,7 @@ export function StudentHeader({
             aria-hidden="true"
           />
 
-          <span className={styles.logoutLabel}>
+          <span className="leading-none">
             Salir
           </span>
         </button>

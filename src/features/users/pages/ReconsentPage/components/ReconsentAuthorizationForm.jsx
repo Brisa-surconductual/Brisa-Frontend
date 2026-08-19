@@ -6,8 +6,6 @@ import {
   Checkbox,
 } from '../../../../../shared/components/ui/Checkbox/index.js';
 
-import styles from './ReconsentAuthorizationForm.module.css';
-
 export function ReconsentAuthorizationForm({
   authorizations,
   attemptedSubmit,
@@ -17,13 +15,9 @@ export function ReconsentAuthorizationForm({
   onSubmit,
 }) {
   return (
-    <form
-      className={styles.form}
-      onSubmit={onSubmit}
-      noValidate
-    >
-      <fieldset className={styles.fieldset}>
-        <legend className={styles.legend}>
+    <form className="flex flex-col gap-[var(--space-5)]" onSubmit={onSubmit} noValidate>
+      <fieldset className="m-0 flex min-w-0 flex-col gap-[var(--space-4)] rounded-[var(--radius-lg)] border border-[var(--surface-border)] p-[var(--space-5)]">
+        <legend className="px-[var(--space-2)] text-[14px] font-extrabold text-[var(--text-primary)]">
           Renovación de autorizaciones
         </legend>
 
@@ -72,12 +66,8 @@ export function ReconsentAuthorizationForm({
 
       {attemptedSubmit &&
         !consentIsComplete && (
-          <p
-            className={styles.validationError}
-            role="alert"
-          >
-            Debes aceptar ambas autorizaciones
-            para continuar.
+          <p className="mt-[calc(var(--space-3)*-1)] mb-0 text-[12px] leading-[1.5] text-[var(--danger-text)]" role="alert">
+            Debes aceptar ambas autorizaciones para continuar.
           </p>
         )}
 

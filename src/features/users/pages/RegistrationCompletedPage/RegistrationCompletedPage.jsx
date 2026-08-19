@@ -24,8 +24,6 @@ import {
   REGISTRATION_STATUS,
 } from '../../types/registrationStatus.js';
 
-import styles from './RegistrationCompletedPage.module.css';
-
 export function RegistrationCompletedPage() {
   const navigate = useNavigate();
 
@@ -51,42 +49,46 @@ export function RegistrationCompletedPage() {
   }
 
   return (
-    <div className={styles.page}>
+    <div className="mx-auto flex w-full max-w-[480px] flex-col items-center gap-[var(--space-6)] text-center">
       <BrisaLogo />
 
-      <span
-        className={styles.icon}
-        aria-hidden="true"
-      >
+      <span className="inline-flex h-[82px] w-[82px] items-center justify-center rounded-[var(--radius-full)] border border-[var(--success-border)] bg-[var(--success-bg)] text-[var(--success-text)]" aria-hidden="true">
         <CheckCircle2
           size={44}
           strokeWidth={1.6}
         />
       </span>
 
-      <section className={styles.content}>
-        <h1>Registro completado</h1>
+      <section>
+        <h1 className="m-0 text-[28px] font-extrabold text-[var(--text-primary)]">
+          Registro completado
+        </h1>
 
-        <p>
-          Tu cuenta y la información de línea base
-          fueron confirmadas correctamente.
+        <p className="mt-[var(--space-3)] mb-0 text-[14px] leading-[1.6] text-[var(--text-secondary)]">
+          Tu cuenta y la información de línea base fueron confirmadas correctamente.
         </p>
       </section>
 
-      <div className={styles.summary}>
+      <div className="flex w-full items-start gap-[var(--space-3)] rounded-[var(--radius-md)] border border-[var(--info-border)] bg-[var(--info-bg)] p-[var(--space-4)] text-left text-[var(--info-text)]">
         <ShieldCheck
           size={20}
           strokeWidth={1.6}
+          className="shrink-0"
           aria-hidden="true"
         />
 
         <div>
-          <span>Cuenta registrada</span>
-          <strong>{account.email}</strong>
+          <span className="block text-[11px]">
+            Cuenta registrada
+          </span>
+
+          <strong className="mt-[2px] block [overflow-wrap:anywhere] text-[13px]">
+            {account.email}
+          </strong>
         </div>
       </div>
 
-      <span className={styles.status}>
+      <span className="rounded-[var(--radius-full)] border border-[var(--success-border)] bg-[var(--success-bg)] px-[12px] py-[4px] font-[var(--font-mono)] text-[10px] font-medium text-[var(--success-text)]">
         Registro completo
       </span>
 
@@ -99,9 +101,8 @@ export function RegistrationCompletedPage() {
         Continuar
       </Button>
 
-      <p className={styles.completionNote}>
-        Tu información quedó registrada de acuerdo
-        con las autorizaciones aceptadas.
+      <p className="m-0 text-[11px] text-[var(--text-muted)]">
+        Tu información quedó registrada de acuerdo con las autorizaciones aceptadas.
       </p>
     </div>
   );

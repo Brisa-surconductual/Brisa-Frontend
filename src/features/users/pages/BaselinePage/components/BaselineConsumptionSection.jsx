@@ -9,8 +9,6 @@ import {
 
 import { BaselineSection } from './BaselineSection.jsx';
 
-import styles from './BaselineFields.module.css';
-
 export function BaselineConsumptionSection({
   form,
   errors,
@@ -29,13 +27,13 @@ export function BaselineConsumptionSection({
       title="Datos de consumo"
       description="Responde de acuerdo con tu experiencia personal."
     >
-      <div className={styles.sensitiveNotice}>
+      <div className="rounded-[var(--radius-md)] border border-[var(--info-border)] bg-[var(--info-bg)] px-[var(--space-4)] py-[var(--space-3)] text-[11px] leading-[1.55] text-[var(--info-text)]">
         Esta sección contiene información sensible.
         Tus respuestas serán tratadas de acuerdo con
         el consentimiento aceptado.
       </div>
 
-      <div className={styles.grid}>
+      <div className="grid grid-cols-1 gap-[var(--space-4)] sm:grid-cols-2">
         <TextField
           id="consumptionStartDate"
           name="consumptionStartDate"

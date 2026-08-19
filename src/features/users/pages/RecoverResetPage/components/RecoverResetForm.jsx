@@ -3,8 +3,6 @@ import { TextField } from '@/shared/components/ui/TextField/index.js';
 
 import { PasswordField } from './PasswordField.jsx';
 
-import styles from './RecoverResetForm.module.css';
-
 export function RecoverResetForm({
   form,
   errors,
@@ -16,7 +14,7 @@ export function RecoverResetForm({
   const fieldsDisabled = isSubmitting || isExpired;
 
   return (
-    <form className={styles.form} onSubmit={onSubmit} noValidate>
+    <form className="flex flex-col gap-[var(--space-5)]" onSubmit={onSubmit} noValidate>
       <TextField
         id="code"
         name="code"

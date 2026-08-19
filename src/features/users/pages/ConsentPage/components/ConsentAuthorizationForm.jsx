@@ -1,8 +1,6 @@
 import { Button } from '../../../../../shared/components/ui/Button/index.js';
 import { Checkbox } from '../../../../../shared/components/ui/Checkbox/index.js';
 
-import styles from './ConsentAuthorizationForm.module.css';
-
 export function ConsentAuthorizationForm({
   authorizations,
   attemptedSubmit,
@@ -13,13 +11,9 @@ export function ConsentAuthorizationForm({
   onCancelRegistration,
 }) {
   return (
-    <form
-      className={styles.form}
-      onSubmit={onSubmit}
-      noValidate
-    >
-      <fieldset className={styles.fieldset}>
-        <legend className={styles.legend}>
+    <form className="flex flex-col gap-[var(--space-5)]" onSubmit={onSubmit} noValidate>
+      <fieldset className="m-0 flex min-w-0 flex-col gap-[var(--space-4)] rounded-[var(--radius-lg)] border border-[var(--surface-border)] p-[var(--space-5)]">
+        <legend className="px-[var(--space-2)] text-[14px] font-extrabold text-[var(--text-primary)]">
           Autorizaciones obligatorias
         </legend>
 
@@ -68,16 +62,12 @@ export function ConsentAuthorizationForm({
 
       {attemptedSubmit &&
         !consentIsComplete && (
-          <p
-            className={styles.validationError}
-            role="alert"
-          >
-            Debes aceptar ambas autorizaciones
-            para continuar.
+          <p className="mt-[calc(var(--space-3)*-1)] mb-0 text-[12px] leading-[1.5] text-[var(--danger-text)]" role="alert">
+            Debes aceptar ambas autorizaciones para continuar.
           </p>
         )}
 
-      <div className={styles.actions}>
+      <div className="flex flex-col gap-[var(--space-3)]">
         <Button
           type="submit"
           size="large"

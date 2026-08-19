@@ -4,16 +4,6 @@ import { Eye, EyeOff, LockKeyhole } from 'lucide-react';
 
 import { TextField } from '@/shared/components/ui/TextField/index.js';
 
-import styles from './PasswordField.module.css';
-
-/*
- * Campo de contraseña con mostrar/ocultar, local a
- * RecoverResetPage. NO incluye PasswordStrength (vive en
- * features/users, y las features no se importan entre
- * sí). Si conviene un medidor de fortaleza acá también,
- * mover PasswordStrength a shared/ en un PR aparte y
- * pequeño, y luego adoptarlo en ambos flujos.
- */
 export function PasswordField({
   id,
   name,
@@ -50,7 +40,7 @@ export function PasswordField({
       endAdornment={
         <button
           type="button"
-          className={styles.visibilityButton}
+          className="inline-flex items-center justify-center rounded-[var(--radius-sm)] border-0 bg-transparent p-[var(--space-1)] text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-500)] disabled:cursor-not-allowed disabled:opacity-60"
           onClick={toggleVisibility}
           aria-label={visibilityLabel}
           aria-pressed={isVisible}

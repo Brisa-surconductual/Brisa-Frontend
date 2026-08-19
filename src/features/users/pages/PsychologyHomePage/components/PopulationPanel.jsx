@@ -10,8 +10,6 @@ import {
   sumCounts,
 } from '../utils/aggregates.js';
 
-import styles from './PopulationPanel.module.css';
-
 export function PopulationPanel() {
   const total = sumCounts(
     FACULTY_DISTRIBUTION,
@@ -19,36 +17,34 @@ export function PopulationPanel() {
 
   return (
     <>
-      <div className={styles.notice}>
+      <div className="flex items-start gap-[var(--space-3)] rounded-[var(--radius-md)] border border-[var(--info-border)] bg-[var(--info-bg)] p-[var(--space-3)] text-[var(--info-text)] md:p-[var(--space-4)]">
         <Info
           size={20}
           strokeWidth={1.8}
+          className="mt-px shrink-0"
           aria-hidden="true"
         />
 
         <div>
-          <strong>
+          <strong className="block text-[13px] md:text-[14px]">
             Vista agregada y anónima
           </strong>
 
-          <p>
-            El perfil administrativo solo
-            consulta estadísticas del grupo.
-            El acceso a datos individuales
-            identificables requiere
-            consentimiento específico y llega
-            en M08.
+          <p className="mt-[var(--space-1)] mb-0 text-[12px] leading-[1.5] opacity-90 md:text-[13px]">
+            El perfil administrativo solo consulta estadísticas del grupo.
+            El acceso a datos individuales identificables requiere
+            consentimiento específico y llega en M08.
           </p>
         </div>
       </div>
 
-      <div className={styles.sectionsGrid}>
+      <div className="grid grid-cols-1 gap-[var(--space-5)] lg:grid-cols-2 lg:gap-[var(--space-6)]">
         <section>
-          <h3 className={styles.sectionTitle}>
+          <h3 className="mt-[var(--space-5)] mb-[var(--space-2)] text-[11px] font-bold tracking-[0.1em] text-[var(--text-secondary)] uppercase">
             Distribución por facultad
           </h3>
 
-          <ul className={styles.list}>
+          <ul className="m-0 list-none rounded-[var(--radius-lg)] border border-[var(--surface-border)] bg-[var(--surface-card)] px-[var(--space-4)] py-[var(--space-2)] shadow-[var(--shadow-sm)] md:px-[var(--space-5)] md:py-[var(--space-3)]">
             {FACULTY_DISTRIBUTION.map(
               ({
                 id,
@@ -57,28 +53,16 @@ export function PopulationPanel() {
               }) => (
                 <li
                   key={id}
-                  className={styles.row}
+                  className="flex items-center justify-between gap-[var(--space-3)] border-b border-[var(--surface-hover)] py-[var(--space-3)] text-[12px] last:border-b-0 md:text-[13px]"
                 >
-                  <span
-                    className={
-                      styles.rowLabel
-                    }
-                  >
+                  <span className="min-w-0 text-[var(--text-muted)]">
                     {label}
                   </span>
 
-                  <span
-                    className={
-                      styles.rowValue
-                    }
-                  >
+                  <span className="inline-flex shrink-0 items-baseline gap-[var(--space-2)] text-right font-semibold text-[var(--text-primary)]">
                     {count}
 
-                    <span
-                      className={
-                        styles.rowShare
-                      }
-                    >
+                    <span className="font-[var(--font-mono)] text-[10px] font-medium text-[var(--text-muted)]">
                       {getSharePercentage(
                         count,
                         total,
@@ -93,11 +77,11 @@ export function PopulationPanel() {
         </section>
 
         <section>
-          <h3 className={styles.sectionTitle}>
+          <h3 className="mt-[var(--space-5)] mb-[var(--space-2)] text-[11px] font-bold tracking-[0.1em] text-[var(--text-secondary)] uppercase">
             Promedios del grupo
           </h3>
 
-          <ul className={styles.list}>
+          <ul className="m-0 list-none rounded-[var(--radius-lg)] border border-[var(--surface-border)] bg-[var(--surface-card)] px-[var(--space-4)] py-[var(--space-2)] shadow-[var(--shadow-sm)] md:px-[var(--space-5)] md:py-[var(--space-3)]">
             {POPULATION_AVERAGES.map(
               ({
                 id,
@@ -106,21 +90,13 @@ export function PopulationPanel() {
               }) => (
                 <li
                   key={id}
-                  className={styles.row}
+                  className="flex items-center justify-between gap-[var(--space-3)] border-b border-[var(--surface-hover)] py-[var(--space-3)] text-[12px] last:border-b-0 md:text-[13px]"
                 >
-                  <span
-                    className={
-                      styles.rowLabel
-                    }
-                  >
+                  <span className="min-w-0 text-[var(--text-muted)]">
                     {label}
                   </span>
 
-                  <span
-                    className={
-                      styles.rowValue
-                    }
-                  >
+                  <span className="inline-flex shrink-0 items-baseline gap-[var(--space-2)] text-right font-semibold text-[var(--text-primary)]">
                     {value}
                   </span>
                 </li>

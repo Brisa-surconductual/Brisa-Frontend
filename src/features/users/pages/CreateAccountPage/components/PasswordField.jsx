@@ -14,8 +14,6 @@ import {
   PasswordStrength,
 } from '../../../components/PasswordStrength/index.js';
 
-import styles from './PasswordField.module.css';
-
 export function PasswordField({
   id,
   name,
@@ -27,21 +25,18 @@ export function PasswordField({
   showStrength = false,
   disabled = false,
 }) {
-  const [isVisible, setIsVisible] =
-    useState(false);
+  const [isVisible, setIsVisible] = useState(false);
 
   const visibilityLabel = isVisible
     ? `Ocultar ${label.toLowerCase()}`
     : `Mostrar ${label.toLowerCase()}`;
 
   function toggleVisibility() {
-    setIsVisible((currentValue) =>
-      !currentValue,
-    );
+    setIsVisible((currentValue) => !currentValue);
   }
 
   return (
-    <div className={styles.group}>
+    <div className="flex flex-col gap-[var(--space-2)]">
       <TextField
         id={id}
         name={name}
@@ -63,7 +58,7 @@ export function PasswordField({
         endAdornment={
           <button
             type="button"
-            className={styles.visibilityButton}
+            className="inline-flex items-center justify-center rounded-[var(--radius-sm)] border-0 bg-transparent p-[var(--space-1)] text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-500)] disabled:cursor-not-allowed disabled:opacity-60"
             onClick={toggleVisibility}
             aria-label={visibilityLabel}
             aria-pressed={isVisible}

@@ -6,8 +6,6 @@ import {
   User,
 } from 'lucide-react';
 
-import styles from './StudentBottomNav.module.css';
-
 /*
  * Navegación principal del estudiante.
  *
@@ -51,11 +49,8 @@ export function StudentBottomNav({
   activeItemId = 'inicio',
 }) {
   return (
-    <nav
-      className={styles.nav}
-      aria-label="Secciones del programa"
-    >
-      <div className={styles.inner}>
+    <nav className="w-full shrink-0 border-t border-[var(--surface-border)] bg-[var(--surface-card)]" aria-label="Secciones del programa">
+      <div className="mx-auto flex w-full max-w-[1200px] px-[var(--space-2)] pt-[var(--space-2)] pb-[var(--space-4)] md:px-[var(--space-7)] md:py-[var(--space-3)] lg:gap-[var(--space-2)]">
         {NAV_ITEMS.map(
           ({
             id,
@@ -65,15 +60,15 @@ export function StudentBottomNav({
             const isActive =
               id === activeItemId;
 
+            const stateClass = isActive
+              ? 'text-[var(--brand-600)] opacity-100'
+              : 'text-[var(--text-muted)] disabled:cursor-not-allowed disabled:opacity-55';
+
             return (
               <button
                 key={id}
                 type="button"
-                className={
-                  isActive
-                    ? styles.itemActive
-                    : styles.item
-                }
+                className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-[var(--space-1)] border-0 bg-transparent p-[var(--space-2)] font-[var(--font-sans)] text-[10px] font-semibold transition-[color,background-color] duration-120 enabled:hover:bg-[var(--surface-hover)] motion-reduce:transition-none md:min-h-[48px] md:flex-row md:gap-[var(--space-2)] md:rounded-[var(--radius-md)] md:px-[var(--space-4)] md:py-[var(--space-2)] md:text-[12px] lg:text-[13px] ${stateClass}`}
                 disabled={!isActive}
                 aria-current={
                   isActive
@@ -87,18 +82,12 @@ export function StudentBottomNav({
                   aria-hidden="true"
                 />
 
-                <span
-                  className={styles.label}
-                >
+                <span className="leading-[1.2]">
                   {label}
                 </span>
 
                 {!isActive && (
-                  <span
-                    className={
-                      styles.srOnly
-                    }
-                  >
+                  <span className="absolute h-px w-px overflow-hidden [clip-path:inset(50%)] whitespace-nowrap">
                     Próximamente
                   </span>
                 )}

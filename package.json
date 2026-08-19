@@ -14,10 +14,12 @@
   "dependencies": {
     "@fontsource/ibm-plex-mono": "^5.2.7",
     "@fontsource/manrope": "^5.2.8",
+    "@tailwindcss/vite": "^4.3.3",
     "lucide-react": "^1.25.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
-    "react-router-dom": "^7.18.1"
+    "react-router-dom": "^7.18.1",
+    "tailwindcss": "^4.3.3"
   },
   "devDependencies": {
     "@babel/core": "^7.29.7",
@@ -37,21 +39,21 @@
     "vite": "^8.1.1"
   },
   "lint-staged": {
-  "src/features/auth/**/*.{js,jsx}": [
-    "prettier --write",
-    "eslint --fix"
-  ],
-  "src/features/student/**/*.{js,jsx}": [
-    "prettier --write",
-    "eslint --fix"
-  ],
-  "src/features/psychology/**/*.{js,jsx}": [
-    "prettier --write",
-    "eslint --fix"
-  ],
-  "src/app/**/*.{js,jsx}": [
-    "prettier --write",
-    "eslint --fix"
-  ]
-}
+    "src/features/auth/**/*.{js,jsx}": [
+      "prettier --write",
+      "eslint --fix"
+    ],
+    "src/features/student/**/*.{js,jsx}": [
+      "prettier --write",
+      "eslint --fix"
+    ],
+    "src/features/psychology/**/*.{js,jsx}": [
+      "prettier --write",
+      "eslint --fix"
+    ],
+    "src/app/**/*.{js,jsx}": [
+      "prettier --write",
+      "eslint --fix"
+    ]
+  }
 }

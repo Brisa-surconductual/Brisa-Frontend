@@ -17,8 +17,6 @@ import {
   PasswordField,
 } from './PasswordField.jsx';
 
-import styles from './CreateAccountForm.module.css';
-
 export function CreateAccountForm({
   form,
   errors,
@@ -27,11 +25,7 @@ export function CreateAccountForm({
   onSubmit,
 }) {
   return (
-    <form
-      className={styles.form}
-      onSubmit={onSubmit}
-      noValidate
-    >
+    <form className="flex flex-col gap-[var(--space-5)]" onSubmit={onSubmit} noValidate>
       <TextField
         id="email"
         name="email"
@@ -79,17 +73,16 @@ export function CreateAccountForm({
         disabled={isSubmitting}
       />
 
-      <div className={styles.privacyNotice}>
+      <div className="flex items-start gap-[var(--space-3)] rounded-[var(--radius-md)] border border-[var(--surface-border)] bg-[var(--surface-hover)] p-[var(--space-4)] text-[var(--text-secondary)]">
         <ShieldCheck
           size={20}
           strokeWidth={1.5}
+          className="shrink-0 text-[var(--brand-600)]"
           aria-hidden="true"
         />
 
-        <p>
-          No solicitaremos tu nombre, documento de
-          identidad ni otros datos personales en esta
-          etapa.
+        <p className="m-0 text-[12px] leading-[1.55]">
+          No solicitaremos tu nombre, documento de identidad ni otros datos personales en esta etapa.
         </p>
       </div>
 
@@ -103,12 +96,12 @@ export function CreateAccountForm({
         Crear mi cuenta
       </Button>
 
-      <div className={styles.loginAccess}>
+      <div className="mt-[var(--space-1)] flex flex-wrap items-center justify-center gap-[var(--space-2)] text-center text-[14px] text-[var(--text-secondary)]">
         <span>¿Ya tienes una cuenta?</span>
 
         <Link
           to="/login"
-          className={styles.loginLink}
+          className="rounded-[var(--radius-sm)] font-semibold text-[var(--brand-600)] no-underline hover:underline focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-[var(--brand-500)]"
         >
           Iniciar sesión
         </Link>
