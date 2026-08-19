@@ -12,9 +12,9 @@ Frontend desarrollado con **React** y **Vite**, siguiendo una arquitectura **SPA
 | npm | 10 o superior |
 | React | 19.2.7 |
 | Vite | 8.1.4 |
+| Tailwind CSS | Versión instalada en `package.json` |
 | JavaScript | ES2024 |
 | React Router | Versión instalada en `package.json` |
-
 > Las versiones instaladas realmente en el proyecto se encuentran en `package.json` y `package-lock.json`. No deben modificarse manualmente sin coordinación con el equipo.
 
 ---
@@ -146,6 +146,8 @@ npm ci
 
 Este comando instala exactamente las versiones registradas en el archivo de bloqueo.
 
+El proyecto utiliza Tailwind CSS integrado mediante el plugin oficial de Vite. No se requiere ejecutar ningún comando adicional para compilar los estilos; Vite procesa Tailwind automáticamente durante `npm run dev` y `npm run build`.
+
 Usar:
 
 ```bash
@@ -200,7 +202,9 @@ Consideraciones:
 - El archivo `.env` no debe subirse al repositorio.
 - Cuando se modifique `.env`, se debe reiniciar `npm run dev`.
 
-En el estado actual, los flujos de autenticación y registro utilizan APIs simuladas y almacenes en memoria, por lo que pueden probarse sin ejecutar un backend. Cuando se conecte el backend, el equipo deberá documentar aquí la URL y las variables necesarias.
+La aplicación puede requerir comunicación con servicios del backend según el flujo utilizado. Las URLs y configuraciones necesarias deben definirse mediante variables de entorno documentadas por el equipo.
+
+Las variables utilizadas por Vite deben comenzar con `VITE_`. No se deben exponer secretos, contraseñas ni credenciales sensibles en el frontend.
 
 ---
 
@@ -646,7 +650,6 @@ PsychologyHomePage/
 ├── utils/
 │   └── aggregates.js
 ├── PsychologyHomePage.jsx
-├── PsychologyHomePage.module.css
 └── index.js
 ```
 
@@ -659,7 +662,6 @@ StudentHomePage/
 ├── utils/
 │   └── studentUser.js
 ├── StudentHomePage.jsx
-├── StudentHomePage.module.css
 └── index.js
 ```
 
@@ -843,16 +845,42 @@ Contiene recursos estáticos:
 
 # Styles
 
-Contiene estilos globales:
+El proyecto utiliza **Tailwind CSS** para los estilos de componentes y vistas.
 
-- Variables
-- Temas
-- Estilos base
-- Normalización visual
+La carpeta:
 
-Los estilos exclusivos de un componente se mantienen en archivos `*.module.css`.
-
+```text
+src/styles/
 ---
+
+styles/
+├── tokens.css
+└── globals.css
+
+tokens.css
+
+Contiene las variables CSS que definen el sistema visual de Brisa:
+
+Colores de marca.
+Colores semánticos.
+Superficies.
+Colores de texto.
+Tipografías.
+Espaciados.
+Radios.
+Sombras.
+Variables para modo oscuro.
+
+globals.css
+
+Contiene:
+
+La importación global de Tailwind CSS.
+Normalización visual.
+Reglas base.
+Estilos globales de html, body y #root.
+Reglas globales de accesibilidad.
+Comportamientos compartidos que no pertenecen a un componente específico.
 
 # Progressive Web App
 
