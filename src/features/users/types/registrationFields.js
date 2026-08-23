@@ -1,5 +1,5 @@
 export const BASELINE_FIELD_LABELS = {
-  age: 'Edad',
+  age: 'Fecha de nacimiento',
   educationalInstitution: 'Entidad educativa',
   academicProgram: 'Programa académico',
   semester: 'Semestre cursado',

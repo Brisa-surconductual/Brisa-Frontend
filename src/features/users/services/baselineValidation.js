@@ -8,14 +8,21 @@ import {
   parseDateOnly,
 } from '../../../shared/utils/dateUtils.js';
 
-function isPositiveInteger(value) {
-  if (value === '') {
+function isValidPastDate(value) {
+  if (!value) {
     return false;
   }
 
-  const number = Number(value);
+  const dateTimestamp = parseDateOnly(value);
 
-  return Number.isInteger(number) && number > 0;
+  if (dateTimestamp === null) {
+    return false;
+  }
+
+  const currentDate = getCurrentDateInBogota();
+  const currentDateTimestamp = parseDateOnly(currentDate);
+
+  return dateTimestamp <= currentDateTimestamp;
 }
 
 function isNonNegativeInteger(value) {
@@ -35,9 +42,12 @@ function isBlank(value) {
 export function validateBaselineForm(form) {
   const errors = {};
 
-  if (!isPositiveInteger(form.age)) {
+  if (!form.age) {
     errors.age =
-      'Ingresa una edad válida usando un número entero.';
+      'La fecha de nacimiento es obligatoria.';
+  } else if (!isValidPastDate(form.age)) {
+    errors.age =
+      'Ingresa una fecha de nacimiento válida que no esté en el futuro.';
   }
 
   if (isBlank(form.educationalInstitution)) {
@@ -50,7 +60,7 @@ export function validateBaselineForm(form) {
       'El programa académico es obligatorio.';
   }
 
-  if (!isPositiveInteger(form.semester)) {
+  if (!isNonNegativeInteger(form.semester) || Number(form.semester) === 0) {
     errors.semester =
       'Ingresa el semestre usando un número entero mayor que cero.';
   }

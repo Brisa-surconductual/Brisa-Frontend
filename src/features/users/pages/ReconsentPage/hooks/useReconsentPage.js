@@ -3,10 +3,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import {
-  renewRegistrationConsent,
-} from '../../../api/registrationApi.js';
-
-import {
   useRegistration,
 } from '../../../hooks/useRegistration.js';
 

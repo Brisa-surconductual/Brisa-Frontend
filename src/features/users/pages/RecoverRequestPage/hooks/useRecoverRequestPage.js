@@ -1,8 +1,5 @@
 import { useState } from 'react';
-
 import { useNavigate } from 'react-router-dom';
-
-import { requestPasswordRecovery } from '@/features/users/api/authApi.js';
 import { validateRecoverRequestForm } from '@/features/users/services/authValidation.js';
 
 import {

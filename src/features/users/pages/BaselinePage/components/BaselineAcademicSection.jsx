@@ -34,12 +34,8 @@ export function BaselineAcademicSection({
         <TextField
           id="age"
           name="age"
-          type="number"
-          label="Edad"
-          placeholder="Ej. 20"
-          inputMode="numeric"
-          min="1"
-          step="1"
+          type="date"
+          label="Fecha de nacimiento"
           value={form.age}
           error={errors.age}
           onChange={onChange}

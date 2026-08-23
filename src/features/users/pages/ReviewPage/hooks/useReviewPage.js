@@ -8,17 +8,19 @@ import {
   useNavigate,
 } from 'react-router-dom';
 
-import { confirmRegistration } from '../../../api/registrationApi.js';
+import { useAuth } from '@/app/providers/index.js';
+
+import { registroUsuario } from '../../../api/resgistratio.jsx';
 import { useRegistration } from '../../../hooks/useRegistration.js';
+
+import {
+  normalizeBaselineForm,
+} from '../../BaselinePage/utils/baselineForm.js';
 
 import {
   getModifiedFieldLabels,
   getSensitiveModifiedFields,
 } from '../../../services/registrationReview.js';
-
-import {
-  useAuth,
-} from '@/app/providers/index.js';
 
 export function useReviewPage() {
   const navigate = useNavigate();
@@ -58,11 +60,6 @@ export function useReviewPage() {
       sensitiveModifiedFields,
     );
 
-  /*
-   * El mensaje se conserva en el estado local, pero se
-   * elimina del historial para que no vuelva a mostrarse
-   * al regresar mediante el navegador.
-   */
   useEffect(() => {
     if (!location.state?.consentRenewed) {
       return;
@@ -96,12 +93,7 @@ export function useReviewPage() {
       goToReconsent();
       return;
     }
-
-    if (!account) {
-      return;
-    }
-
-    if (isSubmitting) {
+    if (!account || !baseline || isSubmitting) {
       return;
     }
 
@@ -109,47 +101,52 @@ export function useReviewPage() {
     setSubmitError('');
 
     try {
-      const confirmationResult =
-        await confirmRegistration({
-          userId: account.userId,
-        });
+      const normalizedBaseline =
+        normalizeBaselineForm(baseline);
 
-      const {
-        account: completedAccount,
-        session,
-      } = confirmationResult;
+      const payload = {
+        correoElectronico: account.email,
+        contrasena: account.password,
+        ...normalizedBaseline,
+      };
+
+      const data = await registroUsuario(payload);
 
       saveAccount({
         ...account,
-        ...completedAccount,
+        email:
+          data?.correoElectronico ??
+          account.email,
+        registrationStatus:
+          data?.estado_registro ??
+          'REGISTRO_COMPLETO',
+        accountStatus:
+          data?.estado_cuenta ??
+          'ACTIVA',
+        role:
+          data?.rol ??
+          'ESTUDIANTE',
       });
 
-      /*
-      * Registra la sesión global antes de navegar.
-      * Así RequireAuth reconocerá al participante.
-      */
-      login(session);
-
-      navigate('/registro/completado', {
-        replace: true,
+      login({
+        email:
+          data?.correoElectronico ??
+          account.email,
+        role: data?.rol ?? 'ESTUDIANTE',
       });
+
+      navigate('/registro/completado', { replace: true });
     } catch (error) {
-      if (
-        error?.code ===
-        'CONSENT_NOT_VALID'
-      ) {
-        goToReconsent();
-        return;
-      }
+      const message =
+        error?.response?.data?.message ??
+        error?.response?.data?.error ??
+        'No pudimos confirmar el registro. Intenta nuevamente.';
 
-      setSubmitError(
-        'No pudimos confirmar el registro. Intenta nuevamente.',
-      );
+      setSubmitError(message);
     } finally {
       setIsSubmitting(false);
     }
   }
-
   return {
     account,
     consent,
