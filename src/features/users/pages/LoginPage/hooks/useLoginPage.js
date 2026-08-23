@@ -1,11 +1,7 @@
 import { useState } from 'react';
-
 import { useNavigate } from 'react-router-dom';
-
 import { SESSION_END_REASON } from '@/app/config/sessionConfig.js';
 import { useAuth } from '@/app/providers/index.js';
-
-import { login as loginRequest } from '@/features/users/api/authApi.js';
 import { AUTH_API_ERROR } from '@/features/users/types/authTypes.js';
 import { validateLoginForm } from '@/features/users/services/authValidation.js';
 

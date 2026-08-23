@@ -12,7 +12,6 @@ import { validateBaselineForm } from '../../../services/baselineValidation.js';
 
 import {
   createBaselineFormState,
-  normalizeBaselineForm,
 } from '../utils/baselineForm.js';
 
 import {
@@ -50,15 +49,7 @@ export function useBaselineForm() {
     focusFirstInvalidField(validationErrors);
   }
 
-  const {
-    isSubmitting,
-    submitError,
-    clearSubmitError,
-    submitBaseline,
-  } = useBaselineSubmission({
-    onValidationError:
-      showValidationErrors,
-  });
+  const { isSubmitting, submitError, clearSubmitError, submitBaseline } = useBaselineSubmission();
 
   useEffect(() => {
     if (
@@ -132,9 +123,7 @@ export function useBaselineForm() {
       return;
     }
 
-    await submitBaseline(
-      normalizeBaselineForm(form),
-    );
+    await submitBaseline(form);
   }
 
   return {

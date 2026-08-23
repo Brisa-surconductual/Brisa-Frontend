@@ -1,11 +1,18 @@
-import { useReducer } from 'react';
+import { useEffect, useReducer, useState } from 'react';
 
 import { AuthContext } from './authContext.js';
-
 import { AUTH_ACTION, authReducer, initialAuthState } from './authReducer.js';
+import { sesionActual } from '../../features/users/api/sesion.jsx';
 
 export function AuthProvider({ children }) {
   const [state, dispatch] = useReducer(authReducer, initialAuthState);
+
+  /*
+   * true mientras se verifica si hay una sesión válida
+   * (cookie) al cargar la app. RequireAuth debe esperar
+   * a que esto sea false antes de decidir si redirige.
+   */
+  const [isLoading, setIsLoading] = useState(true);
 
   function login({ email, role }) {
     dispatch({
@@ -14,10 +21,6 @@ export function AuthProvider({ children }) {
     });
   }
 
-  /*
-   * `reason` es opcional (ver SESSION_END_REASON): el
-   * cierre manual desde una pantalla no necesita motivo.
-   */
   function logout({ reason = null } = {}) {
     dispatch({
       type: AUTH_ACTION.LOGOUT,
@@ -25,18 +28,45 @@ export function AuthProvider({ children }) {
     });
   }
 
-  /*
-   * La sesión vive SOLO en memoria: al recargar se
-   * pierde. Aquí irá la persistencia real (rehidratar
-   * al montar y limpiar en logout) cuando el backend
-   * emita el token de sesión.
-   */
+  useEffect(() => {
+    let isMounted = true;
+
+    async function rehydrateSession() {
+      try {
+        const data = await sesionActual();
+
+        if (!isMounted) return;
+
+        login({
+          email: data.correoElectronico,
+          role: data.rol,
+        });
+      } catch {
+        /*
+         * 401 esperado si no hay cookie válida: el usuario
+         * simplemente no tiene sesión activa. No es un error
+         * a mostrar, solo se queda deslogueado.
+         */
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    rehydrateSession();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const value = {
     user: state.user,
     role: state.role,
     isAuthenticated: state.isAuthenticated,
     sessionEndReason: state.endReason,
+    isLoading,
     login,
     logout,
   };

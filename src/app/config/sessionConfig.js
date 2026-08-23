@@ -8,18 +8,18 @@ const MINUTE_MS = 60 * SECOND_MS;
  * - warningDelayMs: inactividad tolerada antes de avisar.
  * - countdownMs: margen para responder antes del cierre.
  *
- * Producción: 15 min en total (14 min + 1 min de aviso),
- * el tiempo del prototipo. Desarrollo: 20 s (15 s + 5 s),
- * los valores demo del prototipo, para poder probarlo.
+ * Producción: 30 min en total (28 min + 2 min de aviso).
+ * Desarrollo: 5 min en total (4 min + 1 min de aviso),
+ * para trabajar sin cierres tan frecuentes.
  */
 const PRODUCTION_TIMEOUT = Object.freeze({
-  warningDelayMs: 14 * MINUTE_MS,
-  countdownMs: 1 * MINUTE_MS,
+  warningDelayMs: 28 * MINUTE_MS,
+  countdownMs: 2 * MINUTE_MS,
 });
 
 const DEVELOPMENT_TIMEOUT = Object.freeze({
-  warningDelayMs: 15 * SECOND_MS,
-  countdownMs: 5 * SECOND_MS,
+  warningDelayMs: 4 * MINUTE_MS,
+  countdownMs: 1 * MINUTE_MS,
 });
 
 export const SESSION_TIMEOUT = import.meta.env.DEV

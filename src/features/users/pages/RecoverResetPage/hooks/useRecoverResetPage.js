@@ -1,8 +1,5 @@
 import { useEffect, useState } from 'react';
-
 import { useLocation, useNavigate } from 'react-router-dom';
-
-import { resetPassword } from '@/features/users/api/authApi.js';
 import { AUTH_API_ERROR } from '@/features/users/types/authTypes.js';
 import { validateRecoverResetForm } from '@/features/users/services/authValidation.js';
 

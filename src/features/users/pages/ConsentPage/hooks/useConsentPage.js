@@ -1,12 +1,5 @@
 import { useState } from 'react';
-
 import { useNavigate } from 'react-router-dom';
-
-import {
-  acceptConsent,
-  deleteProvisionalAccount,
-} from '../../../api/registrationApi.js';
-
 import { useRegistration } from '../../../hooks/useRegistration.js';
 
 const INITIAL_AUTHORIZATIONS = Object.freeze({
@@ -101,14 +94,10 @@ export function useConsentPage({
 
   async function handleSubmit(event) {
     event.preventDefault();
-
     setAttemptedSubmit(true);
 
     if (!consentIsComplete) {
-      focusFirstMissingAuthorization(
-        authorizations,
-      );
-
+      focusFirstMissingAuthorization(authorizations);
       return;
     }
 
@@ -117,35 +106,26 @@ export function useConsentPage({
       return;
     }
 
+    if (isSubmitting) {
+      return;
+    }
+
     setIsSubmitting(true);
     setSubmitError('');
 
     try {
-      const consent = await acceptConsent({
-        userId: account.userId,
+      saveConsent({
         personalDataAccepted:
           authorizations.personalDataAccepted,
+
         consumptionHistoryAccepted:
-          authorizations
-            .consumptionHistoryAccepted,
+          authorizations.consumptionHistoryAccepted,
+
         consentVersion,
+        status: 'VIGENTE',
       });
 
-      saveConsent(consent);
-
       navigate('/registro/linea-base');
-    } catch (error) {
-      if (
-        error?.code ===
-        'PROVISIONAL_ACCOUNT_NOT_FOUND'
-      ) {
-        returnToAccountCreation();
-        return;
-      }
-
-      setSubmitError(
-        'No pudimos guardar tu consentimiento. Intenta nuevamente.',
-      );
     } finally {
       setIsSubmitting(false);
     }
@@ -161,26 +141,8 @@ export function useConsentPage({
     setSubmitError('');
 
     try {
-      await deleteProvisionalAccount({
-        userId: account.userId,
-      });
-
       setCancelDialogOpen(false);
       returnToAccountCreation();
-    } catch (error) {
-      setCancelDialogOpen(false);
-
-      if (
-        error?.code ===
-        'PROVISIONAL_ACCOUNT_NOT_FOUND'
-      ) {
-        returnToAccountCreation();
-        return;
-      }
-
-      setSubmitError(
-        'No pudimos cancelar el registro. Intenta nuevamente.',
-      );
     } finally {
       setIsCancelling(false);
     }
@@ -202,3 +164,5 @@ export function useConsentPage({
     closeCancelDialog,
   };
 }
+
+

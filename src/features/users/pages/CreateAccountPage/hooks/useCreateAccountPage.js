@@ -1,26 +1,8 @@
 import { useState } from 'react';
-
 import { useNavigate } from 'react-router-dom';
-
-import {
-  createAccount,
-} from '../../../api/registrationApi.js';
-
-import {
-  useRegistration,
-} from '../../../hooks/useRegistration.js';
-
-import {
-  validateAccountForm,
-} from '../../../services/registrationValidation.js';
-
-import {
-  clearAccountFieldErrors,
-  createAccountFormState,
-  focusField,
-  focusFirstInvalidField,
-  hasValidationErrors,
-} from '../utils/accountForm.js';
+import {useRegistration,} from '../../../hooks/useRegistration.js';
+import { validateAccountForm, } from '../../../services/registrationValidation.js';
+import { clearAccountFieldErrors, createAccountFormState, focusField, focusFirstInvalidField, hasValidationErrors,} from '../utils/accountForm.js';
 
 export function useCreateAccountPage() {
   const navigate = useNavigate();
@@ -75,57 +57,26 @@ export function useCreateAccountPage() {
     focusField('email');
   }
 
-  async function handleSubmit(event) {
-    event.preventDefault();
+ async function handleSubmit(event) {
+  event.preventDefault();
+  if (isSubmitting) return;
 
-    if (isSubmitting) {
-      return;
-    }
-
-    const validationErrors =
-      validateAccountForm(form);
-
-    if (
-      hasValidationErrors(validationErrors)
-    ) {
-      showValidationErrors(validationErrors);
-      return;
-    }
-
-    setIsSubmitting(true);
-    setSubmitError('');
-
-    try {
-      /*
-       * confirmPassword se utiliza únicamente
-       * para validación local y no se envía.
-       */
-      const account = await createAccount({
-        email: form.email,
-        password: form.password,
-      });
-
-      saveAccount(account);
-
-      navigate('/registro/consentimiento', {
-        replace: true,
-      });
-    } catch (error) {
-      if (
-        error?.code ===
-        'EMAIL_ALREADY_EXISTS'
-      ) {
-        showDuplicatedEmailError();
-        return;
-      }
-
-      setSubmitError(
-        'No pudimos crear tu cuenta. Verifica tu conexión e intenta nuevamente.',
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
+  const validationErrors = validateAccountForm(form);
+  if (hasValidationErrors(validationErrors)) {
+    showValidationErrors(validationErrors);
+    return;
   }
+
+  setIsSubmitting(true);
+  setSubmitError('');
+
+  try {
+    saveAccount({ email: form.email, password: form.password });
+    navigate('/registro/consentimiento', { replace: true });
+  } finally {
+    setIsSubmitting(false);
+  }
+}
 
   return {
     form,

@@ -37,8 +37,8 @@ export function createAcademicRows(
   const rows = [
     {
       field: 'age',
-      label: 'Edad',
-      value: `${baseline.age} años`,
+      label: 'Fecha de nacimiento',
+      value: formatDate(baseline.age),
     },
     {
       field: 'city',
