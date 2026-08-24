@@ -799,6 +799,154 @@ Debe exportar principalmente:
 
 No debe exponer automáticamente todas las funciones, datos o utilidades internas.
 
+
+---
+# Conexión Back-Front
+
+Esta sección explica cómo el frontend se comunica con el backend de Brisa, y sirve como guía general para implementar la conexión de **cualquier módulo o historia de usuario**, no solo de una funcionalidad específica.
+
+## Idea general
+
+Toda comunicación con el backend pasa por tres capas fijas, en este orden:
+
+```text
+constans.jsx  →  apiClient.jsx  →  api/<archivo-especifico>.jsx
+```
+
+1. **`constans.jsx`** define las URLs base.
+2. **`apiClient.jsx`** centraliza la configuración de axios (una sola vez, de forma global).
+3. **Cada archivo dentro de `api/`** usa esa instancia ya configurada para hacer una llamada concreta.
+
+Un nuevo desarrollador nunca debería configurar axios manualmente dentro de una página o un hook. Siempre se reutiliza `apiClient`.
+
+---
+
+## 1. `shared/utils/constans.jsx`
+
+Aquí vive la URL base del backend y las URLs de cada recurso:
+
+```javascript
+export const BASE_URL = 'http://localhost:3000';
+
+export const USUARIOS = `${BASE_URL}/usuarios`;
+// A medida que se agreguen módulos nuevos, se suman aquí:
+// export const CRONOGRAMA = `${BASE_URL}/cronograma`;
+```
+
+**Regla:** la ruta debe coincidir exactamente (mayúsculas/minúsculas incluidas) con la ruta real del backend. Verifícala en Postman o en el log de arranque de Nest (`[RouterExplorer] Mapped {...}`) antes de darla por buena — un desface de casing entre frontend y backend produce errores silenciosos difíciles de rastrear.
+
+---
+
+## 2. `shared/utils/apiClient.jsx`
+
+Instancia única de axios, configurada una sola vez para todo el proyecto:
+
+```javascript
+import axios from 'axios';
+import { BASE_URL } from './constans.jsx';
+
+export const apiClient = axios.create({
+  baseURL: BASE_URL,
+  withCredentials: true,
+  headers: { 'Content-Type': 'application/json' },
+});
+```
+
+- `withCredentials: true` es obligatorio: sin esto, el navegador no envía ni recibe la cookie de sesión (`brisa_session`), y cualquier ruta protegida del backend responderá como si no hubiera sesión, aunque el login haya sido exitoso.
+- Este archivo **no se toca** para agregar nuevos módulos. Su única responsabilidad es la configuración compartida de axios.
+
+---
+
+## 3. Carpeta `api/` de cada feature (módulo)
+
+Cada módulo (`features/users`, y los que se agreguen a futuro) tiene su propia carpeta `api/`. Dentro, se crea **un archivo por cada llamada al backend o por cada historia de usuario relacionada** — no un archivo gigante con todas las funciones del módulo.
+
+```text
+features/users/api/
+├── registration/
+│   ├── registrationApi.js   ← crear estudiante
+│   └── sesion.jsx           ← consultar sesión actual
+└── ...
+```
+
+Patrón de un archivo de API típico:
+
+```javascript
+import { USUARIOS } from '../../../shared/utils/constans.jsx';
+import { apiClient } from '../../../shared/utils/apiClient.jsx';
+
+export const registroUsuario = async (usuario) => {
+  const { data } = await apiClient.post(`${USUARIOS}/crear/estudiante`, usuario);
+  return data;
+};
+```
+
+Y para peticiones sin body (GET):
+
+```javascript
+import { USUARIOS } from '../../../shared/utils/constans.jsx';
+import { apiClient } from '../../../shared/utils/apiClient.jsx';
+
+export const sesionActual = async () => {
+  const { data } = await apiClient.get(`${USUARIOS}/sesion/actual`);
+  return data;
+};
+```
+
+**Reglas para estos archivos:**
+- No necesitan importar ni configurar axios directamente — siempre usan `apiClient` ya armado.
+- No manejan `try/catch` a menos que necesiten transformar el error; si el error se relanza tal cual, es más simple dejar que el `async/await` lo propague solo.
+- El nombre del archivo y de la función debe reflejar la acción de negocio (`registroUsuario`, `sesionActual`), no el verbo HTTP (`postUsuario`, `getSesion`).
+
+---
+
+## 4. De dónde salen los nombres de los campos del payload
+
+Este es el punto donde más errores ocurren al conectar un módulo nuevo, así que se documenta explícitamente:
+
+- **El nombre de cada campo del JSON que se envía debe coincidir exactamente** con lo que el DTO del backend espera — no con el nombre que usa el formulario en React internamente. Es normal que el formulario use nombres en inglés o distintos (`age`, `city`) y el backend use otros (`fechaNacimiento`, `ciudad`). Cuando esto pase, se necesita una función de normalización que traduzca de un vocabulario al otro antes de enviar (ver ejemplo en `BaselinePage/utils/baselineForm.js` → `normalizeBaselineForm`).
+- **Las fechas** que vienen de un `<input type="date">` llegan como `"YYYY-MM-DD"`, sin hora. Si el backend usa un campo `DateTime` (Prisma/Postgres), esto falla con `premature end of input`. Hay que completar la hora antes de enviar:
+  ```javascript
+  function toIsoMidnight(dateOnlyString) {
+    return `${dateOnlyString}T00:00:00.000Z`;
+  }
+  ```
+- **Antes de dar por buena la forma del payload**, pruébalo primero en Postman contra el endpoint real. Ese payload que Postman aceptó es la fuente de verdad — el frontend debe replicarlo exactamente, campo por campo, no asumirlo.
+- Cuando el backend responde con datos (por ejemplo, el usuario creado), sus claves tampoco tienen por qué coincidir con lo que mandaste — revisa la respuesta real antes de leer sus campos.
+
+---
+
+## 5. Sesión y cookies
+
+La sesión de Brisa se maneja completamente por **cookie `HttpOnly`** — el frontend nunca lee, guarda ni manipula el token manualmente. Esto tiene dos implicaciones prácticas:
+
+1. **Cualquier petición a una ruta protegida** solo necesita `withCredentials: true` (ya está en `apiClient`, así que no hay que hacer nada extra por módulo).
+2. **El estado de sesión en React (`isAuthenticated`, `role`, etc.) vive en memoria** y se pierde al recargar la página, aunque la cookie del navegador siga siendo válida. Por eso `AuthProvider.jsx` (en `app/providers/`) rehidrata la sesión al montar la aplicación:
+   - Llama a un endpoint de "sesión actual" (`GET /usuarios/sesion/actual`) apenas se carga la app.
+   - Si responde con éxito, reconstruye el estado de `isAuthenticated`/`role`/`user` a partir de esa respuesta.
+   - Si responde `401` (no hay cookie válida), la app simplemente se queda deslogueada — no es un error a mostrar.
+   - Mientras esa verificación está en curso, existe un estado `isLoading` que las rutas protegidas (`RequireAuth`) deben esperar antes de decidir si redirigen al login, para evitar que un usuario con sesión válida sea expulsado por error durante ese instante de carga.
+
+**Para verificar manualmente que la cookie funciona de verdad** (útil al depurar cualquier módulo nuevo):
+1. DevTools → **Application** → **Cookies** → confirma que la cookie de sesión existe bajo el dominio del backend.
+2. DevTools → **Network** → en la petición de login/registro, revisa que la respuesta trae el header `set-cookie`.
+3. Ejecuta en consola `fetch('<url-protegida>', { credentials: 'include' })` y confirma que responde sin necesidad de mandar el token manualmente.
+4. Recarga la página (F5) y confirma que la sesión sigue activa gracias a la rehidratación de `AuthProvider`.
+
+---
+
+## Checklist para conectar un módulo/historia de usuario nuevo
+
+1. Confirmar en Postman el endpoint real: método, ruta exacta (case-sensitive), body de ejemplo que el backend acepta, y forma de la respuesta.
+2. Si la URL base del módulo no existe todavía, agregarla en `constans.jsx`.
+3. Crear el archivo de API correspondiente dentro de `features/<modulo>/api/`, usando `apiClient` — nunca axios directo.
+4. Si hay formulario involucrado, revisar que los nombres de campos y el formato de fechas coincidan exactamente con lo validado en Postman; agregar una función de normalización si los vocabularios difieren.
+5. Probar la llamada real desde el navegador (Network tab) y comparar el payload contra el de Postman antes de dar el flujo por terminado.
+6. Si la ruta requiere sesión, no se necesita configuración adicional — `withCredentials` ya está cubierto por `apiClient` — pero sí verificar que el usuario de prueba tenga una sesión activa antes de probar.
+---
+
+
+
 ---
 
 # Lineamientos de páginas y layouts
@@ -895,6 +1043,8 @@ El proyecto está preparado para evolucionar hacia una PWA con:
 Estas capacidades deben considerarse como evolución de la arquitectura y no asumirse como completamente implementadas mientras no exista configuración específica de service worker y manifiesto.
 
 ---
+
+--
 
 # Convenciones
 
