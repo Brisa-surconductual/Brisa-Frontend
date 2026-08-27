@@ -5,12 +5,11 @@ export const INITIAL_RECOVER_RESET_FORM = Object.freeze({
 });
 
 /*
- * Vigencia del código de recuperación (demo). En
- * producción este valor lo define el backend; se
- * parametriza acá en un solo lugar en vez de
- * hardcodearlo en el hook y en la UI por separado.
+ * Vigencia máxima del código de recuperación según RF-07.
+ * El backend sigue siendo la fuente de verdad para determinar
+ * si un código está vigente, expirado o ya fue utilizado.
  */
-export const RECOVERY_CODE_TTL_MS = 2 * 60 * 1000;
+export const RECOVERY_CODE_TTL_MS = 15 * 60 * 1000;
 
 /*
  * A partir de este umbral restante el conteo se marca

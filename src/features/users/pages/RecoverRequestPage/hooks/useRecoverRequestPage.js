@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+
+import { solicitarRecuperacionContrasena } from '@/features/users/api/recuperacionContrasena.jsx';
 import { validateRecoverRequestForm } from '@/features/users/services/authValidation.js';
 
 import {
@@ -14,6 +16,7 @@ export function useRecoverRequestPage() {
 
   const [form, setForm] = useState(createRecoverRequestFormState);
   const [errors, setErrors] = useState({});
+  const [submitError, setSubmitError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   function handleChange(event) {
@@ -25,6 +28,7 @@ export function useRecoverRequestPage() {
     }));
 
     setErrors((currentErrors) => clearFieldErrors(currentErrors, name));
+    setSubmitError('');
   }
 
   async function handleSubmit(event) {
@@ -43,17 +47,30 @@ export function useRecoverRequestPage() {
     }
 
     setIsSubmitting(true);
+    setSubmitError('');
 
-    /*
-     * requestPasswordRecovery siempre resuelve (respuesta
-     * neutra por seguridad, ver authApi.js): no hay código
-     * de error que manejar acá.
-     */
-    await requestPasswordRecovery({ email: form.email });
+    try {
+      await solicitarRecuperacionContrasena({
+        email: form.email,
+      });
 
-    navigate('/recuperar/nueva', {
-      state: { requestedEmail: form.email },
-    });
+      navigate('/recuperar/nueva', {
+        state: { requestedEmail: form.email },
+      });
+    } catch (error) {
+      if (error?.response?.status === 429) {
+        setSubmitError(
+          'Has realizado demasiadas solicitudes. Intenta nuevamente más tarde.',
+        );
+        return;
+      }
+
+      setSubmitError(
+        'No pudimos procesar la solicitud en este momento. Intenta nuevamente.',
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   function goBack() {
@@ -63,6 +80,7 @@ export function useRecoverRequestPage() {
   return {
     form,
     errors,
+    submitError,
     isSubmitting,
     handleChange,
     handleSubmit,
