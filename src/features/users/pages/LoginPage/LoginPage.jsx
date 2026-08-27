@@ -2,12 +2,15 @@ import {
   AlertTriangle,
   ArrowLeft,
   Clock,
+  CheckCircle2,
 } from 'lucide-react';
 
 import { LoginForm } from './components/LoginForm.jsx';
 import { useLoginPage } from './hooks/useLoginPage.js';
+import { useLocation } from 'react-router-dom';
 
 export function LoginPage() {
+  const location = useLocation();
   const {
     form,
     errors,
@@ -20,6 +23,7 @@ export function LoginPage() {
     goToRecover,
     goToCreateAccount,
   } = useLoginPage();
+  const passwordReset = Boolean(location.state?.passwordReset);
 
   return (
     <div className="flex min-h-screen justify-center bg-[var(--surface-bg)] md:items-center md:p-[var(--space-8)]"
@@ -52,6 +56,30 @@ export function LoginPage() {
             Ingresa con tu correo electrónico
           </p>
         </section>
+        {passwordReset && (
+          <div
+            className="flex items-start gap-[var(--space-3)] rounded-[var(--radius-md)] border border-[var(--info-border)] bg-[var(--info-bg)] p-[var(--space-4)] text-[var(--info-text)]"
+            role="status"
+          >
+            <CheckCircle2
+              size={20}
+              strokeWidth={1.8}
+              className="mt-px shrink-0"
+              aria-hidden="true"
+            />
+
+            <div>
+              <strong className="block text-[13px]">
+                Contraseña actualizada
+              </strong>
+
+              <p className="mt-[3px] mb-0 text-[12px] leading-[1.5]">
+                Tu contraseña se restableció correctamente. Ya puedes iniciar
+                sesión.
+              </p>
+            </div>
+          </div>
+        )}
 
         {wasClosedByInactivity && (
           <div className="flex items-start gap-[var(--space-3)] rounded-[var(--radius-md)] border border-[var(--warning-border)] bg-[var(--warning-bg)] p-[var(--space-4)] text-[var(--warning-text)]" role="status"

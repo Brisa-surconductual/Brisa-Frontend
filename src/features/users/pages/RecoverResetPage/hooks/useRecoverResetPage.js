@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { AUTH_API_ERROR } from '@/features/users/types/authTypes.js';
+
+import { actualizarContrasena } from '@/features/users/api/recuperacionContrasena.jsx';
 import { validateRecoverResetForm } from '@/features/users/services/authValidation.js';
 
 import {
@@ -18,12 +19,6 @@ export function useRecoverResetPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  /*
-   * Solo se usa para mostrar el aviso neutro una vez, al
-   * llegar desde el paso 1. No se depende de esto para
-   * ninguna llamada a la API (resetPassword no requiere
-   * el correo).
-   */
   const justRequested = Boolean(location.state?.requestedEmail);
 
   const [form, setForm] = useState(createRecoverResetFormState);
@@ -31,11 +26,6 @@ export function useRecoverResetPage() {
   const [submitError, setSubmitError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  /*
-   * El código se considera generado al montar esta
-   * página (llegue desde el paso 1 o directo por enlace),
-   * con la misma vigencia de 2 minutos del prototipo.
-   */
   const [expiresAt] = useState(() => Date.now() + RECOVERY_CODE_TTL_MS);
   const [remainingMs, setRemainingMs] = useState(() => expiresAt - Date.now());
 
@@ -48,7 +38,8 @@ export function useRecoverResetPage() {
   }, [expiresAt]);
 
   const isExpired = remainingMs <= 0;
-  const isCountdownLow = remainingMs <= RECOVERY_CODE_WARNING_THRESHOLD_MS;
+  const isCountdownLow =
+    remainingMs <= RECOVERY_CODE_WARNING_THRESHOLD_MS;
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -58,7 +49,10 @@ export function useRecoverResetPage() {
       [name]: value,
     }));
 
-    setErrors((currentErrors) => clearFieldErrors(currentErrors, name));
+    setErrors((currentErrors) =>
+      clearFieldErrors(currentErrors, name),
+    );
+
     setSubmitError('');
   }
 
@@ -81,22 +75,34 @@ export function useRecoverResetPage() {
     setSubmitError('');
 
     try {
-      await resetPassword({
+      await actualizarContrasena({
         code: form.code,
         password: form.password,
       });
 
-      navigate('/login', { replace: true });
+      navigate('/login', {
+        replace: true,
+        state: { passwordReset: true },
+      });
     } catch (error) {
-      if (error?.code === AUTH_API_ERROR.INVALID_RECOVERY_CODE) {
+      const status = error?.response?.status;
+
+      if (status === 400) {
         setSubmitError(
-          'El código de recuperación no es válido. Verifica e intenta de nuevo.',
+          'El código de recuperación no es válido o ha expirado. Verifica el código e intenta nuevamente.',
+        );
+        return;
+      }
+
+      if (status === 429) {
+        setSubmitError(
+          'Has realizado demasiados intentos. Intenta nuevamente más tarde.',
         );
         return;
       }
 
       setSubmitError(
-        'No pudimos restablecer tu contraseña. Verifica tu conexión e intenta nuevamente.',
+        'No pudimos restablecer tu contraseña en este momento. Intenta nuevamente.',
       );
     } finally {
       setIsSubmitting(false);
