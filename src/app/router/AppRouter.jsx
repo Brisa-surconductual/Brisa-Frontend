@@ -24,6 +24,10 @@ import {
   USER_ROLE,
 } from '@/features/users/index.js';
 
+import {
+  ScheduleManagementPage,
+} from '@/features/cronograma/index.js';
+
 import { RequireAuth } from './RequireAuth.jsx';
 import { RoleHomeRedirect } from './RoleHomeRedirect.jsx';
 
@@ -123,12 +127,21 @@ export function AppRouter() {
 
             <Route
               element={
-                <RequireAuth allowedRoles={[USER_ROLE.ADMINISTRATIVO]} />
+                <RequireAuth
+                  allowedRoles={[
+                    USER_ROLE.ADMINISTRATIVO,
+                  ]}
+                />
               }
             >
               <Route
                 path="administrativo"
                 element={<PsychologyHomePage />}
+              />
+
+              <Route
+                path="administrativo/cronograma"
+                element={<ScheduleManagementPage />}
               />
             </Route>
           </Route>
