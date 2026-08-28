@@ -26,10 +26,12 @@ import {
 
 import {
   ScheduleManagementPage,
+  TemporalUnitDetailPage,
 } from '@/features/cronograma/index.js';
 
 import { RequireAuth } from './RequireAuth.jsx';
 import { RoleHomeRedirect } from './RoleHomeRedirect.jsx';
+
 
 export function AppRouter() {
   return (
@@ -142,6 +144,11 @@ export function AppRouter() {
               <Route
                 path="administrativo/cronograma"
                 element={<ScheduleManagementPage />}
+              />
+
+              <Route
+                path="administrativo/cronograma/:unitId"
+                element={<TemporalUnitDetailPage />}
               />
             </Route>
           </Route>
