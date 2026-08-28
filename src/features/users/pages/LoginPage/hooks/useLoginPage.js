@@ -2,25 +2,14 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SESSION_END_REASON } from '@/app/config/sessionConfig.js';
 import { useAuth } from '@/app/providers/index.js';
-import { AUTH_API_ERROR } from '@/features/users/types/authTypes.js';
 import { validateLoginForm } from '@/features/users/services/authValidation.js';
-
-import {
-  clearFieldErrors,
-  createLoginFormState,
-  focusFirstInvalidField,
-  hasValidationErrors,
-} from '../utils/loginForm.js';
+import { iniciarSesion } from '../../../api/inicioSesion.jsx';
+import { clearFieldErrors, createLoginFormState, focusFirstInvalidField, hasValidationErrors } from '../utils/loginForm.js';
 
 export function useLoginPage() {
   const navigate = useNavigate();
   const { login, sessionEndReason } = useAuth();
 
-  /*
-   * El motivo del cierre viaja en la sesión, no en el
-   * state de la navegación: así no depende de qué
-   * redirección llegue primero a /login.
-   */
   const wasClosedByInactivity =
     sessionEndReason === SESSION_END_REASON.INACTIVITY;
 
@@ -60,17 +49,19 @@ export function useLoginPage() {
     setSubmitError('');
 
     try {
-      const session = await loginRequest({
+      const data = await iniciarSesion({
         email: form.email,
         password: form.password,
       });
 
-      // Registra la sesión global antes de entrar a la app.
-      login(session);
+      login({
+        email: form.email,
+        role: data.rol,
+      });
 
       navigate('/app', { replace: true });
     } catch (error) {
-      if (error?.code === AUTH_API_ERROR.INVALID_CREDENTIALS) {
+      if (error?.response?.status === 401) {
         setSubmitError(
           'Correo o contraseña incorrectos. Verifica tus datos e intenta de nuevo.',
         );

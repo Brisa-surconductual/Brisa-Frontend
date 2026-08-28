@@ -123,15 +123,11 @@ export function AppRouter() {
 
             <Route
               element={
-                <RequireAuth
-                  allowedRoles={[
-                    USER_ROLE.PSICOLOGIA,
-                  ]}
-                />
+                <RequireAuth allowedRoles={[USER_ROLE.ADMINISTRATIVO]} />
               }
             >
               <Route
-                path="psicologia"
+                path="administrativo"
                 element={<PsychologyHomePage />}
               />
             </Route>
