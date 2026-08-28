@@ -1,6 +1,14 @@
-import { PsychologyHeader } from '@/features/users/components/PsychologyHeader/index.js';
-import { PsychologyTabBar } from '@/features/users/components/PsychologyTabBar/index.js';
-import { PSYCHOLOGY_TAB } from '@/features/users/pages/PsychologyHomePage/data/psychologyTabs.js';
+import {
+  AdministrativeHeader,
+} from '@/shared/components/navigation/AdministrativeHeader/index.js';
+
+import {
+  AdministrativeTabBar,
+} from '@/shared/components/navigation/AdministrativeTabBar/index.js';
+import {
+  ADMINISTRATIVE_TAB,
+  ADMINISTRATIVE_TABS,
+} from '@/shared/data/administrativeTabs.js';
 
 import { DashboardPanel } from './components/DashboardPanel.jsx';
 import { PopulationPanel } from './components/PopulationPanel.jsx';
@@ -19,12 +27,13 @@ export function PsychologyHomePage() {
   return (
     <div className="min-h-screen w-full bg-[var(--surface-bg)]">
       <div className="flex min-h-screen w-full flex-col bg-[var(--surface-bg)]">
-        <PsychologyHeader
+        <AdministrativeHeader
           roleLabel={roleLabel}
           onLogout={handleLogout}
         />
 
-        <PsychologyTabBar
+        <AdministrativeTabBar
+          tabs={ADMINISTRATIVE_TABS}
           activeTabId={activeTabId}
           onTabChange={handleTabChange}
         />
@@ -35,15 +44,15 @@ export function PsychologyHomePage() {
           id={`panel-${activeTabId}`}
           aria-labelledby={`tab-${activeTabId}`}
         >
-          {activeTabId === PSYCHOLOGY_TAB.DASHBOARD && (
+          {activeTabId === ADMINISTRATIVE_TAB.DASHBOARD && (
             <DashboardPanel />
           )}
 
-          {activeTabId === PSYCHOLOGY_TAB.POBLACION && (
+          {activeTabId === ADMINISTRATIVE_TAB.POBLACION && (
             <PopulationPanel />
           )}
 
-          {activeTabId === PSYCHOLOGY_TAB.AJUSTES && (
+          {activeTabId === ADMINISTRATIVE_TAB.AJUSTES && (
             <SettingsPanel
               email={email}
               roleLabel={roleLabel}

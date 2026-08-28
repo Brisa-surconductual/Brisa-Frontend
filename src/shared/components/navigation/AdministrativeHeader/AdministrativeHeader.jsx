@@ -1,6 +1,6 @@
 import { LogOut } from 'lucide-react';
 
-export function PsychologyHeader({
+export function AdministrativeHeader({
   roleLabel,
   onLogout,
 }) {
