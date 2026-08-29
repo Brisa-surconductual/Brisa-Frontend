@@ -16,6 +16,12 @@ import {
 
 import { Button } from '@/shared/components/ui/Button/index.js';
 
+import { ScheduleActivationDialog } from '@/features/cronograma/components/ScheduleActivationDialog/index.js';
+
+import { ScheduleActivationStatus } from '@/features/cronograma/components/ScheduleActivationStatus/index.js';
+
+import { SCHEDULE_ACTIVATION_STATUS } from '@/features/cronograma/types/scheduleTypes.js';
+
 const EMPTY_UNITS = Object.freeze([]);
 
 export function ScheduleManagementPage() {
@@ -24,6 +30,11 @@ export function ScheduleManagementPage() {
 
   const [status, setStatus] = useState('');
   const [date, setDate] = useState('');
+
+  const [isActivationDialogOpen, setIsActivationDialogOpen] = useState(false);
+
+  const activationValidations = [];
+  const scheduleActivationStatus = SCHEDULE_ACTIVATION_STATUS.UNKNOWN;
 
   const units = EMPTY_UNITS;
   const resultCount = units.length;
@@ -62,6 +73,18 @@ export function ScheduleManagementPage() {
     navigate('/app/administrativo/cronograma/nueva');
   }
 
+  function handleActivateSchedule() {
+    setIsActivationDialogOpen(true);
+  }
+
+  function handleCancelActivation() {
+    setIsActivationDialogOpen(false);
+  }
+
+  function handleConfirmActivation() {
+    setIsActivationDialogOpen(false);
+  }
+
   return (
     <div className="min-h-screen bg-[var(--surface-bg)]">
       <AdministrativeHeader
@@ -97,6 +120,11 @@ export function ScheduleManagementPage() {
             </Button>
           </header>
 
+          <ScheduleActivationStatus
+            status={scheduleActivationStatus}
+            onActivate={handleActivateSchedule}
+          />
+
           <ScheduleFilters
             status={status}
             date={date}
@@ -113,6 +141,13 @@ export function ScheduleManagementPage() {
           )}
         </div>
       </main>
+
+      <ScheduleActivationDialog
+        open={isActivationDialogOpen}
+        validations={activationValidations}
+        onConfirm={handleConfirmActivation}
+        onCancel={handleCancelActivation}
+      />
     </div>
   );
 }
