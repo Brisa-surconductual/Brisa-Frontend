@@ -50,8 +50,12 @@ export function ScheduleManagementPage() {
     navigate(`/app/administrativo?tab=${encodeURIComponent(tabId)}`);
   }
 
-  function handleViewDetails(unitId) {
-    navigate(`/app/administrativo/cronograma/${encodeURIComponent(unitId)}`);
+  function handleViewDetails(unit) {
+    navigate(`/app/administrativo/cronograma/${encodeURIComponent(unit.id)}`, {
+      state: {
+        unit,
+      },
+    });
   }
 
   function handleCreateUnit() {
