@@ -25,6 +25,7 @@ import {
 } from '@/features/users/index.js';
 
 import {
+  CreateTemporalUnitPage,
   ScheduleManagementPage,
   TemporalUnitDetailPage,
 } from '@/features/cronograma/index.js';
@@ -144,6 +145,11 @@ export function AppRouter() {
               <Route
                 path="administrativo/cronograma"
                 element={<ScheduleManagementPage />}
+              />
+
+              <Route
+                path="administrativo/cronograma/nueva"
+                element={<CreateTemporalUnitPage />}
               />
 
               <Route
