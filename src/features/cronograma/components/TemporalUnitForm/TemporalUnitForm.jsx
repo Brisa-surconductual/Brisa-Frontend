@@ -4,6 +4,11 @@ import { TextField } from '@/shared/components/ui/TextField/index.js';
 export function TemporalUnitForm({
   form,
   errors = {},
+  title = 'Información de la unidad',
+  description = 'Completa los datos requeridos para definir la nueva unidad temporal.',
+  submitText = 'Crear unidad',
+  submitLoading = false,
+  submitLoadingText = 'Guardando...',
   onChange,
   onSubmit,
   onCancel,
@@ -17,11 +22,11 @@ export function TemporalUnitForm({
       <div className="flex flex-col gap-[var(--space-5)]">
         <div>
           <h2 className="m-0 text-[18px] font-bold text-[var(--text-primary)]">
-            Información de la unidad
+            {title}
           </h2>
 
           <p className="mt-[var(--space-1)] mb-0 text-[12px] leading-[1.5] text-[var(--text-muted)]">
-            Completa los datos requeridos para definir la nueva unidad temporal.
+            {description}
           </p>
         </div>
 
@@ -75,11 +80,22 @@ export function TemporalUnitForm({
         </div>
 
         <div className="flex flex-col-reverse gap-[var(--space-3)] sm:flex-row sm:justify-end">
-          <Button type="button" variant="secondary" onClick={onCancel}>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={onCancel}
+            disabled={submitLoading}
+          >
             Cancelar
           </Button>
 
-          <Button type="submit">Crear unidad</Button>
+          <Button
+            type="submit"
+            loading={submitLoading}
+            loadingText={submitLoadingText}
+          >
+            {submitText}
+          </Button>
         </div>
       </div>
     </form>

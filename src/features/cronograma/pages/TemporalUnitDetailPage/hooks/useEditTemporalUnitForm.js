@@ -5,15 +5,20 @@ import {
   validateTemporalUnitForm,
 } from '@/features/cronograma/utils/temporalUnitFormValidation.js';
 
-const INITIAL_FORM = Object.freeze({
-  name: '',
-  order: '',
-  startDate: '',
-  endDate: '',
-});
+function createInitialForm(unit) {
+  return {
+    name: unit?.name ?? '',
+    order:
+      unit?.order !== undefined && unit?.order !== null
+        ? String(unit.order)
+        : '',
+    startDate: unit?.startDate ?? '',
+    endDate: unit?.endDate ?? '',
+  };
+}
 
-export function useCreateTemporalUnitForm({ onValidSubmit } = {}) {
-  const [form, setForm] = useState(INITIAL_FORM);
+export function useEditTemporalUnitForm({ unit, onValidSubmit }) {
+  const [form, setForm] = useState(() => createInitialForm(unit));
 
   const [errors, setErrors] = useState({});
 
@@ -53,6 +58,7 @@ export function useCreateTemporalUnitForm({ onValidSubmit } = {}) {
     setErrors({});
 
     onValidSubmit?.({
+      id: unit?.id,
       name: form.name.trim(),
       order: Number(form.order),
       startDate: form.startDate,
@@ -60,10 +66,16 @@ export function useCreateTemporalUnitForm({ onValidSubmit } = {}) {
     });
   }
 
+  function resetForm() {
+    setForm(createInitialForm(unit));
+    setErrors({});
+  }
+
   return {
     form,
     errors,
     handleChange,
     handleSubmit,
+    resetForm,
   };
 }

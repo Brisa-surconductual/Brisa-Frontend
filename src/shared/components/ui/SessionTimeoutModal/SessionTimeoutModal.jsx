@@ -43,7 +43,7 @@ export function SessionTimeoutModal({
   return (
     <dialog
       ref={dialogRef}
-      className="w-[min(calc(100%-32px),340px)] max-w-[340px] overflow-visible border-0 bg-transparent p-0 text-[var(--text-primary)] backdrop:bg-[rgb(22_21_16/68%)] backdrop:backdrop-blur-[2px]"
+      className="m-auto w-[min(calc(100%-32px),340px)] max-w-[340px] overflow-visible border-0 bg-transparent p-0 text-[var(--text-primary)] backdrop:bg-[rgb(22_21_16/68%)] backdrop:backdrop-blur-[2px]"
       aria-labelledby={titleId}
       aria-describedby={descriptionId}
       onCancel={handleCancel}
