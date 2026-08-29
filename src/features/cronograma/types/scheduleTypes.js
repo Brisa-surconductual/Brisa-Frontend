@@ -11,3 +11,9 @@ export const TEMPORAL_UNIT_STATUS_LABEL = Object.freeze({
   [TEMPORAL_UNIT_STATUS.BLOQUEADA]: 'Bloqueada',
   [TEMPORAL_UNIT_STATUS.POR_DEFINIR]: 'Por definir',
 });
+
+export const SCHEDULE_ACTIVATION_STATUS = Object.freeze({
+  UNKNOWN: 'UNKNOWN',
+  INACTIVE: 'INACTIVE',
+  ACTIVE: 'ACTIVE',
+});
