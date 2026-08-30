@@ -5,3 +5,5 @@ export { TemporalUnitDetailPage } from './pages/TemporalUnitDetailPage/index.js'
 export { CreateTemporalUnitPage } from './pages/CreateTemporalUnitPage/index.js';
 
 export { CreateAdministrativePausePage } from './pages/CreateAdministrativePausePage/index.js';
+
+export { AdministrativePauseHistoryPage } from './pages/AdministrativePauseHistoryPage/index.js';
