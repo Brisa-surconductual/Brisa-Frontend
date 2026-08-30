@@ -25,6 +25,7 @@ import {
 } from '@/features/users/index.js';
 
 import {
+  CreateAdministrativePausePage,
   CreateTemporalUnitPage,
   ScheduleManagementPage,
   TemporalUnitDetailPage,
@@ -150,6 +151,13 @@ export function AppRouter() {
               <Route
                 path="administrativo/cronograma/nueva"
                 element={<CreateTemporalUnitPage />}
+              />
+
+              <Route
+                path="administrativo/cronograma/pausas/nueva"
+                element={
+                  <CreateAdministrativePausePage />
+                }
               />
 
               <Route
