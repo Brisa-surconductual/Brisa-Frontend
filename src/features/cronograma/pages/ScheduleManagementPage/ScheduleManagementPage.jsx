@@ -85,6 +85,10 @@ export function ScheduleManagementPage() {
     setIsActivationDialogOpen(false);
   }
 
+  function handleCreatePause() {
+    navigate('/app/administrativo/cronograma/pausas/nueva');
+  }
+
   return (
     <div className="min-h-screen bg-[var(--surface-bg)]">
       <AdministrativeHeader
@@ -115,9 +119,13 @@ export function ScheduleManagementPage() {
               </p>
             </div>
 
-            <Button className="shrink-0" onClick={handleCreateUnit}>
-              Crear unidad temporal
-            </Button>
+            <div className="flex flex-col gap-[var(--space-3)] sm:flex-row">
+              <Button variant="secondary" onClick={handleCreatePause}>
+                Registrar pausa
+              </Button>
+
+              <Button onClick={handleCreateUnit}>Crear unidad temporal</Button>
+            </div>
           </header>
 
           <ScheduleActivationStatus
