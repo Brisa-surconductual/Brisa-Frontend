@@ -89,6 +89,10 @@ export function ScheduleManagementPage() {
     navigate('/app/administrativo/cronograma/pausas');
   }
 
+  function handleViewProgress() {
+    navigate('/app/administrativo/cronograma/progreso');
+  }
+
   return (
     <div className="min-h-screen bg-[var(--surface-bg)]">
       <AdministrativeHeader
@@ -120,6 +124,10 @@ export function ScheduleManagementPage() {
             </div>
 
             <div className="flex flex-col gap-[var(--space-3)] sm:flex-row">
+              <Button variant="secondary" onClick={handleViewProgress}>
+                Progreso por usuario
+              </Button>
+
               <Button variant="secondary" onClick={handleViewPauses}>
                 Pausas administrativas
               </Button>

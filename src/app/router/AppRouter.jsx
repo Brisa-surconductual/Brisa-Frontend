@@ -28,6 +28,7 @@ import {
   AdministrativePauseHistoryPage,
   CreateAdministrativePausePage,
   CreateTemporalUnitPage,
+  ParticipantProgressPage,
   ScheduleManagementPage,
   TemporalUnitDetailPage,
 } from '@/features/cronograma/index.js';
@@ -164,6 +165,11 @@ export function AppRouter() {
                 element={
                   <CreateAdministrativePausePage />
                 }
+              />
+
+              <Route
+                path="administrativo/cronograma/progreso"
+                element={<ParticipantProgressPage />}
               />
 
               <Route

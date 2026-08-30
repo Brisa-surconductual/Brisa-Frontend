@@ -7,3 +7,5 @@ export { CreateTemporalUnitPage } from './pages/CreateTemporalUnitPage/index.js'
 export { CreateAdministrativePausePage } from './pages/CreateAdministrativePausePage/index.js';
 
 export { AdministrativePauseHistoryPage } from './pages/AdministrativePauseHistoryPage/index.js';
+
+export { ParticipantProgressPage } from './pages/ParticipantProgressPage/index.js';
