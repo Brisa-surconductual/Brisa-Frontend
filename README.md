@@ -238,6 +238,7 @@ Rutas útiles durante el desarrollo:
 /login
 /registro/cuenta
 /app
+/app/administrativo/cronograma
 ```
 
 > `npm run dev` no selecciona una página concreta. React Router muestra la vista correspondiente a la URL abierta en el navegador. Si la pestaña conserva una ruta anterior, escribir manualmente `/` para regresar a la pantalla inicial.
@@ -260,10 +261,18 @@ Rutas útiles durante el desarrollo:
 
 /app
 ├── /app/estudiante
-└── /app/psicologia
+└── /app/administrativo
+    └── /app/administrativo/cronograma
+        ├── /app/administrativo/cronograma/nueva
+        ├── /app/administrativo/cronograma/pausas
+        │   └── /app/administrativo/cronograma/pausas/nueva
+        ├── /app/administrativo/cronograma/progreso
+        └── /app/administrativo/cronograma/:unitId
 ```
 
 Las rutas bajo `/app` requieren una sesión válida y aplican control de acceso por rol.
+
+Las rutas de administración del cronograma pertenecen al rol administrativo y se mantienen dentro de la sección global **Cronograma**. Las vistas internas como pausas, progreso o detalle de una unidad temporal no crean nuevas pestañas administrativas globales.
 
 Para detener el servidor:
 
@@ -287,7 +296,30 @@ Compilar el proyecto:
 npm run build
 ```
 
-Ambos comandos deben finalizar sin errores.
+El objetivo del repositorio es que ambos comandos finalicen sin errores.
+
+### Estado conocido al cierre de FE-M04-08
+
+La compilación de producción del frontend finaliza correctamente.
+
+Actualmente el lint global continúa reportando **6 errores preexistentes del Módulo 1 (`users`)**. Estos errores no fueron introducidos por el trabajo del Módulo 4. Mientras se corrige esa deuda técnica, cualquier cambio nuevo debe cumplir dos condiciones:
+
+1. No agregar errores adicionales al lint global.
+2. Pasar el lint específico de los archivos o feature modificados.
+
+Para validar el Módulo 4 se puede ejecutar:
+
+```bash
+npx eslint \
+  src/features/cronograma \
+  src/app/router/AppRouter.jsx
+```
+
+Antes de confirmar cambios también se recomienda:
+
+```bash
+git diff --check
+```
 
 La compilación genera:
 
@@ -391,14 +423,39 @@ Los nombres de carpetas, archivos e imports deben coincidir exactamente.
 
 ## Estado simulado en memoria
 
-Los mocks actuales utilizan estructuras en memoria. Las cuentas o estados creados durante una prueba pueden perderse al:
+Algunos flujos existentes del Módulo 1 todavía utilizan estructuras simuladas o estado en memoria mientras se completa su integración con backend. Dichos datos pueden perderse al:
 
 - Recargar completamente la página.
 - Reiniciar el servidor de Vite.
 - Recargar módulos durante ciertos cambios.
 - Cerrar y volver a abrir la aplicación.
 
-Este comportamiento es temporal y será reemplazado por persistencia en el backend.
+Este comportamiento es temporal y debe ser reemplazado por persistencia real en backend.
+
+### Regla aplicada en el Módulo 4
+
+El Módulo 4 (`cronograma`) **no utiliza mocks como fuente de verdad final**.
+
+Cuando todavía no existe una fuente real de backend:
+
+- Las vistas reciben los datos mediante props o variables preparadas para integración.
+- Se utilizan estados vacíos como `[]` o `null` para representar información aún no disponible.
+- Los fixtures temporales solo pueden usarse para comprobar visualmente una interfaz durante desarrollo y deben eliminarse antes del commit.
+- No se usa `localStorage` como sustituto del backend.
+- No se implementa CRUD ficticio en React.
+- No se duplican en frontend reglas de negocio que deben resolver backend u otras capas.
+
+Ejemplos de información que el frontend debe recibir ya resuelta cuando exista la integración:
+
+```text
+canAnnul
+currentWeek
+currentDay
+status
+progressSummary
+completedParticipant
+validations
+```
 
 ## Trabajo dentro de OneDrive
 
@@ -535,7 +592,8 @@ src/
 │   ├── providers/
 │   └── router/
 ├── features/
-│   └── users/
+│   ├── users/
+│   └── cronograma/
 ├── shared/
 ├── assets/
 ├── styles/
@@ -547,24 +605,31 @@ src/
 
 Cada carpeta ubicada directamente dentro de `src/features` representa un **módulo funcional del proyecto**.
 
-Actualmente se está desarrollando el **Módulo 1**, por lo que existe una sola feature principal:
+Actualmente el frontend contiene, entre otras responsabilidades, las features principales:
 
 ```text
 features/
-└── users/
+├── users/       # Módulo 1
+└── cronograma/  # Módulo 4
 ```
 
-La autenticación, el registro, las vistas del estudiante y las vistas de psicología forman parte del mismo módulo. Por esta razón no deben existir como features independientes:
+La autenticación, el registro, las vistas del estudiante y las vistas administrativas asociadas al Módulo 1 permanecen en `features/users`.
+
+La gestión del cronograma, sus unidades temporales, pausas administrativas y progreso temporal de participantes pertenece a `features/cronograma`.
+
+Por esta razón no deben crearse features independientes únicamente por rol, página o subproceso, por ejemplo:
 
 ```text
 features/auth/
 features/student/
 features/psychology/
+features/pauses/
+features/progress/
 ```
 
-Esas responsabilidades se organizan internamente dentro de `features/users`.
+Las responsabilidades internas deben permanecer dentro del módulo al que pertenecen.
 
-Cuando se implemente otro módulo del proyecto, podrá agregarse una nueva carpeta al mismo nivel, siempre que represente realmente un módulo y no un rol, una página o una parte interna de otro módulo.
+Cuando se implemente un módulo nuevo, podrá agregarse otra carpeta al mismo nivel siempre que represente realmente un dominio funcional del proyecto y no una pantalla aislada.
 
 ---
 
@@ -801,6 +866,298 @@ No debe exponer automáticamente todas las funciones, datos o utilidades interna
 
 
 ---
+# Feature `cronograma` — Módulo 4
+
+La feature `cronograma` concentra la interfaz administrativa construida para el Módulo 4.
+
+El trabajo realizado cubre FE-M04-01 a FE-M04-08 y deja preparada la estructura para integrar posteriormente los datos reales del backend sin convertir el frontend en una fuente de reglas de negocio o persistencia.
+
+## Alcance implementado
+
+| Tarea | Funcionalidad |
+|---|---|
+| FE-M04-01 | Estructura inicial de la feature `cronograma` y rutas protegidas |
+| FE-M04-02 | Vista administrativa del cronograma, filtros, listado, estados y detalle |
+| FE-M04-03 | Creación de unidades temporales |
+| FE-M04-04 | Modificación y eliminación visual de unidades temporales |
+| FE-M04-05 | Flujo visual de activación y validaciones del cronograma |
+| FE-M04-06 | Registro de pausas administrativas |
+| FE-M04-07 | Historial y anulación visual de pausas administrativas |
+| FE-M04-08 | Progreso y ubicación temporal de participantes |
+
+## Responsabilidades actuales
+
+La feature permite representar:
+
+- Consulta administrativa del cronograma.
+- Filtrado visual de unidades temporales.
+- Creación de unidades temporales.
+- Consulta de detalle de una unidad temporal.
+- Edición y eliminación según capacidades recibidas por la UI.
+- Estado de activación del cronograma.
+- Validaciones previas a la activación.
+- Registro de pausas administrativas.
+- Historial de pausas.
+- Estados `ACTIVA`, `FINALIZADA` y `ANULADA` para pausas.
+- Confirmación visual antes de anular una pausa.
+- Resumen de progreso de participantes.
+- Ubicación temporal individual.
+- Semana actual y día actual recibidos desde la fuente correspondiente.
+- Estados `ACTIVO`, `EN_PAUSA` y `COMPLETADO`.
+- Representación separada del participante que completó el cronograma.
+
+## Organización general de `cronograma`
+
+```text
+cronograma/
+├── components/
+│   ├── AdministrativePauseCard/
+│   ├── AdministrativePauseForm/
+│   ├── AdministrativePauseList/
+│   ├── CompletedParticipantProgress/
+│   ├── EmptyScheduleState/
+│   ├── ParticipantProgressCard/
+│   ├── ParticipantProgressList/
+│   ├── ParticipantProgressSummary/
+│   ├── ScheduleActivationDialog/
+│   ├── ScheduleActivationStatus/
+│   ├── ScheduleFilters/
+│   ├── TemporalUnitActions/
+│   ├── TemporalUnitCard/
+│   ├── TemporalUnitForm/
+│   └── TemporalUnitList/
+├── pages/
+│   ├── AdministrativePauseHistoryPage/
+│   ├── CreateAdministrativePausePage/
+│   ├── CreateTemporalUnitPage/
+│   ├── ParticipantProgressPage/
+│   ├── ScheduleManagementPage/
+│   └── TemporalUnitDetailPage/
+├── types/
+│   ├── administrativePauseTypes.js
+│   ├── participantProgressTypes.js
+│   └── scheduleTypes.js
+├── utils/
+└── index.js
+```
+
+La estructura puede seguir creciendo únicamente cuando aparezcan responsabilidades reales que lo justifiquen.
+
+## Rutas del Módulo 4
+
+```text
+/app/administrativo/cronograma
+/app/administrativo/cronograma/nueva
+/app/administrativo/cronograma/pausas
+/app/administrativo/cronograma/pausas/nueva
+/app/administrativo/cronograma/progreso
+/app/administrativo/cronograma/:unitId
+```
+
+Todas estas rutas se encuentran bajo el área protegida de la aplicación y requieren el rol administrativo correspondiente.
+
+### `/app/administrativo/cronograma`
+
+Vista principal de gestión del cronograma.
+
+Desde allí se puede acceder a:
+
+```text
+Progreso por usuario
+Pausas administrativas
+Crear unidad temporal
+```
+
+También representa el estado de activación, filtros y listado de unidades temporales.
+
+### `/app/administrativo/cronograma/nueva`
+
+Formulario de creación de unidad temporal.
+
+La validación local cubre únicamente reglas propias del formulario. Las reglas de negocio que dependan de información global o persistida deben resolverse mediante backend.
+
+### `/app/administrativo/cronograma/:unitId`
+
+Vista de detalle de una unidad temporal.
+
+Permite representar las acciones de edición y eliminación según el estado y las capacidades que reciba la interfaz.
+
+### `/app/administrativo/cronograma/pausas`
+
+Historial de pausas administrativas.
+
+Cada pausa puede representar:
+
+```text
+Participante
+Periodo
+Motivo
+Estado
+Acción Anular
+```
+
+La posibilidad de anulación se recibe mediante `canAnnul`. El frontend no deduce automáticamente que una pausa puede anularse solo por encontrarse en estado `ACTIVA`.
+
+### `/app/administrativo/cronograma/pausas/nueva`
+
+Formulario para registrar una pausa administrativa.
+
+Incluye:
+
+- Participante.
+- Fecha inicial.
+- Fecha final.
+- Motivo.
+- Validaciones locales de campos obligatorios y rango de fechas.
+
+Las validaciones de solapamiento u otras reglas que dependan de información persistida corresponden al backend.
+
+### `/app/administrativo/cronograma/progreso`
+
+Vista de **Progreso por usuario**.
+
+Incluye:
+
+```text
+Resumen del progreso
+├── Participantes
+├── Activos
+└── En pausa
+
+Ubicación temporal
+├── Participante
+├── Unidad temporal
+├── Semana actual
+├── Día actual
+└── Estado
+
+Programa completado
+├── Participante
+├── Correo
+├── Progreso final
+└── Estado COMPLETADO
+```
+
+Los conteos y la ubicación temporal no se calculan mediante `filter`, `reduce`, fechas locales o lógica duplicada en React. La vista está preparada para recibir esos valores ya resueltos.
+
+## Estados técnicos centralizados
+
+Los códigos técnicos del Módulo 4 se mantienen en `types`.
+
+Ejemplos:
+
+```text
+scheduleTypes.js
+administrativePauseTypes.js
+participantProgressTypes.js
+```
+
+Esto evita dispersar cadenas técnicas dentro de componentes.
+
+### Pausas administrativas
+
+```text
+ACTIVA
+FINALIZADA
+ANULADA
+```
+
+### Progreso de participantes
+
+```text
+ACTIVO
+EN_PAUSA
+COMPLETADO
+```
+
+Los estados de pausas, participantes y unidades temporales son conceptos diferentes y no deben reutilizarse como si fueran equivalentes.
+
+## Componentes compartidos reutilizados
+
+El Módulo 4 reutiliza componentes existentes de `shared` cuando la responsabilidad es transversal.
+
+Entre ellos:
+
+```text
+AdministrativeHeader
+AdministrativeTabBar
+Button
+TextField
+SelectField
+ConfirmationDialog
+```
+
+No se deben crear copias locales de estos componentes dentro de `cronograma` si la responsabilidad ya está resuelta en `shared`.
+
+## Separación frontend / backend en M04
+
+La interfaz del cronograma sigue esta regla:
+
+```text
+Backend / capa de integración
+            ↓
+      datos resueltos
+            ↓
+       componentes UI
+```
+
+No se debe reemplazar temporalmente esa arquitectura por:
+
+```text
+React
+ ↓
+mini backend local
+ ↓
+reglas de negocio ficticias
+ ↓
+persistencia simulada
+```
+
+Por ejemplo, el frontend no debe decidir por su cuenta:
+
+- Si existe solapamiento entre pausas registradas.
+- Si un cronograma cumple todas las condiciones para activarse.
+- Si una pausa puede anularse basándose solamente en su estado.
+- En qué semana o día debe estar un participante.
+- Cuántos participantes están activos o en pausa.
+- Qué participante completó el cronograma.
+
+La UI sí puede realizar validaciones locales propias de formularios, como:
+
+- Campos requeridos.
+- Formato esperado.
+- Comparación básica entre fecha inicial y fecha final.
+
+## Datos temporales para pruebas visuales
+
+Los fixtures pueden utilizarse durante desarrollo únicamente para comprobar estados de interfaz.
+
+Antes del commit deben retirarse.
+
+El código final de M04 utiliza estados vacíos o valores nulos cuando todavía no existe una fuente real, por ejemplo:
+
+```text
+[]
+null
+—
+```
+
+Un valor desconocido no debe presentarse como `0`, `ACTIVO`, `ANULADA` o cualquier otro resultado que implique una respuesta de negocio inexistente.
+
+## API pública de `cronograma`
+
+El archivo:
+
+```text
+src/features/cronograma/index.js
+```
+
+expone principalmente las páginas utilizadas por el router.
+
+Los componentes, tipos y utilidades internos deben importarse desde su archivo responsable cuando se utilizan dentro de la propia feature.
+
+---
+
 # Conexión Back-Front
 
 Esta sección explica cómo el frontend se comunica con el backend de Brisa, y sirve como guía general para implementar la conexión de **cualquier módulo o historia de usuario**, no solo de una funcionalidad específica.
@@ -943,6 +1300,35 @@ La sesión de Brisa se maneja completamente por **cookie `HttpOnly`** — el fro
 4. Si hay formulario involucrado, revisar que los nombres de campos y el formato de fechas coincidan exactamente con lo validado en Postman; agregar una función de normalización si los vocabularios difieren.
 5. Probar la llamada real desde el navegador (Network tab) y comparar el payload contra el de Postman antes de dar el flujo por terminado.
 6. Si la ruta requiere sesión, no se necesita configuración adicional — `withCredentials` ya está cubierto por `apiClient` — pero sí verificar que el usuario de prueba tenga una sesión activa antes de probar.
+
+## Estado de integración del Módulo 4
+
+Las vistas de `cronograma` se encuentran estructuradas para conectar posteriormente los endpoints reales del backend.
+
+Mientras esos endpoints no estén confirmados:
+
+- No se deben inventar rutas REST.
+- No se debe agregar una constante `CRONOGRAMA` con una URL asumida.
+- No se deben crear respuestas mock como fuente definitiva.
+- No se debe implementar persistencia local para reemplazar al backend.
+- Los nombres de payloads y respuestas deben definirse a partir del DTO y respuesta real del backend.
+
+Cuando la integración esté disponible, debe mantenerse el patrón general:
+
+```text
+constans.jsx
+      ↓
+apiClient.jsx
+      ↓
+features/cronograma/api/
+      ↓
+hooks o páginas
+      ↓
+componentes de presentación
+```
+
+La incorporación de `features/cronograma/api/` debe hacerse cuando existan endpoints reales que justifiquen esos archivos, no antes.
+
 ---
 
 
@@ -995,40 +1381,40 @@ Contiene recursos estáticos:
 
 El proyecto utiliza **Tailwind CSS** para los estilos de componentes y vistas.
 
-La carpeta:
+La carpeta de estilos globales es:
 
 ```text
 src/styles/
----
-
-styles/
 ├── tokens.css
 └── globals.css
+```
 
-tokens.css
+## `tokens.css`
 
 Contiene las variables CSS que definen el sistema visual de Brisa:
 
-Colores de marca.
-Colores semánticos.
-Superficies.
-Colores de texto.
-Tipografías.
-Espaciados.
-Radios.
-Sombras.
-Variables para modo oscuro.
+- Colores de marca.
+- Colores semánticos.
+- Superficies.
+- Colores de texto.
+- Tipografías.
+- Espaciados.
+- Radios.
+- Sombras.
+- Variables para modo oscuro.
 
-globals.css
+## `globals.css`
 
 Contiene:
 
-La importación global de Tailwind CSS.
-Normalización visual.
-Reglas base.
-Estilos globales de html, body y #root.
-Reglas globales de accesibilidad.
-Comportamientos compartidos que no pertenecen a un componente específico.
+- La importación global de Tailwind CSS.
+- Normalización visual.
+- Reglas base.
+- Estilos globales de `html`, `body` y `#root`.
+- Reglas globales de accesibilidad.
+- Comportamientos compartidos que no pertenecen a un componente específico.
+
+---
 
 # Progressive Web App
 
@@ -1044,25 +1430,28 @@ Estas capacidades deben considerarse como evolución de la arquitectura y no asu
 
 ---
 
---
-
 # Convenciones
 
-- Cada carpeta ubicada directamente en `features` representa un módulo del proyecto.
+- Cada carpeta ubicada directamente en `features` representa un módulo funcional del proyecto.
 - Los roles, páginas o partes internas de un módulo no deben convertirse en features separadas.
-- Las responsabilidades de autenticación, registro, estudiante y psicología del Módulo 1 pertenecen a `features/users`.
+- Las responsabilidades de autenticación, registro, estudiante y vistas administrativas del Módulo 1 pertenecen a `features/users`.
+- Las responsabilidades de cronograma, unidades temporales, pausas y progreso temporal del Módulo 4 pertenecen a `features/cronograma`.
 - Los componentes compartidos por varias features se ubican en `shared`.
-- Los componentes utilizados únicamente por `users` permanecen dentro de esa feature.
-- Los componentes exclusivos de una página permanecen dentro de `pages/<NombrePage>/components`.
-- La comunicación con el backend o sus simulaciones se implementa en `api`.
+- Los componentes utilizados únicamente por una feature permanecen dentro de esa feature.
+- Los componentes exclusivos de una página permanecen dentro de `pages/<NombrePage>/components` cuando su reutilización no justifica subirlos de nivel.
+- La comunicación con el backend se implementa en `api` cuando existe una integración real o contrato confirmado.
+- Los mocks pueden utilizarse únicamente como apoyo temporal de desarrollo y no deben convertirse en fuente de verdad definitiva.
+- No se debe utilizar `localStorage` o estado React como sustituto permanente de persistencia de backend.
 - Las páginas pueden contener subcarpetas locales de `components`, `hooks`, `data` y `utils`.
 - No todas las páginas están obligadas a tener las mismas subcarpetas.
 - La estructura debe responder a responsabilidades reales y no crear archivos innecesarios.
 - Los códigos técnicos y roles se centralizan en archivos de `types`.
-- No se deben duplicar constantes de roles entre vistas de estudiante y psicología.
-- Las exportaciones públicas del módulo se consolidan en `features/users/index.js`.
-- Los imports internos de la feature deben apuntar directamente al archivo responsable para evitar dependencias circulares.
-- Antes de subir cambios se deben ejecutar `npm run lint` y `npm run build`.
+- No se deben duplicar constantes equivalentes entre vistas o módulos.
+- Las exportaciones públicas de cada módulo se consolidan en `features/<modulo>/index.js`.
+- Los imports internos de una feature deben apuntar directamente al archivo responsable cuando esto ayuda a evitar dependencias circulares.
+- Las reglas de negocio que dependen de información persistida deben resolverse en backend o en la capa correspondiente; React debe representar los resultados recibidos.
+- Las vistas internas de Cronograma permanecen bajo la pestaña administrativa `Cronograma`; no se crea una pestaña global por cada subfuncionalidad.
+- Antes de subir cambios se deben ejecutar `npm run lint`, `npm run build` y `git diff --check`.
 
 ---
 
