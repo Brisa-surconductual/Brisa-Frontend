@@ -85,8 +85,8 @@ export function ScheduleManagementPage() {
     setIsActivationDialogOpen(false);
   }
 
-  function handleCreatePause() {
-    navigate('/app/administrativo/cronograma/pausas/nueva');
+  function handleViewPauses() {
+    navigate('/app/administrativo/cronograma/pausas');
   }
 
   return (
@@ -120,8 +120,8 @@ export function ScheduleManagementPage() {
             </div>
 
             <div className="flex flex-col gap-[var(--space-3)] sm:flex-row">
-              <Button variant="secondary" onClick={handleCreatePause}>
-                Registrar pausa
+              <Button variant="secondary" onClick={handleViewPauses}>
+                Pausas administrativas
               </Button>
 
               <Button onClick={handleCreateUnit}>Crear unidad temporal</Button>
