@@ -164,9 +164,9 @@ export function AssociateContentPage() {
     navigate('/app/administrativo/cronograma');
   }
 
-  function handleUnitChange(event) {
-    // El mensaje de éxito nombra una unidad concreta: deja de ser cierto en
-    // cuanto se cambia el destino.
+  function handleFormChange(event) {
+    // El mensaje de éxito nombra una actividad y una unidad concretas: deja de
+    // describir el formulario en cuanto se toca cualquiera de los dos campos.
     setSuccessMessage('');
 
     handleChange(event);
@@ -218,7 +218,7 @@ export function AssociateContentPage() {
                   contentHint={contentHint}
                   temporalUnitOptions={temporalUnitOptions}
                   successMessage={successMessage}
-                  onChange={handleUnitChange}
+                  onChange={handleFormChange}
                   onSubmit={handleSubmit}
                   onCancel={handleCancel}
                 />

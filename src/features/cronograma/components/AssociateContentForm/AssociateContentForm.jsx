@@ -10,10 +10,10 @@ import { SelectField } from '@/shared/components/ui/SelectField/index.js';
  */
 export function AssociateContentForm({
   form,
-  errors,
-  contentOptions,
+  errors = {},
+  contentOptions = [],
   contentHint = '',
-  temporalUnitOptions,
+  temporalUnitOptions = [],
   successMessage = '',
   onChange,
   onSubmit,
