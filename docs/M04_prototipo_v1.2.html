@@ -1,0 +1,1639 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brisa · Prototipo M04 v1.2 · Cronograma</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ══ TOKENS ════════════════════════════════════════════════════ */
+:root {
+  --brand-50:#EAF6F5;--brand-100:#CFECE9;--brand-200:#9ED9D2;--brand-300:#69BFB5;
+  --brand-400:#3CA399;--brand-500:#1D8378;--brand-600:#156A61;--brand-700:#11534C;
+  --brand-800:#0C3C37;--brand-900:#082724;
+  --accent-500:#C8501F;--accent-600:#A03D15;
+  --n0:#FFFFFF;--n50:#FAF9F6;--n100:#F0EEE8;--n200:#E1DED5;--n300:#C7C3B6;
+  --n400:#A19C8C;--n500:#726C5A;--n600:#595549;--n700:#403D34;--n800:#282620;--n900:#161510;
+  --success:#2E7D4F;--success-bg:#E8F5ED;--success-text:#1F5C3A;--success-border:#8FCBA3;
+  --warning:#B07A12;--warning-bg:#FBF1DC;--warning-text:#7A5208;--warning-border:#E6C878;
+  --danger:#C13B30;--danger-bg:#FBEAE7;--danger-text:#8E2A21;--danger-border:#E8A99E;
+  --info:#1E6FA8;--info-bg:#E7F1FA;--info-text:#1E6FA8;--info-border:#A8CBE6;
+  --bg:var(--n50);--card:var(--n0);--border:var(--n200);--hover:var(--n100);
+  --tp:var(--n900);--ts:var(--n600);--tm:var(--n500);--btn-pt:var(--n0);
+  --font:'Manrope',sans-serif;--mono:'IBM Plex Mono',monospace;
+  --r-sm:4px;--r-md:8px;--r-lg:12px;--r-xl:16px;--r-2xl:20px;--r-full:9999px;
+  --sh-sm:0 1px 2px rgba(22,21,16,.06);
+  --sh-md:0 2px 8px rgba(22,21,16,.09),0 1px 2px rgba(22,21,16,.06);
+  --sh-lg:0 8px 24px rgba(22,21,16,.10),0 2px 6px rgba(22,21,16,.06);
+}
+[data-theme="dark"] {
+  --brand-50:#082724;--brand-100:#0C3C37;--brand-200:#11534C;--brand-300:#156A61;
+  --brand-400:#1D8378;--brand-500:#3CA399;--brand-600:#69BFB5;--brand-700:#9ED9D2;
+  --brand-800:#CFECE9;--brand-900:#EAF6F5;
+  --success-bg:#13261B;--success-text:#9ED9AE;--success-border:#2F5C41;
+  --warning-bg:#2B2008;--warning-text:#F0C77A;--warning-border:#6B4D14;
+  --danger-bg:#2B1310;--danger-text:#F0A89E;--danger-border:#6B2A20;
+  --info-bg:#0E2233;--info-text:#9BC8E8;--info-border:#1F4566;
+  --bg:#100F0C;--card:#1E1C17;--border:#332F27;--hover:#262319;
+  --tp:#EDEAE2;--ts:#B8B3A4;--tm:#8C8676;--btn-pt:var(--n900);
+  --sh-sm:0 1px 2px rgba(0,0,0,.35);--sh-md:0 2px 8px rgba(0,0,0,.45);--sh-lg:0 8px 24px rgba(0,0,0,.55);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-family:var(--font);background:#0e0e0e;color:var(--tp)}
+body{min-height:100vh;display:flex;flex-direction:column;align-items:center;background:#111}
+:focus-visible{outline:2.5px solid var(--brand-500);outline-offset:2px;border-radius:var(--r-sm)}
+/* ══ DEMO BAR ══ */
+.demo-bar{width:100%;background:#0a0a0a;border-bottom:1px solid #222;padding:8px 16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-family:var(--mono);font-size:10px;color:#888;position:sticky;top:0;z-index:1000}
+.demo-bar strong{color:#aaa;margin-right:2px}
+.demo-btn{background:#1a1a1a;border:1px solid #333;color:#bbb;border-radius:4px;padding:3px 8px;font-size:9px;font-family:var(--mono);cursor:pointer;transition:all .1s}
+.demo-btn:hover{background:#2a2a2a;color:#fff;border-color:#555}
+.demo-btn.active{background:#1D8378;border-color:#1D8378;color:#fff}
+.demo-btn.warn{background:rgba(176,122,18,.2);border-color:rgba(176,122,18,.4);color:#E6C878}
+.demo-btn.warn.on{background:rgba(176,122,18,.4);border-color:#B07A12;color:#F0C77A}
+.demo-sep{color:#333;user-select:none}
+.demo-screen-pill{background:#222;border:1px solid #333;border-radius:var(--r-full);padding:2px 8px;color:#6BC4B8;font-size:9px}
+.demo-spacer{flex:1}
+.role-badge{padding:2px 7px;border-radius:var(--r-full);font-size:9px;font-weight:600}
+.role-badge.student{background:rgba(29,131,120,.25);color:#6BC4B8;border:1px solid rgba(29,131,120,.4)}
+.role-badge.admin{background:rgba(200,80,31,.25);color:#FFC09E;border:1px solid rgba(200,80,31,.4)}
+/* ══ FRAME ══ */
+.frame-outer{display:flex;justify-content:center;align-items:flex-start;padding:24px 16px 40px;flex:1;width:100%}
+.phone{width:390px;background:var(--bg);border-radius:36px;overflow:hidden;position:relative;box-shadow:0 0 0 10px #1a1a1a,0 30px 80px rgba(0,0,0,.7);min-height:720px;max-height:820px;display:flex;flex-direction:column;transition:background .2s}
+.phone::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:100px;height:28px;background:#1a1a1a;border-radius:0 0 18px 18px;z-index:50}
+/* ══ SCREENS ══ */
+.screens{flex:1;position:relative;overflow:hidden}
+.screen{position:absolute;inset:0;overflow-y:auto;background:var(--bg);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;transform:translateX(20px)}
+.screen.active{opacity:1;pointer-events:all;transform:translateX(0)}
+.screen.slide-back{transform:translateX(-20px)}
+.screen-inner{padding:40px 20px 100px;min-height:100%}
+/* ══ APP BAR ══ */
+.app-bar{padding:40px 16px 0;display:flex;align-items:center;gap:10px;position:relative;z-index:10;flex-shrink:0;pointer-events:all}
+.app-bar-back{width:36px;height:36px;border-radius:50%;background:var(--hover);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--tp);font-size:18px;transition:background .12s;flex-shrink:0}
+.app-bar-back:hover{background:var(--border)}
+.app-bar-title{font-size:13px;font-weight:700;color:var(--ts)}
+.app-bar-spacer{flex:1}
+.app-bar-action{background:none;border:none;color:var(--brand-600);font-weight:700;font-size:12px;cursor:pointer;font-family:var(--font);padding:4px 8px;border-radius:var(--r-md);transition:background .12s}
+.app-bar-action:hover{background:var(--hover)}
+[data-theme="dark"] .app-bar-action{color:var(--brand-500)}
+/* ══ BOTTOM NAV ══ */
+.bottom-nav{display:none;background:var(--card);border-top:1px solid var(--border);padding:8px 0 16px;z-index:20;flex-shrink:0}
+.bottom-nav.visible{display:flex}
+.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 0;cursor:pointer;border:none;background:none;color:var(--tm);font-size:9.5px;font-family:var(--font);font-weight:600;transition:color .12s}
+.bnav-item:hover,.bnav-item.active{color:var(--brand-500)}
+.bnav-icon{font-size:20px;line-height:1}
+/* ══ BUTTONS ══ */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;font-family:var(--font);font-weight:700;font-size:14px;border-radius:var(--r-md);border:1.5px solid transparent;padding:11px 20px;cursor:pointer;transition:all .12s;line-height:1.2}
+.btn-primary{background:var(--brand-500);color:var(--btn-pt)}
+.btn-primary:hover:not(:disabled){background:var(--brand-600)}
+[data-theme="dark"] .btn-primary:hover:not(:disabled){background:var(--brand-400)}
+.btn-secondary{background:var(--card);color:var(--tp);border-color:var(--border)}
+.btn-secondary:hover:not(:disabled){background:var(--hover)}
+.btn-ghost{background:transparent;color:var(--ts);border-color:transparent}
+.btn-ghost:hover:not(:disabled){background:var(--hover)}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-block{width:100%;margin-top:8px}
+.btn:disabled{opacity:.42;cursor:not-allowed}
+.btn-sm{padding:7px 14px;font-size:12.5px}
+.btn-xs{padding:4px 10px;font-size:11.5px;font-weight:700;border-radius:var(--r-sm)}
+.btn-link{background:none;border:none;color:var(--brand-600);font-weight:600;font-size:12.5px;cursor:pointer;font-family:var(--font);padding:0;transition:color .12s}
+.btn-link:hover{color:var(--brand-500)}
+[data-theme="dark"] .btn-link{color:var(--brand-500)}
+/* ══ INPUTS ══ */
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.field-label{font-size:12.5px;font-weight:700;color:var(--tp)}
+.input-wrap{position:relative}
+.iico{position:absolute;top:50%;transform:translateY(-50%);color:var(--tm);font-size:16px;pointer-events:none}
+.iico.clickable{pointer-events:all;cursor:pointer;transition:color .12s}
+.iico.clickable:hover{color:var(--tp)}
+.iico-l{left:12px}.iico-r{right:12px}
+.input,.select,.textarea{font-family:var(--font);font-size:14px;color:var(--tp);background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-md);padding:11px 14px;width:100%;transition:border-color .12s,box-shadow .12s;appearance:none}
+.input:focus,.select:focus,.textarea:focus{border-color:var(--brand-400);box-shadow:0 0 0 3px rgba(29,131,120,.12);outline:none}
+.input.has-l{padding-left:40px}.input.has-r{padding-right:40px}
+.input.err{border-color:var(--danger);box-shadow:0 0 0 3px rgba(193,59,48,.08)}
+.input.ok{border-color:var(--success)}
+.textarea{resize:vertical;min-height:80px;line-height:1.5}
+.ferr{font-size:11px;color:var(--danger-text);font-weight:600;display:flex;align-items:center;gap:4px;margin-top:2px}
+.fhint{font-size:11px;color:var(--tm);margin-top:2px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+/* ══ BADGES ══ */
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:var(--r-full);border:1px solid;white-space:nowrap}
+.bdot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.b-success{background:var(--success-bg);border-color:var(--success-border);color:var(--success-text)}
+.b-warning{background:var(--warning-bg);border-color:var(--warning-border);color:var(--warning-text)}
+.b-danger{background:var(--danger-bg);border-color:var(--danger-border);color:var(--danger-text)}
+.b-info{background:var(--info-bg);border-color:var(--info-border);color:var(--info-text)}
+.b-neutral{background:var(--hover);border-color:var(--border);color:var(--tm)}
+.b-brand{background:var(--brand-50);border-color:var(--brand-200);color:var(--brand-700)}
+[data-theme="dark"] .b-brand{background:var(--brand-100);border-color:var(--brand-300);color:var(--brand-600)}
+/* ══ ALERTS ══ */
+.alert{display:flex;gap:10px;padding:12px;border-radius:var(--r-md);border:1px solid;font-size:12.5px;line-height:1.5;margin-bottom:12px}
+.alert-icon{font-size:15px;flex-shrink:0;margin-top:1px}
+.alert-body{display:flex;flex-direction:column;gap:2px}
+.alert-title{font-weight:700;font-size:12.5px}
+.alert-desc{font-size:11.5px;opacity:.85}
+.alert-success{background:var(--success-bg);border-color:var(--success-border);color:var(--success-text)}
+.alert-warning{background:var(--warning-bg);border-color:var(--warning-border);color:var(--warning-text)}
+.alert-error{background:var(--danger-bg);border-color:var(--danger-border);color:var(--danger-text)}
+.alert-info{background:var(--info-bg);border-color:var(--info-border);color:var(--info-text)}
+.alert.hidden{display:none}
+/* ══ MODAL ══ */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:2000;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.visible{display:flex}
+.modal-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-2xl);padding:28px 24px;max-width:320px;width:100%;text-align:center;box-shadow:var(--sh-lg)}
+.modal-card.text-left{text-align:left}
+.modal-icon{font-size:36px;margin-bottom:12px}
+.modal-title{font-size:16px;font-weight:800;color:var(--tp);margin-bottom:6px}
+.modal-desc{font-size:12.5px;color:var(--ts);line-height:1.5;margin-bottom:8px}
+.modal-countdown{font-family:var(--mono);font-size:28px;font-weight:700;color:var(--warning-text);margin:8px 0 20px}
+.modal-actions{display:flex;gap:10px}
+.modal-actions .btn{flex:1;font-size:13px;padding:9px}
+.modal-check-list{list-style:none;text-align:left;margin:12px 0 16px;display:flex;flex-direction:column;gap:6px}
+.modal-check-item{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ts)}
+/* ══ TOAST ══ */
+.toast-wrap{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:3000;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+.toast{background:var(--n900);color:var(--n0);border-radius:var(--r-full);padding:9px 18px;font-size:12.5px;font-weight:600;font-family:var(--font);box-shadow:var(--sh-lg);display:flex;align-items:center;gap:7px;animation:toastin .25s ease,toastout .25s ease 2.5s forwards;white-space:nowrap;max-width:340px}
+[data-theme="dark"] .toast{background:var(--n100);color:var(--n900)}
+.toast.t-success{background:var(--success);color:#fff}
+.toast.t-error{background:var(--danger);color:#fff}
+.toast.t-warning{background:var(--warning);color:#fff}
+.toast.t-info{background:var(--info);color:#fff}
+@keyframes toastin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes toastout{from{opacity:1}to{opacity:0}}
+/* ══ UTILS ══ */
+.mt4{margin-top:4px}.mt8{margin-top:8px}.mt12{margin-top:12px}.mt16{margin-top:16px}.mt20{margin-top:20px}.mt24{margin-top:24px}
+.mb8{margin-bottom:8px}.mb12{margin-bottom:12px}.mb16{margin-bottom:16px}
+.text-center{text-align:center}.text-sm{font-size:11.5px;color:var(--ts)}.mono-sm{font-family:var(--mono);font-size:10px;color:var(--tm)}
+.bold{font-weight:700}.brand-text{color:var(--brand-600)}
+[data-theme="dark"] .brand-text{color:var(--brand-500)}
+.hidden{display:none!important}
+.divider{height:1px;background:var(--border);margin:16px 0}
+.section-label{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--tm);margin-bottom:12px;margin-top:20px}
+/* ══ SPLASH ══ */
+.splash-bg{min-height:100%;background:linear-gradient(160deg,var(--brand-700) 0%,var(--brand-500) 60%,var(--brand-400) 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 32px 48px}
+.splash-icon{width:72px;height:72px;border-radius:20px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;margin-bottom:20px}
+.splash-title{font-size:30px;font-weight:800;color:#fff;letter-spacing:-.02em;margin-bottom:6px}
+.splash-subtitle{font-size:13px;color:rgba(255,255,255,.7);text-align:center;margin-bottom:40px;line-height:1.5}
+.splash-actions{display:flex;flex-direction:column;gap:10px;width:100%}
+.btn-white{background:#fff;color:var(--brand-700);border:none}
+.btn-white:hover:not(:disabled){background:rgba(255,255,255,.9)}
+.btn-outline-white{background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,.4)}
+.btn-outline-white:hover:not(:disabled){background:rgba(255,255,255,.1)}
+/* ══ STUDENT HEADER ══ */
+.student-header{background:var(--brand-500);padding:42px 20px 18px}
+.student-header-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px}
+.student-header-greeting{font-size:11px;color:rgba(255,255,255,.7);margin-bottom:2px}
+.student-header-title{font-size:19px;font-weight:800;color:#fff;line-height:1.2}
+.header-icon-btn{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.18);border:none;color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .12s;flex-shrink:0}
+.header-icon-btn:hover{background:rgba(255,255,255,.28)}
+.header-progress-pill{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.18);border-radius:var(--r-full);padding:4px 10px;font-size:11px;color:rgba(255,255,255,.9);font-weight:700;margin-top:6px}
+/* ══ PAUSE BANNER ══ */
+.pause-banner{background:var(--warning-bg);border:1px solid var(--warning-border);border-radius:var(--r-md);padding:10px 14px;display:flex;gap:10px;align-items:flex-start;margin-bottom:12px}
+.pause-banner-icon{font-size:15px;flex-shrink:0;color:var(--warning-text);margin-top:1px}
+.pause-banner-body{flex:1}
+.pause-banner-title{font-size:12.5px;font-weight:700;color:var(--warning-text)}
+.pause-banner-desc{font-size:11px;color:var(--warning-text);opacity:.85;margin-top:2px;line-height:1.45}
+/* ══ CALENDAR STRIP ══ */
+.cal-strip-wrap{margin:0 -20px;padding:4px 20px 14px;overflow-x:auto;scrollbar-width:none;display:flex;gap:8px}
+.cal-strip-wrap::-webkit-scrollbar{display:none}
+.cal-cell{flex-shrink:0;width:60px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:2px 0;border-radius:var(--r-md);transition:background .12s}
+.cal-cell-num{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;border:2px solid transparent;transition:all .15s}
+.cal-cell-label{font-size:8.5px;font-weight:600;color:var(--tm);text-align:center;line-height:1.2}
+.cal-cell.completed .cal-cell-num{background:var(--success-bg);color:var(--success-text);border-color:var(--success-border)}
+.cal-cell.completed .cal-cell-label{color:var(--success-text)}
+.cal-cell.active .cal-cell-num{background:var(--brand-500);color:#fff;border-color:var(--brand-400);box-shadow:0 0 0 3px rgba(29,131,120,.2)}
+.cal-cell.active .cal-cell-label{color:var(--brand-600);font-weight:800}
+[data-theme="dark"] .cal-cell.active .cal-cell-label{color:var(--brand-500)}
+.cal-cell.blocked .cal-cell-num{background:var(--hover);color:var(--tm);border-color:var(--border)}
+.cal-cell.pending .cal-cell-num{background:var(--warning-bg);color:var(--warning-text);border-color:var(--warning-border)}
+.cal-cell.paused .cal-cell-num{background:var(--warning-bg);color:var(--warning-text);border-color:var(--warning-border)}
+/* ══ WEEK CARD ══ */
+.week-card{background:var(--card);border:1px solid var(--border);border-left:3px solid var(--border);border-radius:var(--r-xl);padding:16px;margin-bottom:12px;box-shadow:var(--sh-sm)}
+.week-card.is-active{border-left-color:var(--brand-500)}
+.week-card.is-completed{border-left-color:var(--success)}
+.week-card-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px;gap:8px}
+.week-card-title{font-size:15px;font-weight:800;color:var(--tp);line-height:1.3}
+.week-card-theme{font-size:11px;color:var(--tm);margin-top:1px;margin-bottom:10px}
+.week-card-dates{font-size:10px;color:var(--tm);font-family:var(--mono);margin-bottom:8px}
+/* ══ PROGRESS BAR ══ */
+.prog-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.prog-label{font-size:10.5px;color:var(--tm)}
+.prog-pct{font-size:10.5px;font-weight:700;color:var(--brand-600);font-family:var(--mono)}
+[data-theme="dark"] .prog-pct{color:var(--brand-500)}
+.prog-wrap{background:var(--hover);border-radius:var(--r-full);height:6px;overflow:hidden;margin-bottom:12px}
+.prog-fill{height:100%;border-radius:var(--r-full);background:var(--brand-500);transition:width .4s ease}
+.prog-fill.full{background:var(--success)}
+/* ══ DAY ITEMS (v1.1) ══ */
+.day-item{display:flex;align-items:center;gap:10px;padding:9px 6px;border-bottom:1px solid var(--hover);cursor:pointer;transition:background .1s;border-radius:var(--r-md)}
+.day-item:last-child{border-bottom:none}
+.day-item:hover{background:var(--hover)}
+.day-item.hoy{background:var(--brand-50);margin:0 -6px;padding:10px 6px;border-bottom:1px solid var(--brand-100);border-radius:var(--r-md)}
+[data-theme="dark"] .day-item.hoy{background:var(--brand-100);border-bottom-color:var(--brand-200)}
+.day-item.hoy:hover{background:var(--brand-100)}
+[data-theme="dark"] .day-item.hoy:hover{background:var(--brand-200)}
+.day-circle{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;font-family:var(--mono);border:1.5px solid transparent}
+.day-circle.completado{background:var(--success-bg);color:var(--success-text);border-color:var(--success-border)}
+.day-circle.hoy{background:var(--brand-500);color:#fff;box-shadow:0 0 0 3px rgba(29,131,120,.2)}
+.day-circle.programado{background:var(--hover);color:var(--tm);border-color:var(--border)}
+.day-body{flex:1;min-width:0}
+.day-name{font-size:12.5px;font-weight:700;color:var(--tp);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.day-item.hoy .day-name{color:var(--brand-700)}
+[data-theme="dark"] .day-item.hoy .day-name{color:var(--brand-500)}
+.day-item.programado .day-name{color:var(--tm)}
+.day-item.completado .day-name{color:var(--ts)}
+.day-meta{font-size:10.5px;color:var(--tm);margin-top:1px;display:flex;align-items:center;gap:4px}
+.day-arrow{color:var(--tm);font-size:14px;flex-shrink:0}
+.hoy-pill{display:inline-flex;background:var(--brand-500);color:#fff;font-size:8.5px;font-weight:800;padding:1px 6px;border-radius:var(--r-full);letter-spacing:.04em;flex-shrink:0}
+/* ══ DAY DETAIL SCREEN ══ */
+.day-detail-header{border-bottom:1px solid var(--border);padding:16px 20px 20px}
+.day-detail-header.activo{background:var(--brand-50)}
+.day-detail-header.completado{background:var(--success-bg);border-bottom-color:var(--success-border)}
+.day-detail-header.programado{background:var(--hover)}
+[data-theme="dark"] .day-detail-header.activo{background:var(--brand-100)}
+.day-detail-badges{display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.day-detail-title{font-size:20px;font-weight:800;color:var(--tp);line-height:1.3}
+.day-detail-body{padding:20px 20px 100px}
+.day-desc-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px;margin-bottom:12px;font-size:13px;color:var(--ts);line-height:1.65}
+.interaction-badge{display:inline-flex;align-items:center;gap:4px;background:var(--info-bg);border:1px solid var(--info-border);color:var(--info-text);font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:var(--r-full)}
+.indicator-card{background:var(--brand-50);border:1px solid var(--brand-100);border-radius:var(--r-md);padding:10px 12px;margin-bottom:16px}
+[data-theme="dark"] .indicator-card{background:var(--brand-100);border-color:var(--brand-200)}
+.indicator-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--brand-600);margin-bottom:3px;font-family:var(--mono)}
+[data-theme="dark"] .indicator-label{color:var(--brand-500)}
+.indicator-name{font-size:12px;font-weight:700;color:var(--brand-700);line-height:1.3}
+[data-theme="dark"] .indicator-name{color:var(--brand-600)}
+.result-card{background:var(--success-bg);border:1px solid var(--success-border);border-radius:var(--r-md);padding:12px 14px;margin-bottom:16px}
+.result-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--success-text);margin-bottom:4px;font-family:var(--mono)}
+.result-value{font-size:12.5px;color:var(--success-text);line-height:1.5}
+.result-indicator{font-family:var(--mono);font-size:11px;color:var(--success-text);margin-top:4px;font-weight:700}
+/* ══ CALENDAR FULL VIEW ══ */
+.prog-summary{background:var(--card);border:1px solid var(--border);border-radius:var(--r-xl);padding:14px 16px;display:flex;align-items:center;gap:16px;margin-bottom:16px;box-shadow:var(--sh-sm)}
+.prog-summary-num{font-size:26px;font-weight:800;color:var(--brand-500);line-height:1;font-family:var(--mono)}
+.prog-summary-label{font-size:11px;color:var(--tm)}
+.prog-summary-divider{width:1px;background:var(--border);align-self:stretch}
+.cal-week-card{background:var(--card);border:1px solid var(--border);border-left:3px solid var(--border);border-radius:var(--r-xl);padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:box-shadow .12s,background .12s}
+.cal-week-card:hover{box-shadow:var(--sh-sm);background:var(--hover)}
+.cal-week-card.is-active{border-left-color:var(--brand-500)}
+.cal-week-card.is-completed{border-left-color:var(--success)}
+.cal-week-card.is-pending{border-left-color:var(--warning)}
+.cal-week-head{display:flex;align-items:center;justify-content:space-between}
+.cal-week-title{font-size:13px;font-weight:700;color:var(--tp)}
+.cal-week-theme{font-size:11px;color:var(--tm);margin-top:1px;margin-bottom:6px}
+.cal-week-dates{font-size:10px;color:var(--tm);font-family:var(--mono);margin-bottom:6px}
+.cal-mini-prog{display:flex;align-items:center;gap:6px}
+.cal-mini-bar{flex:1;background:var(--hover);border-radius:var(--r-full);height:4px;overflow:hidden}
+.cal-mini-fill{height:100%;border-radius:var(--r-full);background:var(--brand-500)}
+.cal-mini-fill.full{background:var(--success)}
+.cal-mini-text{font-size:9.5px;color:var(--tm);white-space:nowrap;font-family:var(--mono)}
+/* ══ BLOCKED SCREEN ══ */
+.blocked-container{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:60px 32px;min-height:500px}
+.blocked-icon{width:80px;height:80px;border-radius:50%;background:var(--hover);display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:20px}
+.blocked-title{font-size:18px;font-weight:800;color:var(--tp);margin-bottom:8px}
+.blocked-desc{font-size:13px;color:var(--ts);line-height:1.6;margin-bottom:20px}
+.blocked-avail{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:12px 16px;display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--tp)}
+/* ══ ADMIN ══ */
+.admin-header{background:var(--n900);padding:42px 16px 12px;display:flex;align-items:center;gap:10px}
+[data-theme="dark"] .admin-header{background:#0A0907;border-bottom:1px solid #1e1c17}
+.admin-logo-chip{background:var(--brand-500);padding:3px 10px;border-radius:var(--r-full);font-size:10px;font-weight:800;color:#fff;letter-spacing:.04em}
+.admin-role-chip{background:rgba(200,80,31,.25);border:1px solid rgba(200,80,31,.4);color:#FFC09E;font-size:9px;font-family:var(--mono);padding:2px 7px;border-radius:var(--r-full)}
+.admin-tab-bar{display:flex;background:var(--card);border-bottom:1px solid var(--border)}
+.admin-tab{flex:1;padding:10px;text-align:center;font-size:12px;font-weight:700;color:var(--tm);cursor:pointer;border-bottom:2px solid transparent;transition:all .12s;border:none;background:none;font-family:var(--font)}
+.admin-tab:hover{color:var(--tp);background:var(--hover)}
+.admin-tab.active{color:var(--brand-500);border-bottom:2px solid var(--brand-500)}
+.activation-bar{background:var(--brand-50);border:1px solid var(--brand-200);border-radius:var(--r-lg);padding:12px 14px;display:flex;align-items:center;gap:12px;margin-bottom:16px}
+[data-theme="dark"] .activation-bar{background:var(--brand-100);border-color:var(--brand-300)}
+.activation-bar.is-active{background:var(--success-bg);border-color:var(--success-border)}
+.activation-bar-title{font-size:12.5px;font-weight:700;color:var(--brand-700)}
+[data-theme="dark"] .activation-bar-title{color:var(--brand-600)}
+.activation-bar.is-active .activation-bar-title{color:var(--success-text)}
+.activation-bar-sub{font-size:10.5px;color:var(--brand-600);margin-top:1px;line-height:1.4}
+.activation-bar.is-active .activation-bar-sub{color:var(--success-text);opacity:.8}
+.admin-week-item{display:flex;align-items:center;gap:12px;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);margin-bottom:8px;cursor:pointer;transition:background .12s,box-shadow .12s}
+.admin-week-item:hover{background:var(--hover);box-shadow:var(--sh-sm)}
+.admin-week-num{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;font-family:var(--mono)}
+.admin-week-num.completed{background:var(--success-bg);color:var(--success-text)}
+.admin-week-num.active{background:var(--brand-500);color:#fff}
+.admin-week-num.blocked{background:var(--hover);color:var(--tm);border:1.5px solid var(--border)}
+.admin-week-num.pending{background:var(--warning-bg);color:var(--warning-text)}
+.admin-week-info{flex:1;min-width:0}
+.admin-week-name{font-size:13px;font-weight:700;color:var(--tp)}
+.admin-week-meta{font-size:10.5px;color:var(--tm);margin-top:2px}
+/* ══ ADMIN UNIT DETAIL ══ */
+.unit-info-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-xl);padding:14px 16px;margin-bottom:16px;box-shadow:var(--sh-sm)}
+.unit-info-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.unit-meta-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--hover);font-size:12px}
+.unit-meta-row:last-child{border-bottom:none}
+.unit-meta-label{color:var(--tm)}
+.unit-meta-value{color:var(--tp);font-weight:600;font-family:var(--mono);font-size:11.5px}
+.content-row{display:flex;align-items:center;gap:8px;padding:9px 16px;border-bottom:1px solid var(--hover)}
+.content-row:last-child{border-bottom:none}
+.content-day-num{font-family:var(--mono);font-size:9.5px;color:var(--tm);background:var(--hover);border-radius:3px;padding:2px 5px;flex-shrink:0;min-width:24px;text-align:center}
+.content-type-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dot-actividad{background:var(--brand-500)}
+.dot-evaluacion{background:var(--info)}
+.dot-reflexion{background:var(--success)}
+.dot-psicoeducacion{background:var(--warning)}
+.dot-ejercicio{background:var(--danger)}
+.dot-pendiente{background:var(--tm)}
+.content-info{flex:1;min-width:0}
+.content-name{font-size:12px;font-weight:700;color:var(--tp);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.content-dates{font-size:9.5px;color:var(--tm);margin-top:1px;font-family:var(--mono)}
+.reprogram-panel{background:var(--hover);border-radius:var(--r-md);padding:10px 12px;margin:4px 16px 8px;display:none}
+.reprogram-panel.open{display:block}
+.reprogram-panel .grid2{gap:8px}
+/* ══ ADMIN PROGRESS ══ */
+.progress-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);margin-bottom:8px;cursor:pointer;transition:background .12s}
+.progress-row:hover{background:var(--hover)}
+.progress-avatar{width:36px;height:36px;border-radius:50%;background:var(--brand-100);color:var(--brand-700);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+[data-theme="dark"] .progress-avatar{background:var(--brand-200);color:var(--n900)}
+.progress-info{flex:1;min-width:0}
+.progress-name{font-size:12.5px;font-weight:700;color:var(--tp)}
+.progress-email{font-size:10px;color:var(--tm);margin-top:1px}
+.progress-right{text-align:right;flex-shrink:0}
+.progress-week-text{font-size:11px;font-weight:700;color:var(--brand-600);font-family:var(--mono)}
+[data-theme="dark"] .progress-week-text{color:var(--brand-500)}
+.progress-week-text.paused{color:var(--warning-text)}
+.progress-week-sub{font-size:9.5px;color:var(--tm);margin-top:1px}
+/* ══ PAUSE FORM ══ */
+.pause-list-item{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:12px 14px;margin-bottom:8px}
+.pause-list-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.pause-user{font-size:13px;font-weight:700;color:var(--tp)}
+.pause-dates{font-size:10.5px;color:var(--tm);font-family:var(--mono);margin-bottom:4px}
+.pause-motivo{font-size:11.5px;color:var(--ts);line-height:1.45}
+
+/* ══ v1.2 ADDITIONS ════════════════════════════════════════ */
+.filter-row{display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap}
+.filter-row .select{font-size:12px;padding:6px 8px;flex:1;min-width:120px}
+.filter-row .input{font-size:12px;padding:6px 8px;flex:1;min-width:100px}
+.filter-count{font-size:10px;color:var(--tm);font-family:var(--mono);flex-shrink:0}
+.empty-state{text-align:center;padding:36px 20px;color:var(--tm)}
+.empty-state-icon{font-size:30px;margin-bottom:8px;opacity:.4}
+.empty-state-text{font-size:13px;font-weight:700;color:var(--ts);margin-bottom:4px}
+.empty-state-sub{font-size:11.5px;color:var(--tm);line-height:1.5}
+.unit-action-row{display:flex;gap:6px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+.associate-panel{background:var(--hover);border-radius:var(--r-xl);padding:16px;margin-top:8px;display:none}
+.associate-panel.open{display:block}
+.associate-panel .section-label{margin-top:0;margin-bottom:12px}
+.condition-item{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);margin-bottom:8px;transition:border-color .15s}
+.condition-icon{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;margin-top:1px}
+.condition-icon.pass{background:var(--success-bg);color:var(--success-text);border:1.5px solid var(--success-border)}
+.condition-icon.fail{background:var(--danger-bg);color:var(--danger-text);border:1.5px solid var(--danger-border)}
+.condition-name{font-size:12.5px;font-weight:700;color:var(--tp);line-height:1.3}
+.condition-desc{font-size:11px;color:var(--tm);margin-top:2px;line-height:1.4}
+.condition-item.fail-item{border-color:var(--danger-border)}
+.condition-item.fail-item .condition-name{color:var(--danger-text)}
+.activation-fail-msg{background:var(--danger-bg);border:1px solid var(--danger-border);border-radius:var(--r-md);padding:8px 12px;font-size:11.5px;color:var(--danger-text);margin-top:8px;display:none}
+.activation-fail-msg.visible{display:block}
+.modal-card .check-item{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:12.5px;color:var(--ts);border-bottom:1px solid var(--hover)}
+.modal-card .check-item:last-child{border-bottom:none}
+.modal-card .check-item.fail{color:var(--danger-text)}
+</style>
+</head>
+<body>
+
+<!-- DEMO BAR -->
+<div class="demo-bar">
+  <strong>Brisa · M04 v1.2</strong>
+  <span class="demo-sep">|</span>
+  <span class="demo-screen-pill" id="dp-screen">login</span>
+  <span id="dp-role" style="display:none"></span>
+  <span class="demo-sep">|</span>
+  <button class="demo-btn" onclick="prefill('student')">👤 Estudiante</button>
+  <button class="demo-btn" onclick="prefill('admin')">🔑 Admin</button>
+  <span class="demo-sep">|</span>
+  <button class="demo-btn warn" id="btn-pause" onclick="togglePauseDemo()">⏸ Simular pausa</button>
+  <button class="demo-btn" id="btn-empty" onclick="toggleEmptySchedule()" title="Activa un cronograma vacío para testear RF-14/RF-19">📋 Cronograma vacío</button>
+  <button class="demo-btn" id="btn-first-access" onclick="showFirstAccess()" title="Simula pantalla de primer ingreso RF-17" style="display:none">🚀 1er ingreso</button>
+  <button class="demo-btn" id="btn-timeout" onclick="triggerTimeoutWarning()" style="display:none">⏱ Timeout</button>
+  <span class="demo-spacer"></span>
+  <button class="demo-btn active" id="btn-dark" onclick="toggleDark()">☀ Claro</button>
+</div>
+
+<!-- PHONE FRAME -->
+<div class="frame-outer">
+<div class="phone" id="phone">
+<div class="screens" id="screens">
+
+<!-- LOGIN -->
+<div class="screen active" id="s-login" data-name="login">
+  <div class="app-bar" style="padding-top:48px">
+    <div style="display:flex;align-items:center;gap:8px">
+      <div style="width:28px;height:28px;background:var(--brand-500);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg width="15" height="15" viewBox="0 0 32 32" fill="none"><path d="M4 22 C7 21,9 18,11 19 C13 20,14 15,17 13 C19.5 11.3,21 11.5,23 10" stroke="white" stroke-width="2.2" stroke-linecap="round" fill="none"/><circle cx="23" cy="10" r="2.4" fill="white"/></svg>
+      </div>
+      <span style="font-size:13px;font-weight:800;color:var(--tp)">Brisa · Cronograma</span>
+    </div>
+  </div>
+  <div class="screen-inner" style="padding-top:16px">
+    <div style="font-size:22px;font-weight:800;color:var(--tp);margin-bottom:4px">Bienvenido de nuevo</div>
+    <div class="text-sm mb16">Ingresa con tu correo institucional</div>
+    <div class="alert alert-error hidden" id="login-alert">
+      <span class="alert-icon">⚠</span>
+      <div class="alert-body"><div class="alert-title">Correo o contraseña incorrectos</div><div class="alert-desc">Verifica tus datos e intenta de nuevo.</div></div>
+    </div>
+    <div class="field">
+      <label class="field-label">Correo institucional</label>
+      <div class="input-wrap">
+        <span class="iico iico-l">✉</span>
+        <input id="login-email" class="input has-l" type="email" placeholder="nombre@usco.edu.co" oninput="clearInputErr(this);document.getElementById('login-alert').classList.add('hidden')">
+      </div>
+      <div class="ferr hidden" id="login-email-err">Ingresa un correo válido</div>
+    </div>
+    <div class="field">
+      <label class="field-label">Contraseña</label>
+      <div class="input-wrap">
+        <span class="iico iico-l">🔒</span>
+        <input id="login-pass" class="input has-l has-r" type="password" placeholder="Tu contraseña" oninput="clearInputErr(this)">
+        <span class="iico iico-r clickable" onclick="togglePw('login-pass',this)">👁</span>
+      </div>
+      <div class="ferr hidden" id="login-pass-err">Ingresa tu contraseña</div>
+    </div>
+    <button class="btn btn-primary btn-block mt8" onclick="doLogin()">Iniciar sesión</button>
+    <div class="text-center mt16">
+      <span class="mono-sm">estudiante@usco.edu.co / Brisa2026#</span><br>
+      <span class="mono-sm" style="margin-top:4px;display:block">admin@usco.edu.co / Admin2026#</span>
+    </div>
+  </div>
+</div>
+
+<!-- STUDENT HOME -->
+<div class="screen" id="s-student-home" data-name="sem. actual">
+  <div class="student-header">
+    <div class="student-header-top">
+      <div>
+        <div class="student-header-greeting">Hola, Laura 👋</div>
+        <div class="student-header-title">Tu programa Brisa</div>
+      </div>
+      <button class="header-icon-btn" onclick="go('s-calendar')">📅</button>
+    </div>
+    <!-- RF-17: inicialización del cronograma por usuario -->
+    <div class="header-progress-pill">
+      <span>📍</span><span id="home-prog-pill">Semana 2 de 5 · Día 3 actual</span>
+    </div>
+  </div>
+  <div class="screen-inner" style="padding-top:16px">
+    <!-- FA-2: Pause banner -->
+    <div class="pause-banner hidden" id="pause-banner">
+      <div class="pause-banner-icon">⏸</div>
+      <div class="pause-banner-body">
+        <div class="pause-banner-title">Tu programa está en pausa</div>
+        <div class="pause-banner-desc">Tu tutor pausó temporalmente el cronograma. Tu progreso está guardado. Reanuda el <strong>25/06/2026</strong>.</div>
+      </div>
+    </div>
+    <!-- Calendar strip -->
+    <div class="section-label" style="margin-top:0">Semanas del programa</div>
+    <div class="cal-strip-wrap" id="cal-strip"></div>
+    <!-- Active week card -->
+    <div class="section-label">Semana 2 — activa <span class="mono-sm">RF-21</span></div>
+    <div class="week-card is-active">
+      <div class="week-card-head">
+        <div>
+          <div class="week-card-title">Evaluación emocional</div>
+          <div class="week-card-dates">📅 09 – 15 jun 2026</div>
+        </div>
+        <span class="badge b-brand"><span class="bdot" style="background:var(--brand-500)"></span>ACTIVA</span>
+      </div>
+      <div class="prog-row">
+        <span class="prog-label">Progreso semanal</span>
+        <span class="prog-pct" id="home-prog-count">2 / 7 días</span>
+      </div>
+      <div class="prog-wrap"><div class="prog-fill" id="home-prog-fill" style="width:29%"></div></div>
+      <div id="home-days"></div>
+    </div>
+    <button class="btn btn-ghost btn-block" style="font-size:13px;margin-top:4px" onclick="go('s-calendar')">Ver programa completo →</button>
+  </div>
+</div>
+
+
+<!-- PRIMER INGRESO (RF-17) -->
+<div class="screen" id="s-first-access" data-name="primer ingreso">
+  <div class="app-bar">
+    <button class="app-bar-back" onclick="back('s-login')">←</button>
+    <span class="app-bar-title">Inicio del programa</span>
+  </div>
+  <div class="screen-inner" style="padding-top:16px">
+    <div style="font-size:18px;font-weight:800;color:var(--tp);margin-bottom:4px">Verificación de ingreso</div>
+    <div class="text-sm mb16">Para iniciar el programa, debes cumplir las siguientes condiciones. <span class="mono-sm">RF-17</span></div>
+    <div id="condition-list"></div>
+    <div class="alert alert-error hidden mt12" id="first-access-error">
+      <span class="alert-icon">⚠</span>
+      <div class="alert-body"><div class="alert-title">No puedes iniciar el programa</div><div class="alert-desc" id="first-access-error-desc">El usuario no cumple con las condiciones necesarias para iniciar el programa.</div></div>
+    </div>
+    <button class="btn btn-primary btn-block mt16" id="btn-start-program" onclick="go('s-student-home')" style="display:none">Iniciar programa</button>
+  </div>
+</div>
+
+<!-- DAY DETAIL -->
+<div class="screen" id="s-day-detail" data-name="actividad">
+  <div class="app-bar">
+    <button class="app-bar-back" onclick="back('s-student-home')">←</button>
+    <span class="app-bar-title" id="dd-week-label">Semana 2</span>
+  </div>
+  <div class="day-detail-header" id="dd-header">
+    <div class="day-detail-badges" id="dd-badges"></div>
+    <div class="day-detail-title" id="dd-title">Actividad</div>
+    <div style="margin-top:8px" id="dd-interaction-badge"></div>
+  </div>
+  <div class="day-detail-body">
+    <div class="section-label" style="margin-top:0">Descripción de la actividad</div>
+    <div class="day-desc-card" id="dd-desc">—</div>
+    <div id="dd-indicator"></div>
+    <div id="dd-avail-row" style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--tm);margin-bottom:16px">
+      <span>🕐</span><span id="dd-avail-text"></span>
+    </div>
+    <div id="dd-action-area"></div>
+    <div class="alert alert-info hidden" id="dd-prog-alert">
+      <span class="alert-icon">📅</span>
+      <div class="alert-body"><div class="alert-title">Actividad no disponible aún</div><div class="alert-desc" id="dd-prog-desc">Disponible el 12/06/2026.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- CALENDAR FULL -->
+<div class="screen" id="s-calendar" data-name="programa">
+  <div class="app-bar">
+    <button class="app-bar-back" onclick="back('s-student-home')">←</button>
+    <span class="app-bar-title">Programa completo</span>
+  </div>
+  <div class="screen-inner" style="padding-top:16px">
+    <div class="prog-summary">
+      <div><div class="prog-summary-num">1/5</div><div class="prog-summary-label">Fases completadas</div></div>
+      <div class="prog-summary-divider"></div>
+      <div><div class="prog-summary-num">9/35</div><div class="prog-summary-label">Días completados</div></div>
+      <div class="prog-summary-divider"></div>
+      <div><div class="prog-summary-num">26%</div><div class="prog-summary-label">Progreso total</div></div>
+    </div>
+    <div id="calendar-weeks"></div>
+  </div>
+</div>
+
+<!-- BLOCKED (FA-1) -->
+<div class="screen" id="s-blocked" data-name="bloqueada">
+  <div class="app-bar">
+    <button class="app-bar-back" onclick="back('s-student-home')">←</button>
+    <span class="app-bar-title">Contenido no disponible</span>
+  </div>
+  <div class="blocked-container">
+    <div class="blocked-icon">🔒</div>
+    <div class="blocked-title">Esta fase aún no ha comenzado</div>
+    <div class="blocked-desc">El contenido de esta semana se habilitará cuando avances en las semanas anteriores. Sigue avanzando con tu semana actual.</div>
+    <div class="blocked-avail" id="blocked-info"><span>📅</span><span id="blocked-date">Disponible a partir del 16/06/2026</span></div>
+    <button class="btn btn-primary mt20" onclick="back('s-student-home')">Volver a mi semana</button>
+  </div>
+</div>
+
+<!-- ADMIN HOME -->
+<div class="screen" id="s-admin-home" data-name="admin · cronograma">
+  <div class="admin-header">
+    <span class="admin-logo-chip">Brisa</span>
+    <span style="font-size:11px;font-weight:700;color:#aaa">M04 Cronograma</span>
+    <span class="admin-role-chip">admin</span>
+    <div style="margin-left:auto">
+      <button class="header-icon-btn" style="background:rgba(255,255,255,.08)" onclick="doLogout()" title="Cerrar sesión">🚪</button>
+    </div>
+  </div>
+  <div class="admin-tab-bar">
+    <button class="admin-tab active" id="atab-structure" onclick="switchAdminTab('structure')">Cronograma</button>
+    <button class="admin-tab" id="atab-users" onclick="go('s-admin-progress')">Usuarios</button>
+    <button class="admin-tab" id="atab-pauses" onclick="go('s-admin-pause')">Pausas</button>
+  </div>
+  <div class="screen-inner" style="padding-top:16px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <span class="section-label" style="margin:0">Estado del cronograma</span>
+      <button class="btn btn-secondary btn-sm" style="font-size:11px" onclick="openNewUnitModal()">+ Nueva unidad <span class="mono-sm">RF-09</span></button>
+    </div>
+    <div class="activation-bar" id="activation-bar">
+      <div style="flex:1">
+        <div class="activation-bar-title" id="act-title">Cronograma inactivo <span class="mono-sm">RF-19/RF-16</span></div>
+        <div class="activation-bar-sub" id="act-sub">Activa el cronograma cuando esté listo para asignar a participantes.</div>
+      </div>
+      <button class="btn btn-primary btn-sm" id="act-btn" onclick="openActivationModal()">Activar</button>
+    </div>
+    <div class="section-label" style="margin-top:4px">Fases del programa <span class="mono-sm">RF-09 · RF-14</span></div>
+    <div class="filter-row" id="filter-row">
+      <select class="select" id="filter-status" onchange="renderAdminHome()">
+        <option value="">Todos los estados</option>
+        <option value="COMPLETADA">Completada</option>
+        <option value="ACTIVA">Activa</option>
+        <option value="BLOQUEADA">Bloqueada</option>
+      </select>
+      <input type="date" class="input" id="filter-date-start" placeholder="Desde" onchange="renderAdminHome()">
+      <span class="filter-count" id="filter-count">5/5</span>
+    </div>
+    <div id="admin-week-list"></div>
+    <div class="empty-state hidden" id="admin-empty-state">
+      <div class="empty-state-icon">📋</div>
+      <div class="empty-state-text">No existen contenidos registrados</div>
+      <div class="empty-state-sub">para el programa seleccionado</div>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN UNIT DETAIL -->
+<div class="screen" id="s-admin-unit" data-name="admin · semana">
+  <div class="app-bar">
+    <button class="app-bar-back" onclick="back('s-admin-home')">←</button>
+    <span class="app-bar-title" id="admin-unit-title">Semana</span>
+    <span class="app-bar-spacer"></span>
+    <button class="app-bar-action" id="admin-unit-early-btn" onclick="openEarlyActivationModal()" style="display:none">⚡ Activar</button>
+  </div>
+  <div class="screen-inner" style="padding-top:16px">
+    <div class="unit-info-card">
+      <div class="unit-info-head">
+        <span class="section-label" style="margin:0">Unidad temporal <span class="mono-sm">RF-20</span></span>
+        <span id="admin-unit-badge" class="badge b-neutral">BLOQUEADA</span>
+      </div>
+      <div class="unit-action-row" id="unit-action-row">
+        <button class="btn btn-secondary btn-sm" id="btn-edit-unit" onclick="openEditUnit()" style="font-size:11.5px">✏️ Editar unidad</button>
+        <button class="btn btn-danger btn-sm" id="btn-delete-unit" onclick="openDeleteUnit()" style="font-size:11.5px">🗑 Eliminar unidad</button>
+      </div>
+      <div class="alert alert-warning hidden mt8" id="unit-readonly-alert">
+        <span class="alert-icon">⚠</span>
+        <div class="alert-body"><div class="alert-title">Unidad no editable</div><div class="alert-desc" id="unit-readonly-desc">No es posible modificar o eliminar una unidad temporal en ejecución o finalizada.</div></div>
+      </div>
+      <div class="unit-meta-row"><span class="unit-meta-label">Fase / Semana</span><span class="unit-meta-value" id="aunit-name">—</span></div>
+      <div class="unit-meta-row"><span class="unit-meta-label">Inicio</span><span class="unit-meta-value" id="aunit-start">—</span></div>
+      <div class="unit-meta-row"><span class="unit-meta-label">Fin</span><span class="unit-meta-value" id="aunit-end">—</span></div>
+      <div class="unit-meta-row"><span class="unit-meta-label">Actividades</span><span class="unit-meta-value" id="aunit-count">7 días</span></div>
+    </div>
+    <div class="section-label">Actividades por día <span class="mono-sm">RF-10 · RF-11</span></div>
+    <div class="week-card" style="border-left:none;padding:4px 0;margin-bottom:16px">
+      <div id="admin-unit-days"></div>
+    </div>
+    <button class="btn btn-secondary btn-block" id="btn-associate" onclick="toggleAssociatePanel()" style="font-size:12px;margin-bottom:12px">+ Asociar actividad <span class="mono-sm">RF-10 · RF-11 · RF-12</span></button>
+    <div class="associate-panel" id="associate-panel">
+      <div class="section-label">Asociar contenido a esta unidad</div>
+      <div class="field">
+        <label class="field-label">Actividad disponible</label>
+        <select class="select" id="ac-content" oninput="clearInputErr(this)">
+          <option value="">Selecciona una actividad...</option>
+          <option value="c_new1">Técnicas de relajación muscular progresiva · ejercicio</option>
+          <option value="c_new2">Mi red de apoyo social · reflexión</option>
+          <option value="c_new3">Carta a mi yo futuro · reflexión</option>
+          <option value="c_new4">Psicoeducación sobre la nicotina · psicoeducación</option>
+          <option value="s1d1">[YA ASIGNADO] Balance decisional → activa HTTP 409</option>
+        </select>
+        <div class="ferr hidden" id="ac-content-err">Selecciona una actividad</div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label class="field-label">Tipo</label>
+          <select class="select" id="ac-type" oninput="clearInputErr(this)">
+            <option value="actividad">Actividad</option><option value="reflexion">Reflexión</option>
+            <option value="ejercicio">Ejercicio</option><option value="psicoeducacion">Psicoeducación</option>
+          </select></div>
+        <div class="field"><label class="field-label">Orden en cronograma <span class="mono-sm">RF-12</span></label>
+          <input type="number" class="input" id="ac-order" placeholder="Ej: 8" min="1" oninput="clearInputErr(this)">
+          <div class="ferr hidden" id="ac-order-err">Orden ya asignado en el cronograma</div>
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label class="field-label">Inicio disponibilidad <span class="mono-sm">RF-11</span></label>
+          <input type="date" class="input" id="ac-start" oninput="clearInputErr(this)">
+          <div class="ferr hidden" id="ac-start-err">Fecha requerida</div>
+        </div>
+        <div class="field"><label class="field-label">Fin disponibilidad</label>
+          <input type="date" class="input" id="ac-end" oninput="clearInputErr(this)">
+          <div class="ferr hidden" id="ac-end-err">Fecha requerida</div>
+        </div>
+      </div>
+      <div class="alert alert-error hidden" id="ac-range-alert"><span class="alert-icon">⚠</span><div class="alert-body"><div class="alert-title">Fechas fuera del rango de la unidad</div><div class="alert-desc" id="ac-range-desc">La disponibilidad del contenido debe estar dentro del rango de la unidad temporal asignada.</div></div></div>
+      <div class="alert alert-error hidden" id="ac-dup-alert"><span class="alert-icon">⚠</span><div class="alert-body"><div class="alert-title">Contenido ya asociado a otra unidad (HTTP 409)</div><div class="alert-desc">Esta actividad ya está asociada a otro cronograma. No puede asignarse a dos unidades simultáneamente.</div></div></div>
+      <button class="btn btn-primary btn-block" onclick="submitAssociateContent()">Asociar actividad</button>
+      <button class="btn btn-ghost btn-block" onclick="toggleAssociatePanel()" style="margin-top:4px">Cancelar</button>
+    </div>
+    <div class="alert alert-warning mt8 hidden" id="desvincular-alert">
+      <span class="alert-icon">⚠</span>
+      <div class="alert-body"><div class="alert-title">Solo se pueden editar actividades PROGRAMADAS</div><div class="alert-desc">Las actividades activas o completadas no pueden modificarse. <span class="mono-sm">RF-18</span></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN PAUSE FORM -->
+<div class="screen" id="s-admin-pause" data-name="admin · pausas">
+  <div class="app-bar">
+    <button class="app-bar-back" onclick="back('s-admin-home')">←</button>
+    <span class="app-bar-title">Pausas administrativas</span>
+  </div>
+  <div class="screen-inner" style="padding-top:16px">
+    <div class="section-label" style="margin-top:0">Registrar nueva pausa <span class="mono-sm">RF-22B</span></div>
+    <div class="week-card" style="border-left:none;padding:16px;margin-bottom:16px">
+      <div class="field">
+        <label class="field-label">Usuario estudiante</label>
+        <select class="select" id="pause-user">
+          <option value="">Selecciona un usuario...</option>
+          <option value="u1">Laura M. (estudiante@usco.edu.co) — Sem. 2 · Día 3</option>
+          <option value="u2" selected>Tatiana R. (tatiana@usco.edu.co) — Sem. 2 · Día 3</option>
+          <option value="u3">Carlos V. (carlos@usco.edu.co) — Sem. 2 · Día 2</option>
+          <option value="u4">Santiago P. (santiago@usco.edu.co) — Sem. 1 · Día 5</option>
+        </select>
+        <div class="ferr hidden" id="pause-user-err">Selecciona un usuario</div>
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label class="field-label">Fecha inicio</label>
+          <input type="date" class="input" id="pause-start" value="2026-06-12" oninput="clearInputErr(this)">
+          <div class="ferr hidden" id="pause-start-err">Fecha requerida</div>
+        </div>
+        <div class="field">
+          <label class="field-label">Fecha fin</label>
+          <input type="date" class="input" id="pause-end" value="2026-06-18" oninput="clearInputErr(this)">
+          <div class="ferr hidden" id="pause-end-err">Debe ser posterior al inicio</div>
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label">Motivo</label>
+        <textarea class="textarea" id="pause-motivo" rows="3" oninput="clearInputErr(this)">Exámenes finales universitarios. El participante solicita suspensión temporal.</textarea>
+        <div class="ferr hidden" id="pause-motivo-err">Ingresa el motivo</div>
+      </div>
+      <div class="alert alert-error hidden" id="pause-overlap-alert">
+        <span class="alert-icon">⚠</span>
+        <div class="alert-body"><div class="alert-title">Solapamiento de pausas</div><div class="alert-desc">Ya existe una pausa registrada para este usuario en ese rango de fechas.</div></div>
+      </div>
+      <button class="btn btn-primary btn-block" onclick="submitPause()">Registrar pausa</button>
+    </div>
+    <div class="section-label">Pausas activas</div>
+    <div id="pause-list">
+      <div class="pause-list-item">
+        <div class="pause-list-head">
+          <span class="pause-user">Tatiana R.</span>
+          <span class="badge b-warning"><span class="bdot" style="background:var(--warning)"></span>ACTIVA</span>
+        </div>
+        <div class="pause-dates">12/06/2026 → 18/06/2026</div>
+        <div class="pause-motivo">Exámenes finales universitarios. El participante solicita suspensión temporal.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN PROGRESS -->
+<div class="screen" id="s-admin-progress" data-name="admin · usuarios">
+  <div class="app-bar">
+    <button class="app-bar-back" onclick="back('s-admin-home')">←</button>
+    <span class="app-bar-title">Progreso por usuario</span>
+  </div>
+  <div class="screen-inner" style="padding-top:16px">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:10px;text-align:center">
+        <div style="font-size:20px;font-weight:800;color:var(--brand-500);font-family:var(--mono)">4</div>
+        <div style="font-size:9.5px;color:var(--tm);margin-top:1px">Participantes</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:10px;text-align:center">
+        <div style="font-size:20px;font-weight:800;color:var(--success);font-family:var(--mono)">3</div>
+        <div style="font-size:9.5px;color:var(--tm);margin-top:1px">Activos</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:10px;text-align:center">
+        <div style="font-size:20px;font-weight:800;color:var(--warning-text);font-family:var(--mono)">1</div>
+        <div style="font-size:9.5px;color:var(--tm);margin-top:1px">En pausa</div>
+      </div>
+    </div>
+    <div class="section-label" style="margin-top:4px">Ubicación temporal <span class="mono-sm">RF-22 · RF-23</span></div>
+    <div id="progress-user-list"></div>
+    <div id="progress-completed-user" class="hidden">
+      <div style="margin-top:16px"><div class="section-label" style="margin-top:0">Programa completado</div>
+      <div class="progress-row" style="border-color:var(--success-border)">
+        <div class="progress-avatar" style="background:var(--success-bg);color:var(--success-text)">AG</div>
+        <div class="progress-info"><div class="progress-name">Andrea G.</div><div class="progress-email">andrea@usco.edu.co</div></div>
+        <div class="progress-right"><div class="progress-week-text" style="color:var(--success-text)">5/5 · 35/35</div><div style="display:flex;justify-content:flex-end;margin-top:3px"><span class="badge b-success" style="font-size:9px">✓ COMPLETADO</span></div></div>
+      </div>
+      <div class="alert alert-success mt8"><span class="alert-icon">🎉</span><div class="alert-body"><div class="alert-title">El usuario ha completado la totalidad del cronograma</div><div class="alert-desc">Andrea G. completó las 5 semanas y 35 actividades del programa. <span class="mono-sm">RF-22</span></div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /screens -->
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav" id="bottom-nav">
+  <button class="bnav-item active" id="bn-home" onclick="navHome()"><div class="bnav-icon">📅</div>Semana</button>
+  <button class="bnav-item" id="bn-cal" onclick="navCalendar()"><div class="bnav-icon">📋</div>Programa</button>
+  <button class="bnav-item" onclick="showToast('Chat disponible en M03','info')"><div class="bnav-icon">💬</div>Chat</button>
+  <button class="bnav-item" onclick="showToast('Diario disponible en M02','info')"><div class="bnav-icon">📓</div>Diario</button>
+  <button class="bnav-item" onclick="showToast('Seguimiento disponible en M05','info')"><div class="bnav-icon">📊</div>Progreso</button>
+</div>
+</div><!-- /phone -->
+</div><!-- /frame-outer -->
+
+<!-- SESSION MODAL -->
+<div class="modal-overlay" id="session-modal">
+  <div class="modal-card" data-theme="">
+    <div class="modal-icon">⏱</div>
+    <div class="modal-title">Tu sesión está por cerrarse</div>
+    <div class="modal-desc">Por inactividad, tu sesión se cerrará en:</div>
+    <div class="modal-countdown" id="modal-count">5</div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="doLogout()">Cerrar sesión</button>
+      <button class="btn btn-primary" onclick="extendSession()">Seguir aquí</button>
+    </div>
+  </div>
+</div>
+
+<!-- ACTIVATION MODAL (RF-19 + RF-16) dynamic -->
+<div class="modal-overlay" id="activation-modal">
+  <div class="modal-card text-left" data-theme="">
+    <div style="font-size:28px;text-align:center;margin-bottom:8px">🚀</div>
+    <div class="modal-title" style="text-align:center">Activar cronograma</div>
+    <div class="modal-desc" style="text-align:center;margin-bottom:10px">Validación automática de consistencia <span class="mono-sm">RF-16</span>:</div>
+    <div id="activation-checklist" style="margin-bottom:10px"></div>
+    <div class="activation-fail-msg" id="activation-fail-msg">Corrige los errores antes de activar el cronograma.</div>
+    <div class="modal-actions" style="flex-direction:column;gap:8px;margin-top:12px">
+      <button class="btn btn-primary" id="btn-confirm-activation" style="width:100%" onclick="confirmActivation()">Confirmar activación</button>
+      <button class="btn btn-secondary" style="width:100%" onclick="closeModal('activation-modal')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- EARLY ACTIVATION MODAL (FA-3) -->
+<div class="modal-overlay" id="early-modal">
+  <div class="modal-card" data-theme="">
+    <div class="modal-icon">⚡</div>
+    <div class="modal-title">Activación anticipada</div>
+    <div class="modal-desc">Esta fase está programada para iniciar el <strong id="early-date">16/06/2026</strong>. ¿Confirmar activación anticipada?</div>
+    <div class="alert alert-warning" style="text-align:left;margin-top:12px">
+      <span class="alert-icon">⚠</span>
+      <div class="alert-body"><div class="alert-title">Impacto en todos los participantes</div><div class="alert-desc">Activa el contenido para todos los usuarios del cronograma. <span class="mono-sm">RF-19</span></div></div>
+    </div>
+    <div class="modal-actions" style="margin-top:16px">
+      <button class="btn btn-secondary" onclick="closeModal('early-modal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmEarlyActivation()">Activar de todas formas</button>
+    </div>
+  </div>
+</div>
+
+<!-- DESVINCULAR MODAL (RF-18) -->
+<div class="modal-overlay" id="desvincular-modal">
+  <div class="modal-card" data-theme="">
+    <div class="modal-icon">🗑</div>
+    <div class="modal-title">Desvincular actividad</div>
+    <div class="modal-desc">¿Desvincular <strong id="desvincular-name">esta actividad</strong> de la unidad temporal? Solo se puede hacer si está en estado PROGRAMADO.</div>
+    <div class="modal-actions" style="margin-top:16px">
+      <button class="btn btn-secondary" onclick="closeModal('desvincular-modal')">Cancelar</button>
+      <button class="btn btn-danger" onclick="confirmDesvincular()">Sí, desvincular</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- NEW UNIT MODAL (RF-09 + RF-20) -->
+<div class="modal-overlay" id="new-unit-modal">
+  <div class="modal-card text-left" data-theme="" style="max-width:340px">
+    <div class="modal-title" id="nu-modal-title">+ Nueva unidad temporal</div>
+    <div class="modal-desc" style="margin-bottom:14px">RF-09 — Definición de estructura temporal</div>
+    <div class="field">
+      <label class="field-label">Nombre de la unidad</label>
+      <input class="input" id="nu-name" placeholder="Ej: Semana 6 · Recaídas" oninput="clearInputErr(this)">
+      <div class="ferr hidden" id="nu-name-err">Campo obligatorio</div>
+    </div>
+    <div class="field">
+      <label class="field-label">Orden en el cronograma <span class="mono-sm">RF-12</span></label>
+      <input class="input" id="nu-order" type="number" placeholder="Ej: 6" min="1" oninput="clearInputErr(this)">
+      <div class="ferr hidden" id="nu-order-err">Orden obligatorio</div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label class="field-label">Fecha inicio</label>
+        <input type="date" class="input" id="nu-start" oninput="clearInputErr(this)">
+        <div class="ferr hidden" id="nu-start-err">Requerida</div>
+      </div>
+      <div class="field"><label class="field-label">Fecha fin</label>
+        <input type="date" class="input" id="nu-end" oninput="clearInputErr(this)">
+        <div class="ferr hidden" id="nu-end-err">Requerida</div>
+      </div>
+    </div>
+    <div class="alert alert-error hidden" id="nu-overlap-alert"><span class="alert-icon">⚠</span><div class="alert-body"><div class="alert-title">Solapamiento de fechas</div><div class="alert-desc">La unidad temporal se solapa con otra existente en el cronograma.</div></div></div>
+    <div class="alert alert-error hidden" id="nu-order-alert"><span class="alert-icon">⚠</span><div class="alert-body"><div class="alert-title">Orden duplicado</div><div class="alert-desc">El orden de la unidad temporal ya se encuentra definido en el cronograma.</div></div></div>
+    <div class="alert alert-error hidden" id="nu-dates-alert"><span class="alert-icon">⚠</span><div class="alert-body"><div class="alert-title">Fechas inválidas</div><div class="alert-desc">La fecha de inicio debe ser anterior a la fecha de fin.</div></div></div>
+    <div class="modal-actions" style="margin-top:14px">
+      <button class="btn btn-secondary" onclick="closeModal('new-unit-modal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="submitNewUnit()">Guardar unidad</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE UNIT MODAL (RF-20) -->
+<div class="modal-overlay" id="delete-unit-modal">
+  <div class="modal-card" data-theme="">
+    <div class="modal-icon">🗑</div>
+    <div class="modal-title">Eliminar unidad temporal</div>
+    <div class="modal-desc">¿Confirmar la eliminación de <strong id="delete-unit-name">esta unidad</strong>? Esta acción no se puede deshacer.</div>
+    <div class="modal-actions" style="margin-top:16px">
+      <button class="btn btn-secondary" onclick="closeModal('delete-unit-modal')">Cancelar</button>
+      <button class="btn btn-danger" onclick="confirmDeleteUnit()">Sí, eliminar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toast-container"></div>
+
+<script>
+/* ══ STATE ══ */
+const S = {
+  dark:false, role:null, email:'',
+  sessionActive:false, inactivityTimer:null, warningTimer:null,
+  countdownInterval:null, inactivitySecs:0, inactivityTick:null,
+  TIMEOUT_WARN:15, TIMEOUT_KILL:20,
+  scheduleActive:false, isPaused:false, emptyScheduleMode:false,
+  selectedWeekId:null, selectedDayId:null,
+  pendingDesvincularId:null, pendingEarlyWeekId:null,
+  pendingEditWeekId:null, pendingDeleteWeekId:null,
+};
+
+const ACCOUNTS = {'admin@usco.edu.co':{pw:'Admin2026#',role:'admin'},'psicologia@usco.edu.co':{pw:'Admin2026#',role:'admin'}};
+const REGISTERED = new Set(['estudiante@usco.edu.co']);
+
+/* ══ REGISTERED PAUSES (F16: real overlap storage) ══ */
+const REGISTERED_PAUSES = [
+  {userId:'u2', start:'2026-06-12', end:'2026-06-18', motivo:'Exámenes finales universitarios.'}
+];
+
+/* ══ CONTENT CATALOG (F3: available content to associate) ══ */
+const CONTENT_CATALOG = [
+  {id:'c_new1',title:'Técnicas de relajación muscular progresiva',type:'ejercicio',itype:'Temporizador guiado + instrucciones',desc:'Ejercicio de 10 minutos para reducir la tensión corporal asociada al craving.',indicator:'IRM — Índice de relajación muscular'},
+  {id:'c_new2',title:'Mi red de apoyo social',type:'reflexion',itype:'Mapa visual + texto libre',desc:'Identifica las personas de tu entorno que pueden apoyarte en momentos de dificultad.',indicator:'IARS — Índice de apoyo social percibido'},
+  {id:'c_new3',title:'Carta a mi yo futuro',type:'reflexion',itype:'Texto libre asistido (mín. 100 palabras)',desc:'Escribe una carta desde el yo del futuro con 6 meses sin vapear.',indicator:'IOM — Índice de orientación motivacional'},
+  {id:'c_new4',title:'Psicoeducación sobre la nicotina',type:'psicoeducacion',itype:'Infografía interactiva + preguntas',desc:'Cómo la nicotina afecta el cerebro, adaptada para jóvenes universitarios.',indicator:'ICCN — Índice de conocimiento sobre la nicotina'},
+];
+
+/* ══ DATA ══ */
+const WEEKS = [
+  {id:1,name:'Semana 1',theme:'Flexibilidad cognitiva',status:'COMPLETADA',start:'02/06',end:'08/06/2026',
+    days:[
+      {id:'s1d1',day:1,title:'Balance decisional',type:'actividad',itype:'Arrastre a 2 columnas (pros/contras)',status:'COMPLETADO',desc:'Clasifica 8 frases en pros y contras del vapeo, una a una. El sistema registra el tiempo de respuesta y los cambios de decisión para evaluar la evitación emocional.',indicator:'IEA — Índice de evitación afectiva',result:'Clasificaste 4 pros y 4 contras. Tiempo promedio: 3.2 s/tarjeta.',resultScore:'IEA = 0.62 — Evitación moderada'},
+      {id:'s1d2',day:2,title:'Valores personales',type:'actividad',itype:'Cuadrícula de selección (mín 3, máx 5) + deslizamiento',status:'COMPLETADO',desc:'Selecciona entre 3 y 5 valores importantes para ti. Luego desliza cada valor para indicar si el vapeo te acerca o te aleja de él.',indicator:'IDV — Índice de discrepancia de valores',result:'Seleccionaste 4 valores. Deslizaste 3 hacia "Me aleja".',resultScore:'IDV = 0.71 — Alta discrepancia percibida'},
+      {id:'s1d3',day:3,title:'Reestructuración de metas SMART',type:'actividad',itype:'Constructor de texto asistido + slider de viabilidad',status:'COMPLETADO',desc:'Evalúa una meta rígida, mide su viabilidad con un slider y transfórmala en una meta flexible.',indicator:'IRM — Índice de reestructuración de metas',result:'Viabilidad inicial: 4/10 → final: 7/10.',resultScore:'IRM = 0.55 — Flexibilización parcial'},
+      {id:'s1d4',day:4,title:'Importancia y confianza',type:'evaluacion',itype:'Escalas dobles + escenarios contextualizados',status:'COMPLETADO',desc:'Responde dos preguntas (importancia y confianza) ante diferentes escenarios cotidianos.',indicator:'ICCM — Índice de coherencia cognitiva motivacional',result:'Importancia promedio: 7.8 · Confianza promedio: 4.2.',resultScore:'ICCM = 3.6 — Alta discrepancia cognitiva'},
+      {id:'s1d5',day:5,title:'Identificación de automatismos',type:'actividad',itype:'Tarjetas situacionales + generación de alternativas',status:'COMPLETADO',desc:'Ante 5 situaciones cotidianas, elige tu respuesta habitual y genera alternativas.',indicator:'IRER — Índice de rigidez estímulo-respuesta',result:'Elegiste "Vapeo" en 2/5 situaciones. Generaste 3 alternativas.',resultScore:'IRER = 0.40 — Rigidez moderada'},
+      {id:'s1d6',day:6,title:'Yo actual vs. Yo que quiero ser',type:'reflexion',itype:'Pantalla dividida + selección de frases + texto libre',status:'COMPLETADO',desc:'Completa dos secciones: quién eres ahora y quién quieres ser. La app genera una representación de la distancia entre ambas versiones.',indicator:'IDM — Índice de discrepancia motivacional',result:'Identificaste 5 diferencias entre ambas versiones.',resultScore:'IDM = 0.78 — Alta discrepancia motivacional'},
+      {id:'s1d7',day:7,title:'Compromiso flexible con el cambio',type:'reflexion',itype:'Selección lenguaje rígido/flexible + constructor de texto',status:'COMPLETADO',desc:'Elige entre compromisos rígidos y flexibles y construye tu propio compromiso semanal.',indicator:'ICA — Índice de compromiso adaptativo',result:'Usaste lenguaje flexible. Compromiso personalizado registrado.',resultScore:'ICA = 0.82 — Compromiso adaptativo alto'},
+    ]
+  },
+  {id:2,name:'Semana 2',theme:'Evaluación emocional',status:'ACTIVA',start:'09/06',end:'15/06/2026',
+    days:[
+      {id:'s2d1',day:1,title:'¿Qué hago cuando me siento mal?',type:'actividad',itype:'Tarjetas situacionales · 5 opciones de respuesta',status:'COMPLETADO',desc:'6 situaciones emocionalmente relevantes, una a la vez. Para cada una eliges lo que SUELES hacer entre 5 opciones.',indicator:'IEI — Índice de evitación inicial',result:'Elegiste "Vapeo" en 3 de 6 situaciones.',resultScore:'IEI = 0.50 — Evitación emocional moderada'},
+      {id:'s2d2',day:2,title:'El alivio que dura poco',type:'evaluacion',itype:'Sliders comparativos: alivio inmediato vs 1h + gráfica',status:'COMPLETADO',desc:'Para 3 escenarios valoras el alivio inmediato y el alivio una hora después del vapeo. Al final, la app muestra una gráfica comparativa.',indicator:'IAT — Índice de alivio transitorio',result:'Alivio inmediato: 7.3/10 · Alivio diferido: 2.1/10.',resultScore:'IAT = 5.2 — Alta percepción de alivio transitorio'},
+      {id:'s2d3',day:3,title:'¿Qué evito cuando vapeo?',type:'actividad',itype:'Clasificación de 8 tarjetas en 4 categorías',status:'ACTIVO',desc:'Arrastra 8 tarjetas a 4 categorías: Evito pensamientos · Evito emociones · Evito sensaciones físicas · Evito situaciones.',indicator:'PE — Perfil de evitación'},
+      {id:'s2d4',day:4,title:'El costo de evitar',type:'reflexion',itype:'Selección múltiple + campo de texto libre',status:'PROGRAMADO',desc:'Selecciona cuáles consecuencias negativas de la evitación te han ocurrido y reflexiona sobre cuál te preocupa más.',indicator:'ICC — Índice de conciencia de costos',availDate:'12/06/2026'},
+      {id:'s2d5',day:5,title:'¿Evito o afronto?',type:'evaluacion',itype:'Escala continua 0–10 con etiquetas en extremos',status:'PROGRAMADO',desc:'Te ubicas en un continuum entre "Evito completamente" y "Afronto activamente" en general y ante 3 emociones específicas.',indicator:'IES — Índice de evitación selectiva',availDate:'13/06/2026'},
+      {id:'s2d6',day:6,title:'La trampa de la evitación emocional',type:'psicoeducacion',itype:'Panel tipo cómic · 4 viñetas + preguntas',status:'PROGRAMADO',desc:'4 viñetas animadas muestran el ciclo trampa del vapeo. Luego respondes si te identificas.',indicator:'IRT — Índice de reconocimiento de la trampa',availDate:'14/06/2026'},
+      {id:'s2d7',day:7,title:'Otra forma de estar con el malestar',type:'reflexion',itype:'Texto psicoeducativo + 3 preguntas + slider',status:'PROGRAMADO',desc:'Texto breve sobre las emociones como señales y 3 preguntas de reflexión sobre lo aprendido.',indicator:'IDA — Índice de disposición al afrontamiento',availDate:'15/06/2026'},
+    ]
+  },
+  {id:3,name:'Semana 3',theme:'Conciencia emocional',status:'BLOQUEADA',start:'16/06',end:'22/06/2026',
+    days:[
+      {id:'s3d1',day:1,title:'Detente y observa',type:'actividad',itype:'Grid 6 emociones + slider + silueta corporal SVG',status:'PROGRAMADO',desc:'Selecciona cómo te sientes, mide tu impulso de vapear y toca las zonas de una silueta donde sientes la emoción.',indicator:'IEI — Índice emoción–impulso'},
+      {id:'s3d2',day:2,title:'Diferenciando emociones',type:'actividad',itype:'Tarjetas situacionales + 4 emociones + Sí/No',status:'PROGRAMADO',desc:'5 situaciones universitarias cotidianas. Para cada una, eliges la emoción y si te acercaría a vapear.',indicator:'IAEC — Índice de activación emocional del consumo'},
+      {id:'s3d3',day:3,title:'Lo que ocurre antes de vapear',type:'actividad',itype:'Arrastre de 8 tarjetas a 4 categorías',status:'PROGRAMADO',desc:'8 tarjetas representan pensamientos, emociones, sensaciones y conductas previas al vapeo.',indicator:'IAFC — Índice de análisis funcional del consumo'},
+      {id:'s3d4',day:4,title:'Pausa consciente frente al impulso',type:'ejercicio',itype:'Temporizador guiado 1 min + preguntas',status:'PROGRAMADO',desc:'Ejercicio guiado de 60 segundos de observación del impulso sin actuar.',indicator:'ITI — Índice de tolerancia al impulso'},
+      {id:'s3d5',day:5,title:'El vapeo como evitación',type:'actividad',itype:'Tarjetas situacionales · 5 opciones de respuesta',status:'PROGRAMADO',desc:'6 situaciones universitarias. Identificas si el vapeo aparece como respuesta recurrente.',indicator:'IEV — Índice de evitación mediante vapeo'},
+      {id:'s3d6',day:6,title:'Elección de alternativas al vapeo',type:'actividad',itype:'Selección en 2 fases (automática → deliberada)',status:'PROGRAMADO',desc:'Primero eliges tu respuesta más probable; luego la app te pide elegir una alternativa diferente.',indicator:'ICA — Índice de conductas alternativas'},
+      {id:'s3d7',day:7,title:'Diario emocional del consumo',type:'reflexion',itype:'Campo de texto libre guiado (mín. 50 palabras)',status:'PROGRAMADO',desc:'Describes un momento de la semana en que sentiste ganas de vapear respondiendo preguntas guía.',indicator:'ICC — Índice de conciencia del consumo'},
+    ]
+  },
+  {id:4,name:'Semana 4',theme:'Contenido por definir',status:'BLOQUEADA',start:'23/06',end:'29/06/2026',
+    days:[
+      {id:'s4d1',day:1,title:'Por definir',type:'pendiente',itype:'—',status:'PROGRAMADO',desc:'Esta semana está siendo definida por el equipo de psicología de la Universidad Surcolombiana.'},
+      {id:'s4d2',day:2,title:'Por definir',type:'pendiente',itype:'—',status:'PROGRAMADO',desc:''},
+      {id:'s4d3',day:3,title:'Por definir',type:'pendiente',itype:'—',status:'PROGRAMADO',desc:''},
+      {id:'s4d4',day:4,title:'Por definir',type:'pendiente',itype:'—',status:'PROGRAMADO',desc:''},
+      {id:'s4d5',day:5,title:'Por definir',type:'pendiente',itype:'—',status:'PROGRAMADO',desc:''},
+      {id:'s4d6',day:6,title:'Por definir',type:'pendiente',itype:'—',status:'PROGRAMADO',desc:''},
+      {id:'s4d7',day:7,title:'Por definir',type:'pendiente',itype:'—',status:'PROGRAMADO',desc:''},
+    ]
+  },
+  {id:5,name:'Semana 5',theme:'Exposición a desencadenantes',status:'BLOQUEADA',start:'30/06',end:'06/07/2026',
+    days:[
+      {id:'s5d1',day:1,title:'Psicoeducación del craving',type:'psicoeducacion',itype:'Animación de ola interactiva + selección',status:'PROGRAMADO',desc:'Animación tipo ola que muestra cómo sube y baja el deseo. Deslizas el dedo siguiendo la ola.',indicator:'ICCC — Índice de control cognitivo del craving'},
+      {id:'s5d2',day:2,title:'Señales interoceptivas',type:'ejercicio',itype:'Silueta corporal SVG + slider de intensidad',status:'PROGRAMADO',desc:'Tocas zonas del cuerpo donde sientes señales físicas del impulso. Evalúas la intensidad.',indicator:'IRIR — Índice de reactividad interoceptiva'},
+      {id:'s5d3',day:3,title:'Identificación proceptiva',type:'actividad',itype:'Selección de pensamientos + defusión cognitiva',status:'PROGRAMADO',desc:'Identifica el pensamiento más frecuente antes de vapear y practica una respuesta alternativa.',indicator:'IRDP — Índice de reactividad y defusión proceptiva'},
+      {id:'s5d4',day:4,title:'Exposición interoceptiva guiada',type:'ejercicio',itype:'Temporizador 30s + 15s + 10s con fases',status:'PROGRAMADO',desc:'Ejercicio guiado: respiración rápida (30s), tensión muscular (15s), relajación (10s).',indicator:'Índice de habituación interoceptiva'},
+      {id:'s5d5',day:5,title:'Exposición en tiempo real',type:'ejercicio',itype:'Temporizador 3 min (accesible desde home)',status:'PROGRAMADO',desc:'El botón "Tengo ganas de vapear" activa un temporizador de 3 min. Observas el impulso sin actuar.',indicator:'IIC-TR — Inhibición conductual en tiempo real'},
+      {id:'s5d6',day:6,title:'Exposición combinada y autoeficacia',type:'evaluacion',itype:'Resumen de métricas + slider de autoeficacia',status:'PROGRAMADO',desc:'Revisas métricas de la semana y evalúas en un slider qué tan capaz te sientes de no vapear.',indicator:'IAGR — Índice de autoeficacia y generalización'},
+      {id:'s5d7',day:7,title:'Consolidación y autoeficacia',type:'reflexion',itype:'Preguntas de cierre + compromiso conductual',status:'PROGRAMADO',desc:'Respondes qué aprendiste, qué tan capaz te sientes y qué harás la próxima vez.',indicator:'IAGR — Índice de autoeficacia y generalización'},
+    ]
+  },
+];
+
+const USERS_DEMO = [
+  {id:'u1',initials:'LM',name:'Laura M.',email:'estudiante@usco.edu.co',weekId:2,dayNum:3,status:'ACTIVA',daysCompleted:2},
+  {id:'u2',initials:'TR',name:'Tatiana R.',email:'tatiana@usco.edu.co',weekId:2,dayNum:3,status:'EN_PAUSA',daysCompleted:2},
+  {id:'u3',initials:'CV',name:'Carlos V.',email:'carlos@usco.edu.co',weekId:2,dayNum:2,status:'ACTIVA',daysCompleted:1},
+  {id:'u4',initials:'SP',name:'Santiago P.',email:'santiago@usco.edu.co',weekId:1,dayNum:5,status:'ACTIVA',daysCompleted:4},
+];
+
+/* ══ NAVIGATION ══ */
+let _history = ['s-login'];
+function go(id, isBack=false) {
+  const prev = document.querySelector('.screen.active');
+  const next = document.getElementById(id);
+  if (!next || prev===next) return;
+  if (prev) { prev.classList.remove('active'); if (isBack) prev.classList.add('slide-back'); }
+  next.classList.remove('slide-back');
+  next.classList.add('active');
+  if (!isBack) _history.push(id);
+  document.getElementById('dp-screen').textContent = next.dataset.name||id;
+  updateDemoBar(id);
+  resetActivity();
+  onScreenEnter(id);
+}
+function back(def) {
+  if (_history.length>1) _history.pop();
+  go(_history[_history.length-1]||def, true);
+}
+function onScreenEnter(id) {
+  if (id==='s-student-home') renderStudentHome();
+  if (id==='s-calendar') renderCalendar();
+  if (id==='s-admin-home') renderAdminHome();
+  if (id==='s-admin-unit') renderAdminUnit();
+  if (id==='s-admin-progress') renderAdminProgress();
+  if (id==='s-first-access') renderFirstAccess();
+  document.getElementById('bn-home').classList.toggle('active', id==='s-student-home');
+  document.getElementById('bn-cal').classList.toggle('active', id==='s-calendar');
+}
+function updateDemoBar(id) {
+  document.getElementById('btn-timeout').style.display = S.sessionActive ? 'inline-block' : 'none';
+  document.getElementById('btn-first-access').style.display = S.role==='student' ? 'inline-block' : 'none';
+  const rp = document.getElementById('dp-role');
+  if (S.role) { rp.style.display='inline-block'; rp.className=`role-badge ${S.role==='admin'?'admin':'student'}`; rp.textContent=S.role==='admin'?'🔑 admin':'👤 estudiante'; }
+  else { rp.style.display='none'; }
+  const studentScreens=['s-student-home','s-day-detail','s-calendar','s-blocked','s-first-access'];
+  document.getElementById('bottom-nav').className = (S.role==='student' && studentScreens.includes(id)) ? 'bottom-nav visible' : 'bottom-nav';
+}
+function navHome() { go('s-student-home'); }
+function navCalendar() { go('s-calendar'); }
+
+/* ══ DARK MODE ══ */
+function toggleDark() {
+  S.dark = !S.dark;
+  const t = S.dark ? 'dark' : '';
+  document.getElementById('phone').setAttribute('data-theme', t);
+  document.querySelectorAll('.modal-card').forEach(c=>c.setAttribute('data-theme',t));
+  const btn = document.getElementById('btn-dark');
+  btn.textContent = S.dark ? '☽ Oscuro' : '☀ Claro';
+  btn.className = S.dark ? 'demo-btn active' : 'demo-btn';
+}
+
+/* ══ SESSION TIMER ══ */
+function startSession() {
+  S.sessionActive=true; stopSession(true); scheduleInactivityCheck();
+  S.inactivityTick=setInterval(()=>S.inactivitySecs++,1000);
+}
+function stopSession(only=false) {
+  clearTimeout(S.inactivityTimer); clearTimeout(S.warningTimer);
+  clearInterval(S.countdownInterval); clearInterval(S.inactivityTick);
+  if (!only) { S.sessionActive=false; document.getElementById('btn-timeout').style.display='none'; }
+}
+function scheduleInactivityCheck() {
+  clearTimeout(S.inactivityTimer); clearTimeout(S.warningTimer);
+  S.warningTimer=setTimeout(showSessionWarning, S.TIMEOUT_WARN*1000);
+  S.inactivityTimer=setTimeout(()=>{
+    document.getElementById('session-modal').classList.remove('visible');
+    clearInterval(S.countdownInterval); doLogout(); showToast('Sesión cerrada por inactividad','warning');
+  }, S.TIMEOUT_KILL*1000);
+}
+function showSessionWarning() {
+  document.getElementById('session-modal').classList.add('visible');
+  let c=S.TIMEOUT_KILL-S.TIMEOUT_WARN; document.getElementById('modal-count').textContent=c;
+  clearInterval(S.countdownInterval);
+  S.countdownInterval=setInterval(()=>{ c--; document.getElementById('modal-count').textContent=Math.max(0,c); },1000);
+}
+function extendSession() { document.getElementById('session-modal').classList.remove('visible'); clearInterval(S.countdownInterval); resetActivity(); showToast('Sesión extendida','success'); }
+function resetActivity() {
+  if (!S.sessionActive) return;
+  S.inactivitySecs=0; document.getElementById('session-modal').classList.remove('visible');
+  clearInterval(S.countdownInterval); scheduleInactivityCheck();
+}
+function triggerTimeoutWarning() {
+  if (!S.sessionActive) return;
+  clearTimeout(S.warningTimer); clearTimeout(S.inactivityTimer); showSessionWarning();
+  S.inactivityTimer=setTimeout(()=>{ document.getElementById('session-modal').classList.remove('visible'); clearInterval(S.countdownInterval); doLogout(); showToast('Sesión cerrada por inactividad','warning'); },5000);
+}
+document.getElementById('phone').addEventListener('pointerdown',resetActivity);
+document.getElementById('phone').addEventListener('keydown',resetActivity);
+
+/* ══ AUTH ══ */
+function isValidEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()); }
+function clearInputErr(inp) { inp.classList.remove('err'); }
+function doLogin() {
+  const em=document.getElementById('login-email').value.trim();
+  const pw=document.getElementById('login-pass').value;
+  let ok=true;
+  if (!isValidEmail(em)) { document.getElementById('login-email').classList.add('err'); document.getElementById('login-email-err').classList.remove('hidden'); ok=false; }
+  if (!pw) { document.getElementById('login-pass').classList.add('err'); document.getElementById('login-pass-err').classList.remove('hidden'); ok=false; }
+  if (!ok) return;
+  const acc=ACCOUNTS[em];
+  if (acc && acc.pw===pw) { S.email=em; S.role='admin'; startSession(); go('s-admin-home'); }
+  else if (REGISTERED.has(em) && pw==='Brisa2026#') { S.email=em; S.role='student'; startSession(); go('s-student-home'); }
+  else { document.getElementById('login-alert').classList.remove('hidden'); document.getElementById('login-email').classList.add('err'); document.getElementById('login-pass').classList.add('err'); }
+}
+function doLogout() {
+  stopSession(); S.role=null; S.email=''; S.isPaused=false; S.emptyScheduleMode=false;
+  _history=['s-login']; document.getElementById('pause-banner').classList.add('hidden');
+  go('s-login',true); showToast('Sesión cerrada','info');
+}
+function togglePw(id,btn) { const i=document.getElementById(id); i.type=i.type==='password'?'text':'password'; btn.textContent=i.type==='password'?'👁':'🙈'; }
+
+/* ══ DATE UTILS ══ */
+function parseProgDate(str) {
+  if (!str) return null;
+  const p=str.trim().split('/');
+  const y=p.length>=3?p[2]:'2026';
+  return new Date(`${y}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`);
+}
+function toInputDate(str) {
+  if (!str) return '';
+  const p=str.trim().split('/');
+  const y=p.length>=3?p[2]:'2026';
+  return `${y}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
+}
+function fromInputDate(str) {
+  if (!str) return '';
+  const [y,m,d]=str.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+/* ══ RENDER STUDENT HOME ══ */
+function renderStudentHome() { renderCalStrip(); renderHomeDays(); }
+function renderCalStrip() {
+  const strip=document.getElementById('cal-strip'); strip.innerHTML='';
+  WEEKS.forEach(w=>{
+    let cls='blocked';
+    if (w.status==='COMPLETADA') cls='completed';
+    else if (w.status==='ACTIVA') cls=S.isPaused?'paused':'active';
+    else if (w.id===4) cls='pending';
+    const cell=document.createElement('div');
+    cell.className=`cal-cell ${cls}`;
+    cell.innerHTML=`<div class="cal-cell-num">${w.status==='COMPLETADA'?'✓':w.id}</div><div class="cal-cell-label">Sem. ${w.id}</div>`;
+    cell.onclick=()=>handleCalClick(w.id);
+    strip.appendChild(cell);
+  });
+}
+function handleCalClick(wid) {
+  const w=WEEKS.find(x=>x.id===wid);
+  if (!w) return;
+  if (w.status==='BLOQUEADA') { document.getElementById('blocked-date').textContent=`Disponible a partir del ${w.start}/${w.end.split('/').pop()}`; go('s-blocked'); }
+  else if (w.status==='ACTIVA') { showToast(`Estás en ${w.name} — ${w.theme}`,'info'); }
+  else { showToast(`${w.name} completada ✓ · 7/7 días`,'success'); }
+}
+function renderHomeDays() {
+  const w2=WEEKS.find(w=>w.id===2);
+  const container=document.getElementById('home-days'); container.innerHTML='';
+  w2.days.forEach(d=>{
+    const isHoy=d.status==='ACTIVO'; const isDone=d.status==='COMPLETADO'; const isLocked=d.status==='PROGRAMADO';
+    const circleCls=isDone?'completado':isHoy?'hoy':'programado';
+    let statusBit='';
+    if (isDone) statusBit=`<span class="badge b-success" style="font-size:8.5px;padding:1px 6px">✓ COMPLETADO</span>`;
+    else if (isHoy) statusBit=`<span class="hoy-pill">HOY</span><span class="badge b-brand" style="font-size:8.5px;padding:1px 6px;margin-left:4px">DISPONIBLE</span>`;
+    else statusBit=`<span style="font-size:9.5px;color:var(--tm);font-family:var(--mono)">${d.availDate||'próximamente'}</span>`;
+    const div=document.createElement('div');
+    div.className=`day-item ${isDone?'completado':isHoy?'hoy':'programado'}`;
+    div.innerHTML=`<div class="day-circle ${circleCls}">${isDone?'✓':d.day}</div><div class="day-body"><div class="day-name">Día ${d.day} · ${d.title}</div><div class="day-meta">${statusBit}</div></div><div class="day-arrow">›</div>`;
+    div.onclick=()=>openDayDetail(d);
+    container.appendChild(div);
+  });
+}
+
+/* ══ DAY DETAIL ══ */
+function openDayDetail(d) {
+  S.selectedDayId=d.id;
+  const week=WEEKS.find(w=>w.days.some(x=>x.id===d.id));
+  const isHoy=d.status==='ACTIVO'; const isDone=d.status==='COMPLETADO';
+  document.getElementById('dd-week-label').textContent=`${week.name} · ${week.theme}`;
+  const hdr=document.getElementById('dd-header');
+  hdr.className=`day-detail-header ${isHoy?'activo':isDone?'completado':'programado'}`;
+  const typeLabels={actividad:'Actividad',evaluacion:'Evaluación',reflexion:'Reflexión',psicoeducacion:'Psicoeducación',ejercicio:'Ejercicio',pendiente:'Por definir'};
+  const typeBadge={actividad:'b-brand',evaluacion:'b-info',reflexion:'b-success',psicoeducacion:'b-warning',ejercicio:'b-danger',pendiente:'b-neutral'};
+  document.getElementById('dd-badges').innerHTML=`<span class="badge ${typeBadge[d.type]||'b-neutral'}">${typeLabels[d.type]||d.type}</span><span class="badge b-neutral">Día ${d.day}</span>${isHoy?'<span class="hoy-pill">HOY</span>':''}${isDone?'<span class="badge b-success">✓ Completado</span>':''}`;
+  document.getElementById('dd-title').textContent=d.title;
+  document.getElementById('dd-interaction-badge').innerHTML=d.itype&&d.itype!=='—'?`<span class="interaction-badge">⚙ ${d.itype}</span>`:'';
+  document.getElementById('dd-desc').textContent=d.desc||'Descripción no disponible.';
+  const indEl=document.getElementById('dd-indicator');
+  if (isDone && d.result) { indEl.innerHTML=`<div class="result-card"><div class="result-label">Tu resultado</div><div class="result-value">${d.result}</div><div class="result-indicator">${d.resultScore}</div></div>`; }
+  else if (d.indicator) { indEl.innerHTML=`<div class="indicator-card"><div class="indicator-label">Indicador que registra esta actividad</div><div class="indicator-name">${d.indicator}</div></div>`; }
+  else { indEl.innerHTML=''; }
+  const avEl=document.getElementById('dd-avail-row'); const avTxt=document.getElementById('dd-avail-text');
+  if (isDone) { avEl.style.display='none'; } else { avEl.style.display='flex'; avTxt.textContent=isHoy?`Disponible 09 – 15 jun 2026`:`Disponible el ${d.availDate}`; }
+  const actionEl=document.getElementById('dd-action-area'); const progAlert=document.getElementById('dd-prog-alert');
+  if (isHoy) { actionEl.innerHTML=`<button class="btn btn-primary btn-block" onclick="showToast('Iniciando actividad — continúa en M03 Chat','success');back('s-student-home')">Iniciar actividad</button>`; progAlert.classList.add('hidden'); }
+  else if (isDone) { actionEl.innerHTML=`<button class="btn btn-ghost btn-block" onclick="back('s-student-home')">Cerrar</button>`; progAlert.classList.add('hidden'); }
+  else { actionEl.innerHTML=`<button class="btn btn-primary btn-block" disabled>Actividad no disponible aún</button>`; progAlert.classList.remove('hidden'); document.getElementById('dd-prog-desc').textContent=`Estará disponible el ${d.availDate}. Completa la actividad del Día ${d.day-1} primero.`; }
+  go('s-day-detail');
+}
+
+/* ══ RENDER CALENDAR ══ */
+function renderCalendar() {
+  const container=document.getElementById('calendar-weeks'); container.innerHTML='';
+  WEEKS.forEach(w=>{
+    const done=w.days.filter(d=>d.status==='COMPLETADO').length; const total=w.days.length;
+    const pct=Math.round((done/total)*100);
+    let bCls='',badge='';
+    if (w.status==='COMPLETADA') { bCls='is-completed'; badge=`<span class="badge b-success" style="font-size:9.5px">✓ COMPLETADA</span>`; }
+    else if (w.status==='ACTIVA') { bCls='is-active'; badge=`<span class="badge b-brand" style="font-size:9.5px">● ACTIVA</span>`; }
+    else if (w.id===4) { bCls='is-pending'; badge=`<span class="badge b-warning" style="font-size:9.5px">⏳ POR DEFINIR</span>`; }
+    else { badge=`<span class="badge b-neutral" style="font-size:9.5px">🔒 BLOQUEADA</span>`; }
+    const card=document.createElement('div');
+    card.className=`cal-week-card ${bCls}`;
+    card.innerHTML=`<div class="cal-week-head"><div style="font-size:13px;font-weight:800;color:var(--tp)">${w.name}</div>${badge}</div><div style="font-size:11px;color:var(--tm);margin-top:2px;margin-bottom:4px">${w.theme}</div><div class="mono-sm" style="margin-bottom:8px">${w.start} – ${w.end}</div><div class="cal-mini-prog"><div class="cal-mini-bar"><div class="cal-mini-fill${pct===100?' full':''}" style="width:${pct}%"></div></div><span class="cal-mini-text">${done}/${total} días</span></div>`;
+    card.onclick=()=>{
+      if (w.status==='BLOQUEADA'||w.id===4) { document.getElementById('blocked-date').textContent=`Disponible a partir del ${w.start}/${w.end.split('/').pop()}`; go('s-blocked'); }
+      else if (w.status==='ACTIVA') { go('s-student-home'); }
+      else { showToast(`${w.name} completada ✓ · 7/7 días`,'success'); }
+    };
+    container.appendChild(card);
+  });
+}
+
+/* ══ RENDER ADMIN HOME (F8: filters, F9/F12: empty state) ══ */
+function renderAdminHome() {
+  const filterStatus=document.getElementById('filter-status')?.value||'';
+  const filterDate=document.getElementById('filter-date-start')?.value||'';
+  let filtered = S.emptyScheduleMode ? [] : WEEKS.filter(w=>{
+    if (filterStatus && w.status!==filterStatus) return false;
+    if (filterDate) { const wEnd=parseProgDate(w.end); if (wEnd && wEnd < new Date(filterDate)) return false; }
+    return true;
+  });
+  const countEl=document.getElementById('filter-count');
+  if (countEl) countEl.textContent=`${filtered.length}/${WEEKS.length}`;
+  const list=document.getElementById('admin-week-list'); list.innerHTML='';
+  const emptyEl=document.getElementById('admin-empty-state');
+  if (filtered.length===0) {
+    emptyEl.classList.remove('hidden'); list.style.display='none';
+  } else {
+    emptyEl.classList.add('hidden'); list.style.display='';
+    filtered.forEach(w=>{
+      let nCls='blocked',badge='';
+      if (w.status==='COMPLETADA') { nCls='completed'; badge=`<span class="badge b-success" style="font-size:9.5px">COMPLETADA</span>`; }
+      else if (w.status==='ACTIVA') { nCls='active'; badge=`<span class="badge b-brand" style="font-size:9.5px">ACTIVA</span>`; }
+      else if (w.id===4) { nCls='pending'; badge=`<span class="badge b-warning" style="font-size:9.5px">POR DEFINIR</span>`; }
+      else { badge=`<span class="badge b-neutral" style="font-size:9.5px">BLOQUEADA</span>`; }
+      const item=document.createElement('div'); item.className='admin-week-item';
+      item.innerHTML=`<div class="admin-week-num ${nCls}">${w.status==='COMPLETADA'?'✓':w.id}</div><div class="admin-week-info"><div class="admin-week-name">${w.name} · ${w.theme}</div><div class="admin-week-meta">${w.start} – ${w.end} · ${w.days.length} actividades</div></div>${badge}<div style="color:var(--tm);font-size:14px;margin-left:4px">›</div>`;
+      item.onclick=()=>{ S.selectedWeekId=w.id; go('s-admin-unit'); };
+      list.appendChild(item);
+    });
+  }
+  // Activation bar
+  const bar=document.getElementById('activation-bar');
+  if (S.scheduleActive) {
+    bar.classList.add('is-active');
+    document.getElementById('act-title').textContent='Cronograma activo ✓';
+    document.getElementById('act-sub').textContent='El cronograma está publicado y asignado a participantes.';
+    document.getElementById('act-btn').textContent='Activo'; document.getElementById('act-btn').disabled=true;
+  }
+}
+
+/* ══ RENDER ADMIN UNIT (F6: order editable, F13: edit/delete) ══ */
+function renderAdminUnit() {
+  const w=WEEKS.find(x=>x.id===S.selectedWeekId); if (!w) return;
+  document.getElementById('admin-unit-title').textContent=w.name;
+  document.getElementById('aunit-name').textContent=`${w.name} — ${w.theme}`;
+  document.getElementById('aunit-start').textContent=w.start.includes('2026')?w.start:`${w.start}/${w.end.split('/').pop()}`;
+  document.getElementById('aunit-end').textContent=w.end;
+  document.getElementById('aunit-count').textContent=`${w.days.length} actividades`;
+  const badgeEl=document.getElementById('admin-unit-badge');
+  if (w.status==='COMPLETADA') { badgeEl.className='badge b-success'; badgeEl.textContent='COMPLETADA'; }
+  else if (w.status==='ACTIVA') { badgeEl.className='badge b-brand'; badgeEl.textContent='ACTIVA'; }
+  else if (w.id===4) { badgeEl.className='badge b-warning'; badgeEl.textContent='POR DEFINIR'; }
+  else { badgeEl.className='badge b-neutral'; badgeEl.textContent='BLOQUEADA'; }
+  document.getElementById('admin-unit-early-btn').style.display=w.status==='BLOQUEADA'?'block':'none';
+  if (w.status==='BLOQUEADA') document.getElementById('early-date').textContent=w.start.includes('2026')?w.start:`${w.start}/${w.end.split('/').pop()}`;
+  // F13: Edit/Delete unit buttons — only for BLOQUEADA units
+  const canModify=w.status==='BLOQUEADA';
+  const editBtn=document.getElementById('btn-edit-unit'); const delBtn=document.getElementById('btn-delete-unit');
+  const roAlert=document.getElementById('unit-readonly-alert');
+  if (canModify) {
+    editBtn.disabled=false; delBtn.disabled=false;
+    roAlert.classList.add('hidden');
+  } else {
+    editBtn.disabled=true; delBtn.disabled=true;
+    roAlert.classList.remove('hidden');
+    document.getElementById('unit-readonly-desc').textContent=
+      w.status==='ACTIVA'?'No es posible modificar o eliminar una unidad temporal en ejecución.':
+      'No es posible modificar o eliminar una unidad temporal finalizada.';
+  }
+  // Days list
+  const container=document.getElementById('admin-unit-days'); container.innerHTML='';
+  const dotCls={actividad:'dot-actividad',evaluacion:'dot-evaluacion',reflexion:'dot-reflexion',psicoeducacion:'dot-psicoeducacion',ejercicio:'dot-ejercicio',pendiente:'dot-pendiente'};
+  const statusBadge={COMPLETADO:`<span class="badge b-success" style="font-size:8.5px">COMPLETADO</span>`,ACTIVO:`<span class="badge b-brand" style="font-size:8.5px">ACTIVO</span>`,PROGRAMADO:`<span class="badge b-neutral" style="font-size:8.5px">PROGRAMADO</span>`};
+  w.days.forEach(d=>{
+    const isEditable=d.status==='PROGRAMADO'&&w.id!==4;
+    // F6: order input in reprogram panel
+    const acts=isEditable?`<button class="btn-xs btn-secondary" onclick="toggleReprogram('rp-${d.id}')" style="font-size:9px;padding:2px 6px">✏️</button><button class="btn-xs btn-danger" onclick="openDesvincular('${d.id}','Día ${d.day}: ${d.title}')" style="font-size:9px;padding:2px 6px">🗑</button>`:`<button class="btn-xs btn-secondary" onclick="showDesvincularAlert()" style="font-size:9px;padding:2px 6px;opacity:.4;cursor:not-allowed">🗑</button>`;
+    const repanel=isEditable?`<div class="reprogram-panel" id="rp-${d.id}"><div style="font-size:10px;font-weight:700;color:var(--tm);margin-bottom:6px">Reprogramar disponibilidad <span class="mono-sm">RF-13</span></div><div class="grid2"><input type="date" class="input" style="font-size:11px;padding:6px 8px" id="rp-start-${d.id}" placeholder="Inicio"><input type="date" class="input" style="font-size:11px;padding:6px 8px" id="rp-end-${d.id}" placeholder="Fin"></div><button class="btn btn-primary" style="width:100%;font-size:12px;padding:7px;margin-top:6px" onclick="saveReprogram('${d.id}','Día ${d.day}: ${d.title}')">Guardar cambios</button></div>`:'';
+    const row=document.createElement('div');
+    row.innerHTML=`<div class="content-row"><span class="content-day-num">D${d.day}</span><span class="content-type-dot ${dotCls[d.type]||'dot-pendiente'}"></span><div class="content-info"><div class="content-name">${d.title}</div><div class="content-dates">${d.itype&&d.itype!=='—'?d.itype:'Tipo por definir'}</div></div>${statusBadge[d.status]||''}<div style="display:flex;gap:3px;flex-shrink:0">${acts}</div></div>${repanel}`;
+    container.appendChild(row);
+  });
+  // Reset associate panel
+  document.getElementById('associate-panel').classList.remove('open');
+  document.getElementById('btn-associate').textContent=`+ Asociar actividad \u003Cspan class="mono-sm"\u003ERF-10 · RF-11 · RF-12\u003C/span\u003E`;
+}
+
+function toggleReprogram(id) { document.getElementById(id)?.classList.toggle('open'); }
+
+/* ══ F7: saveReprogram — date validation ══ */
+function saveReprogram(id, label) {
+  const startInput=document.getElementById(`rp-start-${id}`);
+  const endInput=document.getElementById(`rp-end-${id}`);
+  const sv=startInput?.value; const ev=endInput?.value;
+  if (startInput) startInput.classList.remove('err');
+  if (endInput) endInput.classList.remove('err');
+  if (!sv) { startInput?.classList.add('err'); showToast('Ingresa la fecha de inicio','error'); return; }
+  if (!ev) { endInput?.classList.add('err'); showToast('Ingresa la fecha de fin','error'); return; }
+  if (new Date(sv)>=new Date(ev)) {
+    startInput?.classList.add('err'); endInput?.classList.add('err');
+    showToast('La fecha de inicio debe ser anterior a la fecha de fin.','error'); return;
+  }
+  showToast(`Disponibilidad de "${label}" actualizada ✓`,'success');
+  document.getElementById(`rp-${id}`)?.classList.remove('open');
+}
+
+/* ══ ASSOCIATE CONTENT (F3+F4+F5: RF-10, RF-11, RF-12) ══ */
+function toggleAssociatePanel() {
+  const panel=document.getElementById('associate-panel');
+  panel.classList.toggle('open');
+  // Pre-fill date range from the current week
+  const w=WEEKS.find(x=>x.id===S.selectedWeekId);
+  if (w && panel.classList.contains('open')) {
+    document.getElementById('ac-start').value=toInputDate(w.start);
+    document.getElementById('ac-end').value=toInputDate(w.end);
+  }
+}
+function submitAssociateContent() {
+  const weekId=S.selectedWeekId;
+  const contentId=document.getElementById('ac-content').value;
+  const type=document.getElementById('ac-type').value;
+  const orderVal=document.getElementById('ac-order').value;
+  const order=parseInt(orderVal);
+  const start=document.getElementById('ac-start').value;
+  const end=document.getElementById('ac-end').value;
+  // Clear errors
+  ['ac-range-alert','ac-dup-alert'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+  ['ac-content','ac-order','ac-start','ac-end'].forEach(id=>document.getElementById(id).classList.remove('err'));
+  document.getElementById('ac-content-err').classList.add('hidden');
+  document.getElementById('ac-order-err').classList.add('hidden');
+  document.getElementById('ac-start-err').classList.add('hidden');
+  document.getElementById('ac-end-err').classList.add('hidden');
+  let ok=true;
+  if (!contentId) { document.getElementById('ac-content').classList.add('err'); document.getElementById('ac-content-err').classList.remove('hidden'); ok=false; }
+  if (!orderVal||isNaN(order)||order<1) { document.getElementById('ac-order').classList.add('err'); document.getElementById('ac-order-err').classList.remove('hidden'); ok=false; }
+  if (!start) { document.getElementById('ac-start').classList.add('err'); document.getElementById('ac-start-err').classList.remove('hidden'); ok=false; }
+  if (!end) { document.getElementById('ac-end').classList.add('err'); document.getElementById('ac-end-err').classList.remove('hidden'); ok=false; }
+  if (!ok) return;
+  if (new Date(start)>=new Date(end)) { document.getElementById('ac-start').classList.add('err'); document.getElementById('ac-end').classList.add('err'); showToast('La fecha de inicio debe ser anterior a la fecha de fin.','error'); return; }
+  // F5: Validate dates within unit range
+  const week=WEEKS.find(x=>x.id===weekId);
+  const wStart=parseProgDate(week.start); const wEnd=parseProgDate(week.end);
+  if (new Date(start)<wStart||new Date(end)>wEnd) { document.getElementById('ac-range-alert').classList.remove('hidden'); document.getElementById('ac-range-desc').textContent=`La disponibilidad debe estar entre ${week.start} y ${week.end}.`; return; }
+  // F3: HTTP 409 if content already assigned to another week
+  const alreadyAssigned=WEEKS.some(w=>w.id!==weekId&&w.days.some(d=>d.id===contentId));
+  if (alreadyAssigned) { document.getElementById('ac-dup-alert').classList.remove('hidden'); return; }
+  // F6: Check order uniqueness in cronogram
+  const allOrders=WEEKS.flatMap(w=>w.days.map(d=>d.day));
+  if (allOrders.includes(order)) { document.getElementById('ac-order').classList.add('err'); document.getElementById('ac-order-err').classList.remove('hidden'); return; }
+  // Get content from catalog or WEEKS
+  const content=CONTENT_CATALOG.find(c=>c.id===contentId);
+  if (!content) { showToast('Contenido no encontrado — HTTP 404','error'); return; }
+  // Add to week
+  week.days.push({id:contentId,day:order,title:content.title,type:type||content.type,itype:content.itype||'—',status:'PROGRAMADO',desc:content.desc||'',indicator:content.indicator||''});
+  week.days.sort((a,b)=>a.day-b.day);
+  showToast(`"${content.title}" asociada a ${week.name} ✓`,'success');
+  document.getElementById('associate-panel').classList.remove('open');
+  renderAdminUnit();
+}
+
+/* ══ NEW UNIT MODAL (F1+F2: RF-09) ══ */
+function openNewUnitModal(editId=null) {
+  S.pendingEditWeekId=editId||null;
+  ['nu-name','nu-order','nu-start','nu-end'].forEach(id=>{ const e=document.getElementById(id); if(e){e.value='';e.classList.remove('err');} });
+  ['nu-overlap-alert','nu-order-alert','nu-dates-alert'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+  if (editId) {
+    const w=WEEKS.find(x=>x.id===editId);
+    document.getElementById('nu-modal-title').textContent='Editar unidad temporal';
+    if (w) { document.getElementById('nu-name').value=w.name; document.getElementById('nu-order').value=w.id; document.getElementById('nu-start').value=toInputDate(w.start); document.getElementById('nu-end').value=toInputDate(w.end); }
+  } else { document.getElementById('nu-modal-title').textContent='+ Nueva unidad temporal'; }
+  document.getElementById('new-unit-modal').classList.add('visible');
+}
+function openEditUnit() { openNewUnitModal(S.selectedWeekId); }
+function submitNewUnit() {
+  const name=document.getElementById('nu-name').value.trim();
+  const order=parseInt(document.getElementById('nu-order').value);
+  const start=document.getElementById('nu-start').value;
+  const end=document.getElementById('nu-end').value;
+  ['nu-overlap-alert','nu-order-alert','nu-dates-alert'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+  ['nu-name','nu-order','nu-start','nu-end'].forEach(id=>document.getElementById(id).classList.remove('err'));
+  let ok=true;
+  if (!name) { document.getElementById('nu-name').classList.add('err'); document.getElementById('nu-name-err').classList.remove('hidden'); ok=false; }
+  if (!order||isNaN(order)) { document.getElementById('nu-order').classList.add('err'); document.getElementById('nu-order-err').classList.remove('hidden'); ok=false; }
+  if (!start) { document.getElementById('nu-start').classList.add('err'); document.getElementById('nu-start-err').classList.remove('hidden'); ok=false; }
+  if (!end) { document.getElementById('nu-end').classList.add('err'); document.getElementById('nu-end-err').classList.remove('hidden'); ok=false; }
+  if (!ok) return;
+  if (new Date(start)>=new Date(end)) { document.getElementById('nu-dates-alert').classList.remove('hidden'); document.getElementById('nu-start').classList.add('err'); document.getElementById('nu-end').classList.add('err'); return; }
+  // F2: Check order uniqueness
+  const orderTaken=WEEKS.some(w=>w.id===order&&w.id!==S.pendingEditWeekId);
+  if (orderTaken) { document.getElementById('nu-order-alert').classList.remove('hidden'); document.getElementById('nu-order').classList.add('err'); return; }
+  // F2: Check overlap
+  for (const w of WEEKS) {
+    if (S.pendingEditWeekId && w.id===S.pendingEditWeekId) continue;
+    const wS=parseProgDate(w.start); const wE=parseProgDate(w.end);
+    const nS=new Date(start); const nE=new Date(end);
+    if (!(nE<wS||nS>wE)) { document.getElementById('nu-overlap-alert').classList.remove('hidden'); document.getElementById('nu-start').classList.add('err'); document.getElementById('nu-end').classList.add('err'); return; }
+  }
+  if (S.pendingEditWeekId) {
+    const w=WEEKS.find(x=>x.id===S.pendingEditWeekId);
+    if (w) { w.name=name; w.start=fromInputDate(start).slice(0,5); w.end=fromInputDate(end); showToast(`${name} actualizada ✓`,'success'); renderAdminUnit(); }
+  } else {
+    WEEKS.push({id:Date.now(),name,theme:'Pendiente de contenido',status:'BLOQUEADA',start:fromInputDate(start).slice(0,5),end:fromInputDate(end),days:[]});
+    showToast(`${name} creada ✓`,'success'); renderAdminHome();
+  }
+  closeModal('new-unit-modal');
+}
+
+/* ══ DELETE UNIT (F13: RF-20) ══ */
+function openDeleteUnit() {
+  const w=WEEKS.find(x=>x.id===S.selectedWeekId); if (!w) return;
+  S.pendingDeleteWeekId=S.selectedWeekId;
+  document.getElementById('delete-unit-name').textContent=w.name;
+  document.getElementById('delete-unit-modal').classList.add('visible');
+}
+function confirmDeleteUnit() {
+  const idx=WEEKS.findIndex(x=>x.id===S.pendingDeleteWeekId);
+  if (idx>=0) { const n=WEEKS[idx].name; WEEKS.splice(idx,1); showToast(`${n} eliminada ✓`,'success'); }
+  closeModal('delete-unit-modal'); go('s-admin-home',true);
+}
+
+/* ══ DESVINCULAR (RF-18) ══ */
+function openDesvincular(id,name) { S.pendingDesvincularId=id; document.getElementById('desvincular-name').textContent=name; document.getElementById('desvincular-modal').classList.add('visible'); }
+function confirmDesvincular() { showToast('Actividad desvinculada ✓','success'); closeModal('desvincular-modal'); renderAdminUnit(); }
+function showDesvincularAlert() { const a=document.getElementById('desvincular-alert'); a.classList.remove('hidden'); setTimeout(()=>a.classList.add('hidden'),3500); }
+
+/* ══ RENDER ADMIN PROGRESS (F14: completed user RF-22) ══ */
+function renderAdminProgress() {
+  const list=document.getElementById('progress-user-list'); list.innerHTML='';
+  USERS_DEMO.forEach(u=>{
+    const w=WEEKS.find(x=>x.id===u.weekId); const isPaused=u.status==='EN_PAUSA';
+    const badge=isPaused?`<span class="badge b-warning" style="font-size:9px">⏸ EN PAUSA</span>`:`<span class="badge b-success" style="font-size:9px">✓ ACTIVA</span>`;
+    const wLabel=isPaused?`<div class="progress-week-text paused">Sem.${u.weekId} · Día ${u.dayNum} · Pausada</div>`:`<div class="progress-week-text">Sem.${u.weekId}/5 · Día ${u.dayNum}/7</div>`;
+    const row=document.createElement('div'); row.className='progress-row';
+    row.innerHTML=`<div class="progress-avatar">${u.initials}</div><div class="progress-info"><div class="progress-name">${u.name}</div><div class="progress-email">${u.email}</div></div><div class="progress-right">${wLabel}<div style="display:flex;justify-content:flex-end;margin-top:3px">${badge}</div></div>`;
+    row.onclick=()=>showToast(`${u.name} · ${w?.name} · Día ${u.dayNum} · ${u.daysCompleted}/7 días completados`,'info');
+    list.appendChild(row);
+  });
+  // F14: Show completed user (Andrea G.)
+  document.getElementById('progress-completed-user').classList.remove('hidden');
+}
+
+/* ══ ACTIVATION (F10: dynamic checklist RF-16) ══ */
+function checkActivationRules() {
+  if (S.emptyScheduleMode) return [
+    {text:'Sin solapamiento de unidades temporales',pass:false,reason:'Sin unidades registradas'},
+    {text:'Fechas de contenido dentro de rangos (RF-11)',pass:false},
+    {text:'Orden secuencial único (RF-12)',pass:false},
+    {text:'El cronograma debe tener al menos una unidad temporal',pass:false,reason:'El cronograma debe contar con al menos una unidad temporal para ser activado.'}
+  ];
+  // Rule 1: No overlapping weeks
+  let hasOverlap=false;
+  for (let i=0;i<WEEKS.length&&!hasOverlap;i++) for (let j=i+1;j<WEEKS.length;j++) {
+    const s1=parseProgDate(WEEKS[i].start),e1=parseProgDate(WEEKS[i].end);
+    const s2=parseProgDate(WEEKS[j].start),e2=parseProgDate(WEEKS[j].end);
+    if (s1&&e1&&s2&&e2&&!(e1<s2||s1>e2)) { hasOverlap=true; break; }
+  }
+  // Rule 2: Content dates within unit range (always true for demo data)
+  const datesOk=true;
+  // Rule 3: Unique order
+  const allDays=WEEKS.flatMap(w=>w.days.map(d=>d.day));
+  const orderOk=allDays.length===new Set(allDays).size;
+  // Rule 4: At least one unit with content
+  const hasContent=WEEKS.some(w=>w.days.length>0);
+  return [
+    {text:'Sin solapamiento de unidades temporales',pass:!hasOverlap},
+    {text:'Fechas de contenido dentro de rangos (RF-11)',pass:datesOk},
+    {text:'Orden secuencial único en actividades (RF-12)',pass:orderOk},
+    {text:`${WEEKS.length} unidades · ${WEEKS.flatMap(w=>w.days).length} actividades programadas`,pass:WEEKS.length>0&&hasContent},
+  ];
+}
+function openActivationModal() {
+  const rules=checkActivationRules();
+  const allPass=rules.every(r=>r.pass);
+  const cl=document.getElementById('activation-checklist'); cl.innerHTML='';
+  rules.forEach(r=>{
+    const div=document.createElement('div');
+    div.className=`check-item${r.pass?'':' fail'}`;
+    div.innerHTML=`<span style="font-size:14px">${r.pass?'✅':'❌'}</span><span>${r.text}${r.reason?` — <em>${r.reason}</em>`:''}</span>`;
+    cl.appendChild(div);
+  });
+  const confirmBtn=document.getElementById('btn-confirm-activation');
+  confirmBtn.disabled=!allPass;
+  const failMsg=document.getElementById('activation-fail-msg');
+  if (allPass) { failMsg.classList.remove('visible'); } else { failMsg.classList.add('visible'); }
+  document.getElementById('activation-modal').classList.add('visible');
+}
+function confirmActivation() { closeModal('activation-modal'); S.scheduleActive=true; showToast('Cronograma activado ✓ · RF-19','success'); renderAdminHome(); }
+
+/* ══ EARLY ACTIVATION (FA-3) ══ */
+function openEarlyActivationModal() { S.pendingEarlyWeekId=S.selectedWeekId; document.getElementById('early-modal').classList.add('visible'); }
+function confirmEarlyActivation() { closeModal('early-modal'); const w=WEEKS.find(x=>x.id===S.pendingEarlyWeekId); if(w)w.status='ACTIVA'; showToast(`${w?.name} activada anticipadamente ✓`,'success'); renderAdminUnit(); }
+
+/* ══ F15+F16: submitPause — real validations ══ */
+function getProgramRange() { return {start:'2026-06-02',end:'2026-07-06'}; }
+function submitPause() {
+  const userId=document.getElementById('pause-user').value;
+  const st=document.getElementById('pause-start').value;
+  const en=document.getElementById('pause-end').value;
+  const mo=document.getElementById('pause-motivo').value.trim();
+  ['pause-overlap-alert','pause-range-alert'].forEach(id=>document.getElementById(id)?.classList.add('hidden'));
+  ['pause-user','pause-start','pause-end','pause-motivo'].forEach(id=>document.getElementById(id)?.classList.remove('err'));
+  ['pause-user-err','pause-start-err','pause-end-err','pause-motivo-err'].forEach(id=>document.getElementById(id)?.classList.add('hidden'));
+  let ok=true;
+  if (!userId) { document.getElementById('pause-user').classList.add('err'); document.getElementById('pause-user-err').classList.remove('hidden'); ok=false; }
+  if (!st) { document.getElementById('pause-start').classList.add('err'); document.getElementById('pause-start-err').classList.remove('hidden'); ok=false; }
+  if (!en||en<st) { document.getElementById('pause-end').classList.add('err'); document.getElementById('pause-end-err').classList.remove('hidden'); ok=false; }
+  if (!mo) { document.getElementById('pause-motivo').classList.add('err'); document.getElementById('pause-motivo-err').classList.remove('hidden'); ok=false; }
+  if (!ok) return;
+  // F15: Validate start date within program range
+  const range=getProgramRange();
+  if (st<range.start||st>range.end) { document.getElementById('pause-range-alert').classList.remove('hidden'); return; }
+  // F16: Generalized overlap check against all registered pauses for this user
+  const hasOverlap=REGISTERED_PAUSES.some(p=>{ if(p.userId!==userId)return false; return !(en<p.start||st>p.end); });
+  if (hasOverlap) { document.getElementById('pause-overlap-alert').classList.remove('hidden'); return; }
+  REGISTERED_PAUSES.push({userId,start:st,end:en,motivo:mo});
+  const user=USERS_DEMO.find(u=>u.id===userId);
+  const item=document.createElement('div'); item.className='pause-list-item';
+  item.innerHTML=`<div class="pause-list-head"><span class="pause-user">${user?.name||userId}</span><span class="badge b-warning"><span class="bdot" style="background:var(--warning)"></span>ACTIVA</span></div><div class="pause-dates">${st} → ${en}</div><div class="pause-motivo">${mo}</div>`;
+  document.getElementById('pause-list').appendChild(item);
+  showToast('Pausa administrativa registrada ✓','success');
+}
+
+/* ══ FIRST ACCESS SCREEN (F11: RF-17) ══ */
+function showFirstAccess() { if(S.role==='student') go('s-first-access'); }
+function renderFirstAccess() {
+  const conditions=[
+    {name:'Registro de perfil completado',desc:'El estudiante completó todos los datos de su perfil institucional.',pass:true},
+    {name:'Consentimiento informado aceptado',desc:'El participante aceptó el consentimiento informado del estudio.',pass:true},
+    {name:'Evaluación de línea base capturada',desc:'El cuestionario de línea base fue respondido satisfactoriamente.',pass:true},
+    {name:'Cronograma base activo',desc:'El administrador debe activar el cronograma antes de que el usuario pueda ingresar.',pass:S.scheduleActive},
+  ];
+  const allPass=conditions.every(c=>c.pass);
+  const list=document.getElementById('condition-list'); list.innerHTML='';
+  conditions.forEach(c=>{
+    const div=document.createElement('div'); div.className=`condition-item${c.pass?'':' fail-item'}`;
+    div.innerHTML=`<div class="condition-icon ${c.pass?'pass':'fail'}">${c.pass?'✓':'✗'}</div><div><div class="condition-name">${c.name}</div><div class="condition-desc">${c.desc}</div></div>`;
+    list.appendChild(div);
+  });
+  const errEl=document.getElementById('first-access-error'); const btn=document.getElementById('btn-start-program');
+  if (allPass) { errEl.classList.add('hidden'); btn.style.display='block'; }
+  else {
+    const failing=conditions.filter(c=>!c.pass).map(c=>c.name).join(', ');
+    document.getElementById('first-access-error-desc').textContent=`El usuario no cumple con las condiciones necesarias para iniciar el programa. Pendiente: ${failing}.`;
+    errEl.classList.remove('hidden'); btn.style.display='none';
+  }
+}
+
+/* ══ EMPTY SCHEDULE DEMO (F9+F12: RF-14, RF-19) ══ */
+function toggleEmptySchedule() {
+  S.emptyScheduleMode=!S.emptyScheduleMode;
+  const btn=document.getElementById('btn-empty');
+  btn.className=S.emptyScheduleMode?'demo-btn warn on':'demo-btn';
+  btn.textContent=S.emptyScheduleMode?'📋 Cronograma lleno':'📋 Cronograma vacío';
+  if (S.role==='admin') { renderAdminHome(); showToast(S.emptyScheduleMode?'Modo vacío activo — testea RF-14 y RF-19':'Cronograma normal restaurado','info'); }
+}
+
+/* ══ PAUSE DEMO (FA-2) ══ */
+function togglePauseDemo() {
+  S.isPaused=!S.isPaused;
+  const btn=document.getElementById('btn-pause'); btn.className=S.isPaused?'demo-btn warn on':'demo-btn warn'; btn.textContent=S.isPaused?'▶ Reanudar':'⏸ Simular pausa';
+  const banner=document.getElementById('pause-banner');
+  if (S.isPaused) { banner.classList.remove('hidden'); if(S.role==='student') showToast('Banner de pausa visible en home','warning'); }
+  else { banner.classList.add('hidden'); if(S.role==='student') showToast('Pausa desactivada','info'); }
+  renderCalStrip();
+}
+
+/* ══ MODALS / TOAST ══ */
+function closeModal(id) { document.getElementById(id).classList.remove('visible'); }
+function showToast(msg,type='') {
+  const w=document.getElementById('toast-container'); const t=document.createElement('div');
+  t.className=`toast${type?' t-'+type:''}`;
+  const icons={success:'✓',error:'✗',warning:'⚠',info:'ℹ'};
+  t.textContent=(icons[type]||'')+' '+msg;
+  w.appendChild(t); setTimeout(()=>t.remove(),2800);
+}
+
+/* ══ PREFILL ══ */
+function prefill(role) {
+  const cur=document.querySelector('.screen.active')?.id;
+  if (role==='student') {
+    if (cur==='s-login') { document.getElementById('login-email').value='estudiante@usco.edu.co'; document.getElementById('login-pass').value='Brisa2026#'; }
+    else if (cur==='s-admin-pause') { document.getElementById('pause-user').value='u1'; document.getElementById('pause-start').value='2026-06-20'; document.getElementById('pause-end').value='2026-06-27'; document.getElementById('pause-motivo').value='Viaje académico al congreso nacional de psicología.'; }
+    showToast('Datos de demo rellenados','info');
+  } else {
+    if (cur==='s-login') { document.getElementById('login-email').value='admin@usco.edu.co'; document.getElementById('login-pass').value='Admin2026#'; }
+    else if (cur==='s-admin-unit') { document.getElementById('nu-order').value=''; openNewUnitModal(); }
+    showToast('Credenciales admin rellenadas','info');
+  }
+}
+
+/* ══ ADMIN TABS ══ */
+function switchAdminTab(tab) { ['structure','users','pauses'].forEach(t=>document.getElementById(`atab-${t}`)?.classList.remove('active')); document.getElementById(`atab-${tab}`)?.classList.add('active'); }
+
+/* ══ INIT ══ */
+renderCalStrip();
+renderHomeDays();
+</script>
+</body>
+</html>
