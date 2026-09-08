@@ -26,6 +26,7 @@ import {
 
 import {
   AdministrativePauseHistoryPage,
+  AssociateContentPage,
   CreateAdministrativePausePage,
   CreateTemporalUnitPage,
   ParticipantProgressPage,
@@ -170,6 +171,11 @@ export function AppRouter() {
               <Route
                 path="administrativo/cronograma/progreso"
                 element={<ParticipantProgressPage />}
+              />
+
+              <Route
+                path="administrativo/cronograma/:unitId/contenido"
+                element={<AssociateContentPage />}
               />
 
               <Route
