@@ -9,3 +9,5 @@ export { CreateAdministrativePausePage } from './pages/CreateAdministrativePause
 export { AdministrativePauseHistoryPage } from './pages/AdministrativePauseHistoryPage/index.js';
 
 export { ParticipantProgressPage } from './pages/ParticipantProgressPage/index.js';
+
+export { AssociateContentPage } from './pages/AssociateContentPage/index.js';

@@ -22,6 +22,7 @@ import { TemporalUnitForm } from '@/features/cronograma/components/TemporalUnitF
 import { useEditTemporalUnitForm } from './hooks/useEditTemporalUnitForm.js';
 
 import { ConfirmationDialog } from '@/shared/components/ui/ConfirmationDialog/index.js';
+import { Button } from '@/shared/components/ui/Button/index.js';
 
 export function TemporalUnitDetailPage() {
   const navigate = useNavigate();
@@ -71,6 +72,12 @@ export function TemporalUnitDetailPage() {
 
   function handleBack() {
     navigate('/app/administrativo/cronograma');
+  }
+
+  function handleAssociateContent() {
+    navigate(
+      `/app/administrativo/cronograma/${encodeURIComponent(unitId)}/contenido`,
+    );
   }
 
   function handleEdit() {
@@ -125,6 +132,15 @@ export function TemporalUnitDetailPage() {
           <h1 className="mt-[var(--space-1)] mb-0 text-[26px] font-extrabold text-[var(--text-primary)] md:text-[30px]">
             Detalle de unidad temporal
           </h1>
+
+          {/* FE-M04-10: única entrada a la asociación de contenido (RF-10).
+              Fuera del ternario porque `unit` viene de location.state y es null
+              al entrar por URL directa. */}
+          <div className="mt-[var(--space-4)]">
+            <Button variant="secondary" onClick={handleAssociateContent}>
+              Asociar contenido
+            </Button>
+          </div>
 
           {unit ? (
             isEditing ? (
