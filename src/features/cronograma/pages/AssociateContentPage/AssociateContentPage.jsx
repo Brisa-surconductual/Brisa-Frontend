@@ -42,7 +42,9 @@ export function AssociateContentPage() {
 
   const [successMessage, setSuccessMessage] = useState('');
 
-  const unit = TEMPORAL_UNITS.find((temporalUnit) => temporalUnit.id === unitId);
+  const unit = TEMPORAL_UNITS.find(
+    (temporalUnit) => temporalUnit.id === unitId,
+  );
 
   function handleValidSubmit({ contentId, temporalUnitId }) {
     const content = CONTENT_CATALOG.find((item) => item.id === contentId);
@@ -106,7 +108,8 @@ export function AssociateContentPage() {
   // las ya asociadas para provocar el HTTP 409), y le bastará con cambiar
   // este filtro.
   const availableContent = CONTENT_CATALOG.filter(
-    (item) => item.assignedTemporalUnitId === null && !takenContentIds.has(item.id),
+    (item) =>
+      item.assignedTemporalUnitId === null && !takenContentIds.has(item.id),
   );
 
   const contentOptions = availableContent.map((item) => ({
