@@ -72,7 +72,7 @@ export function AssociateContentPage() {
           // El 0 inicial evita -Infinity cuando la unidad no tiene contenido.
           order: Math.max(0, ...unitOrders) + 1,
           // La ventana de disponibilidad hereda el rango de la unidad hasta
-          // que RF-11 (FE-M04-11) agregue sus propios campos de fecha.
+          // que RF-11 (FE-M04-12) agregue sus propios campos de fecha.
           availableFrom: targetUnit.startDate,
           availableUntil: targetUnit.endDate,
           status: SCHEDULED_CONTENT_STATUS.PROGRAMADO,
@@ -104,9 +104,9 @@ export function AssociateContentPage() {
     scheduledContent.map((item) => item.contentId),
   );
 
-  // Solo las actividades libres. FE-M04-11 traerá el caso contrario (mostrar
-  // las ya asociadas para provocar el HTTP 409), y le bastará con cambiar
-  // este filtro.
+  // Solo las actividades libres. Mostrar también las ya asociadas para
+  // provocar el HTTP 409 es otra tarea de HU-CR-02 / RF-10, y le bastará con
+  // cambiar este filtro.
   const availableContent = CONTENT_CATALOG.filter(
     (item) =>
       item.assignedTemporalUnitId === null && !takenContentIds.has(item.id),
@@ -166,7 +166,7 @@ export function AssociateContentPage() {
 
   function handleFormChange(event) {
     // El mensaje de éxito nombra una actividad y una unidad concretas: deja de
-    // describir el formulario en cuanto se toca cualquiera de los dos campos.
+    // describir el formulario en cuanto se toca cualquiera de los campos.
     setSuccessMessage('');
 
     handleChange(event);
