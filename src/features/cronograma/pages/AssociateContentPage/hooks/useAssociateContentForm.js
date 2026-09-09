@@ -30,16 +30,21 @@ export function useAssociateContentForm({
 
     setForm((currentForm) => ({ ...currentForm, [name]: value }));
 
-    // Se borra solo el error del campo tocado: los demás siguen siendo válidos
-    // hasta el próximo envío.
+    // Se borra el error del campo tocado. Excepción: la validez del orden
+    // depende de la unidad destino (la unicidad es por unidad), así que
+    // cambiar de unidad también invalida un error de orden que ya no aplica.
     setErrors((currentErrors) => {
-      if (!currentErrors[name]) {
+      const staleKeys = [name, name === 'temporalUnitId' ? 'order' : ''].filter(
+        (key) => key && currentErrors[key],
+      );
+
+      if (staleKeys.length === 0) {
         return currentErrors;
       }
 
       const nextErrors = { ...currentErrors };
 
-      delete nextErrors[name];
+      staleKeys.forEach((key) => delete nextErrors[key]);
 
       return nextErrors;
     });

@@ -26,7 +26,10 @@ export function validateAssociateContentForm(form, scheduledContent = []) {
 
   // El formato se comprueba antes que la unicidad: un "1.5" debe explicarse
   // como valor inválido, nunca como orden ocupado.
-  if (!form.order) {
+  // `?.trim()` cubre a la vez el campo ausente y el que solo trae espacios:
+  // sin él, Number('  ') es 0 y el usuario vería "mayor que cero" en vez de
+  // "obligatorio".
+  if (!form.order?.trim()) {
     errors.order = 'El orden de la actividad es obligatorio.';
   } else if (!Number.isInteger(order) || order <= 0) {
     errors.order = 'El orden debe ser un número entero mayor que cero.';
