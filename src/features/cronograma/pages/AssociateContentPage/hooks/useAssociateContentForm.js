@@ -8,14 +8,19 @@ import {
 /**
  * La unidad destino llega precargada desde el parámetro de ruta, pero queda
  * editable: el brief la pide como campo requerido del formulario.
+ *
+ * `scheduledContent` es lo ya programado, necesario para comprobar que el orden
+ * (HU-CR-04 / RF-12) no esté ocupado dentro de la unidad destino.
  */
 export function useAssociateContentForm({
   initialTemporalUnitId = '',
+  scheduledContent = [],
   onValidSubmit,
 } = {}) {
   const [form, setForm] = useState({
     contentId: '',
     temporalUnitId: initialTemporalUnitId,
+    order: '',
   });
 
   const [errors, setErrors] = useState({});
@@ -23,19 +28,16 @@ export function useAssociateContentForm({
   function handleChange(event) {
     const { name, value } = event.target;
 
-    setForm((currentForm) => ({
-      ...currentForm,
-      [name]: value,
-    }));
+    setForm((currentForm) => ({ ...currentForm, [name]: value }));
 
+    // Se borra solo el error del campo tocado: los demás siguen siendo válidos
+    // hasta el próximo envío.
     setErrors((currentErrors) => {
       if (!currentErrors[name]) {
         return currentErrors;
       }
 
-      const nextErrors = {
-        ...currentErrors,
-      };
+      const nextErrors = { ...currentErrors };
 
       delete nextErrors[name];
 
@@ -46,7 +48,10 @@ export function useAssociateContentForm({
   function handleSubmit(event) {
     event.preventDefault();
 
-    const validationErrors = validateAssociateContentForm(form);
+    const validationErrors = validateAssociateContentForm(
+      form,
+      scheduledContent,
+    );
 
     if (hasAssociateContentFormErrors(validationErrors)) {
       setErrors(validationErrors);
@@ -58,19 +63,24 @@ export function useAssociateContentForm({
     onValidSubmit?.({
       contentId: form.contentId,
       temporalUnitId: form.temporalUnitId,
+      // El input guarda texto; la página recibe ya el número que va al estado.
+      order: Number(form.order),
     });
   }
 
   /**
-   * Tras asociar, la actividad ya no está disponible: se limpia solo ese campo
-   * para poder encadenar varias asociaciones sobre la misma unidad.
+   * Tras asociar, la actividad ya no está disponible y el orden que se acaba de
+   * usar queda ocupado: se limpian ambos para poder encadenar asociaciones
+   * sobre la misma unidad sin arrastrar un valor que ya daría error. La unidad
+   * destino se conserva a propósito.
    */
-  function clearSelectedContent() {
+  function clearContentAndOrder() {
     setForm((currentForm) => ({
       ...currentForm,
       contentId: '',
+      order: '',
     }));
   }
 
-  return { form, errors, handleChange, handleSubmit, clearSelectedContent };
+  return { form, errors, handleChange, handleSubmit, clearContentAndOrder };
 }

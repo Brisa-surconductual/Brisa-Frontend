@@ -1,5 +1,6 @@
 import { Button } from '@/shared/components/ui/Button/index.js';
 import { SelectField } from '@/shared/components/ui/SelectField/index.js';
+import { TextField } from '@/shared/components/ui/TextField/index.js';
 
 /**
  * HU-CR-02 / RF-10: asociar una actividad del catálogo a una unidad temporal.
@@ -14,6 +15,7 @@ export function AssociateContentForm({
   contentOptions = [],
   contentHint = '',
   temporalUnitOptions = [],
+  orderHint = '',
   successMessage = '',
   onChange,
   onSubmit,
@@ -34,8 +36,9 @@ export function AssociateContentForm({
           </h2>
 
           <p className="mt-[var(--space-2)] mb-0 text-[13px] leading-[1.6] text-[var(--text-muted)]">
-            La actividad queda programada al final del cronograma de la unidad,
-            disponible durante todo su rango de fechas.
+            Indica en qué posición del cronograma de la unidad queda la
+            actividad. Estará disponible durante todo el rango de fechas de la
+            unidad.
           </p>
         </div>
 
@@ -61,6 +64,21 @@ export function AssociateContentForm({
           options={temporalUnitOptions}
           value={form.temporalUnitId}
           error={errors.temporalUnitId}
+          required
+          onChange={onChange}
+        />
+
+        <TextField
+          id="associate-content-order"
+          name="order"
+          type="number"
+          min="1"
+          step="1"
+          label="Orden dentro de la unidad"
+          placeholder="Ej. 1"
+          value={form.order}
+          error={errors.order}
+          hint={orderHint}
           required
           onChange={onChange}
         />
