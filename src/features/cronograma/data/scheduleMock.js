@@ -4,12 +4,12 @@ import { SCHEDULED_CONTENT_STATUS } from '@/features/cronograma/types/contentTyp
 /**
  * Contenido del catálogo ya programado dentro de una unidad temporal.
  *
- * `order` es la posición dentro del cronograma de la unidad y, a la vez, el
- * número de día que se muestra en la UI ("D3"), igual que en el prototipo.
+ * `order` es solo la posición dentro de la secuencia de la unidad, nunca un
+ * número de día (decisión del equipo, FIX-M04-01). La UI lo pinta como "#3".
  *
- * La ventana de disponibilidad va del día que le toca al contenido hasta el
- * cierre de su unidad. Sin hora: el prototipo solo maneja fechas
- * (`availDate` e `<input type="date">`).
+ * La ventana de disponibilidad hereda hoy el rango completo de su unidad, no un
+ * día concreto. Sin hora: solo fecha, confirmado por el equipo, igual que el
+ * prototipo (`availDate` e `<input type="date">`).
  *
  * ut-4 y ut-5 quedan a propósito sin contenido, para ejercitar el estado vacío.
  */
