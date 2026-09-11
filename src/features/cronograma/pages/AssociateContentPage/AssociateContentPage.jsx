@@ -46,7 +46,7 @@ export function AssociateContentPage() {
     (temporalUnit) => temporalUnit.id === unitId,
   );
 
-  function handleValidSubmit({ contentId, temporalUnitId }) {
+  function handleValidSubmit({ contentId, temporalUnitId, order }) {
     const content = CONTENT_CATALOG.find((item) => item.id === contentId);
 
     const targetUnit = TEMPORAL_UNITS.find(
@@ -57,37 +57,36 @@ export function AssociateContentPage() {
       return;
     }
 
-    setScheduledContent((currentContent) => {
-      const unitOrders = currentContent
-        .filter((item) => item.temporalUnitId === temporalUnitId)
-        .map((item) => item.order);
+    setScheduledContent((currentContent) => [
+      ...currentContent,
+      {
+        id: `sc-${temporalUnitId}-${contentId}`,
+        temporalUnitId,
+        contentId,
+        // HU-CR-04 / RF-12: el orden lo escribe el administrativo. Que esté
+        // libre dentro de la unidad ya lo comprobó validateAssociateContentForm.
+        order,
+        // La ventana de disponibilidad hereda el rango de la unidad hasta
+        // que RF-11 (FE-M04-12) agregue sus propios campos de fecha.
+        availableFrom: targetUnit.startDate,
+        availableUntil: targetUnit.endDate,
+        status: SCHEDULED_CONTENT_STATUS.PROGRAMADO,
+      },
+    ]);
 
-      return [
-        ...currentContent,
-        {
-          id: `sc-${temporalUnitId}-${contentId}`,
-          temporalUnitId,
-          contentId,
-          // El orden se deriva: el campo manual es de RF-12 (FE-M04-12).
-          // El 0 inicial evita -Infinity cuando la unidad no tiene contenido.
-          order: Math.max(0, ...unitOrders) + 1,
-          // La ventana de disponibilidad hereda el rango de la unidad hasta
-          // que RF-11 (FE-M04-11) agregue sus propios campos de fecha.
-          availableFrom: targetUnit.startDate,
-          availableUntil: targetUnit.endDate,
-          status: SCHEDULED_CONTENT_STATUS.PROGRAMADO,
-        },
-      ];
-    });
+    // El mensaje nombra el orden porque el campo se acaba de vaciar: es la
+    // única confirmación de la posición que quedó guardada.
+    setSuccessMessage(
+      `"${content.title}" asociada a ${targetUnit.name} en el orden ${order}.`,
+    );
 
-    setSuccessMessage(`"${content.title}" asociada a ${targetUnit.name}.`);
-
-    clearSelectedContent();
+    clearContentAndOrder();
   }
 
-  const { form, errors, handleChange, handleSubmit, clearSelectedContent } =
+  const { form, errors, handleChange, handleSubmit, clearContentAndOrder } =
     useAssociateContentForm({
       initialTemporalUnitId: unit ? unit.id : '',
+      scheduledContent,
       onValidSubmit: handleValidSubmit,
     });
 
@@ -104,9 +103,9 @@ export function AssociateContentPage() {
     scheduledContent.map((item) => item.contentId),
   );
 
-  // Solo las actividades libres. FE-M04-11 traerá el caso contrario (mostrar
-  // las ya asociadas para provocar el HTTP 409), y le bastará con cambiar
-  // este filtro.
+  // Solo las actividades libres. Mostrar también las ya asociadas para
+  // provocar el HTTP 409 es otra tarea de HU-CR-02 / RF-10, y le bastará con
+  // cambiar este filtro.
   const availableContent = CONTENT_CATALOG.filter(
     (item) =>
       item.assignedTemporalUnitId === null && !takenContentIds.has(item.id),
@@ -125,6 +124,18 @@ export function AssociateContentPage() {
   const selectedContent = CONTENT_CATALOG.find(
     (item) => item.id === form.contentId,
   );
+
+  // Sin renumeración automática el orden puede tener huecos (1, 5), así que
+  // se listan los ocupados en vez de prometer un único "siguiente".
+  let orderHint = '';
+
+  if (unitContent.length > 0) {
+    const takenOrders = unitContent.map((item) => item.order);
+
+    orderHint = `Órdenes ocupados: ${takenOrders.join(', ')}. Siguiente al final: ${Math.max(...takenOrders) + 1}.`;
+  } else if (form.temporalUnitId) {
+    orderHint = 'Esta unidad aún no tiene actividades: empieza en 1.';
+  }
 
   let contentHint = '';
 
@@ -166,7 +177,7 @@ export function AssociateContentPage() {
 
   function handleFormChange(event) {
     // El mensaje de éxito nombra una actividad y una unidad concretas: deja de
-    // describir el formulario en cuanto se toca cualquiera de los dos campos.
+    // describir el formulario en cuanto se toca cualquiera de los campos.
     setSuccessMessage('');
 
     handleChange(event);
@@ -217,6 +228,7 @@ export function AssociateContentPage() {
                   contentOptions={contentOptions}
                   contentHint={contentHint}
                   temporalUnitOptions={temporalUnitOptions}
+                  orderHint={orderHint}
                   successMessage={successMessage}
                   onChange={handleFormChange}
                   onSubmit={handleSubmit}
