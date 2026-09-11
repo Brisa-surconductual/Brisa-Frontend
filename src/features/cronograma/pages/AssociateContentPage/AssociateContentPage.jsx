@@ -244,7 +244,7 @@ export function AssociateContentPage() {
                   className="m-0 text-[16px] font-bold text-[var(--text-primary)]"
                   id={CONTENT_LIST_HEADING_ID}
                 >
-                  Actividades por día
+                  Actividades programadas
                 </h2>
 
                 <p className="mt-[var(--space-1)] mb-0 text-[13px] text-[var(--text-muted)]">
