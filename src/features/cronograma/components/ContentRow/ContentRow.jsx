@@ -43,7 +43,7 @@ export function ContentRow({
   return (
     <div className="flex items-center gap-[var(--space-3)] rounded-[var(--radius-lg)] border border-[var(--surface-border)] bg-[var(--surface-card)] px-[var(--space-3)] py-[var(--space-2)]">
       <span className="font-[var(--font-mono)] text-[11px] font-bold text-[var(--text-muted)]">
-        D{order ?? '–'}
+        #{order ?? '–'}
       </span>
 
       <span
