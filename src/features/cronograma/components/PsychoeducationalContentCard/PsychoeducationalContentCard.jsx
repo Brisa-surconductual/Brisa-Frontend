@@ -4,6 +4,7 @@ import { PSYCHOEDUCATIONAL_CONTENT_TYPE_LABEL } from '@/features/cronograma/type
 
 export function PsychoeducationalContentCard({
   content,
+  onManageResources,
   onEdit,
   onDelete,
 }) {
@@ -39,6 +40,17 @@ export function PsychoeducationalContentCard({
       )}
 
       <div className="mt-[var(--space-5)] flex flex-wrap justify-end gap-[var(--space-3)]">
+        <Button
+          variant="secondary"
+          size="small"
+          disabled={!canEdit}
+          onClick={() =>
+            onManageResources?.(content)
+          }
+        >
+          Gestionar recursos
+        </Button>
+
         <Button
           variant="secondary"
           size="small"

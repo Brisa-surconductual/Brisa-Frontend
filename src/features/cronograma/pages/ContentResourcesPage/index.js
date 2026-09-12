@@ -1,0 +1,1 @@
+export { ContentResourcesPage } from './ContentResourcesPage.jsx';

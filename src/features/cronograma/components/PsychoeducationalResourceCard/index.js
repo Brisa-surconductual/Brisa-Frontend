@@ -1,0 +1,1 @@
+export { PsychoeducationalResourceCard } from './PsychoeducationalResourceCard.jsx';

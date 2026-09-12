@@ -15,3 +15,5 @@ export { AssociateContentPage } from './pages/AssociateContentPage/index.js';
 export { ContentManagementPage } from './pages/ContentManagementPage/index.js';
 
 export { ContentFormPage } from './pages/ContentFormPage/index.js';
+
+export { ContentResourcesPage } from './pages/ContentResourcesPage/index.js';

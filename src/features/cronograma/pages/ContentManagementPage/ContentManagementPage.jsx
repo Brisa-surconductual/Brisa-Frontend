@@ -64,6 +64,19 @@ export function ContentManagementPage({
     );
   }
 
+  function handleManageResources(content) {
+    navigate(
+      `/app/administrativo/cronograma/contenidos/${encodeURIComponent(
+        content.id,
+      )}/recursos`,
+      {
+        state: {
+          content,
+        },
+      },
+    );
+  }
+
   function handleEdit(content) {
     navigate(
         `/app/administrativo/cronograma/contenidos/${encodeURIComponent(
@@ -148,6 +161,9 @@ export function ContentManagementPage({
           ) : (
             <PsychoeducationalContentList
               contents={contents}
+              onManageResources={
+                handleManageResources
+              }
               onEdit={handleEdit}
               onDelete={handleRequestDelete}
             />
