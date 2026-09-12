@@ -93,6 +93,12 @@ export function ScheduleManagementPage() {
     navigate('/app/administrativo/cronograma/progreso');
   }
 
+  function handleViewContents() {
+    navigate(
+      '/app/administrativo/cronograma/contenidos',
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[var(--surface-bg)]">
       <AdministrativeHeader
@@ -123,16 +129,31 @@ export function ScheduleManagementPage() {
               </p>
             </div>
 
-            <div className="flex flex-col gap-[var(--space-3)] sm:flex-row">
-              <Button variant="secondary" onClick={handleViewProgress}>
+            <div className="flex flex-col gap-[var(--space-3)] sm:flex-row sm:flex-wrap">
+              <Button
+                variant="secondary"
+                onClick={handleViewProgress}
+              >
                 Progreso por usuario
               </Button>
 
-              <Button variant="secondary" onClick={handleViewPauses}>
+              <Button
+                variant="secondary"
+                onClick={handleViewPauses}
+              >
                 Pausas administrativas
               </Button>
 
-              <Button onClick={handleCreateUnit}>Crear unidad temporal</Button>
+              <Button
+                variant="secondary"
+                onClick={handleViewContents}
+              >
+                Gestionar contenidos
+              </Button>
+
+              <Button onClick={handleCreateUnit}>
+                Crear unidad temporal
+              </Button>
             </div>
           </header>
 
