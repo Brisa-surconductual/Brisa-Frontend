@@ -47,6 +47,14 @@ export function validatePsychoeducationalResourceForm(form) {
       'Selecciona un archivo para este recurso.';
   }
 
+  if (
+  !Array.isArray(form.moduleIds) ||
+  form.moduleIds.length === 0
+  ) {
+    errors.moduleIds =
+      'Selecciona al menos un módulo destino.';
+  }
+
   return errors;
 }
 
