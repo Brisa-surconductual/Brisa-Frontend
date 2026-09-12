@@ -2,6 +2,7 @@ import { PsychoeducationalContentCard } from '@/features/cronograma/components/P
 
 export function PsychoeducationalContentList({
   contents,
+  onManageResources,
   onEdit,
   onDelete,
 }) {
@@ -28,6 +29,7 @@ export function PsychoeducationalContentList({
         <PsychoeducationalContentCard
           key={content.id}
           content={content}
+          onManageResources={onManageResources}
           onEdit={onEdit}
           onDelete={onDelete}
         />

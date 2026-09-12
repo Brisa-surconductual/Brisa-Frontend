@@ -29,6 +29,7 @@ import {
   AssociateContentPage,
   ContentFormPage,
   ContentManagementPage,
+  ContentResourcesPage,
   CreateAdministrativePausePage,
   CreateTemporalUnitPage,
   ParticipantProgressPage,
@@ -190,6 +191,11 @@ export function AppRouter() {
                 element={
                   <ContentFormPage mode="edit" />
                 }
+              />
+
+              <Route
+                path="administrativo/cronograma/contenidos/:contentId/recursos"
+                element={<ContentResourcesPage />}
               />
 
               <Route
