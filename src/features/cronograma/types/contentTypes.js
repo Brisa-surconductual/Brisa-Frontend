@@ -49,3 +49,45 @@ export const CONTENT_TYPE_TONE = Object.freeze({
   [CONTENT_TYPE.EJERCICIO]: 'danger',
   [CONTENT_TYPE.PENDIENTE]: 'neutral',
 });
+
+/**
+ * RF-24: tipos permitidos para la creación de contenido psicoeducativo.
+ *
+ * Se mantiene separado de CONTENT_TYPE porque este último pertenece
+ * al catálogo de contenido programado construido en tareas anteriores.
+ */
+export const PSYCHOEDUCATIONAL_CONTENT_TYPE = Object.freeze({
+  INFORMATIVO: 'INFORMATIVO',
+  ACTIVIDAD: 'ACTIVIDAD',
+  MULTIMEDIA: 'MULTIMEDIA',
+});
+
+export const PSYCHOEDUCATIONAL_CONTENT_TYPE_LABEL = Object.freeze({
+  [PSYCHOEDUCATIONAL_CONTENT_TYPE.INFORMATIVO]: 'Informativo',
+  [PSYCHOEDUCATIONAL_CONTENT_TYPE.ACTIVIDAD]: 'Actividad',
+  [PSYCHOEDUCATIONAL_CONTENT_TYPE.MULTIMEDIA]: 'Multimedia',
+});
+
+export const PSYCHOEDUCATIONAL_CONTENT_TYPE_OPTIONS = Object.freeze([
+  Object.freeze({
+    value: PSYCHOEDUCATIONAL_CONTENT_TYPE.INFORMATIVO,
+    label:
+      PSYCHOEDUCATIONAL_CONTENT_TYPE_LABEL[
+        PSYCHOEDUCATIONAL_CONTENT_TYPE.INFORMATIVO
+      ],
+  }),
+  Object.freeze({
+    value: PSYCHOEDUCATIONAL_CONTENT_TYPE.ACTIVIDAD,
+    label:
+      PSYCHOEDUCATIONAL_CONTENT_TYPE_LABEL[
+        PSYCHOEDUCATIONAL_CONTENT_TYPE.ACTIVIDAD
+      ],
+  }),
+  Object.freeze({
+    value: PSYCHOEDUCATIONAL_CONTENT_TYPE.MULTIMEDIA,
+    label:
+      PSYCHOEDUCATIONAL_CONTENT_TYPE_LABEL[
+        PSYCHOEDUCATIONAL_CONTENT_TYPE.MULTIMEDIA
+      ],
+  }),
+]);

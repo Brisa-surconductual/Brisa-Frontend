@@ -27,6 +27,8 @@ import {
 import {
   AdministrativePauseHistoryPage,
   AssociateContentPage,
+  ContentFormPage,
+  ContentManagementPage,
   CreateAdministrativePausePage,
   CreateTemporalUnitPage,
   ParticipantProgressPage,
@@ -171,6 +173,23 @@ export function AppRouter() {
               <Route
                 path="administrativo/cronograma/progreso"
                 element={<ParticipantProgressPage />}
+              />
+
+              <Route
+                path="administrativo/cronograma/contenidos"
+                element={<ContentManagementPage />}
+              />
+
+              <Route
+                path="administrativo/cronograma/contenidos/nuevo"
+                element={<ContentFormPage />}
+              />
+
+              <Route
+                path="administrativo/cronograma/contenidos/:contentId/editar"
+                element={
+                  <ContentFormPage mode="edit" />
+                }
               />
 
               <Route

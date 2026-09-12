@@ -11,3 +11,7 @@ export { AdministrativePauseHistoryPage } from './pages/AdministrativePauseHisto
 export { ParticipantProgressPage } from './pages/ParticipantProgressPage/index.js';
 
 export { AssociateContentPage } from './pages/AssociateContentPage/index.js';
+
+export { ContentManagementPage } from './pages/ContentManagementPage/index.js';
+
+export { ContentFormPage } from './pages/ContentFormPage/index.js';
