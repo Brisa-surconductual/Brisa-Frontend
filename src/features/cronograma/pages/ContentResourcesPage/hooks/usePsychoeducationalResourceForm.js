@@ -16,6 +16,7 @@ const EMPTY_RESOURCE_FORM = Object.freeze({
   textContent: '',
   storageKey: '',
   file: null,
+  moduleIds: Object.freeze([]),
 });
 
 function createInitialForm(initialValues = EMPTY_RESOURCE_FORM) {
@@ -29,6 +30,9 @@ function createInitialForm(initialValues = EMPTY_RESOURCE_FORM) {
     textContent: initialValues.textContent ?? '',
     storageKey: initialValues.storageKey ?? '',
     file: null,
+    moduleIds: Array.isArray(initialValues.moduleIds)
+      ? [...initialValues.moduleIds]
+      : [],
   };
 }
 
@@ -106,6 +110,25 @@ export function usePsychoeducationalResourceForm({
     clearFieldError('file');
   }
 
+  function handleModuleToggle(moduleId) {
+    setForm((currentForm) => {
+      const isSelected =
+        currentForm.moduleIds.includes(moduleId);
+
+      return {
+        ...currentForm,
+        moduleIds: isSelected
+          ? currentForm.moduleIds.filter(
+              (currentModuleId) =>
+                currentModuleId !== moduleId,
+            )
+          : [...currentForm.moduleIds, moduleId],
+      };
+    });
+
+    clearFieldError('moduleIds');
+  }
+
   function handleSubmit(event) {
     event.preventDefault();
 
@@ -137,6 +160,7 @@ export function usePsychoeducationalResourceForm({
       storageKey: isFileResource
         ? form.storageKey.trim() || null
         : null,
+      moduleIds: [...form.moduleIds],
     });
   }
 
@@ -150,6 +174,7 @@ export function usePsychoeducationalResourceForm({
     errors,
     handleChange,
     handleFileChange,
+    handleModuleToggle,
     handleSubmit,
     resetForm,
   };

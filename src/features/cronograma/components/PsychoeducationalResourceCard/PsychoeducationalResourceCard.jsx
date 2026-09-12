@@ -7,6 +7,7 @@ import {
 
 export function PsychoeducationalResourceCard({
   resource,
+  destinationModules = [],
   canManage = false,
   onEdit,
   onDelete,
@@ -19,6 +20,12 @@ export function PsychoeducationalResourceCard({
   const isText =
     resource.type ===
     PSYCHOEDUCATIONAL_RESOURCE_TYPE.TEXTO;
+
+  const associatedModules = destinationModules.filter(
+    (module) =>
+      Array.isArray(resource.moduleIds) &&
+      resource.moduleIds.includes(module.id),
+  );
 
   return (
     <article className="rounded-[var(--radius-lg)] border border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-4)] shadow-[var(--shadow-sm)]">
@@ -54,6 +61,29 @@ export function PsychoeducationalResourceCard({
                 'El archivo se resolverá mediante la fuente de datos integrada.'}
             </p>
           </div>
+        )}
+      </div>
+
+      <div className="mt-[var(--space-4)]">
+        <p className="m-0 text-[11px] font-bold tracking-[0.03em] text-[var(--text-muted)] uppercase">
+          Módulos destino
+        </p>
+
+        {associatedModules.length > 0 ? (
+          <div className="mt-[var(--space-2)] flex flex-wrap gap-[var(--space-2)]">
+            {associatedModules.map((module) => (
+              <span
+                key={module.id}
+                className="rounded-[var(--radius-full)] bg-[var(--brand-50)] px-[var(--space-3)] py-[var(--space-1)] text-[11px] font-bold text-[var(--brand-700)]"
+              >
+                {module.name}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-[var(--space-2)] mb-0 text-[12px] text-[var(--text-muted)]">
+            Sin módulos asociados.
+          </p>
         )}
       </div>
 

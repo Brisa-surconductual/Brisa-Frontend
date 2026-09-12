@@ -9,13 +9,17 @@ import {
   isPsychoeducationalFileResourceType,
 } from '@/features/cronograma/types/resourceTypes.js';
 
+import { DestinationModuleSelector } from '@/features/cronograma/components/DestinationModuleSelector/index.js';
+
 export function PsychoeducationalResourceForm({
   form,
   errors = {},
+  destinationModules = [],
   loading = false,
   submitLabel = 'Guardar recurso',
   onChange,
   onFileChange,
+  onModuleToggle,
   onSubmit,
   onCancel,
 }) {
@@ -183,6 +187,14 @@ export function PsychoeducationalResourceForm({
             )}
           </div>
         )}
+
+        <DestinationModuleSelector
+          modules={destinationModules}
+          selectedModuleIds={form.moduleIds}
+          error={errors.moduleIds}
+          disabled={loading}
+          onToggle={onModuleToggle}
+        />
       </div>
 
       <div className="mt-[var(--space-6)] flex flex-col-reverse gap-[var(--space-3)] sm:flex-row sm:justify-end">

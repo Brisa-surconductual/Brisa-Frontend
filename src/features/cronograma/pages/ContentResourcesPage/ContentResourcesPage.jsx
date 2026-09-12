@@ -23,10 +23,12 @@ import {
 import { usePsychoeducationalResourceForm } from './hooks/usePsychoeducationalResourceForm.js';
 
 const EMPTY_RESOURCES = Object.freeze([]);
+const EMPTY_DESTINATION_MODULES = Object.freeze([]);
 
 export function ContentResourcesPage({
   content: contentProp,
   resources = EMPTY_RESOURCES,
+  destinationModules = EMPTY_DESTINATION_MODULES,
   loading = false,
   onCreateResource,
   onUpdateResource,
@@ -79,6 +81,7 @@ export function ContentResourcesPage({
     errors,
     handleChange,
     handleFileChange,
+    handleModuleToggle,
     handleSubmit,
     resetForm,
   } = usePsychoeducationalResourceForm({
@@ -95,10 +98,6 @@ export function ContentResourcesPage({
     if (!canManage) {
       return;
     }
-
-    setEditingResource(resource);
-    resetForm(resource);
-    setFormSession((current) => current + 1);
 
     setEditingResource(resource);
     resetForm(resource);
@@ -280,6 +279,7 @@ export function ContentResourcesPage({
                     key={formSession}
                     form={form}
                     errors={errors}
+                    destinationModules={destinationModules}
                     loading={loading}
                     submitLabel={
                       editingResource
@@ -290,6 +290,7 @@ export function ContentResourcesPage({
                     onFileChange={
                       handleFileChange
                     }
+                    onModuleToggle={handleModuleToggle}
                     onSubmit={handleSubmit}
                     onCancel={resetEditor}
                   />
@@ -318,6 +319,7 @@ export function ContentResourcesPage({
                 ) : (
                   <PsychoeducationalResourceList
                     resources={resources}
+                    destinationModules={destinationModules}
                     canManage={canManage}
                     onEdit={handleEdit}
                     onDelete={
