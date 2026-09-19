@@ -22,22 +22,25 @@ import { useAssociateContentForm } from './hooks/useAssociateContentForm.js';
 import { useScheduledContentAvailabilityForm } from './hooks/useScheduledContentAvailabilityForm.js';
 
 import { Button } from '@/shared/components/ui/Button/index.js';
+import { ConfirmationDialog } from '@/shared/components/ui/ConfirmationDialog/index.js';
 
 import { canModifyScheduledContent } from '@/features/cronograma/utils/scheduledContentPermissions.js';
 import { canModifyTemporalUnit } from '@/features/cronograma/utils/temporalUnitPermissions.js';
+
+
 
 
 const EMPTY_CONTENT_CATALOG = Object.freeze([]);
 const EMPTY_TEMPORAL_UNITS = Object.freeze([]);
 const EMPTY_SCHEDULED_CONTENT = Object.freeze([]);
 const CONTENT_LIST_HEADING_ID = 'associate-content-list-heading';
-
 export function AssociateContentPage({
   contentCatalog = EMPTY_CONTENT_CATALOG,
   temporalUnits = EMPTY_TEMPORAL_UNITS,
   scheduledContent = EMPTY_SCHEDULED_CONTENT,
   onAssociateContent,
   onUpdateScheduledContentAvailability,
+  onDeleteScheduledContentAssociation,
 } = {}) {
   const navigate = useNavigate();
   const { unitId } = useParams();
@@ -45,6 +48,7 @@ export function AssociateContentPage({
   const { role, logout } = useAuth();
 
   const [editingAssociation, setEditingAssociation] = useState(null);
+  const [pendingDeleteAssociation, setPendingDeleteAssociation] = useState(null);
 
   const unit = temporalUnits.find(
     (temporalUnit) => temporalUnit.id === unitId,
@@ -125,6 +129,30 @@ export function AssociateContentPage({
   function handleCancelAvailabilityEdit() {
     resetAvailabilityForm();
     setEditingAssociation(null);
+  }
+
+  function handleRequestDeleteAssociation(association) {
+    if (!association?.id) {
+      return;
+    }
+
+    setPendingDeleteAssociation(association);
+  }
+
+  function handleCancelDeleteAssociation() {
+    setPendingDeleteAssociation(null);
+  }
+
+  function handleConfirmDeleteAssociation() {
+    if (!pendingDeleteAssociation?.id) {
+      return;
+    }
+
+    onDeleteScheduledContentAssociation?.({
+      associationId: pendingDeleteAssociation.id,
+    });
+
+    setPendingDeleteAssociation(null);
   }
 
   const selectedUnit = temporalUnits.find(
@@ -320,21 +348,35 @@ export function AssociateContentPage({
                               actions={
                                 canModifyScheduledContent(item.status) &&
                                 canModifyTemporalUnit(selectedUnit?.status) ? (
-                                  <Button
-                                    size="small"
-                                    variant="secondary"
-                                    onClick={() =>
-                                      handleEditAvailability({
-                                        ...item,
-                                        contentTitle:
-                                          content?.title ?? item.contentId,
-                                        temporalUnitName:
-                                          selectedUnit?.name ?? '',
-                                      })
-                                    }
-                                  >
-                                    Editar disponibilidad
-                                  </Button>
+                                  <>
+                                    <Button
+                                      size="small"
+                                      variant="secondary"
+                                      onClick={() =>
+                                        handleEditAvailability({
+                                          ...item,
+                                          contentTitle: content?.title ?? item.contentId,
+                                          temporalUnitName: selectedUnit?.name ?? '',
+                                        })
+                                      }
+                                    >
+                                      Editar disponibilidad
+                                    </Button>
+
+                                    <Button
+                                      size="small"
+                                      variant="danger"
+                                      onClick={() =>
+                                        handleRequestDeleteAssociation({
+                                          ...item,
+                                          contentTitle: content?.title ?? item.contentId,
+                                          temporalUnitName: selectedUnit?.name ?? '',
+                                        })
+                                      }
+                                    >
+                                      Desvincular
+                                    </Button>
+                                  </>
                                 ) : null
                               }
                             />
@@ -350,6 +392,19 @@ export function AssociateContentPage({
                   )}
                 </div>
               </section>
+              <ConfirmationDialog
+                open={Boolean(pendingDeleteAssociation)}
+                title="Desvincular contenido"
+                description={
+                  pendingDeleteAssociation
+                    ? `¿Deseas desvincular "${pendingDeleteAssociation.contentTitle}" de ${pendingDeleteAssociation.temporalUnitName}? Esta acción quitará el contenido de la unidad temporal.`
+                    : ''
+                }
+                confirmText="Desvincular"
+                cancelText="Cancelar"
+                onConfirm={handleConfirmDeleteAssociation}
+                onCancel={handleCancelDeleteAssociation}
+              />
             </>
           ) : (
             <div className="mt-[var(--space-6)]">
