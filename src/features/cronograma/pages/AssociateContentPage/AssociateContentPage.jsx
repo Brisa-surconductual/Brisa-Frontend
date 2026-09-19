@@ -27,9 +27,6 @@ import { ConfirmationDialog } from '@/shared/components/ui/ConfirmationDialog/in
 import { canModifyScheduledContent } from '@/features/cronograma/utils/scheduledContentPermissions.js';
 import { canModifyTemporalUnit } from '@/features/cronograma/utils/temporalUnitPermissions.js';
 
-
-
-
 const EMPTY_CONTENT_CATALOG = Object.freeze([]);
 const EMPTY_TEMPORAL_UNITS = Object.freeze([]);
 const EMPTY_SCHEDULED_CONTENT = Object.freeze([]);
