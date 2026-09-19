@@ -12,85 +12,122 @@ import {
 } from '@/shared/data/administrativeTabs.js';
 
 import { AssociateContentForm } from '@/features/cronograma/components/AssociateContentForm/index.js';
+import { ScheduledContentAvailabilityForm } from '@/features/cronograma/components/ScheduledContentAvailabilityForm/index.js';
 import { ContentRow } from '@/features/cronograma/components/ContentRow/index.js';
 import { EmptyScheduleState } from '@/features/cronograma/components/EmptyScheduleState/index.js';
 
-import { CONTENT_CATALOG } from '@/features/cronograma/data/contentCatalogMock.js';
-import {
-  SCHEDULED_CONTENT,
-  TEMPORAL_UNITS,
-} from '@/features/cronograma/data/scheduleMock.js';
-
-import {
-  CONTENT_TYPE_LABEL,
-  SCHEDULED_CONTENT_STATUS,
-} from '@/features/cronograma/types/contentTypes.js';
+import { CONTENT_TYPE_LABEL } from '@/features/cronograma/types/contentTypes.js';
 
 import { useAssociateContentForm } from './hooks/useAssociateContentForm.js';
+import { useScheduledContentAvailabilityForm } from './hooks/useScheduledContentAvailabilityForm.js';
 
+import { Button } from '@/shared/components/ui/Button/index.js';
+
+import { canModifyScheduledContent } from '@/features/cronograma/utils/scheduledContentPermissions.js';
+import { canModifyTemporalUnit } from '@/features/cronograma/utils/temporalUnitPermissions.js';
+
+
+const EMPTY_CONTENT_CATALOG = Object.freeze([]);
+const EMPTY_TEMPORAL_UNITS = Object.freeze([]);
+const EMPTY_SCHEDULED_CONTENT = Object.freeze([]);
 const CONTENT_LIST_HEADING_ID = 'associate-content-list-heading';
 
-export function AssociateContentPage() {
+export function AssociateContentPage({
+  contentCatalog = EMPTY_CONTENT_CATALOG,
+  temporalUnits = EMPTY_TEMPORAL_UNITS,
+  scheduledContent = EMPTY_SCHEDULED_CONTENT,
+  onAssociateContent,
+  onUpdateScheduledContentAvailability,
+} = {}) {
   const navigate = useNavigate();
   const { unitId } = useParams();
 
   const { role, logout } = useAuth();
 
-  // Sin persistencia: el listado vive en memoria y se pierde al salir de la
-  // pantalla. Es lo esperado mientras no haya backend (FE-M04-10).
-  const [scheduledContent, setScheduledContent] = useState(SCHEDULED_CONTENT);
+  const [editingAssociation, setEditingAssociation] = useState(null);
 
-  const [successMessage, setSuccessMessage] = useState('');
-
-  const unit = TEMPORAL_UNITS.find(
+  const unit = temporalUnits.find(
     (temporalUnit) => temporalUnit.id === unitId,
   );
 
-  function handleValidSubmit({ contentId, temporalUnitId, order }) {
-    const content = CONTENT_CATALOG.find((item) => item.id === contentId);
+  function handleValidAvailabilitySubmit({
+    associationId,
+    availableFrom,
+    availableUntil,
+  }) {
+    onUpdateScheduledContentAvailability?.({
+      associationId,
+      availableFrom,
+      availableUntil,
+    });
+  }
 
-    const targetUnit = TEMPORAL_UNITS.find(
-      (temporalUnit) => temporalUnit.id === temporalUnitId,
+  function handleValidSubmit({
+    contentId,
+    temporalUnitId,
+    order,
+  }) {
+    const content = contentCatalog.find(
+      (item) => item.id === contentId,
+    );
+
+    const targetUnit = temporalUnits.find(
+      (temporalUnit) =>
+        temporalUnit.id === temporalUnitId,
     );
 
     if (!content || !targetUnit) {
       return;
     }
 
-    setScheduledContent((currentContent) => [
-      ...currentContent,
-      {
-        id: `sc-${temporalUnitId}-${contentId}`,
-        temporalUnitId,
-        contentId,
-        // HU-CR-04 / RF-12: el orden lo escribe el administrativo. Que esté
-        // libre dentro de la unidad ya lo comprobó validateAssociateContentForm.
-        order,
-        // La ventana de disponibilidad hereda el rango de la unidad hasta
-        // que RF-11 (FE-M04-12) agregue sus propios campos de fecha.
-        availableFrom: targetUnit.startDate,
-        availableUntil: targetUnit.endDate,
-        status: SCHEDULED_CONTENT_STATUS.PROGRAMADO,
-      },
-    ]);
-
-    // El mensaje nombra el orden porque el campo se acaba de vaciar: es la
-    // única confirmación de la posición que quedó guardada.
-    setSuccessMessage(
-      `"${content.title}" asociada a ${targetUnit.name} en el orden ${order}.`,
-    );
-
-    clearContentAndOrder();
+    onAssociateContent?.({
+      contentId,
+      temporalUnitId,
+      order,
+    });
   }
+  const {
+    form,
+    errors,
+    handleChange,
+    handleSubmit,
+  } = useAssociateContentForm({
+    initialTemporalUnitId: unit ? unit.id : '',
+    scheduledContent,
+    onValidSubmit: handleValidSubmit,
+  });
 
-  const { form, errors, handleChange, handleSubmit, clearContentAndOrder } =
-    useAssociateContentForm({
-      initialTemporalUnitId: unit ? unit.id : '',
-      scheduledContent,
-      onValidSubmit: handleValidSubmit,
+  const {
+    form: availabilityForm,
+    errors: availabilityErrors,
+    handleChange: handleAvailabilityChange,
+    handleSubmit: handleAvailabilitySubmit,
+    loadAvailability,
+    resetForm: resetAvailabilityForm,
+  } = useScheduledContentAvailabilityForm({
+    onValidSubmit: handleValidAvailabilitySubmit,
+  });
+
+  function handleEditAvailability(association) {
+    if (!association?.id) {
+      return;
+    }
+
+    loadAvailability({
+      associationId: association.id,
+      availableFrom: association.availableFrom ?? '',
+      availableUntil: association.availableUntil ?? '',
     });
 
-  const selectedUnit = TEMPORAL_UNITS.find(
+    setEditingAssociation(association);
+  }
+
+  function handleCancelAvailabilityEdit() {
+    resetAvailabilityForm();
+    setEditingAssociation(null);
+  }
+
+  const selectedUnit = temporalUnits.find(
     (temporalUnit) => temporalUnit.id === form.temporalUnitId,
   );
 
@@ -106,7 +143,7 @@ export function AssociateContentPage() {
   // Solo las actividades libres. Mostrar también las ya asociadas para
   // provocar el HTTP 409 es otra tarea de HU-CR-02 / RF-10, y le bastará con
   // cambiar este filtro.
-  const availableContent = CONTENT_CATALOG.filter(
+  const availableContent = contentCatalog.filter(
     (item) =>
       item.assignedTemporalUnitId === null && !takenContentIds.has(item.id),
   );
@@ -116,12 +153,12 @@ export function AssociateContentPage() {
     label: item.title,
   }));
 
-  const temporalUnitOptions = TEMPORAL_UNITS.map((temporalUnit) => ({
+  const temporalUnitOptions = temporalUnits.map((temporalUnit) => ({
     value: temporalUnit.id,
     label: `${temporalUnit.name} · ${temporalUnit.theme}`,
   }));
 
-  const selectedContent = CONTENT_CATALOG.find(
+  const selectedContent = contentCatalog.find(
     (item) => item.id === form.contentId,
   );
 
@@ -178,7 +215,6 @@ export function AssociateContentPage() {
   function handleFormChange(event) {
     // El mensaje de éxito nombra una actividad y una unidad concretas: deja de
     // describir el formulario en cuanto se toca cualquiera de los campos.
-    setSuccessMessage('');
 
     handleChange(event);
   }
@@ -229,12 +265,25 @@ export function AssociateContentPage() {
                   contentHint={contentHint}
                   temporalUnitOptions={temporalUnitOptions}
                   orderHint={orderHint}
-                  successMessage={successMessage}
                   onChange={handleFormChange}
                   onSubmit={handleSubmit}
                   onCancel={handleCancel}
                 />
               </div>
+              {editingAssociation && (
+                <div className="mt-[var(--space-6)]">
+                  <ScheduledContentAvailabilityForm
+                    form={availabilityForm}
+                    errors={availabilityErrors}
+                    contentTitle={editingAssociation.contentTitle ?? ''}
+                    temporalUnitName={editingAssociation.temporalUnitName ?? ''}
+                    temporalUnitRange={editingAssociation.temporalUnitRange ?? ''}
+                    onChange={handleAvailabilityChange}
+                    onSubmit={handleAvailabilitySubmit}
+                    onCancel={handleCancelAvailabilityEdit}
+                  />
+                </div>
+              )}
 
               <section
                 className="mt-[var(--space-6)]"
@@ -257,7 +306,7 @@ export function AssociateContentPage() {
                   {unitContent.length > 0 ? (
                     <ul className="m-0 grid list-none gap-[var(--space-2)] p-0">
                       {unitContent.map((item) => {
-                        const content = CONTENT_CATALOG.find(
+                        const content = contentCatalog.find(
                           (catalogItem) => catalogItem.id === item.contentId,
                         );
 
@@ -268,6 +317,26 @@ export function AssociateContentPage() {
                               title={content?.title ?? item.contentId}
                               contentType={content?.type}
                               status={item.status}
+                              actions={
+                                canModifyScheduledContent(item.status) &&
+                                canModifyTemporalUnit(selectedUnit?.status) ? (
+                                  <Button
+                                    size="small"
+                                    variant="secondary"
+                                    onClick={() =>
+                                      handleEditAvailability({
+                                        ...item,
+                                        contentTitle:
+                                          content?.title ?? item.contentId,
+                                        temporalUnitName:
+                                          selectedUnit?.name ?? '',
+                                      })
+                                    }
+                                  >
+                                    Editar disponibilidad
+                                  </Button>
+                                ) : null
+                              }
                             />
                           </li>
                         );
