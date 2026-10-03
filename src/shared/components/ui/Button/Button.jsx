@@ -3,7 +3,7 @@ import { LoaderCircle } from 'lucide-react';
 const VARIANT_CLASS = Object.freeze({
   primary: 'bg-[var(--brand-500)] text-[var(--button-primary-text)] enabled:hover:bg-[var(--brand-600)] [html[data-theme="dark"]_&]:enabled:hover:bg-[var(--brand-400)]',
 
-  secondary: 'border-[var(--surface-border)] bg-[var(--surface-card)] text-[var(--text-primary)] enabled:hover:bg-[var(--surface-hover)]',
+  secondary: 'border-[var(--button-secondary-border)] bg-[var(--button-secondary-bg)] text-[var(--text-primary)] shadow-[var(--shadow-sm)] enabled:hover:border-[var(--button-secondary-hover-border)] enabled:hover:bg-[var(--button-secondary-hover-bg)]',
 
   ghost: 'bg-transparent text-[var(--text-secondary)] enabled:hover:bg-[var(--surface-hover)] enabled:hover:text-[var(--text-primary)]',
 
