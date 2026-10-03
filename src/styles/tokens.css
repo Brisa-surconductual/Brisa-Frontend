@@ -70,6 +70,12 @@
   --text-inverse: var(--neutral-0);
   --button-primary-text: var(--neutral-0);
 
+  /* Botones secundarios */
+  --button-secondary-bg: var(--surface-card);
+  --button-secondary-border: var(--neutral-300);
+  --button-secondary-hover-bg: var(--surface-hover);
+  --button-secondary-hover-border: var(--neutral-400);
+
   /* Tipografía */
   --font-sans: "Manrope", sans-serif;
   --font-mono: "IBM Plex Mono", monospace;
@@ -146,4 +152,9 @@
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 35%);
   --shadow-md: 0 2px 8px rgb(0 0 0 / 45%);
   --shadow-lg: 0 8px 24px rgb(0 0 0 / 55%);
+
+  --button-secondary-bg: var(--surface-card);
+  --button-secondary-border: #514b3f;
+  --button-secondary-hover-bg: var(--surface-hover);
+  --button-secondary-hover-border: #6a6253;
 }

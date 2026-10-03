@@ -31,6 +31,7 @@ import {
   ContentManagementPage,
   ContentResourcesPage,
   CreateAdministrativePausePage,
+  CreateSchedulePage,
   CreateTemporalUnitPage,
   ParticipantProgressPage,
   ScheduleManagementPage,
@@ -159,6 +160,11 @@ export function AppRouter() {
               <Route
                 path="administrativo/cronograma"
                 element={<ScheduleManagementPage />}
+              />
+
+              <Route
+                path="administrativo/cronograma/crear"
+                element={<CreateSchedulePage />}
               />
 
               <Route
