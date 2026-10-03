@@ -1,6 +1,9 @@
 import { ParticipantProgressCard } from '@/features/cronograma/components/ParticipantProgressCard/index.js';
 
-export function ParticipantProgressList({ participants }) {
+export function ParticipantProgressList({
+  participants,
+  onViewTemporalInformation,
+}) {
   return (
     <section aria-labelledby="participant-progress-list-title">
       <h2
@@ -19,6 +22,11 @@ export function ParticipantProgressList({ participants }) {
             currentWeek={participant.currentWeek}
             currentDay={participant.currentDay}
             status={participant.status}
+            onViewTemporalInformation={
+              onViewTemporalInformation
+                ? () => onViewTemporalInformation(participant)
+                : undefined
+            }
           />
         ))}
       </div>

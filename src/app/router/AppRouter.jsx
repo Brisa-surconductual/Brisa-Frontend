@@ -36,6 +36,7 @@ import {
   ScheduleManagementPage,
   TemporalUnitDetailPage,
   CurrentContentPage,
+  TemporalInformationPage,
 } from '@/features/cronograma/index.js';
 
 import { RequireAuth } from './RequireAuth.jsx';
@@ -180,6 +181,11 @@ export function AppRouter() {
               <Route
                 path="administrativo/cronograma/progreso"
                 element={<ParticipantProgressPage />}
+              />
+
+              <Route
+                path="administrativo/cronograma/progreso/:participantId/informacion-temporal"
+                element={<TemporalInformationPage />}
               />
 
               <Route
