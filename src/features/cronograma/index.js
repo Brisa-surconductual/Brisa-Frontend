@@ -21,3 +21,5 @@ export { ContentResourcesPage } from './pages/ContentResourcesPage/index.js';
 export { CurrentContentPage } from './pages/CurrentContentPage/index.js';
 
 export { TemporalInformationPage } from './pages/TemporalInformationPage/index.js';
+
+export { CreateSchedulePage } from './pages/CreateSchedulePage/index.js';

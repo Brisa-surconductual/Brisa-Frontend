@@ -73,6 +73,10 @@ export function ScheduleManagementPage() {
     navigate('/app/administrativo/cronograma/nueva');
   }
 
+  function handleCreateSchedule() {
+    navigate('/app/administrativo/cronograma/crear');
+  }
+
   function handleActivateSchedule() {
     setIsActivationDialogOpen(true);
   }
@@ -151,7 +155,14 @@ export function ScheduleManagementPage() {
                 Gestionar contenidos
               </Button>
 
-              <Button onClick={handleCreateUnit}>
+              <Button onClick={handleCreateSchedule}>
+                Crear cronograma
+              </Button>
+
+              <Button
+                variant='secondary'
+                onClick={handleCreateUnit}
+              >
                 Crear unidad temporal
               </Button>
             </div>
