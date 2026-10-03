@@ -17,3 +17,5 @@ export { ContentManagementPage } from './pages/ContentManagementPage/index.js';
 export { ContentFormPage } from './pages/ContentFormPage/index.js';
 
 export { ContentResourcesPage } from './pages/ContentResourcesPage/index.js';
+
+export { CurrentContentPage } from './pages/CurrentContentPage/index.js';
