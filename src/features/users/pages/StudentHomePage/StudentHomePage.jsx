@@ -6,6 +6,8 @@ import { StudentHeader } from '@/features/users/components/StudentHeader/index.j
 import { ModuleGrid } from './components/ModuleGrid.jsx';
 import { useStudentHomePage } from './hooks/useStudentHomePage.js';
 
+import { CurrentContentAccessCard } from '@/features/cronograma/components/CurrentContentAccessCard/index.js';
+
 export function StudentHomePage() {
   const { displayName, roleLabel, handleLogout } = useStudentHomePage();
 
@@ -48,6 +50,8 @@ export function StudentHomePage() {
               REGISTRO_COMPLETO
             </span>
           </div>
+
+          <CurrentContentAccessCard />
 
           <h2 className="mt-[var(--space-1)] mb-0 text-[11px] font-bold tracking-[0.1em] text-[var(--text-secondary)] uppercase">
             Módulos del programa

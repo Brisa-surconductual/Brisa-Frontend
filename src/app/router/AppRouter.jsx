@@ -35,6 +35,7 @@ import {
   ParticipantProgressPage,
   ScheduleManagementPage,
   TemporalUnitDetailPage,
+  CurrentContentPage,
 } from '@/features/cronograma/index.js';
 
 import { RequireAuth } from './RequireAuth.jsx';
@@ -132,6 +133,11 @@ export function AppRouter() {
               <Route
                 path="estudiante"
                 element={<StudentHomePage />}
+              />
+
+              <Route
+                path="estudiante/cronograma/contenido-vigente"
+                element={<CurrentContentPage />}
               />
             </Route>
 
