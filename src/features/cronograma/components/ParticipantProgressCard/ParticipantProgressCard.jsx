@@ -24,6 +24,7 @@ export function ParticipantProgressCard({
   currentWeek,
   currentDay,
   status,
+  onViewTemporalInformation,
 }) {
   const statusLabel =
     PARTICIPANT_PROGRESS_STATUS_LABEL[status] ?? status ?? '—';
@@ -82,6 +83,17 @@ export function ParticipantProgressCard({
           </dd>
         </div>
       </dl>
+      {onViewTemporalInformation ? (
+        <div className="mt-[var(--space-4)] border-t border-[var(--surface-border)] pt-[var(--space-4)]">
+          <button
+            type="button"
+            className="cursor-pointer border-0 bg-transparent p-0 text-[12px] font-bold text-[var(--brand-600)] hover:underline md:text-[13px]"
+            onClick={onViewTemporalInformation}
+          >
+            Ver información temporal →
+          </button>
+        </div>
+      ) : null}
     </article>
   );
 }

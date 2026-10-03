@@ -55,6 +55,16 @@ export function ParticipantProgressPage() {
     navigate('/app/administrativo/cronograma');
   }
 
+  function handleViewTemporalInformation(participant) {
+    if (!participant?.id) {
+      return;
+    }
+
+    navigate(
+      `/app/administrativo/cronograma/progreso/${encodeURIComponent(participant.id)}/informacion-temporal`,
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[var(--surface-bg)]">
       <AdministrativeHeader
@@ -95,7 +105,10 @@ export function ParticipantProgressPage() {
           <ParticipantProgressSummary summary={progressSummary} />
 
           {participants.length > 0 ? (
-            <ParticipantProgressList participants={participants} />
+            <ParticipantProgressList
+              participants={participants}
+              onViewTemporalInformation={handleViewTemporalInformation}
+            />
           ) : (
             <section
               className="rounded-[var(--radius-lg)] border border-dashed border-[var(--surface-border)] bg-[var(--surface-card)] px-[var(--space-5)] py-[var(--space-8)] text-center"
