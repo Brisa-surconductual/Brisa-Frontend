@@ -1,13 +1,8 @@
 import { useNavigate } from 'react-router-dom';
-
 import { useAuth } from '@/app/providers/index.js';
-
 import { AdministrativeHeader } from '@/shared/components/navigation/AdministrativeHeader/index.js';
 import { AdministrativeTabBar } from '@/shared/components/navigation/AdministrativeTabBar/index.js';
-import {
-  ADMINISTRATIVE_TAB,
-  ADMINISTRATIVE_TABS,
-} from '@/shared/data/administrativeTabs.js';
+import { ADMINISTRATIVE_TAB, ADMINISTRATIVE_TABS } from '@/shared/data/administrativeTabs.js';
 
 import { TemporalUnitForm } from '@/features/cronograma/components/TemporalUnitForm/index.js';
 
@@ -16,7 +11,7 @@ import { useCreateTemporalUnitForm } from './hooks/useCreateTemporalUnitForm.js'
 export function CreateTemporalUnitPage() {
   const navigate = useNavigate();
   const { role, logout } = useAuth();
-  const { form, errors, handleChange, handleSubmit } =
+  const { form, errors, submitError, isSubmitting, handleChange, handleSubmit } =
     useCreateTemporalUnitForm();
 
   function handleLogout() {
@@ -91,7 +86,10 @@ export function CreateTemporalUnitPage() {
               onChange={handleChange}
               onSubmit={handleSubmit}
               onCancel={handleCancel}
+              submitLoading={isSubmitting}
             />
+
+            {submitError && <p>{submitError}</p>}
           </div>
         </div>
       </main>

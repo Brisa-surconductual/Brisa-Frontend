@@ -1,32 +1,53 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
 import { useAuth } from '@/app/providers/index.js';
-
 import { ScheduleForm } from '@/features/cronograma/components/ScheduleForm/index.js';
-
+import { crearCronograma } from '../../api/cronograma/crearCronograma';
 import { AdministrativeHeader } from '@/shared/components/navigation/AdministrativeHeader/index.js';
 import { AdministrativeTabBar } from '@/shared/components/navigation/AdministrativeTabBar/index.js';
-
-import {
-  ADMINISTRATIVE_TAB,
-  ADMINISTRATIVE_TABS,
-} from '@/shared/data/administrativeTabs.js';
-
+import { ADMINISTRATIVE_TAB, ADMINISTRATIVE_TABS} from '@/shared/data/administrativeTabs.js';
 import { useCreateScheduleForm } from './hooks/useCreateScheduleForm.js';
+
+function toIsoMidnight(dateOnlyString) {
+  return `${dateOnlyString}T00:00:00.000Z`;
+}
+
+function normalizeScheduleForm(form) {
+  return {
+    nombre: form.name,
+    fecha_activacion: toIsoMidnight(form.activationDate),
+    es_base: form.isBase,
+  };
+}
 
 export function CreateSchedulePage() {
   const navigate = useNavigate();
   const { role, logout } = useAuth();
 
-  const { form, errors, handleChange, handleSubmit } =
-    useCreateScheduleForm();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+
+  async function handleValidSubmit(formValues) {
+    setIsSubmitting(true);
+    setSubmitError('');
+
+    try {
+      await crearCronograma(normalizeScheduleForm(formValues));
+      navigate('/app/administrativo/cronograma');
+    } catch (error) {
+      setSubmitError('No pudimos crear el cronograma. Intenta nuevamente.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  const { form, errors, handleChange, handleSubmit } = useCreateScheduleForm({
+    onValidSubmit: handleValidSubmit,
+  });
 
   function handleLogout() {
     logout();
-
-    navigate('/login', {
-      replace: true,
-    });
+    navigate('/login', { replace: true });
   }
 
   function handleTabChange(tabId) {
@@ -34,12 +55,10 @@ export function CreateSchedulePage() {
       navigate('/app/administrativo/cronograma');
       return;
     }
-
     if (tabId === ADMINISTRATIVE_TAB.DASHBOARD) {
       navigate('/app/administrativo');
       return;
     }
-
     navigate(`/app/administrativo?tab=${encodeURIComponent(tabId)}`);
   }
 
@@ -86,10 +105,17 @@ export function CreateSchedulePage() {
             Registra la información general del nuevo cronograma.
           </p>
 
+          {submitError && (
+            <p className="mt-[var(--space-4)] text-[13px] font-semibold text-[var(--danger-text)]">
+              {submitError}
+            </p>
+          )}
+
           <div className="mt-[var(--space-6)]">
             <ScheduleForm
               form={form}
               errors={errors}
+              isSubmitting={isSubmitting}
               onChange={handleChange}
               onSubmit={handleSubmit}
               onCancel={handleCancel}

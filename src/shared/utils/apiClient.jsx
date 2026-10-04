@@ -6,3 +6,13 @@ export const apiClient = axios.create({
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 });
+
+apiClient.interceptors.request.use((config) => {
+  const csrfToken = localStorage.getItem('csrfToken'); 
+  
+  if (csrfToken) {
+    config.headers['X-CSRF-Token'] = csrfToken;
+  }
+  
+  return config;
+});
