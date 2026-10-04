@@ -1,13 +1,6 @@
 import { useState } from 'react';
 
-import { crearUnidadTemporal } from '@/features/cronograma/api/unidadTemporal/crearUnidadTemporal.jsx';
-import {
-  hasTemporalUnitFormErrors,
-  validateTemporalUnitForm,
-} from '@/features/cronograma/utils/temporalUnitFormValidation.js';
-
 const INITIAL_FORM = Object.freeze({
-  idSchedule: '',
   name: '',
   startDate: '',
   endDate: '',
@@ -28,52 +21,54 @@ export function useCreateTemporalUnitForm({ onValidSubmit } = {}) {
     }));
 
     setErrors((currentErrors) => {
-      if (!currentErrors[name]) {
-        return currentErrors;
-      }
-
+      if (!currentErrors[name]) return currentErrors;
       const nextErrors = { ...currentErrors };
       delete nextErrors[name];
-
       return nextErrors;
     });
 
     setSubmitError('');
   }
 
+  // Validación propia sin depender del campo viejo "orden"
+  function validateForm() {
+    const newErrors = {};
+    if (!form.name.trim()) newErrors.name = 'El nombre es obligatorio.';
+    if (!form.startDate) newErrors.startDate = 'La fecha de inicio es obligatoria.';
+    if (!form.endDate) newErrors.endDate = 'La fecha de fin es obligatoria.';
+    
+    // Validar coherencia de fechas
+    if (form.startDate && form.endDate && new Date(form.startDate) > new Date(form.endDate)) {
+      newErrors.endDate = 'La fecha final no puede ser anterior al inicio.';
+    }
+    
+    return newErrors;
+  }
+
   async function handleSubmit(event) {
     event.preventDefault();
 
-    if (isSubmitting) {
-      return;
-    }
+    if (isSubmitting) return;
 
-    const validationErrors = validateTemporalUnitForm(form);
-
-    if (hasTemporalUnitFormErrors(validationErrors)) {
+    // Ejecutar validación
+    const validationErrors = validateForm();
+    
+    // Si hay errores, se asignan al estado y aborta (aquí moría silenciosamente antes)
+    if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
-      return;
+      return; 
     }
-
-    const payload = {
-      idSchedule: form.idSchedule,
-      name: form.name,
-      startDate: form.startDate,
-      endDate: form.endDate,
-    };
 
     setErrors({});
     setSubmitError('');
     setIsSubmitting(true);
 
     try {
-      const createdTemporalUnit = await crearUnidadTemporal(payload);
-
-      onValidSubmit?.(createdTemporalUnit);
+      await onValidSubmit?.(form);
     } catch (error) {
-      setSubmitError(
-        'No fue posible crear la unidad temporal. Intenta nuevamente.',
-      );
+      console.error('Error interno capturado por el hook:', error); 
+      // Si el error tiene un mensaje (el que lanzamos arriba), lo mostramos. Si no, el default.
+      setSubmitError(error.message || 'No fue posible crear la unidad temporal. Intenta nuevamente.');
     } finally {
       setIsSubmitting(false);
     }

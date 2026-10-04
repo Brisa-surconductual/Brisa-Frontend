@@ -1,10 +1,4 @@
-import {
-  BrowserRouter,
-  Navigate,
-  Route,
-  Routes,
-} from 'react-router-dom';
-
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { ProtectedLayout } from '@/app/layouts/ProtectedLayout/index.js';
 import { RegistrationLayout } from '@/app/layouts/RegistrationLayout/index.js';
 
@@ -38,6 +32,7 @@ import {
   TemporalUnitDetailPage,
   CurrentContentPage,
   TemporalInformationPage,
+  SchedulePanelPage,
 } from '@/features/cronograma/index.js';
 
 import { RequireAuth } from './RequireAuth.jsx';
@@ -227,6 +222,22 @@ export function AppRouter() {
               />
             </Route>
           </Route>
+
+          <Route 
+                path="/app/administrativo/cronograma"
+                element={<ScheduleManagementPage />} 
+          />
+          
+          <Route 
+                path="/app/administrativo/cronograma/:idSchedule/panel" 
+                element={<SchedulePanelPage />}
+           />
+          
+          <Route 
+                path="/app/administrativo/cronograma/:idSchedule/crear-unidad" 
+                element={<CreateTemporalUnitPage />} 
+          />
+          
         </Route>
 
         <Route
