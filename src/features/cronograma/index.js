@@ -23,3 +23,5 @@ export { CurrentContentPage } from './pages/CurrentContentPage/index.js';
 export { TemporalInformationPage } from './pages/TemporalInformationPage/index.js';
 
 export { CreateSchedulePage } from './pages/CreateSchedulePage/index.js';
+
+export { SchedulePanelPage } from './pages/SchedulePanelPage/SchedulePanelPage.jsx';
