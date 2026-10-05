@@ -5,13 +5,8 @@ export function AdministrativePauseList({ pauses, onAnnul }) {
     <div className="grid gap-[var(--space-4)] lg:grid-cols-2">
       {pauses.map((pause) => (
         <AdministrativePauseCard
-          key={pause.id}
-          participantName={pause.participantName}
-          startDate={pause.startDate}
-          endDate={pause.endDate}
-          reason={pause.reason}
-          status={pause.status}
-          canAnnul={pause.canAnnul}
+          key={pause.idPausaAdministrativa} // Llave real del backend
+          pause={pause} // Le pasamos todo el objeto directo
           onAnnul={() => onAnnul?.(pause)}
         />
       ))}
