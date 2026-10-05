@@ -1,13 +1,13 @@
 import { Button } from '@/shared/components/ui/Button/index.js';
 import { SelectField } from '@/shared/components/ui/SelectField/index.js';
 import { TextField } from '@/shared/components/ui/TextField/index.js';
+import {SearchableUserSelect} from '../SearchableUserSelect/SearchableUserSelect'
 
 export function AdministrativePauseForm({
   form,
   errors = {},
   formError = '',
   successMessage = '',
-  participantOptions = [],
   onChange,
   onSubmit,
   onCancel,
@@ -25,24 +25,31 @@ export function AdministrativePauseForm({
           <h2 className="m-0 text-[18px] font-bold text-[var(--text-primary)]">
             Información de la pausa
           </h2>
-
           <p className="mt-[var(--space-1)] mb-0 text-[12px] leading-[1.5] text-[var(--text-muted)]">
-            Completa los datos requeridos para registrar la pausa
-            administrativa.
+            Completa los datos requeridos para registrar la pausa administrativa.
           </p>
         </div>
 
-        <SelectField
-          id="participantId"
-          name="participantId"
-          label="Participante"
-          placeholder="Selecciona un participante"
-          options={participantOptions}
-          value={form.participantId}
-          error={errors.participantId}
-          required
-          onChange={onChange}
-        />
+        {/* AQUÍ REEMPLAZAMOS EL SELECT TRADICIONAL POR EL BUSCADOR DINÁMICO */}
+        <div className="flex flex-col gap-1">
+          <SearchableUserSelect
+            value={form.participantId}
+            onChange={(selectedId) => {
+              // Simulamos el evento para que el hook detecte el cambio del participantId
+              onChange({
+                target: {
+                  name: 'participantId',
+                  value: selectedId
+                }
+              });
+            }}
+          />
+          {errors.participantId && (
+            <p className="m-0 text-[11px] font-semibold text-[var(--danger-text)]">
+              {errors.participantId}
+            </p>
+          )}
+        </div>
 
         <div className="grid grid-cols-1 gap-[var(--space-4)] md:grid-cols-2">
           <TextField
@@ -74,9 +81,7 @@ export function AdministrativePauseForm({
             htmlFor="pauseReason"
           >
             Motivo
-            <span className="text-[var(--danger-text)]" aria-hidden="true">
-              *
-            </span>
+            <span className="text-[var(--danger-text)]" aria-hidden="true">*</span>
           </label>
 
           <textarea
