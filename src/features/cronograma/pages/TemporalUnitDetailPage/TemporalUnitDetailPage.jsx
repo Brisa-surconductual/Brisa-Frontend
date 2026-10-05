@@ -1,59 +1,38 @@
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
-
 import { useState } from 'react';
-
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/app/providers/index.js';
 
 import { AdministrativeHeader } from '@/shared/components/navigation/AdministrativeHeader/index.js';
 import { AdministrativeTabBar } from '@/shared/components/navigation/AdministrativeTabBar/index.js';
-import {
-  ADMINISTRATIVE_TAB,
-  ADMINISTRATIVE_TABS,
-} from '@/shared/data/administrativeTabs.js';
+import { ADMINISTRATIVE_TAB, ADMINISTRATIVE_TABS } from '@/shared/data/administrativeTabs.js';
 
-import { TemporalUnitActions } from '@/features/cronograma/components/TemporalUnitActions/index.js';
-
-import { TEMPORAL_UNIT_STATUS_LABEL } from '@/features/cronograma/types/scheduleTypes.js';
-
-import { formatScheduleDateRange } from '@/features/cronograma/utils/scheduleDateUtils.js';
-
-import { TemporalUnitForm } from '@/features/cronograma/components/TemporalUnitForm/index.js';
-
-import { useEditTemporalUnitForm } from './hooks/useEditTemporalUnitForm.js';
-
-import { ConfirmationDialog } from '@/shared/components/ui/ConfirmationDialog/index.js';
 import { Button } from '@/shared/components/ui/Button/index.js';
+import { TextField } from '@/shared/components/ui/TextField/index.js';
+import { ConfirmationDialog } from '@/shared/components/ui/ConfirmationDialog/index.js';
+import {updateUnitTemporal} from '../../api/unidadTemporal/updateUnitTemporal';
+import {FormAlert} from '../../../../shared/components/ui/FromAlert/FromALert'
 
 export function TemporalUnitDetailPage() {
+  const location = useLocation();
   const navigate = useNavigate();
   const { unitId } = useParams();
-
-  const location = useLocation();
-
-  const unit = location.state?.unit ?? null;
-
-  const [isEditing, setIsEditing] = useState(false);
-
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-
-  function handleValidEditSubmit() {
-    setIsEditing(false);
-  }
-
-  const { form, errors, handleChange, handleSubmit, resetForm } =
-    useEditTemporalUnitForm({
-      unit,
-      onValidSubmit: handleValidEditSubmit,
-    });
-
   const { role, logout } = useAuth();
+  const [formError, setFormError] = useState('');
+  const [unit, setUnit] = useState(location.state?.unit ?? null);
+
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [editForm, setEditForm] = useState({
+    nombre: unit?.nombreUnidadTemporal || '',
+    fecha_inicio: unit?.fechaInicio?.split('T')[0] || '',
+    fecha_fin: unit?.fechaFin?.split('T')[0] || ''
+  });
 
   function handleLogout() {
     logout();
-
-    navigate('/login', {
-      replace: true,
-    });
+    navigate('/login', { replace: true });
   }
 
   function handleTabChange(tabId) {
@@ -61,170 +40,262 @@ export function TemporalUnitDetailPage() {
       navigate('/app/administrativo/cronograma');
       return;
     }
-
     if (tabId === ADMINISTRATIVE_TAB.DASHBOARD) {
       navigate('/app/administrativo');
       return;
     }
-
     navigate(`/app/administrativo?tab=${encodeURIComponent(tabId)}`);
   }
 
   function handleBack() {
-    navigate('/app/administrativo/cronograma');
+    navigate(-1);
   }
 
   function handleAssociateContent() {
-    navigate(
-      `/app/administrativo/cronograma/${encodeURIComponent(unitId)}/contenido`,
-    );
+    navigate(`/app/administrativo/cronograma/${encodeURIComponent(unitId)}/contenido`);
   }
 
-  function handleEdit() {
-    resetForm();
-    setIsEditing(true);
+  function handleEditChange(e) {
+    setEditForm({ ...editForm, [e.target.name]: e.target.value });
+    if (formError) setFormError('');
   }
 
-  function handleCancelEdit() {
-    resetForm();
-    setIsEditing(false);
+  async function handleUpdateSubmit(e) {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setFormError('');
+
+    const payload = {
+      idUnidadTemporal: unit.idUnidadTemporal,
+    };
+
+   
+    if (editForm.nombre) payload.nombre = editForm.nombre;
+    if (editForm.fecha_inicio) payload.fecha_inicio = editForm.fecha_inicio;
+    if (editForm.fecha_fin) payload.fecha_fin = editForm.fecha_fin;
+
+    try {
+      console.log('Enviando actualización al backend:', payload);
+      
+      await updateUnitTemporal(payload);
+      
+      setUnit({
+        ...unit,
+        nombreUnidadTemporal: editForm.nombre || unit.nombreUnidadTemporal,
+        fechaInicio: editForm.fecha_inicio || unit.fechaInicio,
+        fechaFin: editForm.fecha_fin || unit.fechaFin
+      });
+      
+      setIsEditModalOpen(false);
+    } catch (error) {
+      const mensajeDelBack = error.response?.data?.message || 'Ocurrió un error inesperado';
+      setFormError(Array.isArray(mensajeDelBack) ? mensajeDelBack[0] : mensajeDelBack);
+      console.error('Detalle técnico:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
-  function handleDelete() {
+  function handleDeleteClick() {
     setIsDeleteDialogOpen(true);
   }
 
-  function handleCancelDelete() {
+  function handleConfirmDelete() {
+    // Aquí iría tu llamada a la API para eliminar: await eliminarUnidadTemporal(unit.idUnidadTemporal);
+    console.log('Eliminando unidad:', unit.idUnidadTemporal);
     setIsDeleteDialogOpen(false);
+    handleBack(); // Regresar al panel tras eliminar
   }
 
-  function handleConfirmDelete() {
-    setIsDeleteDialogOpen(false);
+  if (!unit) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-[var(--surface-bg)]">
+        <p className="text-[var(--text-muted)] font-medium mb-4">Unidad no encontrada o datos perdidos.</p>
+        <Button onClick={() => navigate('/app/administrativo/cronograma')}>Volver a cronogramas</Button>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-[var(--surface-bg)]">
-      <AdministrativeHeader
-        roleLabel={role ?? 'ADMINISTRATIVO'}
-        onLogout={handleLogout}
-      />
-
+    <div className="min-h-screen bg-[var(--surface-bg)] flex flex-col">
+      <AdministrativeHeader roleLabel={role ?? 'ADMINISTRATIVO'} onLogout={handleLogout} />
+      
       <AdministrativeTabBar
         tabs={ADMINISTRATIVE_TABS}
         activeTabId={ADMINISTRATIVE_TAB.CRONOGRAMA}
         onTabChange={handleTabChange}
       />
 
-      <main>
-        <div className="mx-auto w-full max-w-[1200px] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]">
-          <button
-            type="button"
-            className="mb-[var(--space-5)] text-[13px] font-bold text-[var(--brand-600)]"
-            onClick={handleBack}
-          >
-            ← Volver al cronograma
+      <main className="flex-1 pb-[var(--space-8)]">
+        <div className="mx-auto w-full max-w-[1000px] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]">
+          
+          <button onClick={handleBack} className="mb-[var(--space-5)] text-[13px] font-bold text-[var(--brand-600)] transition-colors hover:text-[var(--brand-700)]">
+            ← Volver al panel del cronograma
           </button>
 
-          <p className="m-0 text-[12px] font-bold tracking-[0.04em] text-[var(--brand-600)] uppercase">
-            Administración
-          </p>
-
-          <h1 className="mt-[var(--space-1)] mb-0 text-[26px] font-extrabold text-[var(--text-primary)] md:text-[30px]">
-            Detalle de unidad temporal
-          </h1>
-
-          {/* FE-M04-10: única entrada a la asociación de contenido (RF-10).
-              Fuera del ternario porque `unit` viene de location.state y es null
-              al entrar por URL directa. */}
-          <div className="mt-[var(--space-4)]">
-            <Button variant="secondary" onClick={handleAssociateContent}>
-              Asociar contenido
-            </Button>
-          </div>
-
-          {unit ? (
-            isEditing ? (
-              <div className="mt-[var(--space-6)]">
-                <TemporalUnitForm
-                  form={form}
-                  errors={errors}
-                  title="Editar unidad temporal"
-                  description="Actualiza los datos de la unidad temporal seleccionada."
-                  submitText="Guardar cambios"
-                  submitLoadingText="Guardando cambios..."
-                  onChange={handleChange}
-                  onSubmit={handleSubmit}
-                  onCancel={handleCancelEdit}
-                />
+          {/* CABEZOTE MINIMALISTA */}
+          <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-5 pb-[var(--space-6)] border-b border-[var(--surface-border)]">
+            <div>
+              <div className="flex items-center gap-3 mb-[var(--space-2)]">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--brand-100)] text-[12px] font-extrabold text-[var(--brand-700)]">
+                  {unit.orden ?? '-'}
+                </span>
+                <p className="m-0 text-[12px] font-bold tracking-[0.04em] text-[var(--text-muted)] uppercase">
+                  Unidad Temporal
+                </p>
               </div>
-            ) : (
-              <section className="mt-[var(--space-6)] rounded-[var(--radius-lg)] border border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-4)] shadow-[var(--shadow-sm)] md:p-[var(--space-5)]">
-                <div className="flex flex-col gap-[var(--space-5)]">
-                  <div>
-                    <div className="flex flex-col gap-[var(--space-2)] sm:flex-row sm:items-center sm:justify-between">
-                      <h2 className="m-0 text-[20px] font-bold text-[var(--text-primary)]">
-                        {unit.name}
-                      </h2>
+              
+              <h1 className="m-0 text-[26px] font-extrabold text-[var(--text-primary)] md:text-[30px]">
+                {unit.nombreUnidadTemporal}
+              </h1>
+              
+              <div className="mt-[var(--space-2)] flex flex-wrap items-center gap-3 text-[13px] text-[var(--text-muted)] font-medium">
+                <span className="bg-white border border-[var(--surface-border)] px-2 py-1 rounded-md">
+                  Vigencia: {unit.fechaInicio?.split('T')[0]} al {unit.fechaFin?.split('T')[0]}
+                </span>
+                <span className={`px-2 py-1 rounded-md font-bold uppercase tracking-wider text-[10px] ${
+                  unit.status === 'ACTIVA' ? 'bg-[var(--brand-50)] text-[var(--brand-700)]' : 
+                  unit.status === 'COMPLETADA' ? 'bg-[var(--success-bg)] text-[var(--success-text)]' : 
+                  'bg-[var(--surface-hover)] text-[var(--text-muted)]'
+                }`}>
+                  {unit.status}
+                </span>
+              </div>
+            </div>
+            
+            {/* BOTONES DE ACCIÓN (Editar y Eliminar) */}
+            <div className="flex w-full sm:w-auto gap-3">
+              <Button variant="secondary" onClick={() => setIsEditModalOpen(true)} className="flex-1 sm:flex-none">
+                 Editar
+              </Button>
+              <Button variant="danger" onClick={handleDeleteClick} className="flex-1 sm:flex-none">
+                Eliminar
+              </Button>
+            </div>
+          </header>
 
-                      <span className="w-fit rounded-[var(--radius-full)] bg-[var(--surface-hover)] px-[var(--space-3)] py-[var(--space-1)] text-[11px] font-bold text-[var(--text-secondary)]">
-                        {TEMPORAL_UNIT_STATUS_LABEL[unit.status] ?? unit.status}
-                      </span>
-                    </div>
+          {/* SECCIÓN DE CONTENIDOS ASOCIADOS */}
+          <section className="mt-[var(--space-8)]">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-[18px] font-extrabold text-[var(--text-primary)] m-0">
+                Contenidos Asociados
+              </h2>
+              <Button variant="secondary" onClick={handleAssociateContent} className="text-[13px]">
+                + Asociar contenido
+              </Button>
+            </div>
+            
+            <div className="rounded-[var(--radius-lg)] border border-dashed border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-8)] text-center shadow-sm">
+              <p className="m-0 text-[14px] text-[var(--text-muted)]">
+                Aún no hay contenidos cargados para esta unidad temporal. Utiliza el botón superior para vincular recursos.
+              </p>
+            </div>
+          </section>
 
-                    <dl className="mt-[var(--space-5)] grid grid-cols-1 gap-[var(--space-4)] md:grid-cols-2">
-                      <div>
-                        <dt className="text-[12px] font-semibold text-[var(--text-muted)]">
-                          Fechas
-                        </dt>
-
-                        <dd className="mt-[var(--space-1)] ml-0 text-[14px] text-[var(--text-primary)]">
-                          {formatScheduleDateRange(
-                            unit.startDate,
-                            unit.endDate,
-                          )}
-                        </dd>
-                      </div>
-
-                      <div>
-                        <dt className="text-[12px] font-semibold text-[var(--text-muted)]">
-                          Actividades
-                        </dt>
-
-                        <dd className="mt-[var(--space-1)] ml-0 text-[14px] text-[var(--text-primary)]">
-                          {unit.activityCount ?? 0}
-                        </dd>
-                      </div>
-                    </dl>
-                  </div>
-
-                  <TemporalUnitActions
-                    status={unit.status}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                  />
-                </div>
-              </section>
-            )
-          ) : (
-            <p className="mt-[var(--space-2)] mb-0 text-[13px] text-[var(--text-muted)]">
-              Unidad seleccionada: {unitId}
-            </p>
-          )}
         </div>
       </main>
+
+      {/* MODAL DE EDICIÓN MINIMALISTA */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-[var(--radius-xl)] shadow-lg w-full max-w-[500px] overflow-hidden animate-fade-in">
+            <div className="px-6 py-5 border-b border-[var(--surface-border)] flex justify-between items-center">
+              <h3 className="m-0 text-[18px] font-bold text-[var(--text-primary)]">Modificar Unidad</h3>
+              <button onClick={() => setIsEditModalOpen(false)} className="text-[var(--text-muted)] hover:text-black font-bold">✕</button>
+            </div>
+            
+            <form onSubmit={handleUpdateSubmit} className="p-6 flex flex-col gap-5">
+              <TextField 
+                label="Nombre de la unidad" 
+                name="nombre" 
+                value={editForm.nombre} 
+                onChange={handleEditChange} 
+                required 
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <TextField 
+                  label="Fecha inicio" 
+                  name="fecha_inicio" 
+                  type="date" 
+                  value={editForm.fecha_inicio} 
+                  onChange={handleEditChange} 
+                  required 
+                />
+                <TextField 
+                  label="Fecha fin" 
+                  name="fecha_fin" 
+                  type="date" 
+                  value={editForm.fecha_fin} 
+                  onChange={handleEditChange} 
+                  required 
+                />
+              </div>
+              
+              <div className="mt-2 flex justify-end gap-3 pt-2">
+                <Button type="button" variant="secondary" onClick={() => setIsEditModalOpen(false)}>Cancelar</Button>
+                <Button type="submit" loading={isSubmitting}>Guardar cambios</Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {isEditModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-[var(--radius-xl)] shadow-lg w-full max-w-[500px] overflow-hidden animate-fade-in">
+            <div className="px-6 py-5 border-b border-[var(--surface-border)] flex justify-between items-center">
+              <h3 className="m-0 text-[18px] font-bold text-[var(--text-primary)]">Modificar Unidad</h3>
+              <button onClick={() => setIsEditModalOpen(false)} className="text-[var(--text-muted)] hover:text-black font-bold">✕</button>
+            </div>
+            
+            <form onSubmit={handleUpdateSubmit} className="p-6 flex flex-col gap-4">
+              
+              {/* CAJITA ROJA DE ALERTA CONSUMIENDO EL ERROR DEL BACKEND */}
+              <FormAlert message={formError} />
+
+              <TextField 
+                label="Nombre de la unidad" 
+                name="nombre" 
+                value={editForm.nombre} 
+                onChange={handleEditChange} 
+                required 
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <TextField 
+                  label="Fecha inicio" 
+                  name="fecha_inicio" 
+                  type="date" 
+                  value={editForm.fecha_inicio} 
+                  onChange={handleEditChange} 
+                  required 
+                />
+                <TextField 
+                  label="Fecha fin" 
+                  name="fecha_fin" 
+                  type="date" 
+                  value={editForm.fecha_fin} 
+                  onChange={handleEditChange} 
+                  required 
+                />
+              </div>
+              
+              <div className="mt-2 flex justify-end gap-3 pt-2">
+                <Button type="button" variant="secondary" onClick={() => setIsEditModalOpen(false)}>Cancelar</Button>
+                <Button type="submit" loading={isSubmitting}>Guardar cambios</Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <ConfirmationDialog
         open={isDeleteDialogOpen}
         title="Eliminar unidad temporal"
-        description={
-          unit
-            ? `¿Estás seguro de eliminar "${unit.name}"? Esta acción requiere confirmación.`
-            : '¿Estás seguro de eliminar esta unidad temporal?'
-        }
-        confirmText="Eliminar"
+        description={`¿Estás seguro de eliminar la unidad "${unit.nombreUnidadTemporal}"? Esta acción requiere confirmación y podría afectar los contenidos asociados.`}
+        confirmText="Sí, eliminar"
         cancelText="Cancelar"
         onConfirm={handleConfirmDelete}
-        onCancel={handleCancelDelete}
+        onCancel={() => setIsDeleteDialogOpen(false)}
       />
     </div>
   );
