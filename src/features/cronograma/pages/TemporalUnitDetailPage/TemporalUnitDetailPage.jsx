@@ -25,7 +25,7 @@ export function TemporalUnitDetailPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
   const [actionError, setActionError] = useState(''); 
-  
+  const [successMessage, setSuccessMessage] = useState('');
   const [editForm, setEditForm] = useState({
     nombre: unit?.nombreUnidadTemporal || '',
     fecha_inicio: unit?.fechaInicio?.split('T')[0] || '',
@@ -111,7 +111,10 @@ export function TemporalUnitDetailPage() {
       await deleteUnitTemporal(unit.idUnidadTemporal);
       
       setIsDeleteDialogOpen(false);
-      handleBack(); 
+      setSuccessMessage('Unidad Temporal eliminada correctamente.');
+      setTimeout(() => {
+        handleBack();
+      }, 1500);
     } catch (error) {
       console.error('Detalle técnico de eliminación:', error);
       
@@ -159,9 +162,9 @@ export function TemporalUnitDetailPage() {
           <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-5 pb-[var(--space-6)] border-b border-[var(--surface-border)]">
             <div className="w-full">
               
-              {/* CAJITA ROJA SI OCURRE UN ERROR DE ELIMINACIÓN O ACCIÓN */}
-              <div className="mb-4">
-                <FormAlert message={actionError} />
+              <div className="mb-4 flex flex-col gap-2">
+                <FormAlert message={actionError} type="error" />
+                <FormAlert message={successMessage} type="success" />
               </div>
 
               <div className="flex items-center gap-3 mb-[var(--space-2)]">
