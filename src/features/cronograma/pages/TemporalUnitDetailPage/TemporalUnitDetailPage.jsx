@@ -11,6 +11,7 @@ import { TextField } from '@/shared/components/ui/TextField/index.js';
 import { ConfirmationDialog } from '@/shared/components/ui/ConfirmationDialog/index.js';
 import {updateUnitTemporal} from '../../api/unidadTemporal/updateUnitTemporal';
 import {FormAlert} from '../../../../shared/components/ui/FromAlert/FromALert'
+import {deleteUnitTemporal} from '../../api/unidadTemporal/delelteUnitTemporal';
 
 export function TemporalUnitDetailPage() {
   const location = useLocation();
@@ -19,11 +20,12 @@ export function TemporalUnitDetailPage() {
   const { role, logout } = useAuth();
   const [formError, setFormError] = useState('');
   const [unit, setUnit] = useState(location.state?.unit ?? null);
-
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const [deleteError, setDeleteError] = useState('');
+  const [actionError, setActionError] = useState(''); 
+  
   const [editForm, setEditForm] = useState({
     nombre: unit?.nombreUnidadTemporal || '',
     fecha_inicio: unit?.fechaInicio?.split('T')[0] || '',
@@ -100,11 +102,32 @@ export function TemporalUnitDetailPage() {
     setIsDeleteDialogOpen(true);
   }
 
-  function handleConfirmDelete() {
-    // Aquí iría tu llamada a la API para eliminar: await eliminarUnidadTemporal(unit.idUnidadTemporal);
-    console.log('Eliminando unidad:', unit.idUnidadTemporal);
-    setIsDeleteDialogOpen(false);
-    handleBack(); // Regresar al panel tras eliminar
+  async function handleConfirmDelete() {
+    setActionError(''); // Limpiamos errores previos
+    
+    try {
+      console.log('Eliminando unidad:', unit.idUnidadTemporal);
+      
+      await deleteUnitTemporal(unit.idUnidadTemporal);
+      
+      setIsDeleteDialogOpen(false);
+      handleBack(); 
+    } catch (error) {
+      console.error('Detalle técnico de eliminación:', error);
+      
+      const data = error.response?.data;
+      let mensajeDelBack = 'No fue posible eliminar la unidad temporal.';
+      
+      if (data?.message) {
+        mensajeDelBack = Array.isArray(data.message) ? data.message[0] : data.message;
+      } else if (error.message) {
+        mensajeDelBack = error.message;
+      }
+      
+      setIsDeleteDialogOpen(false);
+      
+      setActionError(mensajeDelBack);
+    }
   }
 
   if (!unit) {
@@ -133,9 +156,14 @@ export function TemporalUnitDetailPage() {
             ← Volver al panel del cronograma
           </button>
 
-          {/* CABEZOTE MINIMALISTA */}
           <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-5 pb-[var(--space-6)] border-b border-[var(--surface-border)]">
-            <div>
+            <div className="w-full">
+              
+              {/* CAJITA ROJA SI OCURRE UN ERROR DE ELIMINACIÓN O ACCIÓN */}
+              <div className="mb-4">
+                <FormAlert message={actionError} />
+              </div>
+
               <div className="flex items-center gap-3 mb-[var(--space-2)]">
                 <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--brand-100)] text-[12px] font-extrabold text-[var(--brand-700)]">
                   {unit.orden ?? '-'}
@@ -163,10 +191,9 @@ export function TemporalUnitDetailPage() {
               </div>
             </div>
             
-            {/* BOTONES DE ACCIÓN (Editar y Eliminar) */}
-            <div className="flex w-full sm:w-auto gap-3">
-              <Button variant="secondary" onClick={() => setIsEditModalOpen(true)} className="flex-1 sm:flex-none">
-                 Editar
+            <div className="flex w-full sm:w-auto gap-3 shrink-0">
+              <Button variant="secondary" onClick={() => { setFormError(''); setIsEditModalOpen(true); }} className="flex-1 sm:flex-none">
+                Editar
               </Button>
               <Button variant="danger" onClick={handleDeleteClick} className="flex-1 sm:flex-none">
                 Eliminar
@@ -174,7 +201,6 @@ export function TemporalUnitDetailPage() {
             </div>
           </header>
 
-          {/* SECCIÓN DE CONTENIDOS ASOCIADOS */}
           <section className="mt-[var(--space-8)]">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-[18px] font-extrabold text-[var(--text-primary)] m-0">
@@ -195,7 +221,6 @@ export function TemporalUnitDetailPage() {
         </div>
       </main>
 
-      {/* MODAL DE EDICIÓN MINIMALISTA */}
       {isEditModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="bg-white rounded-[var(--radius-xl)] shadow-lg w-full max-w-[500px] overflow-hidden animate-fade-in">
@@ -250,7 +275,6 @@ export function TemporalUnitDetailPage() {
             
             <form onSubmit={handleUpdateSubmit} className="p-6 flex flex-col gap-4">
               
-              {/* CAJITA ROJA DE ALERTA CONSUMIENDO EL ERROR DEL BACKEND */}
               <FormAlert message={formError} />
 
               <TextField 
