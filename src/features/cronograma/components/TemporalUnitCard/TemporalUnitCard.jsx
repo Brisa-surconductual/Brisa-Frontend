@@ -1,88 +1,57 @@
-import {
-  TEMPORAL_UNIT_STATUS,
-  TEMPORAL_UNIT_STATUS_LABEL,
-} from '@/features/cronograma/types/scheduleTypes.js';
-import {
-  formatScheduleDateRange,
-} from '@/features/cronograma/utils/scheduleDateUtils.js';
+export function TemporalUnitCard({ unit, onViewDetails }) {
+  const {
+    nombreUnidadTemporal,
+    orden,
+    fechaInicio,
+    fechaFin,
+    status,
+    esUtilizadoPorUsuario
+  } = unit;
 
-const STATUS_CLASS = Object.freeze({
-  [TEMPORAL_UNIT_STATUS.COMPLETADA]:
-    'bg-[var(--success-bg)] text-[var(--success-text)]',
+  const statusStyles = {
+    'ACTIVA': 'bg-[var(--brand-50)] text-[var(--brand-700)] border-[var(--brand-200)]',
+    'COMPLETADA': 'bg-[var(--success-bg)] text-[var(--success-text)] border-[var(--success-bg)]',
+    'BLOQUEADA': 'bg-[var(--surface-hover)] text-[var(--text-muted)] border-[var(--surface-border)]',
+    'POR_DEFINIR': 'bg-[var(--warning-bg)] text-[var(--warning-text)] border-transparent'
+  };
 
-  [TEMPORAL_UNIT_STATUS.ACTIVA]:
-    'bg-[var(--brand-100)] text-[var(--brand-700)]',
-
-  [TEMPORAL_UNIT_STATUS.BLOQUEADA]:
-    'bg-[var(--neutral-100)] text-[var(--text-muted)]',
-
-  [TEMPORAL_UNIT_STATUS.POR_DEFINIR]:
-    'bg-[var(--warning-bg)] text-[var(--warning-text)]',
-});
-
-export function TemporalUnitCard({
-  name,
-  status,
-  startDate,
-  endDate,
-  activityCount,
-  onViewDetails,
-}) {
-  const statusLabel =
-    TEMPORAL_UNIT_STATUS_LABEL[status] ?? status;
-
-  const dateRange = formatScheduleDateRange(
-    startDate,
-    endDate,
-  );
+  const badgeStyle = statusStyles[status] || statusStyles['POR_DEFINIR'];
 
   return (
-    <article className="rounded-[var(--radius-lg)] border border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-4)] shadow-[var(--shadow-sm)] md:p-[var(--space-5)]">
-      <div className="flex flex-wrap items-start justify-between gap-[var(--space-3)]">
-        <h2 className="m-0 text-[16px] font-bold text-[var(--text-primary)] md:text-[18px]">
-          {name}
-        </h2>
-
-        <span
-          className={`rounded-[var(--radius-full)] px-[var(--space-3)] py-[var(--space-1)] text-[10px] font-extrabold tracking-[0.03em] uppercase ${
-            STATUS_CLASS[status] ??
-            'bg-[var(--neutral-100)] text-[var(--text-muted)]'
-          }`}
-        >
-          {statusLabel}
-        </span>
+    <article className="group flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-[var(--radius-lg)] border border-[var(--surface-border)] bg-white p-[var(--space-4)] transition-all duration-200 hover:border-[var(--brand-300)] hover:shadow-sm">
+      
+      <div className="flex items-start sm:items-center gap-4">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--surface-bg)] text-[14px] font-extrabold text-[var(--text-secondary)]">
+          {orden ?? '-'}
+        </div>
+        
+        <div>
+          <div className="flex flex-wrap items-center gap-3">
+            <h3 className="m-0 text-[15px] font-bold text-[var(--text-primary)]">
+              {nombreUnidadTemporal}
+            </h3>
+            <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wider uppercase border ${badgeStyle}`}>
+              {status}
+            </span>
+          </div>
+          
+          <div className="mt-1 flex flex-wrap items-center gap-4 text-[12px] font-medium text-[var(--text-muted)]">
+            <span> {fechaInicio?.split('T')[0]} — {fechaFin?.split('T')[0]}</span>
+            {esUtilizadoPorUsuario && (
+              <span className="text-[var(--brand-600)] font-bold">
+                • En uso
+              </span>
+            )}
+          </div>
+        </div>
       </div>
 
-      <dl className="mt-[var(--space-4)] grid gap-[var(--space-3)] sm:grid-cols-2">
-        <div>
-          <dt className="text-[11px] font-semibold text-[var(--text-muted)]">
-            Fechas
-          </dt>
-
-          <dd className="mt-[var(--space-1)] ml-0 text-[13px] font-medium text-[var(--text-primary)]">
-            {dateRange}
-          </dd>
-        </div>
-
-        <div>
-          <dt className="text-[11px] font-semibold text-[var(--text-muted)]">
-            Actividades
-          </dt>
-
-          <dd className="mt-[var(--space-1)] ml-0 text-[13px] font-medium text-[var(--text-primary)]">
-            {activityCount}
-          </dd>
-        </div>
-      </dl>
-        <div className="mt-[var(--space-4)] flex justify-end">
-          <button
-            type="button"
-            className="rounded-[var(--radius-md)] border border-[var(--brand-500)] bg-transparent px-[var(--space-3)] py-[var(--space-2)] text-[12px] font-bold text-[var(--brand-600)] transition-[background-color,color] duration-120 hover:bg-[var(--brand-50)] motion-reduce:transition-none"
-            onClick={onViewDetails}
-          >
-            Ver detalle
-          </button>
-        </div>
+      <button
+        onClick={onViewDetails}
+        className="shrink-0 rounded-[var(--radius-md)] px-4 py-2 text-[12px] font-bold text-[var(--brand-600)] transition-colors hover:bg-[var(--brand-50)]"
+      >
+        Ver detalles →
+      </button>
     </article>
   );
 }

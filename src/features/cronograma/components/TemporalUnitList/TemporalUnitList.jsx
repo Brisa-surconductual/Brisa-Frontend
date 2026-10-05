@@ -2,15 +2,11 @@ import { TemporalUnitCard } from '@/features/cronograma/components/TemporalUnitC
 
 export function TemporalUnitList({ units = [], onViewDetails }) {
   return (
-    <div className="grid gap-[var(--space-4)]">
+    <div className="flex flex-col gap-[var(--space-3)]">
       {units.map((unit) => (
         <TemporalUnitCard
-          key={unit.id}
-          name={unit.name}
-          status={unit.status}
-          startDate={unit.startDate}
-          endDate={unit.endDate}
-          activityCount={unit.activityCount}
+          key={unit.idUnidadTemporal}
+          unit={unit}
           onViewDetails={() => onViewDetails?.(unit)}
         />
       ))}
