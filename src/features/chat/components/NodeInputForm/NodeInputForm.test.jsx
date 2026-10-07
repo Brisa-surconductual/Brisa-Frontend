@@ -61,6 +61,22 @@ describe('NodeInputForm', () => {
     expect(html).not.toContain('Continuar');
   });
 
+  it('SELECCION_MULTIPLE pinta casillas, ayuda y "Continuar"', () => {
+    const html = render({
+      nodo: pregunta({
+        tipo_entrada: TIPO_ENTRADA.SELECCION_MULTIPLE,
+        opciones: [{ valor: 'a', etiqueta: 'Calma' }],
+        min_selecciones: 1,
+        max_selecciones: 2,
+      }),
+    });
+    expect(html).toContain('role="checkbox"');
+    expect(html).toContain('aria-checked="false"');
+    expect(html).toContain('Elige entre 1 y 2');
+    expect(html).toContain('Calma');
+    expect(html).toContain('Continuar');
+  });
+
   it('un tipo no registrado no pinta nada', () => {
     expect(render({ nodo: pregunta({ tipo_entrada: 'constructor' }) })).toBe(
       '',

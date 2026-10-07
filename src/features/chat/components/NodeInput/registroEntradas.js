@@ -1,6 +1,8 @@
 import { TIPO_ENTRADA } from '../../types/index.js';
 import { BooleanoInput } from './BooleanoInput.jsx';
 import { booleano } from './booleano.js';
+import { SeleccionMultipleInput } from './SeleccionMultipleInput.jsx';
+import { seleccionMultiple } from './seleccionMultiple.js';
 import { SeleccionUnicaInput } from './SeleccionUnicaInput.jsx';
 import { seleccionUnica } from './seleccionUnica.js';
 
@@ -14,6 +16,10 @@ export const REGISTRO_ENTRADAS = Object.freeze({
     Componente: SeleccionUnicaInput,
     ...seleccionUnica,
     envioInmediato: true,
+  }),
+  [TIPO_ENTRADA.SELECCION_MULTIPLE]: Object.freeze({
+    Componente: SeleccionMultipleInput,
+    ...seleccionMultiple,
   }),
   [TIPO_ENTRADA.BOOLEANO]: Object.freeze({
     Componente: BooleanoInput,
