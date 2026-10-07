@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/app/providers/index.js';
 
@@ -13,17 +13,46 @@ import {updateUnitTemporal} from '../../api/unidadTemporal/updateUnitTemporal';
 import {FormAlert} from '../../../../shared/components/ui/FromAlert/FromALert'
 import {deleteUnitTemporal} from '../../api/unidadTemporal/delelteUnitTemporal';
 
+import { ContentRow } from '@/features/cronograma/components/ContentRow/index.js';
+import { obtenerContenidosUnidadTemporal } from '@/features/cronograma/api/contenidoUnidadTemporal/obtenerContenidosUnidadTemporal.jsx';
+import { SCHEDULED_CONTENT_STATUS } from '@/features/cronograma/types/contentTypes.js';
+
+function getScheduledContentStatus(
+  availableFrom,
+  availableUntil,
+) {
+  const now = Date.now();
+  const start = new Date(availableFrom).getTime();
+  const end = new Date(availableUntil).getTime();
+
+  if (now < start) {
+    return SCHEDULED_CONTENT_STATUS.PROGRAMADO;
+  }
+
+  if (now < end) {
+    return SCHEDULED_CONTENT_STATUS.ACTIVO;
+  }
+
+  return SCHEDULED_CONTENT_STATUS.COMPLETADO;
+}
+
+function formatAvailability(value) {
+  if (!value) {
+    return '—';
+  }
+
+  return new Date(value).toLocaleString();
+}
 export function TemporalUnitDetailPage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { unitId } = useParams();
+  const { scheduleId, unitId } = useParams();
   const { role, logout } = useAuth();
   const [formError, setFormError] = useState('');
   const [unit, setUnit] = useState(location.state?.unit ?? null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [deleteError, setDeleteError] = useState('');
   const [actionError, setActionError] = useState(''); 
   const [successMessage, setSuccessMessage] = useState('');
   const [editForm, setEditForm] = useState({
@@ -31,6 +60,36 @@ export function TemporalUnitDetailPage() {
     fecha_inicio: unit?.fechaInicio?.split('T')[0] || '',
     fecha_fin: unit?.fechaFin?.split('T')[0] || ''
   });
+
+  const [associatedContents, setAssociatedContents] = useState([]);
+  const [isLoadingContents, setIsLoadingContents] = useState(true);
+  const [contentsError, setContentsError] = useState('');
+
+  useEffect(() => {
+    async function loadAssociatedContents() {
+      setIsLoadingContents(true);
+      setContentsError('');
+
+      try {
+        const data = await obtenerContenidosUnidadTemporal({
+          scheduleId,
+          temporalUnitId: unitId,
+        });
+
+        setAssociatedContents(data.contenidos ?? []);
+      } catch {
+        setContentsError(
+          'No fue posible cargar los contenidos asociados a esta unidad.',
+        );
+      } finally {
+        setIsLoadingContents(false);
+      }
+    }
+
+    if (scheduleId && unitId) {
+      loadAssociatedContents();
+    }
+  }, [scheduleId, unitId]);
 
   function handleLogout() {
     logout();
@@ -54,7 +113,12 @@ export function TemporalUnitDetailPage() {
   }
 
   function handleAssociateContent() {
-    navigate(`/app/administrativo/cronograma/${encodeURIComponent(unitId)}/contenido`);
+    navigate(
+      `/app/administrativo/cronograma/${encodeURIComponent(scheduleId)}/unidades/${encodeURIComponent(unitId)}/contenido`,
+      {
+        state: { unit },
+      },
+    );
   }
 
   function handleEditChange(e) {
@@ -214,11 +278,45 @@ export function TemporalUnitDetailPage() {
               </Button>
             </div>
             
-            <div className="rounded-[var(--radius-lg)] border border-dashed border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-8)] text-center shadow-sm">
-              <p className="m-0 text-[14px] text-[var(--text-muted)]">
-                Aún no hay contenidos cargados para esta unidad temporal. Utiliza el botón superior para vincular recursos.
+            {contentsError ? (
+              <p
+                className="text-[13px] font-semibold text-[var(--danger)]"
+                role="alert"
+              >
+                {contentsError}
               </p>
-            </div>
+            ) : isLoadingContents ? (
+              <p className="text-[14px] text-[var(--text-muted)]">
+                Cargando contenidos asociados...
+              </p>
+            ) : associatedContents.length > 0 ? (
+              <ul className="m-0 grid list-none gap-[var(--space-2)] p-0">
+                {associatedContents.map((content) => (
+                  <li key={content.idContenidoCronograma}>
+                    <ContentRow
+                      order={content.ordenContenido}
+                      title={content.nombreContenido}
+                      contentType={content.tipo}
+                      status={getScheduledContentStatus(
+                        content.fechaInicioDisponibilidad,
+                        content.fechaFinDisponibilidad,
+                      )}
+                      subtitle={`${formatAvailability(
+                        content.fechaInicioDisponibilidad,
+                      )} → ${formatAvailability(
+                        content.fechaFinDisponibilidad,
+                      )}`}
+                    />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="rounded-[var(--radius-lg)] border border-dashed border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-8)] text-center shadow-sm">
+                <p className="m-0 text-[14px] text-[var(--text-muted)]">
+                  Aún no hay contenidos asociados a esta unidad temporal.
+                </p>
+              </div>
+)}
           </section>
 
         </div>

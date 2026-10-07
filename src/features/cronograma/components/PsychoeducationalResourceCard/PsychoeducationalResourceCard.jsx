@@ -9,6 +9,10 @@ export function PsychoeducationalResourceCard({
   resource,
   destinationModules = [],
   canManage = false,
+  canMoveUp = false,
+  canMoveDown = false,
+  onMoveUp,
+  onMoveDown,
   onEdit,
   onDelete,
 }) {
@@ -88,6 +92,25 @@ export function PsychoeducationalResourceCard({
       </div>
 
       <div className="mt-[var(--space-5)] flex flex-wrap justify-end gap-[var(--space-3)]">
+
+        <Button
+          variant="secondary"
+          size="small"
+          disabled={!canMoveUp}
+          onClick={() => onMoveUp?.(resource)}
+        >
+          Subir
+        </Button>
+
+        <Button
+          variant="secondary"
+          size="small"
+          disabled={!canMoveDown}
+          onClick={() => onMoveDown?.(resource)}
+        >
+          Bajar
+        </Button>
+
         <Button
           variant="secondary"
           size="small"

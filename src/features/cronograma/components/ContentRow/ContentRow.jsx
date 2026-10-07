@@ -1,6 +1,7 @@
 import {
   CONTENT_TYPE_LABEL,
   CONTENT_TYPE_TONE,
+  PSYCHOEDUCATIONAL_CONTENT_TYPE_LABEL,
   SCHEDULED_CONTENT_STATUS_LABEL,
   SCHEDULED_CONTENT_STATUS_TONE,
 } from '@/features/cronograma/types/contentTypes.js';
@@ -37,7 +38,10 @@ export function ContentRow({
   actions,
   onSelect,
 }) {
-  const typeLabel = CONTENT_TYPE_LABEL[contentType] ?? 'Por definir';
+  const typeLabel =
+    PSYCHOEDUCATIONAL_CONTENT_TYPE_LABEL[contentType] ??
+    CONTENT_TYPE_LABEL[contentType] ??
+    'Por definir';
   const typeTone = CONTENT_TYPE_TONE[contentType] ?? 'neutral';
 
   return (

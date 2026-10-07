@@ -4,6 +4,9 @@ export function PsychoeducationalResourceList({
   resources,
   destinationModules = [],
   canManage = false,
+  canReorder = false,
+  onMoveUp,
+  onMoveDown,
   onEdit,
   onDelete,
 }) {
@@ -32,12 +35,19 @@ export function PsychoeducationalResourceList({
       className="grid gap-[var(--space-4)]"
       aria-label="Recursos del contenido psicoeducativo"
     >
-      {orderedResources.map((resource) => (
+      {orderedResources.map((resource, index) => (
         <PsychoeducationalResourceCard
           key={resource.id}
           resource={resource}
           destinationModules={destinationModules}
           canManage={canManage}
+          canMoveUp={canReorder && index > 0}
+          canMoveDown={
+            canReorder &&
+            index < orderedResources.length - 1
+          }
+          onMoveUp={onMoveUp}
+          onMoveDown={onMoveDown}
           onEdit={onEdit}
           onDelete={onDelete}
         />

@@ -5,22 +5,16 @@ import {
   validateAssociateContentForm,
 } from '../utils/associateContentFormValidation.js';
 
-/**
- * La unidad destino llega precargada desde el parámetro de ruta, pero queda
- * editable: el brief la pide como campo requerido del formulario.
- *
- * `scheduledContent` es lo ya programado, necesario para comprobar que el orden
- * (HU-CR-04 / RF-12) no esté ocupado dentro de la unidad destino.
- */
+
 export function useAssociateContentForm({
   initialTemporalUnitId = '',
-  scheduledContent = [],
   onValidSubmit,
 } = {}) {
   const [form, setForm] = useState({
     contentId: '',
     temporalUnitId: initialTemporalUnitId,
-    order: '',
+    availableFrom: '',
+    availableUntil: '',
   });
 
   const [errors, setErrors] = useState({});
@@ -34,9 +28,10 @@ export function useAssociateContentForm({
     // depende de la unidad destino (la unicidad es por unidad), así que
     // cambiar de unidad también invalida un error de orden que ya no aplica.
     setErrors((currentErrors) => {
-      const staleKeys = [name, name === 'temporalUnitId' ? 'order' : ''].filter(
-        (key) => key && currentErrors[key],
-      );
+      const staleKeys = [
+        name,
+        name === 'availableFrom' ? 'availableUntil' : '',
+      ].filter((key) => key && currentErrors[key]);
 
       if (staleKeys.length === 0) {
         return currentErrors;
@@ -53,10 +48,8 @@ export function useAssociateContentForm({
   function handleSubmit(event) {
     event.preventDefault();
 
-    const validationErrors = validateAssociateContentForm(
-      form,
-      scheduledContent,
-    );
+    const validationErrors =
+      validateAssociateContentForm(form);
 
     if (hasAssociateContentFormErrors(validationErrors)) {
       setErrors(validationErrors);
@@ -68,8 +61,8 @@ export function useAssociateContentForm({
     onValidSubmit?.({
       contentId: form.contentId,
       temporalUnitId: form.temporalUnitId,
-      // El input guarda texto; la página recibe ya el número que va al estado.
-      order: Number(form.order),
+      availableFrom: form.availableFrom,
+      availableUntil: form.availableUntil,
     });
   }
 
@@ -79,13 +72,14 @@ export function useAssociateContentForm({
    * sobre la misma unidad sin arrastrar un valor que ya daría error. La unidad
    * destino se conserva a propósito.
    */
-  function clearContentAndOrder() {
+  function clearAssociationForm() {
     setForm((currentForm) => ({
       ...currentForm,
       contentId: '',
-      order: '',
+      availableFrom: '',
+      availableUntil: '',
     }));
   }
 
-  return { form, errors, handleChange, handleSubmit, clearContentAndOrder };
+  return { form, errors, handleChange, handleSubmit, clearAssociationForm };
 }

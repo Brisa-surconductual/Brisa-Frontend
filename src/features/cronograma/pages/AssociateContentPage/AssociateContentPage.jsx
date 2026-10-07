@@ -1,6 +1,5 @@
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-
-import { useState } from 'react';
 
 import { useAuth } from '@/app/providers/index.js';
 
@@ -16,8 +15,6 @@ import { ScheduledContentAvailabilityForm } from '@/features/cronograma/componen
 import { ContentRow } from '@/features/cronograma/components/ContentRow/index.js';
 import { EmptyScheduleState } from '@/features/cronograma/components/EmptyScheduleState/index.js';
 
-import { CONTENT_TYPE_LABEL } from '@/features/cronograma/types/contentTypes.js';
-
 import { useAssociateContentForm } from './hooks/useAssociateContentForm.js';
 import { useScheduledContentAvailabilityForm } from './hooks/useScheduledContentAvailabilityForm.js';
 
@@ -25,76 +22,282 @@ import { Button } from '@/shared/components/ui/Button/index.js';
 import { ConfirmationDialog } from '@/shared/components/ui/ConfirmationDialog/index.js';
 
 import { canModifyScheduledContent } from '@/features/cronograma/utils/scheduledContentPermissions.js';
-import { canModifyTemporalUnit } from '@/features/cronograma/utils/temporalUnitPermissions.js';
+
+import { obtenerCatalogoContenidos } from '@/features/cronograma/api/contenido/obtenerCatalogoContenidos.jsx';
+import { obtenerContenidosUnidadTemporal } from '@/features/cronograma/api/contenidoUnidadTemporal/obtenerContenidosUnidadTemporal.jsx';
+import { getUnitTemporalByShulde } from '@/features/cronograma/api/unidadTemporal/getUnitTemporalByShulde.jsx';
+
+import {
+  PSYCHOEDUCATIONAL_CONTENT_TYPE_LABEL,
+  SCHEDULED_CONTENT_STATUS,
+} from '@/features/cronograma/types/contentTypes.js';
+
+import { asociarContenidoUnidadTemporal } from '@/features/cronograma/api/contenidoUnidadTemporal/asociarContenidoUnidadTemporal.jsx';
+import { actualizarDisponibilidadContenido } from '@/features/cronograma/api/contenidoUnidadTemporal/actualizarDisponibilidadContenido.jsx';
+import { eliminarAsociacionContenidoUnidadTemporal } from '@/features/cronograma/api/contenidoUnidadTemporal/eliminarAsociacionContenidoUnidadTemporal.jsx';
 
 const EMPTY_CONTENT_CATALOG = Object.freeze([]);
 const EMPTY_TEMPORAL_UNITS = Object.freeze([]);
 const EMPTY_SCHEDULED_CONTENT = Object.freeze([]);
-const CONTENT_LIST_HEADING_ID = 'associate-content-list-heading';
-export function AssociateContentPage({
-  contentCatalog = EMPTY_CONTENT_CATALOG,
-  temporalUnits = EMPTY_TEMPORAL_UNITS,
-  scheduledContent = EMPTY_SCHEDULED_CONTENT,
-  onAssociateContent,
-  onUpdateScheduledContentAvailability,
-  onDeleteScheduledContentAssociation,
-} = {}) {
+function getTemporalUnitStatus(unit) {
+  const now = Date.now();
+  const start = new Date(unit.fechaInicio).getTime();
+  const end = new Date(unit.fechaFin).getTime();
+
+  if (!Number.isFinite(start) || !Number.isFinite(end)) {
+    return 'POR_DEFINIR';
+  }
+
+  if (now < start) {
+    return 'BLOQUEADA';
+  }
+
+  if (now > end) {
+    return 'COMPLETADA';
+  }
+
+  return 'ACTIVA';
+}
+
+function getScheduledContentStatus(
+  availableFrom,
+  availableUntil,
+) {
+  const now = Date.now();
+  const start = new Date(availableFrom).getTime();
+  const end = new Date(availableUntil).getTime();
+
+  if (now < start) {
+    return SCHEDULED_CONTENT_STATUS.PROGRAMADO;
+  }
+
+  if (now < end) {
+    return SCHEDULED_CONTENT_STATUS.ACTIVO;
+  }
+
+  return SCHEDULED_CONTENT_STATUS.COMPLETADO;
+}
+
+function toDateTimeLocal(value) {
+  if (!value) {
+    return '';
+  }
+
+  const date = new Date(value);
+
+  const pad = (number) =>
+    String(number).padStart(2, '0');
+
+  return `${date.getFullYear()}-${pad(
+    date.getMonth() + 1,
+  )}-${pad(date.getDate())}T${pad(
+    date.getHours(),
+  )}:${pad(date.getMinutes())}`;
+}
+
+function mapScheduledContents(contents, unitId) {
+  return contents.map((content) => ({
+    id: content.idContenidoCronograma,
+    contentId: content.idContenido,
+    temporalUnitId: unitId,
+    order: content.ordenContenido,
+    availableFrom: toDateTimeLocal(
+      content.fechaInicioDisponibilidad,
+    ),
+    availableUntil: toDateTimeLocal(
+      content.fechaFinDisponibilidad,
+    ),
+    status: getScheduledContentStatus(
+      content.fechaInicioDisponibilidad,
+      content.fechaFinDisponibilidad,
+    ),
+  }));
+}
+const CONTENT_LIST_HEADING_ID =
+  'associate-content-list-heading';
+export function AssociateContentPage() {
   const navigate = useNavigate();
-  const { unitId } = useParams();
+  const { scheduleId, unitId } = useParams();
 
   const { role, logout } = useAuth();
 
+  const [contentCatalog, setContentCatalog] = useState(
+    EMPTY_CONTENT_CATALOG,
+  );
+
+  const [temporalUnits, setTemporalUnits] = useState(
+    EMPTY_TEMPORAL_UNITS,
+  );
+
+  const [scheduledContent, setScheduledContent] = useState(
+    EMPTY_SCHEDULED_CONTENT,
+  );
+
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+
   const [editingAssociation, setEditingAssociation] = useState(null);
   const [pendingDeleteAssociation, setPendingDeleteAssociation] = useState(null);
+
+  useEffect(() => {
+    async function loadPageData() {
+      setLoading(true);
+      setLoadError('');
+
+      try {
+        const [
+          catalogData,
+          unitsResponse,
+          scheduledResponse,
+        ] = await Promise.all([
+          obtenerCatalogoContenidos(),
+          getUnitTemporalByShulde(scheduleId),
+          obtenerContenidosUnidadTemporal({
+            scheduleId,
+            temporalUnitId: unitId,
+          }),
+        ]);
+
+        const unitsData = Array.isArray(unitsResponse)
+          ? unitsResponse
+          : unitsResponse?.data ?? [];
+
+        setContentCatalog(
+          catalogData.map((content) => ({
+            id: content.idContenido,
+            title: content.nombre,
+            type: content.tipoContenido,
+            associated: content.asociado,
+            associationId:
+              content.idAsociasionUnidadTemporalContenido,
+          })),
+        );
+
+        setTemporalUnits(
+          unitsData.map((temporalUnit) => ({
+            id: temporalUnit.idUnidadTemporal,
+            name: temporalUnit.nombreUnidadTemporal,
+            order: temporalUnit.orden,
+            startDate: temporalUnit.fechaInicio,
+            endDate: temporalUnit.fechaFin,
+            status: getTemporalUnitStatus(temporalUnit),
+          })),
+        );
+
+        setScheduledContent(
+          mapScheduledContents(
+            scheduledResponse.contenidos ?? [],
+            unitId,
+          ),
+        );
+      } catch {
+        setLoadError(
+          'No pudimos cargar la información de la unidad y sus contenidos.',
+        );
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (scheduleId && unitId) {
+      loadPageData();
+    }
+  }, [scheduleId, unitId]);
 
   const unit = temporalUnits.find(
     (temporalUnit) => temporalUnit.id === unitId,
   );
 
-  function handleValidAvailabilitySubmit({
+  async function refreshAssociationData() {
+    const [catalogData, scheduledResponse] =
+      await Promise.all([
+        obtenerCatalogoContenidos(),
+        obtenerContenidosUnidadTemporal({
+          scheduleId,
+          temporalUnitId: unitId,
+        }),
+      ]);
+
+    setContentCatalog(
+      catalogData.map((content) => ({
+        id: content.idContenido,
+        title: content.nombre,
+        type: content.tipoContenido,
+        associated: content.asociado,
+        associationId:
+          content.idAsociasionUnidadTemporalContenido,
+      })),
+    );
+
+    setScheduledContent(
+      mapScheduledContents(
+        scheduledResponse.contenidos ?? [],
+        unitId,
+      ),
+    );
+  }
+
+  async function handleValidAvailabilitySubmit({
     associationId,
     availableFrom,
     availableUntil,
   }) {
-    onUpdateScheduledContentAvailability?.({
-      associationId,
-      availableFrom,
-      availableUntil,
-    });
+    setLoadError('');
+
+    try {
+      await actualizarDisponibilidadContenido({
+        associationId,
+        availableFrom: new Date(availableFrom).toISOString(),
+        availableUntil: new Date(
+          availableUntil,
+        ).toISOString(),
+      });
+
+      await refreshAssociationData();
+
+      resetAvailabilityForm();
+      setEditingAssociation(null);
+    } catch {
+      setLoadError(
+        'No pudimos actualizar la disponibilidad del contenido.',
+      );
+    }
   }
 
-  function handleValidSubmit({
+  async function handleValidSubmit({
     contentId,
     temporalUnitId,
-    order,
+    availableFrom,
+    availableUntil,
   }) {
-    const content = contentCatalog.find(
-      (item) => item.id === contentId,
-    );
+    setLoadError('');
 
-    const targetUnit = temporalUnits.find(
-      (temporalUnit) =>
-        temporalUnit.id === temporalUnitId,
-    );
+    try {
+      await asociarContenidoUnidadTemporal({
+        contentId,
+        temporalUnitId,
+        availableFrom: new Date(availableFrom).toISOString(),
+        availableUntil: new Date(
+          availableUntil,
+        ).toISOString(),
+      });
 
-    if (!content || !targetUnit) {
-      return;
+      await refreshAssociationData();
+      clearAssociationForm();
+    } catch {
+      setLoadError(
+        'No pudimos asociar el contenido a la unidad temporal.',
+      );
     }
-
-    onAssociateContent?.({
-      contentId,
-      temporalUnitId,
-      order,
-    });
   }
   const {
     form,
     errors,
     handleChange,
     handleSubmit,
+    clearAssociationForm,
   } = useAssociateContentForm({
-    initialTemporalUnitId: unit ? unit.id : '',
-    scheduledContent,
+    initialTemporalUnitId: unitId,
     onValidSubmit: handleValidSubmit,
   });
 
@@ -140,16 +343,26 @@ export function AssociateContentPage({
     setPendingDeleteAssociation(null);
   }
 
-  function handleConfirmDeleteAssociation() {
+  async function handleConfirmDeleteAssociation() {
     if (!pendingDeleteAssociation?.id) {
       return;
     }
 
-    onDeleteScheduledContentAssociation?.({
-      associationId: pendingDeleteAssociation.id,
-    });
+    setLoadError('');
 
-    setPendingDeleteAssociation(null);
+    try {
+      await eliminarAsociacionContenidoUnidadTemporal(
+        pendingDeleteAssociation.id,
+      );
+
+      await refreshAssociationData();
+    } catch {
+      setLoadError(
+        'No pudimos desvincular el contenido de la unidad temporal.',
+      );
+    } finally {
+      setPendingDeleteAssociation(null);
+    }
   }
 
   const selectedUnit = temporalUnits.find(
@@ -170,7 +383,8 @@ export function AssociateContentPage({
   // cambiar este filtro.
   const availableContent = contentCatalog.filter(
     (item) =>
-      item.assignedTemporalUnitId === null && !takenContentIds.has(item.id),
+      !item.associated &&
+      !takenContentIds.has(item.id),
   );
 
   const contentOptions = availableContent.map((item) => ({
@@ -187,25 +401,15 @@ export function AssociateContentPage({
     (item) => item.id === form.contentId,
   );
 
-  // Sin renumeración automática el orden puede tener huecos (1, 5), así que
-  // se listan los ocupados en vez de prometer un único "siguiente".
-  let orderHint = '';
-
-  if (unitContent.length > 0) {
-    const takenOrders = unitContent.map((item) => item.order);
-
-    orderHint = `Órdenes ocupados: ${takenOrders.join(', ')}. Siguiente al final: ${Math.max(...takenOrders) + 1}.`;
-  } else if (form.temporalUnitId) {
-    orderHint = 'Esta unidad aún no tiene actividades: empieza en 1.';
-  }
-
-  let contentHint = '';
-
-  if (selectedContent) {
-    contentHint = `Tipo: ${CONTENT_TYPE_LABEL[selectedContent.type] ?? 'Por definir'}`;
-  } else if (contentOptions.length === 0) {
-    contentHint = 'No hay actividades disponibles en el catálogo.';
-  }
+  const contentHint = selectedContent
+  ? `Tipo: ${
+      PSYCHOEDUCATIONAL_CONTENT_TYPE_LABEL[
+        selectedContent.type
+      ] ?? selectedContent.type
+    }`
+  : contentOptions.length === 0
+    ? 'No hay contenidos disponibles en el catálogo.'
+    : '';
 
   function handleLogout() {
     logout();
@@ -275,7 +479,23 @@ export function AssociateContentPage({
             Asociar contenido a esta unidad
           </h1>
 
-          {unit ? (
+          {loadError && (
+            <div
+              className="mt-[var(--space-5)] rounded-[var(--radius-md)] border border-[var(--danger-border)] bg-[var(--danger-bg)] p-[var(--space-4)] text-[13px] font-semibold text-[var(--danger-text)]"
+              role="alert"
+            >
+              {loadError}
+            </div>
+          )}
+
+          {loading ? (
+            <p
+              className="mt-[var(--space-6)] text-[13px] text-[var(--text-muted)]"
+              role="status"
+            >
+              Cargando contenidos de la unidad...
+            </p>
+          ) : unit ? (
             <>
               <p className="mt-[var(--space-2)] mb-0 max-w-[680px] text-[13px] leading-[1.6] text-[var(--text-muted)]">
                 Selecciona una actividad del catálogo y la unidad temporal en la
@@ -289,7 +509,6 @@ export function AssociateContentPage({
                   contentOptions={contentOptions}
                   contentHint={contentHint}
                   temporalUnitOptions={temporalUnitOptions}
-                  orderHint={orderHint}
                   onChange={handleFormChange}
                   onSubmit={handleSubmit}
                   onCancel={handleCancel}
@@ -343,8 +562,7 @@ export function AssociateContentPage({
                               contentType={content?.type}
                               status={item.status}
                               actions={
-                                canModifyScheduledContent(item.status) &&
-                                canModifyTemporalUnit(selectedUnit?.status) ? (
+                                canModifyScheduledContent(item.status) ? (
                                   <>
                                     <Button
                                       size="small"

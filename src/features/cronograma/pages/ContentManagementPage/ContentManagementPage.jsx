@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useAuth } from '@/app/providers/index.js';
@@ -10,6 +10,9 @@ import { AdministrativeTabBar } from '@/shared/components/navigation/Administrat
 import { Button } from '@/shared/components/ui/Button/index.js';
 import { ConfirmationDialog } from '@/shared/components/ui/ConfirmationDialog/index.js';
 
+import { eliminarContenido } from '@/features/cronograma/api/contenido/eliminarContenido.jsx';
+import { obtenerCatalogoContenidos } from '@/features/cronograma/api/contenido/obtenerCatalogoContenidos.jsx';
+
 import {
   ADMINISTRATIVE_TAB,
   ADMINISTRATIVE_TABS,
@@ -17,13 +20,46 @@ import {
 
 const EMPTY_CONTENTS = Object.freeze([]);
 
-export function ContentManagementPage({
-  contents = EMPTY_CONTENTS,
-  loading = false,
-  onDeleteContent,
-}) {
+export function ContentManagementPage() {
   const navigate = useNavigate();
   const { role, logout } = useAuth();
+
+  const [contents, setContents] = useState(EMPTY_CONTENTS);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+
+  useEffect(() => {
+    async function loadContents() {
+      setLoading(true);
+      setLoadError('');
+
+      try {
+        const data = await obtenerCatalogoContenidos();
+
+        setContents(
+          data.map((content) => ({
+            id: content.idContenido,
+            name: content.nombre,
+            type: content.tipoContenido,
+            associationId:
+              content.idAsociasionUnidadTemporalContenido,
+            associated: content.asociado,
+            createdAt: content.fechaCreacionContenido,
+            canEdit: true,
+            canDelete: true,
+          })),
+        );
+      } catch {
+        setLoadError(
+          'No pudimos cargar los contenidos. Intenta nuevamente.',
+        );
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadContents();
+  }, []);
 
   const [
     pendingDeleteContent,
@@ -98,14 +134,28 @@ export function ContentManagementPage({
     setPendingDeleteContent(null);
   }
 
-  function handleConfirmDelete() {
+  async function handleConfirmDelete() {
     if (!pendingDeleteContent) {
       return;
     }
 
-    onDeleteContent?.(pendingDeleteContent);
+    const contentId = pendingDeleteContent.id;
 
-    setPendingDeleteContent(null);
+    try {
+      await eliminarContenido(contentId);
+
+      setContents((currentContents) =>
+        currentContents.filter(
+          (content) => content.id !== contentId,
+        ),
+      );
+    } catch {
+      setLoadError(
+        'No pudimos eliminar el contenido. Verifica su estado e intenta nuevamente.',
+      );
+    } finally {
+      setPendingDeleteContent(null);
+    }
   }
 
   return (
@@ -150,6 +200,15 @@ export function ContentManagementPage({
               Crear contenido
             </Button>
           </header>
+
+          {loadError && (
+            <div
+              className="rounded-[var(--radius-md)] border border-[var(--danger-border)] bg-[var(--danger-bg)] p-[var(--space-4)] text-[13px] font-semibold text-[var(--danger-text)]"
+              role="alert"
+            >
+              {loadError}
+            </div>
+          )}
 
           {loading ? (
             <p
