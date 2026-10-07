@@ -1,0 +1,1511 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brisa · Prototipo M02 · Diario</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --brand-50:#EAF6F5; --brand-100:#CFECE9; --brand-200:#9ED9D2; --brand-300:#69BFB5;
+  --brand-400:#3CA399; --brand-500:#1D8378; --brand-600:#156A61; --brand-700:#11534C;
+  --brand-800:#0C3C37; --brand-900:#082724;
+
+  --accent-50:#FFF0E9; --accent-100:#FFD9C7; --accent-200:#FFB494; --accent-300:#FB8E5F;
+  --accent-400:#E96F3B; --accent-500:#C8501F; --accent-600:#A03D15; --accent-700:#782D10;
+  --accent-800:#531F0A; --accent-900:#311206;
+
+  --n0:#FFFFFF; --n50:#FAF9F6; --n100:#F0EEE8; --n200:#E1DED5; --n300:#C7C3B6;
+  --n400:#A19C8C; --n500:#726C5A; --n600:#595549; --n700:#403D34; --n800:#282620; --n900:#161510;
+
+  --success:#2E7D4F; --success-bg:#E8F5ED; --success-text:#1F5C3A; --success-border:#8FCBA3;
+  --warning:#B07A12; --warning-bg:#FBF1DC; --warning-text:#7A5208; --warning-border:#E6C878;
+  --danger:#C13B30; --danger-bg:#FBEAE7; --danger-text:#8E2A21; --danger-border:#E8A99E;
+  --info:#1E6FA8; --info-bg:#E7F1FA; --info-text:#1E6FA8; --info-border:#A8CBE6;
+
+  --bg:var(--n50); --card:var(--n0); --border:var(--n200); --hover:var(--n100);
+  --tp:var(--n900); --ts:var(--n600); --tm:var(--n500); --ti:var(--n0);
+  --btn-pt:var(--n0); --btn-at:var(--n0);
+
+  --font:'Manrope',sans-serif; --mono:'IBM Plex Mono',monospace;
+
+  --r-sm:4px; --r-md:8px; --r-lg:12px; --r-xl:16px; --r-2xl:20px; --r-full:9999px;
+
+  --sh-sm:0 1px 2px rgba(22,21,16,.06);
+  --sh-md:0 2px 8px rgba(22,21,16,.09),0 1px 2px rgba(22,21,16,.06);
+  --sh-lg:0 8px 24px rgba(22,21,16,.10),0 2px 6px rgba(22,21,16,.06);
+}
+[data-theme="dark"]{
+  --brand-50:#082724; --brand-100:#0C3C37; --brand-200:#11534C; --brand-300:#156A61;
+  --brand-400:#1D8378; --brand-500:#3CA399; --brand-600:#69BFB5; --brand-700:#9ED9D2;
+  --brand-800:#CFECE9; --brand-900:#EAF6F5;
+
+  --accent-50:#311206; --accent-100:#531F0A; --accent-200:#782D10; --accent-300:#A03D15;
+  --accent-400:#C8501F; --accent-500:#E96F3B; --accent-600:#FB8E5F;
+
+  --success-bg:#13261B; --success-text:#9ED9AE; --success-border:#2F5C41;
+  --warning-bg:#2B2008; --warning-text:#F0C77A; --warning-border:#6B4D14;
+  --danger-bg:#2B1310; --danger-text:#F0A89E; --danger-border:#6B2A20;
+  --info-bg:#0E2233; --info-text:#9BC8E8; --info-border:#1F4566;
+
+  --bg:#100F0C; --card:#1E1C17; --border:#332F27; --hover:#262319;
+  --tp:#EDEAE2; --ts:#B8B3A4; --tm:#8C8676;
+  --btn-pt:var(--n900); --btn-at:var(--n900);
+  --sh-sm:0 1px 2px rgba(0,0,0,.35); --sh-md:0 2px 8px rgba(0,0,0,.45); --sh-lg:0 8px 24px rgba(0,0,0,.55);
+}
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:var(--font);background:#111;color:var(--tp);display:flex;flex-direction:column;min-height:100vh}
+button,input,textarea,select{font-family:inherit}
+:focus-visible{outline:2px solid var(--brand-400);outline-offset:2px}
+.hidden{display:none !important}
+
+/* ---------- Demo bar ---------- */
+.demo-bar{
+  width:100%;background:#0a0a0a;border-bottom:1px solid #222;
+  padding:8px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  font-family:var(--mono);font-size:10px;color:#888;position:sticky;top:0;z-index:1000;
+}
+.demo-bar strong{color:#fff}
+.demo-sep{color:#333}
+.demo-spacer{flex:1}
+.demo-btn{background:#1a1a1a;border:1px solid #333;color:#bbb;border-radius:4px;padding:3px 8px;font-size:9px;font-family:var(--mono);cursor:pointer;transition:all .1s;white-space:nowrap}
+.demo-btn:hover{background:#2a2a2a;color:#fff;border-color:#555}
+.demo-btn.active{background:#1D8378;border-color:#1D8378;color:#fff}
+.demo-screen-pill{background:#222;border:1px solid #333;border-radius:var(--r-full);padding:2px 8px;color:#6BC4B8;font-size:9px}
+.role-badge{border-radius:var(--r-full);padding:2px 8px;font-size:9px;font-weight:600}
+.role-badge.student{background:rgba(29,131,120,.25);color:#6BC4B8;border:1px solid rgba(29,131,120,.4)}
+.role-badge.admin{background:rgba(200,80,31,.25);color:#FFC09E;border:1px solid rgba(200,80,31,.4)}
+
+/* ---------- Phone frame ---------- */
+.frame-outer{display:flex;justify-content:center;align-items:flex-start;padding:24px 16px 40px;flex:1;width:100%}
+.phone{
+  width:390px;background:var(--bg);border-radius:36px;overflow:hidden;position:relative;
+  box-shadow:0 0 0 10px #1a1a1a,0 30px 80px rgba(0,0,0,.7);
+  min-height:720px;max-height:820px;display:flex;flex-direction:column;transition:background .2s;
+}
+.phone::before{
+  content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:100px;height:28px;background:#1a1a1a;border-radius:0 0 18px 18px;z-index:50;
+}
+.screens{flex:1;position:relative;overflow:hidden}
+.screen{
+  position:absolute;inset:0;overflow-y:auto;background:var(--bg);opacity:0;pointer-events:none;
+  transition:opacity .25s, transform .25s;transform:translateX(20px);
+}
+.screen.active{opacity:1;pointer-events:all;transform:translateX(0)}
+.screen.slide-back{transform:translateX(-20px)}
+.screen-inner{padding:20px 20px 110px;min-height:100%}
+.screen-inner.pt-notch{padding-top:48px}
+.screen-inner.center{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:100%}
+
+/* ---------- App bar ---------- */
+.app-bar{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--border);background:var(--card);position:sticky;top:0;z-index:10}
+.app-bar-back{width:32px;height:32px;border-radius:var(--r-full);border:1px solid var(--border);background:var(--card);color:var(--tp);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:15px}
+.app-bar-back:hover{background:var(--hover)}
+.app-bar-title{font-weight:700;font-size:16px;color:var(--tp);flex:1}
+.app-bar-sub{font-size:11px;color:var(--tm);font-weight:500}
+.app-bar-action{font-size:12px;font-weight:700;color:var(--brand-600);background:none;border:none;cursor:pointer;padding:6px}
+
+/* ---------- Buttons ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;font-weight:700;font-size:14px;border-radius:var(--r-md);border:1.5px solid transparent;padding:11px 20px;cursor:pointer;transition:all .12s}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-primary{background:var(--brand-500);color:var(--btn-pt)}
+.btn-primary:hover:not(:disabled){background:var(--brand-600)}
+.btn-secondary{background:var(--card);color:var(--tp);border-color:var(--border)}
+.btn-secondary:hover{background:var(--hover)}
+.btn-ghost{background:transparent;color:var(--ts);border-color:transparent}
+.btn-ghost:hover{background:var(--hover)}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-block{width:100%;margin-top:8px}
+.btn-sm{padding:7px 14px;font-size:12.5px}
+.btn-link{background:none;border:none;color:var(--brand-600);font-weight:600;font-size:12.5px;cursor:pointer}
+
+/* ---------- Fields ---------- */
+.field{margin-bottom:16px}
+.field-label{display:block;font-size:12.5px;font-weight:700;color:var(--tp);margin-bottom:6px}
+.field-hint{font-size:11.5px;color:var(--tm);margin-top:5px;line-height:1.4}
+.input-wrap{position:relative}
+.input{width:100%;padding:11px 13px;border-radius:var(--r-md);border:1.5px solid var(--border);background:var(--card);color:var(--tp);font-size:14px;transition:all .12s}
+.input:focus{border-color:var(--brand-400)}
+.input.err{border-color:var(--danger-border);background:var(--danger-bg)}
+.input.ok{border-color:var(--success-border)}
+.ferr{font-size:11.5px;color:var(--danger-text);margin-top:5px;font-weight:600}
+textarea.input{resize:none;min-height:150px;line-height:1.6;font-family:var(--font)}
+
+/* ---------- Badges / alerts ---------- */
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:var(--r-full);border:1px solid}
+.bdot{width:6px;height:6px;border-radius:50%}
+.b-success{background:var(--success-bg);color:var(--success-text);border-color:var(--success-border)}
+.b-warning{background:var(--warning-bg);color:var(--warning-text);border-color:var(--warning-border)}
+.b-danger{background:var(--danger-bg);color:var(--danger-text);border-color:var(--danger-border)}
+.b-info{background:var(--info-bg);color:var(--info-text);border-color:var(--info-border)}
+.b-neutral{background:var(--n100);color:var(--ts);border-color:var(--border)}
+
+.alert{display:flex;gap:10px;padding:12px 14px;border-radius:var(--r-md);border:1px solid;margin-bottom:14px}
+.alert-icon{font-size:15px;line-height:1.3}
+.alert-title{font-size:12.5px;font-weight:700}
+.alert-desc{font-size:11.5px;margin-top:2px;line-height:1.4}
+.alert-error{background:var(--danger-bg);border-color:var(--danger-border);color:var(--danger-text)}
+.alert-warning{background:var(--warning-bg);border-color:var(--warning-border);color:var(--warning-text)}
+.alert-success{background:var(--success-bg);border-color:var(--success-border);color:var(--success-text)}
+.alert-info{background:var(--info-bg);border-color:var(--info-border);color:var(--info-text)}
+
+/* ---------- Modal ---------- */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:2000;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.visible{display:flex}
+.modal-card{background:var(--card);border-radius:var(--r-2xl);padding:26px 22px;max-width:320px;width:100%;box-shadow:var(--sh-lg);text-align:center}
+.modal-card.wide{max-width:340px;text-align:left}
+.modal-icon{font-size:30px;margin-bottom:10px}
+.modal-title{font-weight:800;font-size:16px;color:var(--tp);margin-bottom:6px}
+.modal-desc{font-size:12.5px;color:var(--ts);line-height:1.5;margin-bottom:14px}
+.modal-countdown{font-family:var(--mono);font-size:26px;font-weight:700;color:var(--brand-500);margin-bottom:16px}
+.modal-actions{display:flex;gap:8px;margin-top:6px}
+.modal-actions .btn{flex:1}
+
+/* ---------- Toast ---------- */
+.toast-wrap{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:3000;display:flex;flex-direction:column;gap:8px;pointer-events:none;align-items:center}
+.toast{background:var(--n900);color:var(--n0);border-radius:var(--r-full);padding:9px 18px;font-weight:600;font-size:12.5px;box-shadow:var(--sh-lg);animation:toastin .25s ease,toastout .25s ease 2.5s forwards;max-width:300px;text-align:center}
+.toast.t-success{background:var(--success);color:#fff}
+.toast.t-error{background:var(--danger);color:#fff}
+.toast.t-warning{background:var(--warning);color:#fff}
+.toast.t-info{background:var(--info);color:#fff}
+@keyframes toastin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes toastout{to{opacity:0;transform:translateY(-6px)}}
+
+/* ---------- Bottom nav ---------- */
+.bottom-nav{display:none;background:var(--card);border-top:1px solid var(--border);padding:8px 0 16px;position:sticky;bottom:0;z-index:15}
+.bottom-nav.visible{display:flex}
+.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--tm);font-size:9.5px;font-weight:600;background:none;border:none;cursor:pointer}
+.bnav-item.active{color:var(--brand-500)}
+.bnav-icon{font-size:17px}
+
+/* ---------- SOS floating button ---------- */
+.sos-fab{
+  position:absolute;right:16px;bottom:96px;z-index:40;
+  display:flex;align-items:center;gap:6px;background:var(--brand-600);color:#fff;
+  border:none;border-radius:var(--r-full);padding:11px 16px 11px 13px;font-weight:800;font-size:11.5px;
+  box-shadow:var(--sh-lg);cursor:grab;transition:transform .12s;touch-action:none;user-select:none;
+}
+.sos-fab:hover{transform:scale(1.04)}
+.sos-fab:active{cursor:grabbing}
+.sos-fab.hidden{display:none}
+.activity-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.activity-cell{aspect-ratio:1;border-radius:4px;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--tm);font-family:var(--mono)}
+.activity-cell.active{background:var(--brand-500);color:var(--btn-pt)}
+
+/* ---------- Word counter ---------- */
+.word-counter{display:flex;align-items:center;justify-content:space-between;margin-top:6px}
+.wc-track{flex:1;height:4px;border-radius:2px;background:var(--border);overflow:hidden;margin-right:10px}
+.wc-fill{height:100%;width:0%;background:var(--brand-500);transition:width .12s,background .12s}
+.wc-fill.warn{background:var(--warning)}
+.wc-fill.limit{background:var(--danger)}
+.wc-label{font-family:var(--mono);font-size:11px;color:var(--tm);white-space:nowrap}
+.wc-label.warn{color:var(--warning-text);font-weight:700}
+.wc-label.limit{color:var(--danger-text);font-weight:700}
+
+/* ---------- Emotion selector ---------- */
+.emotion-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.emotion-chip{display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px;border-radius:var(--r-lg);border:1.5px solid var(--border);background:var(--card);cursor:pointer;transition:all .12s}
+.emotion-chip .ic{font-size:19px}
+.emotion-chip .lb{font-size:10px;font-weight:700;color:var(--ts);text-align:center;line-height:1.2}
+.emotion-chip:hover{background:var(--hover)}
+.emotion-chip.sel{border-color:var(--brand-500);background:var(--brand-50)}
+.emotion-chip.sel .lb{color:var(--brand-700)}
+
+/* ---------- Craving selector ---------- */
+.craving-row{display:flex;gap:6px}
+.craving-chip{flex:1;aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:var(--r-md);border:1.5px solid var(--border);background:var(--card);font-weight:800;font-size:15px;color:var(--ts);cursor:pointer;transition:all .12s}
+.craving-chip:hover{background:var(--hover)}
+.craving-chip.sel{border-color:var(--brand-500);background:var(--brand-500);color:var(--btn-pt)}
+.craving-unsure{margin-top:8px;width:100%;padding:9px;border-radius:var(--r-md);border:1.5px dashed var(--border);background:transparent;color:var(--tm);font-weight:700;font-size:11.5px;cursor:pointer;transition:all .12s}
+.craving-unsure:hover{background:var(--hover)}
+.craving-unsure.sel{border-style:solid;border-color:var(--brand-500);color:var(--brand-700);background:var(--brand-50)}
+.craving-scale-labels{display:flex;justify-content:space-between;font-size:9.5px;color:var(--tm);margin-top:5px;font-weight:600}
+
+/* ---------- Guide panel ---------- */
+.guide-panel{background:var(--info-bg);border:1px solid var(--info-border);border-radius:var(--r-lg);padding:12px 14px;margin-bottom:16px;position:relative}
+.guide-panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.guide-panel-title{font-size:11px;font-weight:800;color:var(--info-text);text-transform:uppercase;letter-spacing:.03em}
+.guide-close{background:none;border:none;color:var(--info-text);font-size:14px;cursor:pointer;padding:2px 6px;opacity:.7}
+.guide-close:hover{opacity:1}
+.guide-q{font-size:12.5px;color:var(--info-text);line-height:1.6;padding-left:14px;position:relative}
+.guide-q::before{content:'·';position:absolute;left:2px}
+
+/* ---------- Entry card ---------- */
+.entry-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px;margin-bottom:10px;cursor:pointer;transition:all .12s}
+.entry-card:hover{border-color:var(--brand-300);box-shadow:var(--sh-sm)}
+.entry-card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.entry-date{font-family:var(--mono);font-size:11px;color:var(--tm);font-weight:600}
+.entry-text{font-size:13px;color:var(--ts);line-height:1.5;margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.entry-tags{display:flex;gap:6px;flex-wrap:wrap}
+
+/* ---------- Empty state ---------- */
+.empty-state{display:flex;flex-direction:column;align-items:center;text-align:center;padding:60px 24px;gap:10px}
+.empty-icon{font-size:40px;margin-bottom:6px;opacity:.8}
+.empty-title{font-weight:800;font-size:15px;color:var(--tp)}
+.empty-desc{font-size:12.5px;color:var(--tm);line-height:1.5;max-width:240px}
+
+/* ---------- Filters / pagination ---------- */
+.filter-row{display:flex;gap:6px;overflow-x:auto;margin-bottom:14px;padding-bottom:2px}
+.filter-chip{flex-shrink:0;padding:6px 12px;border-radius:var(--r-full);border:1.5px solid var(--border);background:var(--card);font-size:11px;font-weight:700;color:var(--ts);cursor:pointer;white-space:nowrap;transition:all .12s}
+.filter-chip:hover{background:var(--hover)}
+.filter-chip.sel{border-color:var(--brand-500);background:var(--brand-500);color:var(--btn-pt)}
+.filter-chip.clear{border-style:dashed;color:var(--danger-text);border-color:var(--danger-border)}
+.pagination{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:16px}
+.page-btn{width:30px;height:30px;border-radius:var(--r-full);border:1px solid var(--border);background:var(--card);color:var(--tp);cursor:pointer;font-weight:700;font-size:12px}
+.page-btn:disabled{opacity:.35;cursor:not-allowed}
+.page-info{font-family:var(--mono);font-size:11px;color:var(--tm)}
+
+/* ---------- Bottom sheet (word cloud) ---------- */
+.sheet-overlay{position:absolute;inset:0;background:rgba(0,0,0,.5);z-index:60;display:none;align-items:flex-end}
+.sheet-overlay.visible{display:flex}
+.sheet{background:var(--card);width:100%;border-radius:20px 20px 0 0;padding:18px 20px 24px;box-shadow:var(--sh-lg);max-height:78%;overflow-y:auto}
+.sheet-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 14px}
+.sheet-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px}
+.sheet-title{font-weight:800;font-size:15px;color:var(--tp)}
+.sheet-close{background:none;border:none;font-size:16px;color:var(--tm);cursor:pointer}
+.sheet-sub{font-size:11.5px;color:var(--tm);margin-bottom:14px;line-height:1.4}
+.word-cloud{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.word-chip{padding:7px 13px;border-radius:var(--r-full);border:1.5px solid var(--border);background:var(--bg);color:var(--ts);font-size:12.5px;font-weight:600;cursor:pointer;transition:all .12s}
+.word-chip:hover{background:var(--hover)}
+.word-chip.sel{border-color:var(--brand-500);background:var(--brand-500);color:var(--btn-pt)}
+
+/* ---------- Admin ---------- */
+.admin-header{background:var(--n900);color:var(--n0);padding:20px 20px 14px}
+.admin-header-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:2px}
+.admin-title{font-weight:800;font-size:17px}
+.admin-sub{font-size:11px;color:var(--n400)}
+.admin-tab-bar{display:flex;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
+.admin-tab{flex:1;text-align:center;padding:12px 4px;font-size:12px;font-weight:700;color:var(--tm);cursor:pointer;border-bottom:2px solid transparent}
+.admin-tab.active{color:var(--brand-600);border-bottom-color:var(--brand-500)}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:16px 20px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:13px}
+.stat-card .v{font-size:20px;font-weight:800;color:var(--tp);font-family:var(--mono)}
+.stat-card .l{font-size:10.5px;color:var(--tm);font-weight:600;margin-top:2px}
+.user-item{display:flex;align-items:center;gap:12px;padding:13px 20px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s}
+.user-item:hover{background:var(--hover)}
+.user-avatar{width:38px;height:38px;border-radius:var(--r-full);background:var(--brand-100);color:var(--brand-700);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0}
+.user-info{flex:1;min-width:0}
+.user-name{font-weight:700;font-size:13px;color:var(--tp)}
+.user-meta{font-size:10.5px;color:var(--tm);margin-top:2px;display:flex;gap:8px;flex-wrap:wrap}
+.user-arrow{color:var(--tm);font-size:13px}
+
+.audit-banner{display:flex;gap:10px;background:var(--warning-bg);border:1px solid var(--warning-border);border-radius:var(--r-md);padding:12px;margin:16px 20px;font-size:11.5px;color:var(--warning-text);line-height:1.5}
+.reason-option{display:flex;align-items:center;gap:9px;padding:11px 12px;border:1.5px solid var(--border);border-radius:var(--r-md);margin-bottom:8px;cursor:pointer;font-size:12.5px;color:var(--tp);font-weight:600;transition:all .12s}
+.reason-option:hover{background:var(--hover)}
+.reason-option.sel{border-color:var(--brand-500);background:var(--brand-50)}
+.reason-radio{width:16px;height:16px;border-radius:50%;border:2px solid var(--border);flex-shrink:0;position:relative}
+.reason-option.sel .reason-radio{border-color:var(--brand-500)}
+.reason-option.sel .reason-radio::after{content:'';position:absolute;inset:3px;border-radius:50%;background:var(--brand-500)}
+
+.section-title{font-size:11px;font-weight:800;color:var(--tm);text-transform:uppercase;letter-spacing:.04em;margin:20px 0 10px}
+.section-title:first-child{margin-top:0}
+</style>
+</head>
+<body>
+
+<!-- ================= DEMO BAR ================= -->
+<div class="demo-bar">
+  <strong>Brisa · M02</strong>
+  <span class="demo-sep">|</span>
+  <span class="demo-screen-pill" id="dp-screen">splash</span>
+  <span class="role-badge student hidden" id="dp-role"></span>
+  <span class="demo-sep">|</span>
+  <button class="demo-btn" onclick="prefill('student')" title="Rellena credenciales de estudiante">👤 Estudiante</button>
+  <button class="demo-btn" onclick="prefill('admin')" title="Rellena credenciales de admin">🔑 Admin</button>
+  <span class="demo-sep">|</span>
+  <button class="demo-btn" id="btn-empty" onclick="toggleEmptyDemo()" title="Alterna entre diario con entradas y estado vacío">🗒 Vaciar diario</button>
+  <button class="demo-btn" onclick="simulateSuggestion('consumo_reportado')" title="Evento: consumo reportado en Chat → categoría Autocompasión">💬 Sug. recaída</button>
+  <button class="demo-btn" onclick="simulateSuggestion('sesion_completada')" title="Evento: sesión TCC completada → categoría Reflexión">✅ Sug. sesión</button>
+  <button class="demo-btn" onclick="simulateSuggestion('nueva_unidad_temporal')" title="Evento: nueva semana de cronograma → categoría Metas">📅 Sug. semana</button>
+  <button class="demo-btn" onclick="simulateSuggestion('inactividad_3_dias')" title="Evento: 3 días de inactividad al iniciar sesión → categoría Reconexión">💤 Sug. inactivo</button>
+  <span class="demo-sep">|</span>
+  <button class="demo-btn" id="btn-no-guides" onclick="toggleNoGuides()" title="RF-41 FA: simula que no hay guías publicadas para la semana activa">🗒 Sin guías semana</button>
+  <button class="demo-btn" id="btn-ts-fail" onclick="armTimestampFailure()" title="RF-44 FA: el próximo guardado simula un fallo del servicio de tiempo del servidor">⏱ Fallo timestamp (1x)</button>
+  <button class="demo-btn" onclick="simulateCrossUserAccess()" title="RF-48 FA: estudiante intenta consultar entradas de otro usuario">🚫 Acceso cruzado (403)</button>
+  <button class="demo-btn" onclick="simulateAdminNoUser()" title="RF-48 FA: admin consulta sin especificar usuario">🚫 Sin usuario (400)</button>
+  <span class="demo-sep">|</span>
+  <button class="demo-btn" id="btn-timeout" onclick="triggerTimeoutWarning()" style="display:none" title="Simula expiración de sesión">⏱ Simular timeout</button>
+  <span class="demo-spacer"></span>
+  <button class="demo-btn active" id="btn-dark" onclick="toggleDark()">☀ Claro</button>
+</div>
+
+<!-- ================= PHONE FRAME ================= -->
+<div class="frame-outer">
+<div class="phone" id="phone">
+  <div class="screens" id="screens">
+
+    <!-- ---------- SPLASH ---------- -->
+    <div class="screen active" id="s-splash" data-name="splash">
+      <div class="screen-inner center pt-notch">
+        <div style="font-size:44px;margin-bottom:14px">📓</div>
+        <div style="font-weight:800;font-size:22px;color:var(--tp);margin-bottom:6px">Brisa · Diario</div>
+        <div style="font-size:12.5px;color:var(--tm);max-width:230px;line-height:1.5;margin-bottom:26px">Un espacio privado para registrar cómo te sientes y qué tanto deseo de vapear tuviste hoy.</div>
+        <button class="btn btn-primary" style="padding:12px 32px" onclick="go('s-login')">Comenzar</button>
+      </div>
+    </div>
+
+    <!-- ---------- LOGIN ---------- -->
+    <div class="screen" id="s-login" data-name="login">
+      <div class="screen-inner pt-notch">
+        <div style="font-weight:800;font-size:20px;margin-bottom:4px">Inicia sesión</div>
+        <div style="font-size:12px;color:var(--tm);margin-bottom:24px">Accede para continuar tu proceso.</div>
+
+        <div class="alert alert-error hidden" id="login-alert">
+          <span class="alert-icon">⚠</span>
+          <div class="alert-body"><div class="alert-title">Correo o contraseña incorrectos</div><div class="alert-desc">Verifica tus datos e intenta nuevamente.</div></div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Correo institucional</label>
+          <input class="input" type="email" id="login-email" placeholder="nombre@usco.edu.co" oninput="clearErr('login')">
+        </div>
+        <div class="field">
+          <label class="field-label">Contraseña</label>
+          <input class="input" type="password" id="login-pass" placeholder="••••••••" oninput="clearErr('login')">
+        </div>
+        <button class="btn btn-primary btn-block" onclick="doLogin()">Iniciar sesión</button>
+        <div style="text-align:center;margin-top:14px"><button class="btn-link" onclick="showToast('Recuperación disponible en M01','info')">¿Olvidaste tu contraseña?</button></div>
+      </div>
+    </div>
+
+    <!-- ---------- STUDENT: LISTA / HISTORIAL ---------- -->
+    <div class="screen" id="s-diario-lista" data-name="diario · lista">
+      <div class="app-bar">
+        <div class="app-bar-title">Mi diario<div class="app-bar-sub" id="lista-count">— entradas</div></div>
+        <button class="app-bar-action" onclick="openNewEntry()">+ Nueva</button>
+      </div>
+      <div class="screen-inner" style="padding-bottom:130px">
+
+        <div class="filter-row" id="filter-row">
+          <button class="filter-chip" data-f="emotion:ANSIOSO" onclick="toggleFilter('emotion','ANSIOSO')">😟 Ansioso</button>
+          <button class="filter-chip" data-f="emotion:MOTIVADO" onclick="toggleFilter('emotion','MOTIVADO')">💪 Motivado</button>
+          <button class="filter-chip" data-f="craving:high" onclick="toggleFilter('craving','high')">🔥 Craving alto (4-5)</button>
+          <button class="filter-chip" data-f="craving:low" onclick="toggleFilter('craving','low')">🌿 Craving bajo (1-2)</button>
+          <button class="filter-chip clear hidden" id="clear-filters" onclick="clearFilters()">✕ Limpiar</button>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+          <input type="date" class="input" id="filter-date-from" style="padding:7px 9px;font-size:11.5px" onchange="applyDateFilter()">
+          <span style="color:var(--tm);font-size:11px">–</span>
+          <input type="date" class="input" id="filter-date-to" style="padding:7px 9px;font-size:11.5px" onchange="applyDateFilter()">
+          <button class="btn-link" onclick="clearDateFilter()" style="white-space:nowrap">Limpiar fechas</button>
+        </div>
+        <div class="ferr hidden" id="date-filter-err" style="margin-bottom:10px">El rango de fechas es inválido. La fecha de inicio debe ser igual o anterior a la fecha de fin.</div>
+
+        <div id="lista-content"></div>
+
+      </div>
+      <div class="sos-fab" id="sos-fab-lista" title="Arrastra para reposicionar, toca para abrir"><span>🆘</span>SOS</div>
+    </div>
+
+    <!-- ---------- STUDENT: NUEVA ENTRADA ---------- -->
+    <div class="screen" id="s-diario-nueva" data-name="diario · nueva entrada">
+      <div class="app-bar">
+        <button class="app-bar-back" onclick="confirmDiscard()">←</button>
+        <div class="app-bar-title">Nueva entrada<div class="app-bar-sub">Semana 3 · Manejo de impulsos</div></div>
+      </div>
+      <div class="screen-inner" style="padding-bottom:130px">
+
+        <div class="guide-panel" id="guide-panel">
+          <div class="guide-panel-head">
+            <span class="guide-panel-title">Guía de escritura (opcional)</span>
+            <button class="guide-close" onclick="dismissGuides()" title="Ocultar guías">✕</button>
+          </div>
+          <div class="guide-q">¿Qué estabas sintiendo justo antes de las ganas de vapear?</div>
+          <div class="guide-q">¿Qué podrías hacer diferente la próxima vez?</div>
+          <div class="guide-q" id="guide-q-3">¿Qué tan intensa fue la sensación, en tus palabras?</div>
+          <div class="field-hint" style="margin-top:8px;color:var(--info-text)">⚠ RF-41: el documento de requerimientos es contradictorio (Restricciones indica máx. 2 guías, Proceso indica 3). Este prototipo usa 3, alineado con Proceso, hasta que el equipo de psicología unifique el valor.</div>
+        </div>
+        <div class="alert alert-info hidden" id="guide-hidden-msg" style="padding:8px 12px">
+          <span class="alert-icon" style="font-size:12px">✓</span>
+          <div class="alert-desc" style="margin:0">Guías ocultas para esta entrada. <button class="btn-link" onclick="restoreGuides()" style="padding:0">Mostrar de nuevo</button></div>
+        </div>
+        <div class="alert alert-info hidden" id="guide-unavailable-msg" style="padding:8px 12px">
+          <span class="alert-icon" style="font-size:12px">ℹ</span>
+          <div class="alert-desc" style="margin:0">No hay guías publicadas para la semana activa. Escribe libremente sobre tu experiencia esta semana.</div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Cuéntanos qué pasó</label>
+          <textarea class="input" id="entry-text" placeholder="Este espacio es solo para ti. Escribe con honestidad…" oninput="onTextInput()"></textarea>
+          <div class="word-counter">
+            <div class="wc-track"><div class="wc-fill" id="wc-fill"></div></div>
+            <div class="wc-label" id="wc-label">0 / 100 palabras</div>
+          </div>
+          <div class="ferr hidden" id="text-err">La entrada del diario no puede estar vacía.</div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">¿Cómo te sientes ahora mismo? <span style="color:var(--danger-text)">*</span></label>
+          <div class="emotion-grid" id="emotion-grid"></div>
+          <div class="ferr hidden" id="emotion-err">Debe seleccionar un estado emocional para continuar.</div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Nivel de deseo de consumo hoy <span style="color:var(--danger-text)">*</span></label>
+          <div class="craving-row" id="craving-row"></div>
+          <div class="craving-scale-labels"><span>1 · mínimo</span><span>5 · máximo</span></div>
+          <button class="craving-unsure" id="craving-unsure-btn" onclick="selectCraving(0)">No estoy seguro/a</button>
+          <div class="ferr hidden" id="craving-err">Por favor, indica cómo está tu deseo de consumo hoy (puedes elegir "No estoy seguro") para guardar tu entrada.</div>
+        </div>
+
+        <button class="btn btn-primary btn-block" id="btn-save-entry" onclick="saveEntry()">Guardar entrada</button>
+        <div style="font-size:10.5px;color:var(--tm);text-align:center;margin-top:10px;line-height:1.5">Una vez guardada, la entrada no podrá editarse ni eliminarse.</div>
+      </div>
+
+      <!-- Word cloud bottom sheet -->
+      <div class="sheet-overlay" id="sheet-overlay">
+        <div class="sheet">
+          <div class="sheet-handle"></div>
+          <div class="sheet-head">
+            <div>
+              <div class="sheet-title" id="sheet-title">Puede que quieras escribir sobre esto</div>
+            </div>
+            <button class="sheet-close" onclick="closeSheet('ignorada')">✕</button>
+          </div>
+          <div class="sheet-sub" id="sheet-sub">Elige hasta 3 palabras para empezar tu entrada, o ignora esta sugerencia.</div>
+          <div class="word-cloud" id="word-cloud"></div>
+          <button class="btn btn-primary btn-block" id="sheet-confirm" onclick="useSuggestedWords()" disabled>Usar palabras seleccionadas</button>
+          <button class="btn btn-ghost btn-block" onclick="closeSheet('ignorada')">Ignorar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ---------- STUDENT: ENTRADA GUARDADA ---------- -->
+    <div class="screen" id="s-diario-guardada" data-name="diario · entrada guardada">
+      <div class="app-bar">
+        <button class="app-bar-back" onclick="go('s-diario-lista')">←</button>
+        <div class="app-bar-title">Entrada<div class="app-bar-sub" id="guardada-fecha">—</div></div>
+        <button class="app-bar-action" style="color:var(--tm)" onclick="attemptEdit()" title="Las entradas son inmutables">✎ ¿Editar?</button>
+      </div>
+      <div class="screen-inner">
+        <div class="alert alert-info" style="margin-bottom:18px">
+          <span class="alert-icon">🔒</span>
+          <div class="alert-body"><div class="alert-title">Entrada inmutable</div><div class="alert-desc">Este registro no puede modificarse ni eliminarse, conforme a la política de integridad del diario.</div></div>
+        </div>
+
+        <div class="field-label" style="margin-bottom:8px">Estado emocional</div>
+        <div id="guardada-emotion" style="margin-bottom:18px"></div>
+
+        <div class="field-label" style="margin-bottom:8px">Nivel de deseo de consumo</div>
+        <div id="guardada-craving" style="margin-bottom:18px"></div>
+
+        <div class="field-label" style="margin-bottom:8px">Tu registro</div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px;font-size:13.5px;line-height:1.6;color:var(--tp)" id="guardada-texto">—</div>
+
+        <button class="btn btn-secondary btn-block" style="margin-top:22px" onclick="go('s-diario-lista')">Volver al historial</button>
+      </div>
+    </div>
+
+    <!-- ---------- ADMIN: ACTIVIDAD POR USUARIO ---------- -->
+    <div class="screen" id="s-admin-diario" data-name="admin · actividad diario">
+      <div class="admin-header">
+        <div class="admin-header-top">
+          <div class="admin-title">Diario · Actividad</div>
+          <button class="btn-link" style="color:#9ED9D2" onclick="doLogout()">Salir</button>
+        </div>
+        <div class="admin-sub">Equipo de psicología — vista agregada, sin acceso al texto</div>
+      </div>
+      <div class="admin-tab-bar">
+        <div class="admin-tab active">Por participante</div>
+        <div class="admin-tab" onclick="showToast('Panel completo disponible en M08 · Administrativo','info')">Config.</div>
+      </div>
+      <div class="screen-inner" style="padding:0 0 90px">
+        <div class="stat-grid">
+          <div class="stat-card"><div class="v">4</div><div class="l">Participantes activos</div></div>
+          <div class="stat-card"><div class="v">68%</div><div class="l">Cumplimiento semanal prom.</div></div>
+        </div>
+        <div class="section-title" style="padding:0 20px">Participantes</div>
+        <div id="admin-user-list"></div>
+      </div>
+    </div>
+
+    <!-- ---------- ADMIN: DETALLE POR PARTICIPANTE (agregado) ---------- -->
+    <div class="screen" id="s-admin-detalle" data-name="admin · detalle participante">
+      <div class="app-bar">
+        <button class="app-bar-back" onclick="go('s-admin-diario')">←</button>
+        <div class="app-bar-title" id="admin-detalle-nombre">Participante<div class="app-bar-sub">Métricas de adherencia del diario</div></div>
+      </div>
+      <div class="screen-inner">
+        <div id="admin-consent-blocked" class="alert alert-error hidden">
+          <span class="alert-icon">🔒</span>
+          <div class="alert-body"><div class="alert-title">Acceso administrativo suspendido</div><div class="alert-desc">El consentimiento de tratamiento de datos de este participante no se encuentra vigente. No es posible acceder a sus métricas ni a sus entradas.</div></div>
+        </div>
+
+        <div id="admin-detalle-body">
+          <div class="stat-grid" style="padding:0 0 6px" id="admin-detalle-stats"></div>
+
+          <div class="field-label" style="margin:14px 0 6px">Índice de actividad binaria — últimos 14 días</div>
+          <div class="activity-grid" id="admin-activity-grid"></div>
+
+          <div class="alert alert-info" style="margin-top:14px">
+            <span class="alert-icon">ℹ</span>
+            <div class="alert-body"><div class="alert-title">Contenido textual protegido</div><div class="alert-desc">El texto de las entradas es sensible (RF-52). Para consultarlo debes registrar un motivo auditable.</div></div>
+          </div>
+
+          <button class="btn btn-secondary btn-block" onclick="openAuditModal()">🔒 Solicitar acceso auditado al texto</button>
+          <button class="btn btn-ghost btn-block" onclick="simulateCsvExport()">⬇ Exportar CSV (campos limitados al consentimiento)</button>
+
+          <div id="admin-audit-result" class="hidden"></div>
+          <div id="admin-csv-result" class="hidden"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom nav (rol estudiante) -->
+  <div class="bottom-nav" id="bottom-nav">
+    <button class="bnav-item" id="bn-home" onclick="showToast('Inicio disponible fuera de este prototipo de M02','info')"><div class="bnav-icon">🏠</div>Inicio</button>
+    <button class="bnav-item" id="bn-cronograma" onclick="showToast('Cronograma disponible en M04','info')"><div class="bnav-icon">📅</div>Cronograma</button>
+    <button class="bnav-item active" id="bn-diario" onclick="go('s-diario-lista')"><div class="bnav-icon">📓</div>Diario</button>
+    <button class="bnav-item" id="bn-perfil" onclick="doLogout()"><div class="bnav-icon">👤</div>Salir</button>
+  </div>
+
+</div>
+</div>
+
+<!-- ================= MODALS (fuera del phone) ================= -->
+
+<!-- Session timeout -->
+<div class="modal-overlay" id="session-modal">
+  <div class="modal-card">
+    <div class="modal-icon">⏱</div>
+    <div class="modal-title">Tu sesión está por cerrarse</div>
+    <div class="modal-desc">Por tu seguridad, cerraremos tu sesión por inactividad.</div>
+    <div class="modal-countdown" id="modal-count">5</div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="doLogout()">Cerrar sesión</button>
+      <button class="btn btn-primary" onclick="extendSession()">Seguir aquí</button>
+    </div>
+  </div>
+</div>
+
+<!-- SOS stub -->
+<div class="modal-overlay" id="sos-modal">
+  <div class="modal-card">
+    <div class="modal-icon">🆘</div>
+    <div class="modal-title">Botón SOS Craving</div>
+    <div class="modal-desc">Esta función pertenece al módulo M03 · Chat (RF-43). Al activarse, pausa esta sesión de diario, ejecuta una intervención breve de TCC (máx. 60s) y notifica al módulo de seguimiento. Se implementará al construir M03.</div>
+    <button class="btn btn-primary btn-block" onclick="closeModal('sos-modal')">Entendido</button>
+  </div>
+</div>
+
+<!-- Confirm discard -->
+<div class="modal-overlay" id="discard-modal">
+  <div class="modal-card">
+    <div class="modal-icon">📝</div>
+    <div class="modal-title">¿Descartar esta entrada?</div>
+    <div class="modal-desc">Aún no la has guardado. Si sales ahora, perderás lo que escribiste.</div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('discard-modal')">Seguir escribiendo</button>
+      <button class="btn btn-danger" onclick="discardEntry()">Descartar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Immutability attempt -->
+<div class="modal-overlay" id="immutable-modal">
+  <div class="modal-card">
+    <div class="modal-icon">🔒</div>
+    <div class="modal-title">No es posible modificar esta entrada</div>
+    <div class="modal-desc">Las entradas del diario no pueden ser modificadas una vez registradas.</div>
+    <div style="font-family:var(--mono);font-size:10px;color:var(--tm);margin-bottom:10px" id="immutable-log-line">Intento registrado en la bitácora interna.</div>
+    <button class="btn btn-primary btn-block" onclick="closeModal('immutable-modal')">Entendido</button>
+  </div>
+</div>
+
+<!-- Audit justification modal -->
+<div class="modal-overlay" id="audit-modal">
+  <div class="modal-card wide">
+    <div class="modal-title" style="text-align:center;margin-bottom:4px">Acceso auditado al texto</div>
+    <div class="modal-desc" style="text-align:center">Selecciona el motivo de la consulta. Quedará registrado en la bitácora de auditoría junto con tu usuario y la fecha.</div>
+    <div id="reason-options"></div>
+    <textarea class="input hidden" id="reason-other-text" placeholder="Especifica el motivo…" style="min-height:60px;margin-top:4px;margin-bottom:12px"></textarea>
+    <div class="ferr hidden" id="audit-err" style="margin-bottom:10px">Selecciona un motivo para continuar.</div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('audit-modal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmAudit()">Confirmar acceso</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toast-container"></div>
+
+<script>
+/* ============================================================
+   ESTADO
+   ============================================================ */
+const S = {
+  dark:false, role:null, email:'',
+  sessionActive:false, sessionTimer:null, warnTimer:null, countInterval:null,
+  TIMEOUT_WARN:15, TIMEOUT_KILL:20,
+  emptyDemo:false,
+  currentPage:1, pageSize:20,
+  filters:{ emotion:null, craving:null, dateFrom:null, dateTo:null },
+  draft:{ text:'', emotion:null, craving:undefined, guidesVisible:true, prefillSource:null },
+  currentEvent:null, shownEvents:new Set(),
+  currentEntryId:null,
+  auditReason:null,
+  auditLog:[],
+  noGuidesThisWeek:false,
+  simulateTimestampFailure:false,
+  editAttempts:[],
+  sosPos:null
+};
+
+const ACCOUNTS = { 'admin@usco.edu.co': {pw:'Admin2026#', role:'admin', name:'Equipo Psicología'} };
+const REGISTERED = new Set(['estudiante@usco.edu.co']);
+
+const EMOTIONS = [
+  {id:'ANSIOSO',    ic:'😟', lb:'Ansioso',    badge:'b-warning'},
+  {id:'IRRITABLE',  ic:'😠', lb:'Irritable',  badge:'b-danger'},
+  {id:'TRISTE',     ic:'😔', lb:'Triste',     badge:'b-info'},
+  {id:'NEUTRO',     ic:'😐', lb:'Neutro',     badge:'b-neutral'},
+  {id:'MOTIVADO',   ic:'💪', lb:'Motivado',   badge:'b-success'},
+  {id:'NO_ESTOY_SEGURO', ic:'🤷', lb:'No estoy seguro', badge:'b-neutral'},
+];
+function emotionMeta(id){ return EMOTIONS.find(e=>e.id===id) || EMOTIONS[3]; }
+
+const WORD_BANK = {
+  consumo_reportado: { title:'Después de una recaída, escribe sin juzgarte', cat:'Manejo de recaídas / Autocompasión',
+    words:['recaída','honestidad','sin culpa','aprendizaje','de nuevo','fue difícil','me perdono','un paso atrás','sigo aquí','mañana','contexto','desencadenante'] },
+  sesion_completada: { title:'Acabas de terminar una sesión, ¿qué te llevas?', cat:'Reflexión y aprendizajes',
+    words:['aprendí','me sorprendió','pensé en','noté que','cambiaría','útil','difícil','claridad','patrón','conexión','sensación','decisión'] },
+  nueva_unidad_temporal: { title:'Empieza una semana nueva, ¿qué te propones?', cat:'Metas y motivación',
+    words:['esta semana','mi meta','quiero lograr','me comprometo','un hábito','apoyo','constancia','pequeño paso','motivación','razón','avance','confianza'] },
+  inactividad_3_dias: { title:'Hace unos días que no escribes, ¿cómo has estado?', cat:'Reconexión / Recordatorio de beneficios',
+    words:['he estado','extrañé esto','beneficios','energía','respirar mejor','orgullo','retomar','sin prisa','cambios','ahorro','salud','de nuevo aquí'] },
+};
+
+/* Entradas del estudiante (mock, en memoria) */
+let diaryEntries = [];
+function seedEntries(){
+  const base = Date.now();
+  const day = 86400000;
+  const sample = [
+    {text:'Hoy sentí ganas de vapear después de clase, pero salí a caminar en vez de hacerlo. Me costó los primeros minutos.', emotion:'ANSIOSO', craving:3},
+    {text:'Buen día en general. Recordé por qué empecé este proceso y eso me ayudó a mantenerme firme.', emotion:'MOTIVADO', craving:1},
+    {text:'Discutí con un compañero de cuarto y sentí muchas ganas de vapear para calmarme. No lo hice.', emotion:'IRRITABLE', craving:4},
+    {text:'No pasó nada especial hoy, solo quería dejar registro de que sigo en el proceso.', emotion:'NEUTRO', craving:2},
+    {text:'Extrañé mucho a mi familia esta semana y eso despertó ganas de consumir. Escribir esto ayuda.', emotion:'TRISTE', craving:4},
+    {text:'No sé bien cómo me siento hoy, ha sido un día raro entre parcial y parcial.', emotion:'NO_ESTOY_SEGURO', craving:0},
+    {text:'Semana difícil de exámenes. El estrés sube el deseo de vapear pero he aguantado tres días.', emotion:'ANSIOSO', craving:5},
+    {text:'Hice ejercicio en la mañana y sentí mucha claridad. Casi no pensé en vapear en todo el día.', emotion:'MOTIVADO', craving:1},
+  ];
+  let id = 1;
+  // generar 23 entradas para forzar paginación (20/página, RF-47)
+  for(let i=0;i<23;i++){
+    const s = sample[i % sample.length];
+    diaryEntries.push({
+      id:id++, text:s.text, emotion:s.emotion, craving:s.craving,
+      ts:new Date(base - i*day - i*3600000)
+    });
+  }
+}
+seedEntries();
+
+/* Participantes (mock admin) — mismos nombres usados en M01 para continuidad */
+/* ---------- RF-50: motor de métricas dinámico (sin datos precalculados) ---------- */
+function dayKeyBogota(ts){
+  const d = (ts instanceof Date) ? ts : new Date(ts);
+  const bogota = new Date(d.getTime() - 5*3600000);
+  return bogota.toISOString().slice(0,10);
+}
+function computeMetrics(entries, opts){
+  opts = opts || {};
+  const cronogramaAsignado = opts.cronogramaAsignado !== false;
+  if(!entries || entries.length===0){
+    return { freq:0, streak:0, maxStreak:0, pct: cronogramaAsignado ? 0 : null, avgEmotion:'NEUTRO', avgCraving:null, activeDays:new Set(), totalActiveDays:0 };
+  }
+  const dayKeys = new Set(entries.map(e=>dayKeyBogota(e.ts)));
+  let freq = 0;
+  for(let i=0;i<7;i++){
+    const k = dayKeyBogota(new Date(Date.now() - i*86400000));
+    if(dayKeys.has(k)) freq++;
+  }
+  let streak = 0;
+  for(let i=0;i<365;i++){
+    const k = dayKeyBogota(new Date(Date.now() - i*86400000));
+    if(dayKeys.has(k)) streak++; else break;
+  }
+  const sortedKeys = Array.from(dayKeys).sort();
+  let maxStreak = 0, curr = 0, prevDate = null;
+  sortedKeys.forEach(k=>{
+    const d = new Date(k+'T00:00:00');
+    if(prevDate && (d - prevDate) === 86400000){ curr++; } else { curr = 1; }
+    maxStreak = Math.max(maxStreak, curr);
+    prevDate = d;
+  });
+  const pct = cronogramaAsignado ? Math.round((freq/7)*100) : null;
+  const emCount = {};
+  entries.forEach(e=>{ emCount[e.emotion] = (emCount[e.emotion]||0)+1; });
+  const avgEmotion = Object.keys(emCount).sort((a,b)=>emCount[b]-emCount[a])[0] || 'NEUTRO';
+  const cravingVals = entries.map(e=>e.craving).filter(c=>c>0);
+  const avgCraving = cravingVals.length ? Math.round((cravingVals.reduce((a,b)=>a+b,0)/cravingVals.length)*10)/10 : null;
+  return { freq, streak, maxStreak, pct, avgEmotion, avgCraving, activeDays:dayKeys, totalActiveDays:dayKeys.size };
+}
+function buildEntriesFromOffsets(offsets, pattern){
+  return offsets.map((off,i)=>{
+    const p = pattern[i % pattern.length];
+    return { ts:new Date(Date.now() - off*86400000 - (off%3)*3600000), text:p.text, emotion:p.emotion, craving:p.craving };
+  });
+}
+function entriesFor(s){ return s.isDemoUser ? diaryEntries : s.entries; }
+
+/* Seudónimos (RF-48/RF-52: los nombres reales no son coherentes con el principio de anonimato) */
+const STUDENTS = [
+  { id:'P-001', name:'Participante P-001', email:'p001@usco.edu.co', consentVigente:true, cronogramaAsignado:true,
+    entries: buildEntriesFromOffsets([0,1,2,3,5,6,9,10], [
+      {text:'Buen día en general, mantuve la calma frente a un antojo fuerte.', emotion:'MOTIVADO', craving:2},
+      {text:'Estrés por entrega de proyecto, craving alto pero no consumí.', emotion:'ANSIOSO', craving:4},
+      {text:'Día tranquilo, sin mucho que contar.', emotion:'NEUTRO', craving:1} ]) },
+  { id:'P-002', name:'Participante P-002', email:'p002@usco.edu.co', consentVigente:true, cronogramaAsignado:true,
+    entries: buildEntriesFromOffsets([2,7], [
+      {text:'Recaí anoche. Me siento mal pero quiero seguir intentándolo.', emotion:'TRISTE', craving:5},
+      {text:'Semana difícil, poca energía para escribir.', emotion:'TRISTE', craving:3} ]) },
+  { id:'P-003', name:'Participante P-003', email:'p003@usco.edu.co', consentVigente:true, cronogramaAsignado:true,
+    entries: buildEntriesFromOffsets([0,1,2,3,4,5,6,7,8,9,10,11], [
+      {text:'Once días seguidos registrando. Cada día se siente un poco más fácil.', emotion:'MOTIVADO', craving:1},
+      {text:'Sigo firme con el proceso.', emotion:'MOTIVADO', craving:1},
+      {text:'Un poco de ansiedad pero controlada.', emotion:'ANSIOSO', craving:2} ]) },
+  { id:'P-004', name:'Participante P-004', email:'p004@usco.edu.co', consentVigente:true, cronogramaAsignado:false,
+    entries: buildEntriesFromOffsets([0,3,6], [
+      {text:'Día tranquilo, sin mucho que contar.', emotion:'NEUTRO', craving:2},
+      {text:'Aún no tengo cronograma asignado por el equipo de psicología.', emotion:'NEUTRO', craving:1} ]) },
+  { id:'P-005', name:'Participante P-005', email:'p005@usco.edu.co', consentVigente:false, cronogramaAsignado:true,
+    entries: buildEntriesFromOffsets([1,4], [
+      {text:'Entrada registrada antes de retirar el consentimiento.', emotion:'NEUTRO', craving:2} ]) },
+  { id:'demo', name:'Estudiante de demostración (tú)', email:'estudiante@usco.edu.co', consentVigente:true, cronogramaAsignado:true, isDemoUser:true, entries:null },
+];
+
+/* ============================================================
+   NAVEGACIÓN (idéntico patrón a M01)
+   ============================================================ */
+let _history = ['s-splash'];
+
+function go(id, back=false){
+  const prev = document.querySelector('.screen.active');
+  const next = document.getElementById(id);
+  if(!next || prev === next) return;
+  if(prev){ prev.classList.remove('active'); if(back) prev.classList.add('slide-back'); }
+  next.classList.remove('slide-back');
+  next.classList.add('active');
+  if(!back) _history.push(id);
+  document.getElementById('dp-screen').textContent = next.dataset.name || id;
+  updateDemoBar(id);
+  resetActivity();
+  window.scrollTo(0,0);
+}
+
+function back(defaultTarget){
+  if(_history.length > 1) _history.pop();
+  const target = _history[_history.length-1] || defaultTarget;
+  go(target, true);
+}
+
+function updateDemoBar(id){
+  const roleEl = document.getElementById('dp-role');
+  if(S.role){
+    roleEl.textContent = S.role === 'student' ? 'estudiante' : 'admin';
+    roleEl.className = 'role-badge ' + S.role;
+  } else {
+    roleEl.className = 'role-badge hidden';
+  }
+  document.getElementById('btn-timeout').style.display = S.sessionActive ? 'inline-block' : 'none';
+  const bottomNav = document.getElementById('bottom-nav');
+  const studentScreens = ['s-diario-lista','s-diario-nueva','s-diario-guardada'];
+  bottomNav.classList.toggle('visible', S.role === 'student' && studentScreens.includes(id));
+  const sosFab = document.getElementById('sos-fab-lista');
+  sosFab.classList.toggle('hidden', !(S.role === 'student' && id === 's-diario-lista'));
+}
+
+/* ============================================================
+   LOGIN / SESIÓN
+   ============================================================ */
+function prefill(role){
+  if(role === 'student'){
+    document.getElementById('login-email').value = 'estudiante@usco.edu.co';
+    document.getElementById('login-pass').value = 'Brisa2026#';
+  } else {
+    document.getElementById('login-email').value = 'admin@usco.edu.co';
+    document.getElementById('login-pass').value = 'Admin2026#';
+  }
+  clearErr('login');
+}
+
+function clearErr(scope){
+  document.getElementById(scope+'-alert')?.classList.add('hidden');
+  document.querySelectorAll('#s-'+scope+' .input.err').forEach(i=>i.classList.remove('err'));
+}
+
+function doLogin(){
+  const email = document.getElementById('login-email').value.trim().toLowerCase();
+  const pass = document.getElementById('login-pass').value;
+  const acc = ACCOUNTS[email];
+  if(acc && acc.pw === pass){
+    S.email = email; S.role = 'admin';
+    startSession();
+    renderAdminList();
+    go('s-admin-diario');
+    showToast('Bienvenido, '+acc.name,'success');
+  } else if(REGISTERED.has(email) && pass === 'Brisa2026#'){
+    S.email = email; S.role = 'student';
+    startSession();
+    S.currentPage = 1; S.filters = {emotion:null, craving:null};
+    renderLista();
+    go('s-diario-lista');
+    showToast('Sesión iniciada','success');
+  } else {
+    document.getElementById('login-alert').classList.remove('hidden');
+    document.getElementById('login-email').classList.add('err');
+    document.getElementById('login-pass').classList.add('err');
+  }
+}
+
+function doLogout(){
+  clearInterval(S.sessionTimer); clearInterval(S.warnTimer); clearInterval(S.countInterval);
+  S.sessionActive = false; S.role = null; S.email = '';
+  closeModal('session-modal');
+  document.getElementById('login-email').value=''; document.getElementById('login-pass').value='';
+  _history = ['s-splash'];
+  go('s-login');
+  showToast('Sesión cerrada','info');
+}
+
+function startSession(){
+  S.sessionActive = true;
+  resetActivity();
+  document.getElementById('btn-timeout').style.display = 'inline-block';
+}
+function resetActivity(){
+  if(!S.sessionActive) return;
+  clearTimeout(S.sessionTimer); clearTimeout(S.warnTimer);
+  S.sessionTimer = setTimeout(()=>triggerTimeoutWarning(), S.TIMEOUT_WARN*1000);
+}
+function triggerTimeoutWarning(){
+  if(!S.sessionActive) return;
+  document.getElementById('session-modal').classList.add('visible');
+  let count = S.TIMEOUT_KILL - S.TIMEOUT_WARN;
+  document.getElementById('modal-count').textContent = count;
+  clearInterval(S.countInterval);
+  S.countInterval = setInterval(()=>{
+    count--;
+    document.getElementById('modal-count').textContent = Math.max(count,0);
+    if(count<=0){ clearInterval(S.countInterval); doLogout(); }
+  },1000);
+}
+function extendSession(){
+  clearInterval(S.countInterval);
+  document.getElementById('session-modal').classList.remove('visible');
+  resetActivity();
+  showToast('Sesión extendida','success');
+}
+document.addEventListener('click', ()=>{ if(S.sessionActive) resetActivity(); });
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+function showToast(msg, type=''){
+  const wrap = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = 'toast' + (type ? ' t-'+type : '');
+  const icon = {success:'✓', error:'✗', warning:'⚠', info:'ℹ'}[type] || '';
+  t.textContent = (icon ? icon+' ' : '') + msg;
+  wrap.appendChild(t);
+  setTimeout(()=>t.remove(), 3000);
+}
+
+function closeModal(id){ document.getElementById(id).classList.remove('visible'); }
+
+/* ============================================================
+   DARK MODE
+   ============================================================ */
+function toggleDark(){
+  S.dark = !S.dark;
+  document.getElementById('phone').setAttribute('data-theme', S.dark ? 'dark' : '');
+  document.querySelectorAll('.modal-card').forEach(m=>m.closest('.modal-overlay') && m.setAttribute('data-theme', S.dark?'dark':''));
+  const btn = document.getElementById('btn-dark');
+  btn.textContent = S.dark ? '☽ Oscuro' : '☀ Claro';
+  btn.classList.toggle('active', !S.dark);
+}
+
+/* ============================================================
+   LISTA / HISTORIAL (RF-47, RF-48)
+   ============================================================ */
+function toggleEmptyDemo(){
+  S.emptyDemo = !S.emptyDemo;
+  document.getElementById('btn-empty').classList.toggle('active', S.emptyDemo);
+  document.getElementById('btn-empty').textContent = S.emptyDemo ? '🗒 Restaurar demo' : '🗒 Vaciar diario';
+  S.currentPage = 1;
+  renderLista();
+}
+
+function toggleFilter(type, value){
+  S.filters[type] = (S.filters[type] === value) ? null : value;
+  S.currentPage = 1;
+  document.querySelectorAll('.filter-chip[data-f]').forEach(chip=>{
+    const [t,v] = chip.dataset.f.split(':');
+    chip.classList.toggle('sel', S.filters[t] === v);
+  });
+  const anyFilter = S.filters.emotion || S.filters.craving || S.filters.dateFrom || S.filters.dateTo;
+  document.getElementById('clear-filters').classList.toggle('hidden', !anyFilter);
+  renderLista();
+}
+function clearFilters(){
+  S.filters = {emotion:null, craving:null, dateFrom:null, dateTo:null};
+  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('sel'));
+  document.getElementById('filter-date-from').value = '';
+  document.getElementById('filter-date-to').value = '';
+  document.getElementById('date-filter-err').classList.add('hidden');
+  document.getElementById('clear-filters').classList.add('hidden');
+  S.currentPage = 1;
+  renderLista();
+}
+function applyDateFilter(){
+  const fromVal = document.getElementById('filter-date-from').value;
+  const toVal = document.getElementById('filter-date-to').value;
+  const from = fromVal ? new Date(fromVal+'T00:00:00') : null;
+  const to = toVal ? new Date(toVal+'T23:59:59') : null;
+  if(from && to && from > to){
+    document.getElementById('date-filter-err').classList.remove('hidden');
+    return;
+  }
+  document.getElementById('date-filter-err').classList.add('hidden');
+  S.filters.dateFrom = from; S.filters.dateTo = to;
+  S.currentPage = 1;
+  document.getElementById('clear-filters').classList.remove('hidden');
+  renderLista();
+}
+function clearDateFilter(){
+  document.getElementById('filter-date-from').value = '';
+  document.getElementById('filter-date-to').value = '';
+  S.filters.dateFrom = null; S.filters.dateTo = null;
+  document.getElementById('date-filter-err').classList.add('hidden');
+  S.currentPage = 1;
+  renderLista();
+}
+
+function filteredEntries(){
+  if(S.emptyDemo) return [];
+  return diaryEntries.filter(e=>{
+    if(S.filters.emotion && e.emotion !== S.filters.emotion) return false;
+    if(S.filters.craving === 'high' && !(e.craving >= 4)) return false;
+    if(S.filters.craving === 'low' && !(e.craving >= 1 && e.craving <= 2)) return false;
+    if(S.filters.dateFrom && e.ts < S.filters.dateFrom) return false;
+    if(S.filters.dateTo && e.ts > S.filters.dateTo) return false;
+    return true;
+  }).sort((a,b)=> b.ts - a.ts);
+}
+
+function fmtDate(ts){
+  const d = (ts instanceof Date) ? ts : new Date(ts);
+  return d.toLocaleString('es-CO', {day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', timeZone:'America/Bogota'});
+}
+
+function renderLista(){
+  const all = filteredEntries();
+  const total = all.length;
+  document.getElementById('lista-count').textContent = S.emptyDemo ? '0 entradas' : (total + (total===1?' entrada':' entradas'));
+  const container = document.getElementById('lista-content');
+
+  if(diaryEntries.length === 0 || S.emptyDemo){
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📓</div>
+        <div class="empty-title">Aún no tienes entradas registradas</div>
+        <div class="empty-desc">Puedes crear tu primera entrada cuando lo desees. Este espacio es solo tuyo.</div>
+        <button class="btn btn-primary" style="margin-top:14px" onclick="openNewEntry()">Escribir mi primera entrada</button>
+      </div>`;
+    document.getElementById('pagination-wrap')?.remove();
+    return;
+  }
+
+  if(total === 0){
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🔍</div>
+        <div class="empty-title">Sin resultados</div>
+        <div class="empty-desc">No se encontraron entradas que coincidan con los filtros seleccionados.</div>
+        <button class="btn btn-secondary" style="margin-top:14px" onclick="clearFilters()">Limpiar filtros</button>
+      </div>`;
+    return;
+  }
+
+  const totalPages = Math.max(1, Math.ceil(total / S.pageSize));
+  if(S.currentPage > totalPages) S.currentPage = totalPages;
+  const startIdx = (S.currentPage-1)*S.pageSize;
+  const pageItems = all.slice(startIdx, startIdx+S.pageSize);
+
+  let html = '';
+  pageItems.forEach(e=>{
+    const em = emotionMeta(e.emotion);
+    const cravingLabel = e.craving === 0 ? 'No estoy seguro/a' : ('Craving '+e.craving+'/5');
+    html += `
+      <div class="entry-card" onclick="openSaved(${e.id})">
+        <div class="entry-card-head">
+          <span class="entry-date">${fmtDate(e.ts)}</span>
+          <span>🔒</span>
+        </div>
+        <div class="entry-text">${e.text}</div>
+        <div class="entry-tags">
+          <span class="badge ${em.badge}"><span class="bdot" style="background:currentColor"></span>${em.ic} ${em.lb}</span>
+          <span class="badge b-neutral">${cravingLabel}</span>
+        </div>
+      </div>`;
+  });
+
+  if(totalPages > 1){
+    html += `
+      <div class="pagination" id="pagination-wrap">
+        <button class="page-btn" ${S.currentPage<=1?'disabled':''} onclick="changePage(-1)">‹</button>
+        <span class="page-info">${total} entradas · página ${S.currentPage} / ${totalPages}</span>
+        <button class="page-btn" ${S.currentPage>=totalPages?'disabled':''} onclick="changePage(1)">›</button>
+      </div>`;
+  }
+  container.innerHTML = html;
+}
+function changePage(delta){
+  S.currentPage += delta;
+  renderLista();
+  showToast('Mostrando página '+S.currentPage,'info');
+}
+
+function openSaved(id){
+  const e = diaryEntries.find(x=>x.id===id);
+  if(!e) return;
+  S.currentEntryId = id;
+  document.getElementById('guardada-fecha').textContent = fmtDate(e.ts);
+  const em = emotionMeta(e.emotion);
+  document.getElementById('guardada-emotion').innerHTML = `<span class="badge ${em.badge}"><span class="bdot" style="background:currentColor"></span>${em.ic} ${em.lb}</span>`;
+  const cravingLabel = e.craving === 0 ? 'No estoy seguro/a' : (e.craving+' / 5');
+  document.getElementById('guardada-craving').innerHTML = `<span class="badge b-neutral">${cravingLabel}</span>`;
+  document.getElementById('guardada-texto').textContent = e.text;
+  go('s-diario-guardada');
+}
+
+/* ============================================================
+   NUEVA ENTRADA (RF-40, RF-41, RF-42, RF-103, RF-44, RF-45, RF-46)
+   ============================================================ */
+function renderSelectors(){
+  const eg = document.getElementById('emotion-grid');
+  eg.innerHTML = EMOTIONS.map(e=>`
+    <div class="emotion-chip" id="em-${e.id}" onclick="selectEmotion('${e.id}')">
+      <span class="ic">${e.ic}</span><span class="lb">${e.lb}</span>
+    </div>`).join('');
+
+  const cr = document.getElementById('craving-row');
+  cr.innerHTML = [1,2,3,4,5].map(n=>`<div class="craving-chip" id="cr-${n}" onclick="selectCraving(${n})">${n}</div>`).join('');
+}
+renderSelectors();
+
+function openNewEntry(){
+  S.draft = { text:'', emotion:null, craving:undefined, guidesVisible:true, prefillSource:null };
+  document.getElementById('entry-text').value = '';
+  document.getElementById('guide-hidden-msg').classList.add('hidden');
+  document.getElementById('guide-unavailable-msg').classList.toggle('hidden', !S.noGuidesThisWeek);
+  document.getElementById('guide-panel').classList.toggle('hidden', S.noGuidesThisWeek);
+  document.querySelectorAll('.emotion-chip').forEach(c=>c.classList.remove('sel'));
+  document.querySelectorAll('.craving-chip').forEach(c=>c.classList.remove('sel'));
+  document.getElementById('craving-unsure-btn').classList.remove('sel');
+  ['text-err','emotion-err','craving-err'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+  document.getElementById('entry-text').classList.remove('err');
+  updateWordCounter();
+  go('s-diario-nueva');
+}
+function toggleNoGuides(){
+  S.noGuidesThisWeek = !S.noGuidesThisWeek;
+  document.getElementById('btn-no-guides').classList.toggle('active', S.noGuidesThisWeek);
+  showToast(S.noGuidesThisWeek ? 'RF-41 FA: simulando semana sin guías publicadas' : 'Guías de escritura restauradas', 'info');
+  if(document.getElementById('s-diario-nueva').classList.contains('active')){
+    document.getElementById('guide-unavailable-msg').classList.toggle('hidden', !S.noGuidesThisWeek);
+    document.getElementById('guide-panel').classList.toggle('hidden', S.noGuidesThisWeek || !S.draft.guidesVisible);
+  }
+}
+
+function dismissGuides(){
+  S.draft.guidesVisible = false;
+  document.getElementById('guide-panel').classList.add('hidden');
+  document.getElementById('guide-hidden-msg').classList.remove('hidden');
+}
+function restoreGuides(){
+  S.draft.guidesVisible = true;
+  document.getElementById('guide-panel').classList.remove('hidden');
+  document.getElementById('guide-hidden-msg').classList.add('hidden');
+}
+
+function countWords(str){
+  const m = str.trim().match(/[^\s]+/g);
+  return m ? m.length : 0;
+}
+
+function onTextInput(){
+  const ta = document.getElementById('entry-text');
+  let words = countWords(ta.value);
+  if(words > 100){
+    // RF-45: bloquear ingreso de palabras adicionales una vez alcanzado el límite
+    const truncated = ta.value.trim().split(/\s+/).slice(0,100).join(' ');
+    ta.value = truncated + (/\s$/.test(ta.value) ? '' : '');
+    words = 100;
+  }
+  S.draft.text = ta.value;
+  document.getElementById('text-err').classList.add('hidden');
+  ta.classList.remove('err');
+  updateWordCounter(words);
+}
+
+function updateWordCounter(words){
+  if(words === undefined) words = countWords(document.getElementById('entry-text').value);
+  const fill = document.getElementById('wc-fill');
+  const label = document.getElementById('wc-label');
+  fill.style.width = Math.min(words,100)+'%';
+  fill.className = 'wc-fill' + (words>=100?' limit':(words>=80?' warn':''));
+  label.className = 'wc-label' + (words>=100?' limit':(words>=80?' warn':''));
+  label.textContent = words + ' / 100 palabras';
+}
+
+function selectEmotion(id){
+  S.draft.emotion = id;
+  document.querySelectorAll('.emotion-chip').forEach(c=>c.classList.toggle('sel', c.id === 'em-'+id));
+  document.getElementById('emotion-err').classList.add('hidden');
+}
+function selectCraving(n){
+  S.draft.craving = n;
+  document.querySelectorAll('.craving-chip').forEach(c=>c.classList.toggle('sel', c.id === 'cr-'+n));
+  document.getElementById('craving-unsure-btn').classList.toggle('sel', n===0);
+  document.getElementById('craving-err').classList.add('hidden');
+}
+
+function saveEntry(){
+  const text = document.getElementById('entry-text').value.trim();
+  let ok = true;
+
+  if(countWords(text) === 0){
+    document.getElementById('text-err').classList.remove('hidden');
+    document.getElementById('entry-text').classList.add('err');
+    ok = false;
+  }
+  if(!S.draft.emotion){
+    document.getElementById('emotion-err').classList.remove('hidden');
+    ok = false;
+  }
+  if(S.draft.craving === undefined){
+    document.getElementById('craving-err').classList.remove('hidden');
+    ok = false;
+  }
+  if(!ok){ showToast('Revisa los campos marcados','error'); return; }
+
+  if(S.simulateTimestampFailure){
+    S.simulateTimestampFailure = false;
+    document.getElementById('btn-ts-fail').classList.remove('active');
+    showToast('No fue posible completar el registro de la entrada en este momento. Intente nuevamente.','error');
+    return;
+  }
+
+  const newEntry = { id: Date.now(), text, emotion:S.draft.emotion, craving:S.draft.craving, ts:new Date() };
+  diaryEntries.unshift(newEntry);
+  S.emptyDemo = false;
+  document.getElementById('btn-empty').classList.remove('active');
+  document.getElementById('btn-empty').textContent = '🗒 Vaciar diario';
+  S.currentPage = 1;
+  renderLista();
+  showToast('Entrada guardada','success');
+  openSaved(newEntry.id);
+}
+
+function armTimestampFailure(){
+  S.simulateTimestampFailure = true;
+  document.getElementById('btn-ts-fail').classList.add('active');
+  showToast('RF-44 FA: el próximo guardado fallará simulando un error del servicio de tiempo del servidor (sin datos parciales)','warning');
+}
+function simulateCrossUserAccess(){
+  showToast('No tiene permisos para acceder a las entradas de este usuario.','error');
+}
+function simulateAdminNoUser(){
+  showToast('HTTP 400: debe especificarse un usuario para consultar el repositorio de entradas del diario.','error');
+}
+function attemptEdit(){
+  const attempt = { entryId:S.currentEntryId, actor:S.email, role:S.role, ts:new Date(), result:'HTTP 405 rechazado' };
+  S.editAttempts.push(attempt);
+  document.getElementById('immutable-log-line').textContent = 'Intento #'+S.editAttempts.length+' registrado en la bitácora interna ('+fmtDate(attempt.ts)+').';
+  document.getElementById('immutable-modal').classList.add('visible');
+}
+
+function confirmDiscard(){
+  const hasContent = document.getElementById('entry-text').value.trim().length > 0 || S.draft.emotion || S.draft.craving !== undefined;
+  if(hasContent){ document.getElementById('discard-modal').classList.add('visible'); }
+  else { go('s-diario-lista'); }
+}
+function discardEntry(){
+  closeModal('discard-modal');
+  go('s-diario-lista');
+}
+
+/* ============================================================
+   SUGERENCIA · NUBE DE PALABRAS (RF-49)
+   ============================================================ */
+let selectedWords = [];
+function simulateSuggestion(eventKey){
+  if(S.shownEvents.has(eventKey)){
+    showToast('Esta sugerencia ya se mostró en la sesión actual (sin reintentos)','info');
+    return;
+  }
+  const data = WORD_BANK[eventKey];
+  if(!data){ return; }
+  S.currentEvent = eventKey;
+  selectedWords = [];
+  document.getElementById('sheet-title').textContent = data.title;
+  document.getElementById('sheet-sub').textContent = 'Categoría: '+data.cat+' · elige hasta 3 palabras para precargar tu entrada, o ignora esta sugerencia.';
+
+  const pool = [...data.words].sort(()=>Math.random()-0.5).slice(0, 8 + Math.floor(Math.random()*5));
+  document.getElementById('word-cloud').innerHTML = pool.map(w=>`<span class="word-chip" onclick="toggleWord(this,'${w}')">${w}</span>`).join('');
+  document.getElementById('sheet-confirm').disabled = true;
+
+  if(!document.getElementById('s-diario-nueva').classList.contains('active')){
+    openNewEntry();
+  }
+  document.getElementById('sheet-overlay').classList.add('visible');
+}
+function toggleWord(el, w){
+  const idx = selectedWords.indexOf(w);
+  if(idx>-1){ selectedWords.splice(idx,1); el.classList.remove('sel'); }
+  else {
+    if(selectedWords.length >= 3){ showToast('Máximo 3 palabras','warning'); return; }
+    selectedWords.push(w); el.classList.add('sel');
+  }
+  document.getElementById('sheet-confirm').disabled = selectedWords.length === 0;
+}
+function useSuggestedWords(){
+  const ta = document.getElementById('entry-text');
+  ta.value = (selectedWords.join(' ') + ' ').trimStart();
+  onTextInput();
+  S.shownEvents.add(S.currentEvent);
+  document.getElementById('sheet-overlay').classList.remove('visible');
+  showToast('Diario precargado con tus palabras','success');
+}
+function closeSheet(status){
+  if(S.currentEvent) S.shownEvents.add(S.currentEvent);
+  document.getElementById('sheet-overlay').classList.remove('visible');
+  if(status==='ignorada') showToast('Sugerencia ignorada','info');
+}
+
+/* ============================================================
+   SOS (stub — RF-43 pertenece a M03 · Chat)
+   ============================================================ */
+function openSOS(){
+  document.getElementById('sos-modal').classList.add('visible');
+}
+
+/* ============================================================
+   ADMIN · ACTIVIDAD POR USUARIO (agregado, sin texto)
+   ============================================================ */
+function renderAdminList(){
+  const wrap = document.getElementById('admin-user-list');
+  wrap.innerHTML = STUDENTS.map(s=>{
+    const initials = s.isDemoUser ? 'TÚ' : s.id.slice(-3);
+    if(!s.consentVigente){
+      return `
+      <div class="user-item" onclick="openAdminDetalle('${s.id}')">
+        <div class="user-avatar" style="background:var(--danger-bg);color:var(--danger-text)">${initials}</div>
+        <div class="user-info">
+          <div class="user-name">${s.name}</div>
+          <div class="user-meta"><span class="badge b-danger">🔒 Consentimiento no vigente</span></div>
+        </div>
+        <span class="user-arrow">›</span>
+      </div>`;
+    }
+    const m = computeMetrics(entriesFor(s), {cronogramaAsignado:s.cronogramaAsignado});
+    const em = emotionMeta(m.avgEmotion);
+    return `
+    <div class="user-item" onclick="openAdminDetalle('${s.id}')">
+      <div class="user-avatar">${initials}</div>
+      <div class="user-info">
+        <div class="user-name">${s.name}${s.isDemoUser?' <span class="badge b-info" style="padding:1px 6px">en vivo</span>':''}</div>
+        <div class="user-meta">
+          <span>📅 ${m.freq}/7 días</span>
+          <span>🔥 racha ${m.streak}</span>
+          <span class="badge ${em.badge}" style="padding:1px 7px">${em.ic} ${em.lb}</span>
+        </div>
+      </div>
+      <span class="user-arrow">›</span>
+    </div>`;
+  }).join('');
+}
+
+function renderActivityGrid(entries){
+  const m = computeMetrics(entries, {});
+  const cells = [];
+  for(let i=13;i>=0;i--){
+    const d = new Date(Date.now() - i*86400000);
+    const k = dayKeyBogota(d);
+    const active = m.activeDays.has(k);
+    cells.push(`<div class="activity-cell${active?' active':''}" title="${k}">${d.getDate()}</div>`);
+  }
+  return cells.join('');
+}
+
+function openAdminDetalle(id){
+  const s = STUDENTS.find(x=>x.id===id);
+  if(!s) return;
+  S.currentAdminUser = id;
+  document.getElementById('admin-detalle-nombre').innerHTML = s.name + '<div class="app-bar-sub">'+s.email+'</div>';
+  document.getElementById('admin-audit-result').classList.add('hidden');
+  document.getElementById('admin-audit-result').innerHTML = '';
+  document.getElementById('admin-csv-result').classList.add('hidden');
+  document.getElementById('admin-csv-result').innerHTML = '';
+
+  const blocked = document.getElementById('admin-consent-blocked');
+  const body = document.getElementById('admin-detalle-body');
+  if(!s.consentVigente){
+    blocked.classList.remove('hidden');
+    body.classList.add('hidden');
+    go('s-admin-detalle');
+    return;
+  }
+  blocked.classList.add('hidden');
+  body.classList.remove('hidden');
+
+  const entries = entriesFor(s);
+  const m = computeMetrics(entries, {cronogramaAsignado:s.cronogramaAsignado});
+  document.getElementById('admin-detalle-stats').innerHTML = `
+    <div class="stat-card"><div class="v">${m.freq}/7</div><div class="l">Frecuencia semanal</div></div>
+    <div class="stat-card"><div class="v">${m.pct===null?'No calculable':m.pct+'%'}</div><div class="l">Cumplimiento${s.cronogramaAsignado?'':' (sin cronograma)'}</div></div>
+    <div class="stat-card"><div class="v">${m.streak} 🔥</div><div class="l">Racha activa</div></div>
+    <div class="stat-card"><div class="v">${m.maxStreak}</div><div class="l">Racha máxima histórica</div></div>
+    <div class="stat-card"><div class="v">${m.avgCraving===null?'N/D':m.avgCraving+'/5'}</div><div class="l">Craving promedio</div></div>
+    <div class="stat-card"><div class="v">${emotionMeta(m.avgEmotion).ic}</div><div class="l">Emoción predominante</div></div>
+  `;
+  document.getElementById('admin-activity-grid').innerHTML = renderActivityGrid(entries);
+  go('s-admin-detalle');
+}
+
+function simulateCsvExport(){
+  const el = document.getElementById('admin-csv-result');
+  el.classList.remove('hidden');
+  el.innerHTML = `
+    <div class="alert alert-success" style="margin-top:10px">
+      <span class="alert-icon">⬇</span>
+      <div class="alert-body"><div class="alert-title">Exportación CSV simulada</div><div class="alert-desc">Campos incluidos (limitados al consentimiento informado): id_seudonimo, fecha_registro, estado_emocional, nivel_deseo_consumo. Excluidos: contenido_texto, nombre, correo. Archivo no descargado — es una simulación de RF-52.</div></div>
+    </div>`;
+  showToast('CSV simulado generado con campos limitados','success');
+}
+
+/* ---------- Acceso auditado (RF-52) ---------- */
+const AUDIT_REASONS = [
+  'Seguimiento clínico programado',
+  'Reporte de riesgo detectado por el sistema (M05)',
+  'Solicitud del equipo de investigación',
+  'Otro (especificar)'
+];
+function renderAuditReasons(){
+  const wrap = document.getElementById('reason-options');
+  wrap.innerHTML = AUDIT_REASONS.map((r,i)=>`
+    <div class="reason-option" id="reason-${i}" onclick="selectReason(${i})">
+      <div class="reason-radio"></div>${r}
+    </div>`).join('');
+}
+renderAuditReasons();
+
+function selectReason(i){
+  S.auditReason = i;
+  document.querySelectorAll('.reason-option').forEach((el,idx)=>el.classList.toggle('sel', idx===i));
+  document.getElementById('audit-err').classList.add('hidden');
+  document.getElementById('reason-other-text').classList.toggle('hidden', i !== AUDIT_REASONS.length-1);
+}
+function openAuditModal(){
+  const s0 = STUDENTS.find(x=>x.id===S.currentAdminUser);
+  if(s0 && !s0.consentVigente){
+    showToast('No es posible acceder a las entradas de este participante. El consentimiento de tratamiento de datos no se encuentra vigente.','error');
+    return;
+  }
+  S.auditReason = null;
+  document.querySelectorAll('.reason-option').forEach(el=>el.classList.remove('sel'));
+  document.getElementById('reason-other-text').classList.add('hidden');
+  document.getElementById('reason-other-text').value = '';
+  document.getElementById('audit-err').classList.add('hidden');
+  document.getElementById('audit-modal').classList.add('visible');
+}
+function confirmAudit(){
+  if(S.auditReason === null){
+    document.getElementById('audit-err').classList.remove('hidden');
+    return;
+  }
+  let reason = AUDIT_REASONS[S.auditReason];
+  if(S.auditReason === AUDIT_REASONS.length-1){
+    const other = document.getElementById('reason-other-text').value.trim();
+    if(!other){ showToast('Especifica el motivo','error'); return; }
+    reason = other;
+  }
+  const s = STUDENTS.find(x=>x.id===S.currentAdminUser);
+  const logEntry = { admin:S.email, student:s.id, reason, ts:new Date() };
+  S.auditLog.push(logEntry);
+  closeModal('audit-modal');
+  renderAuditResult(s, logEntry);
+  showToast('Acceso concedido y registrado en bitácora','success');
+}
+function renderAuditResult(s, log){
+  const el = document.getElementById('admin-audit-result');
+  el.classList.remove('hidden');
+  let entriesHtml = entriesFor(s).map(e=>{
+    const em = emotionMeta(e.emotion);
+    return `<div class="entry-card" style="cursor:default">
+      <div class="entry-card-head"><span class="entry-date">${fmtDate(e.ts)}</span></div>
+      <div class="entry-text" style="-webkit-line-clamp:unset">${e.text}</div>
+      <div class="entry-tags"><span class="badge ${em.badge}">${em.ic} ${em.lb}</span><span class="badge b-neutral">${e.craving===0?'No estoy seguro/a':e.craving+'/5'}</span></div>
+    </div>`;
+  }).join('');
+  el.innerHTML = `
+    <div class="audit-banner">🔒 Acceso auditado registrado el ${fmtDate(log.ts)} por ${log.admin}. Motivo: "${log.reason}". Esta consulta queda en la bitácora de auditoría de forma inmutable.</div>
+    <div class="section-title">Entradas de ${s.name}</div>
+    ${entriesHtml}
+  `;
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+document.querySelectorAll('.modal-overlay').forEach(ov=>{
+  ov.addEventListener('click', (e)=>{ if(e.target === ov && ov.id !== 'session-modal') ov.classList.remove('visible'); });
+});
+
+/* Botón SOS arrastrable (hallazgo de evaluación: el punto fijo estorbaba) */
+(function initSosDrag(){
+  const fab = document.getElementById('sos-fab-lista');
+  if(!fab) return;
+  let dragging = false, moved = false, startX, startY, startLeft, startTop;
+  fab.addEventListener('pointerdown', (e)=>{
+    dragging = true; moved = false;
+    try{ fab.setPointerCapture(e.pointerId); }catch(err){}
+    const rect = fab.getBoundingClientRect();
+    const parentRect = fab.parentElement.getBoundingClientRect();
+    startLeft = rect.left - parentRect.left;
+    startTop = rect.top - parentRect.top;
+    startX = e.clientX; startY = e.clientY;
+    fab.style.right = 'auto'; fab.style.bottom = 'auto';
+    fab.style.left = startLeft+'px'; fab.style.top = startTop+'px';
+  });
+  fab.addEventListener('pointermove', (e)=>{
+    if(!dragging) return;
+    const dx = e.clientX - startX, dy = e.clientY - startY;
+    if(Math.abs(dx)>3 || Math.abs(dy)>3) moved = true;
+    const parentRect = fab.parentElement.getBoundingClientRect();
+    let newLeft = startLeft + dx, newTop = startTop + dy;
+    newLeft = Math.max(4, Math.min(newLeft, parentRect.width - fab.offsetWidth - 4));
+    newTop = Math.max(4, Math.min(newTop, parentRect.height - fab.offsetHeight - 4));
+    fab.style.left = newLeft+'px'; fab.style.top = newTop+'px';
+    S.sosPos = { left:newLeft, top:newTop };
+  });
+  function endDrag(){
+    if(!dragging) return;
+    dragging = false;
+    if(!moved){ openSOS(); }
+  }
+  fab.addEventListener('pointerup', endDrag);
+  fab.addEventListener('pointercancel', endDrag);
+})();
+
+updateDemoBar('s-splash');
+</script>
+</body>
+</html>

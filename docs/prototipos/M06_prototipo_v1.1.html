@@ -1,0 +1,2623 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brisa · Prototipo M06 · Gamificación y Storytelling</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ══ TOKENS (heredados del Design System v1.2) ══════════════════ */
+:root {
+  --brand-50:#EAF6F5;--brand-100:#CFECE9;--brand-200:#9ED9D2;--brand-300:#69BFB5;
+  --brand-400:#3CA399;--brand-500:#1D8378;--brand-600:#156A61;--brand-700:#11534C;
+  --brand-800:#0C3C37;--brand-900:#082724;
+  --accent-50:#FFF0E9;--accent-100:#FFD9C7;--accent-200:#FFB494;--accent-300:#FB8E5F;
+  --accent-400:#E96F3B;--accent-500:#C8501F;--accent-600:#A03D15;--accent-700:#782D10;
+  --accent-800:#531F0A;--accent-900:#311206;
+  --n0:#FFFFFF;--n50:#FAF9F6;--n100:#F0EEE8;--n200:#E1DED5;--n300:#C7C3B6;
+  --n400:#A19C8C;--n500:#726C5A;--n600:#595549;--n700:#403D34;--n800:#282620;--n900:#161510;
+  --success:#2E7D4F;--success-bg:#E8F5ED;--success-text:#1F5C3A;--success-border:#8FCBA3;
+  --warning:#B07A12;--warning-bg:#FBF1DC;--warning-text:#7A5208;--warning-border:#E6C878;
+  --danger:#C13B30;--danger-bg:#FBEAE7;--danger-text:#8E2A21;--danger-border:#E8A99E;
+  --info:#1E6FA8;--info-bg:#E7F1FA;--info-text:#1E6FA8;--info-border:#A8CBE6;
+  --bg:var(--n50);--card:var(--n0);--border:var(--n200);--hover:var(--n100);
+  --tp:var(--n900);--ts:var(--n600);--tm:var(--n500);--ti:var(--n0);
+  --btn-pt:var(--n0);--btn-at:var(--n0);
+  --font:'Manrope',sans-serif;--mono:'IBM Plex Mono',monospace;
+  --r-sm:4px;--r-md:8px;--r-lg:12px;--r-xl:16px;--r-2xl:20px;--r-full:9999px;
+  --sh-sm:0 1px 2px rgba(22,21,16,.06);
+  --sh-md:0 2px 8px rgba(22,21,16,.09),0 1px 2px rgba(22,21,16,.06);
+  --sh-lg:0 8px 24px rgba(22,21,16,.10),0 2px 6px rgba(22,21,16,.06);
+  --sidebar-w:240px;
+  /* Tokens propios de M06 — derivados, sin hex nuevos.
+     Regla del accent: el ember es exclusivo de M06 → mascota, nivel y logros narrativos. */
+  --m6-flower:var(--accent-500);
+  --m6-flower-soft:var(--accent-300);
+  --m6-pot:var(--accent-600);
+  --m6-pot-soft:var(--accent-400);
+  --m6-leaf:var(--success);
+  --m6-leaf-soft:var(--success-border);
+  --m6-soil:var(--n700);
+}
+[data-theme="dark"] {
+  --brand-50:#082724;--brand-100:#0C3C37;--brand-200:#11534C;--brand-300:#156A61;
+  --brand-400:#1D8378;--brand-500:#3CA399;--brand-600:#69BFB5;--brand-700:#9ED9D2;
+  --brand-800:#CFECE9;--brand-900:#EAF6F5;
+  --accent-50:#311206;--accent-100:#531F0A;--accent-200:#782D10;--accent-300:#A03D15;
+  --accent-400:#C8501F;--accent-500:#E96F3B;--accent-600:#FB8E5F;--accent-700:#FFB494;
+  --accent-800:#FFD9C7;--accent-900:#FFF0E9;
+  --success-bg:#13261B;--success-text:#9ED9AE;--success-border:#2F5C41;
+  --warning-bg:#2B2008;--warning-text:#F0C77A;--warning-border:#6B4D14;
+  --danger-bg:#2B1310;--danger-text:#F0A89E;--danger-border:#6B2A20;
+  --info-bg:#0E2233;--info-text:#9BC8E8;--info-border:#1F4566;
+  --bg:#100F0C;--card:#1E1C17;--border:#332F27;--hover:#262319;
+  --tp:#EDEAE2;--ts:#B8B3A4;--tm:#8C8676;
+  --btn-pt:var(--n900);--btn-at:var(--n900);
+  --sh-sm:0 1px 2px rgba(0,0,0,.35);--sh-md:0 2px 8px rgba(0,0,0,.45);--sh-lg:0 8px 24px rgba(0,0,0,.55);
+  --m6-leaf:#4FA36F;--m6-soil:var(--n800);
+}
+/* ══ RESET ══ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-family:var(--font);background:#0e0e0e;color:var(--tp)}
+body{min-height:100vh;display:flex;flex-direction:column;align-items:center;background:#111}
+:focus-visible{outline:2.5px solid var(--brand-500);outline-offset:2px;border-radius:var(--r-sm)}
+button{font-family:var(--font)}
+
+/* ══ DEMO BAR ══ */
+.demo-bar{width:100%;background:#0a0a0a;border-bottom:1px solid #222;padding:8px 16px;
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-family:var(--mono);
+  font-size:10px;color:#888;position:sticky;top:0;z-index:1000}
+.demo-bar strong{color:#aaa;margin-right:4px}
+.demo-btn{background:#1a1a1a;border:1px solid #333;color:#bbb;border-radius:4px;padding:3px 8px;
+  font-size:9px;font-family:var(--mono);cursor:pointer;transition:all .1s}
+.demo-btn:hover{background:#2a2a2a;color:#fff;border-color:#555}
+.demo-btn.active{background:#1D8378;border-color:#1D8378;color:#fff}
+.demo-btn.warn.active{background:#B07A12;border-color:#B07A12;color:#fff}
+.demo-btn.danger.active{background:#C13B30;border-color:#C13B30;color:#fff}
+.demo-sep{color:#333;user-select:none}
+.demo-screen-pill{background:#222;border:1px solid #333;border-radius:var(--r-full);padding:2px 8px;color:#6BC4B8;font-size:9px}
+.demo-spacer{flex:1}
+.role-badge{padding:2px 7px;border-radius:var(--r-full);font-size:9px;font-weight:600}
+.role-badge.student{background:rgba(29,131,120,.25);color:#6BC4B8;border:1px solid rgba(29,131,120,.4)}
+.role-badge.admin{background:rgba(200,80,31,.25);color:#FFC09E;border:1px solid rgba(200,80,31,.4)}
+
+/* ══ FRAME ══ */
+.frame-outer{display:flex;justify-content:center;align-items:flex-start;padding:24px 16px 40px;flex:1;width:100%}
+.frame-outer.hidden{display:none}
+.phone{width:390px;background:var(--bg);border-radius:36px;overflow:hidden;position:relative;
+  box-shadow:0 0 0 10px #1a1a1a,0 30px 80px rgba(0,0,0,.7);min-height:760px;max-height:820px;
+  display:flex;flex-direction:column;transition:background .2s}
+.phone::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:100px;height:28px;background:#1a1a1a;border-radius:0 0 18px 18px;z-index:50}
+
+/* ══ SCREENS ══ */
+.screens{flex:1;position:relative;overflow:hidden}
+.screen{position:absolute;inset:0;overflow-y:auto;background:var(--bg);opacity:0;pointer-events:none;
+  transition:opacity .25s,transform .25s;transform:translateX(20px)}
+.screen.active{opacity:1;pointer-events:all;transform:translateX(0)}
+.screen.slide-back{transform:translateX(-20px)}
+.screen-inner{padding:16px 20px 28px;min-height:100%}
+
+/* ══ APP BAR ══ */
+.app-bar{padding:40px 20px 4px;display:flex;align-items:center;gap:12px;position:relative;z-index:10;flex-shrink:0}
+.app-bar-back{width:36px;height:36px;border-radius:50%;background:var(--hover);border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;color:var(--tp);font-size:18px;transition:background .12s;flex-shrink:0}
+.app-bar-back:hover{background:var(--border)}
+.app-bar-title{font-size:13px;font-weight:700;color:var(--ts)}
+.app-bar-spacer{flex:1}
+
+/* ══ BOTTOM NAV ══ */
+.bottom-nav{display:none;background:var(--card);border-top:1px solid var(--border);padding:8px 0 14px;z-index:20;flex-shrink:0}
+.bottom-nav.visible{display:flex}
+.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 0;cursor:pointer;
+  border:none;background:none;color:var(--tm);font-size:9px;font-weight:600;transition:color .12s}
+.bnav-item:hover{color:var(--brand-500)}
+.bnav-item.active{color:var(--brand-500)}
+.bnav-icon{font-size:18px;line-height:1}
+
+/* ══ BUTTONS ══ */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;font-weight:700;font-size:14px;
+  border-radius:var(--r-md);border:1.5px solid transparent;padding:11px 20px;cursor:pointer;transition:all .12s;line-height:1.2}
+.btn-primary{background:var(--brand-500);color:var(--btn-pt)}
+.btn-primary:hover:not(:disabled){background:var(--brand-600)}
+[data-theme="dark"] .btn-primary:hover:not(:disabled){background:var(--brand-400)}
+.btn-accent{background:var(--accent-500);color:var(--btn-at)}
+.btn-accent:hover:not(:disabled){background:var(--accent-600)}
+.btn-secondary{background:var(--card);color:var(--tp);border-color:var(--border)}
+.btn-secondary:hover:not(:disabled){background:var(--hover)}
+.btn-ghost{background:transparent;color:var(--ts);border-color:transparent}
+.btn-ghost:hover:not(:disabled){background:var(--hover)}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-danger:hover:not(:disabled){background:var(--danger-text)}
+.btn-block{width:100%}
+.btn:disabled{opacity:.42;cursor:not-allowed}
+.btn-sm{padding:7px 12px;font-size:12px}
+.btn-xs{padding:4px 9px;font-size:11px;border-radius:var(--r-sm)}
+.btn-link{background:none;border:none;color:var(--brand-600);font-weight:700;font-size:12px;cursor:pointer;padding:0}
+.btn-link:hover{color:var(--brand-500)}
+
+/* ══ INPUTS ══ */
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.field-label{font-size:12px;font-weight:700;color:var(--tp)}
+.input,.select,.ta{font-family:var(--font);font-size:13px;color:var(--tp);background:var(--card);
+  border:1.5px solid var(--border);border-radius:var(--r-md);padding:9px 12px;width:100%;
+  transition:border-color .12s,box-shadow .12s;appearance:none}
+.ta{min-height:70px;resize:vertical;line-height:1.5}
+.input:focus,.select:focus,.ta:focus{border-color:var(--brand-400);box-shadow:0 0 0 3px rgba(29,131,120,.12);outline:none}
+.input.err,.select.err,.ta.err{border-color:var(--danger);box-shadow:0 0 0 3px rgba(193,59,48,.08)}
+.input.ok,.ta.ok{border-color:var(--success)}
+.ferr{font-size:11px;color:var(--danger-text);font-weight:600;display:flex;gap:4px;margin-top:2px}
+.fhint{font-size:10.5px;color:var(--tm);margin-top:2px;line-height:1.45}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* ══ BADGES / ALERTS ══ */
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;padding:3px 8px;
+  border-radius:var(--r-full);border:1px solid;white-space:nowrap}
+.b-success{background:var(--success-bg);border-color:var(--success-border);color:var(--success-text)}
+.b-warning{background:var(--warning-bg);border-color:var(--warning-border);color:var(--warning-text)}
+.b-danger{background:var(--danger-bg);border-color:var(--danger-border);color:var(--danger-text)}
+.b-info{background:var(--info-bg);border-color:var(--info-border);color:var(--info-text)}
+.b-neutral{background:var(--hover);border-color:var(--border);color:var(--tm)}
+.b-accent{background:var(--accent-50);border-color:var(--accent-200);color:var(--accent-600)}
+[data-theme="dark"] .b-accent{background:var(--accent-50);border-color:var(--accent-300);color:var(--accent-600)}
+.alert{display:flex;gap:10px;padding:11px 12px;border-radius:var(--r-md);border:1px solid;font-size:12px;line-height:1.5;margin-bottom:12px}
+.alert-icon{font-size:14px;flex-shrink:0;margin-top:1px}
+.alert-title{font-weight:700;font-size:12px}
+.alert-desc{font-size:11px;opacity:.9;margin-top:1px}
+.alert-success{background:var(--success-bg);border-color:var(--success-border);color:var(--success-text)}
+.alert-warning{background:var(--warning-bg);border-color:var(--warning-border);color:var(--warning-text)}
+.alert-error{background:var(--danger-bg);border-color:var(--danger-border);color:var(--danger-text)}
+.alert-info{background:var(--info-bg);border-color:var(--info-border);color:var(--info-text)}
+
+/* ══ CARDS ══ */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px;box-shadow:var(--sh-sm);margin-bottom:10px}
+.card-title{font-size:13px;font-weight:800;color:var(--tp)}
+.card-sub{font-size:11px;color:var(--tm);margin-top:2px;line-height:1.45}
+.section-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--tm);margin:16px 0 8px}
+.divider{height:1px;background:var(--border);margin:14px 0}
+.rf-tag{font-family:var(--mono);font-size:9px;color:var(--tm);background:var(--hover);border:1px solid var(--border);
+  border-radius:var(--r-sm);padding:1px 5px;white-space:nowrap}
+.empty{text-align:center;padding:28px 16px;color:var(--tm)}
+.empty-icon{font-size:30px;opacity:.5;margin-bottom:8px}
+.empty-title{font-size:13px;font-weight:700;color:var(--ts);margin-bottom:4px}
+.empty-desc{font-size:11.5px;line-height:1.5}
+
+/* ══ HEADER ESTUDIANTE ══ */
+.m6-header{background:linear-gradient(160deg,var(--accent-600),var(--accent-500) 70%);padding:42px 20px 16px;
+  display:flex;align-items:center;justify-content:space-between;gap:10px}
+.m6-header-name{font-size:14px;font-weight:800;color:#fff}
+.m6-header-sub{font-size:10px;color:rgba(255,255,255,.75);margin-top:1px}
+.m6-header-btn{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.2);border:none;color:#fff;
+  font-size:15px;cursor:pointer;transition:background .12s}
+.m6-header-btn:hover{background:rgba(255,255,255,.32)}
+
+/* ══ MASCOTA SVG ══ */
+.mascot-stage{display:flex;flex-direction:column;align-items:center;gap:6px;padding:6px 0}
+.mascot-holder{background:var(--card);border:1px solid var(--border);border-radius:var(--r-2xl);
+  padding:8px;box-shadow:var(--sh-sm);cursor:pointer;transition:box-shadow .15s,transform .15s;position:relative}
+.mascot-holder:hover{box-shadow:var(--sh-md)}
+.mascot-holder.tapped{animation:mascotTap .6s ease}
+@keyframes mascotTap{0%{transform:translateY(0)}25%{transform:translateY(-10px) rotate(-2deg)}50%{transform:translateY(0)}70%{transform:translateY(-5px) rotate(1deg)}100%{transform:translateY(0)}}
+.mascot-svg{display:block}
+.mascot-svg .grp{opacity:0;transition:opacity .5s ease,transform .5s ease;transform-origin:50% 100%;transform:scale(.6)}
+.mascot-svg .grp.on{opacity:1;transform:scale(1)}
+.mascot-svg .sway{animation:sway 4s ease-in-out infinite;transform-origin:50% 100%}
+@keyframes sway{0%,100%{transform:rotate(-1.5deg)}50%{transform:rotate(1.5deg)}}
+.mascot-name{font-size:15px;font-weight:800;color:var(--tp)}
+.mascot-state-pill{font-family:var(--mono);font-size:10px;color:var(--accent-600);background:var(--accent-50);
+  border:1px solid var(--accent-200);border-radius:var(--r-full);padding:2px 9px}
+[data-theme="dark"] .mascot-state-pill{border-color:var(--accent-300)}
+.mascot-hint{font-size:10.5px;color:var(--tm);text-align:center}
+.mascot-speech{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:9px 12px;
+  font-size:12px;color:var(--ts);line-height:1.5;position:relative;margin-top:6px;box-shadow:var(--sh-sm);animation:pop .3s ease}
+@keyframes pop{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+
+/* ══ ESCALERA DE ESTADOS ══ */
+.evo-row{display:flex;gap:6px;margin-top:4px}
+.evo-step{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 2px;border-radius:var(--r-md);
+  border:1px solid var(--border);background:var(--card);transition:all .15s}
+.evo-step.done{border-color:var(--accent-300);background:var(--accent-50)}
+[data-theme="dark"] .evo-step.done{background:var(--accent-50)}
+.evo-step.current{border-color:var(--accent-500);box-shadow:0 0 0 3px rgba(200,80,31,.14)}
+.evo-emoji{font-size:16px;filter:grayscale(1);opacity:.45}
+.evo-step.done .evo-emoji{filter:none;opacity:1}
+.evo-label{font-size:8.5px;font-weight:700;color:var(--tm);text-align:center;line-height:1.2}
+.evo-step.done .evo-label{color:var(--accent-600)}
+
+/* ══ NIVEL / XP ══ */
+.xp-track{height:10px;background:var(--hover);border:1px solid var(--border);border-radius:var(--r-full);overflow:hidden}
+.xp-fill{height:100%;background:linear-gradient(90deg,var(--accent-400),var(--accent-500));border-radius:var(--r-full);
+  transition:width .6s cubic-bezier(.4,0,.2,1)}
+.level-chip{display:inline-flex;align-items:center;gap:6px;background:var(--accent-500);color:var(--btn-at);
+  border-radius:var(--r-full);padding:4px 12px;font-size:12px;font-weight:800}
+.level-row{display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid var(--border);
+  border-radius:var(--r-md);background:var(--card);margin-bottom:6px}
+.level-row.reached{border-color:var(--accent-300);background:var(--accent-50)}
+.level-row.now{border-color:var(--accent-500);box-shadow:0 0 0 3px rgba(200,80,31,.12)}
+.level-num{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:11px;font-weight:700;background:var(--hover);color:var(--tm);flex-shrink:0}
+.level-row.reached .level-num{background:var(--accent-500);color:var(--btn-at)}
+
+/* ══ LOGROS ══ */
+.logro-card{display:flex;gap:11px;align-items:flex-start;padding:12px;border:1px solid var(--border);
+  border-radius:var(--r-lg);background:var(--card);margin-bottom:8px;transition:all .15s}
+.logro-card.unlocked{border-color:var(--accent-300)}
+.logro-card.locked{opacity:.62}
+.logro-card:hover{box-shadow:var(--sh-sm)}
+.logro-ico{width:38px;height:38px;border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;
+  font-size:19px;flex-shrink:0;background:var(--hover);filter:grayscale(1)}
+.logro-card.unlocked .logro-ico{background:var(--accent-50);filter:none;box-shadow:0 0 0 1px var(--accent-200)}
+.logro-name{font-size:12.5px;font-weight:800;color:var(--tp)}
+.logro-desc{font-size:11px;color:var(--tm);line-height:1.45;margin-top:2px}
+.logro-cond{font-family:var(--mono);font-size:9px;color:var(--tm);margin-top:5px;display:flex;align-items:center;gap:4px}
+
+/* ══ CAPÍTULO ══ */
+.chapter-hero{background:linear-gradient(160deg,var(--accent-600),var(--accent-400));padding:44px 20px 18px;color:#fff}
+.chapter-fase{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;color:rgba(255,255,255,.75);text-transform:uppercase}
+.chapter-title{font-size:20px;font-weight:800;margin-top:4px;line-height:1.25}
+.chapter-meta{font-size:10.5px;color:rgba(255,255,255,.75);margin-top:6px}
+.story-text{font-size:13.5px;line-height:1.75;color:var(--tp)}
+.story-text p{margin-bottom:12px}
+.story-text p:first-letter{font-weight:700}
+.tip-card{background:var(--brand-50);border:1px solid var(--brand-200);border-radius:var(--r-lg);padding:12px 14px}
+[data-theme="dark"] .tip-card{background:var(--brand-50);border-color:var(--brand-300)}
+.tip-label{font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--brand-600);margin-bottom:5px}
+.tip-text{font-size:12.5px;line-height:1.6;color:var(--tp)}
+
+/* ══ TOGGLE (RF-120) ══ */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0}
+.toggle{width:44px;height:25px;border-radius:var(--r-full);background:var(--n300);border:none;cursor:pointer;
+  position:relative;flex-shrink:0;transition:background .18s}
+.toggle.on{background:var(--brand-500)}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:19px;height:19px;border-radius:50%;background:#fff;
+  transition:transform .18s;box-shadow:var(--sh-sm)}
+.toggle.on::after{transform:translateX(19px)}
+.toggle:disabled{opacity:.45;cursor:not-allowed}
+
+/* ══ ADMIN ══ */
+.admin-header{background:var(--n900);padding:42px 16px 10px;display:flex;align-items:center;gap:10px}
+[data-theme="dark"] .admin-header{background:#0A0907;border-bottom:1px solid #1e1c17}
+.admin-logo-chip{background:var(--brand-500);padding:3px 10px;border-radius:var(--r-full);font-size:10px;font-weight:800;color:#fff}
+.admin-role-chip{background:rgba(200,80,31,.25);border:1px solid rgba(200,80,31,.4);color:#FFC09E;font-size:9px;
+  font-family:var(--mono);padding:2px 7px;border-radius:var(--r-full)}
+.admin-tab-bar{display:flex;background:var(--card);border-bottom:1px solid var(--border);overflow-x:auto}
+.admin-tab{flex:0 0 auto;padding:10px 12px;text-align:center;font-size:11.5px;font-weight:700;color:var(--tm);
+  cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;transition:all .12s;white-space:nowrap}
+.admin-tab:hover{color:var(--tp);background:var(--hover)}
+.admin-tab.active{color:var(--brand-500);border-bottom-color:var(--brand-500)}
+.tabpane{display:none}
+.tabpane.active{display:block}
+.list-item{display:flex;align-items:center;gap:10px;padding:11px 12px;background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r-lg);margin-bottom:8px;transition:background .12s}
+.list-item.click{cursor:pointer}
+.list-item.click:hover{background:var(--hover);box-shadow:var(--sh-sm)}
+.li-body{flex:1;min-width:0}
+.li-title{font-size:12.5px;font-weight:700;color:var(--tp)}
+.li-sub{font-size:10.5px;color:var(--tm);margin-top:2px}
+.li-side{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.phase-head{display:flex;align-items:center;gap:8px;margin:14px 0 8px}
+.phase-name{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--ts)}
+.phase-line{flex:1;height:1px;background:var(--border)}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:12px}
+.stat-value{font-size:22px;font-weight:800;color:var(--brand-500);line-height:1.1}
+.stat-label{font-size:10px;color:var(--tm);margin-top:2px}
+.bar-row{margin-bottom:9px}
+.bar-head{display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px}
+.bar-name{font-weight:700;color:var(--tp)}
+.bar-val{font-family:var(--mono);color:var(--tm)}
+.bar-track{height:8px;background:var(--hover);border-radius:var(--r-full);overflow:hidden;border:1px solid var(--border)}
+.bar-fill{height:100%;background:var(--brand-500);transition:width .5s}
+.bar-fill.accent{background:var(--accent-500)}
+.map-row{display:flex;align-items:center;gap:8px;padding:9px 10px;border:1px solid var(--border);border-radius:var(--r-md);
+  background:var(--card);margin-bottom:6px}
+.map-unit{font-size:11.5px;font-weight:700;color:var(--tp);flex:1}
+.map-arrow{color:var(--tm);font-size:11px}
+.audit-item{border-left:2px solid var(--border);padding:7px 0 7px 10px;margin-left:4px}
+.audit-ev{font-family:var(--mono);font-size:10px;font-weight:500;color:var(--brand-600)}
+.audit-meta{font-family:var(--mono);font-size:9px;color:var(--tm);margin-top:2px}
+
+/* ══ DESKTOP SHELL (RF-117 · anticipa M08) ══ */
+.desktop{display:none;width:100%;max-width:1280px;min-height:720px;background:var(--bg);color:var(--tp);
+  border-radius:12px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.7);margin:24px 16px 40px}
+.desktop.visible{display:flex}
+.dk-side{width:var(--sidebar-w);background:var(--card);border-right:1px solid var(--border);padding:18px 12px;flex-shrink:0}
+.dk-logo{display:flex;align-items:center;gap:8px;padding:0 8px 16px}
+.dk-logo-name{font-size:14px;font-weight:800;color:var(--tp)}
+.dk-nav{display:flex;flex-direction:column;gap:2px}
+.dk-nav-item{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:var(--r-md);border:none;background:none;
+  color:var(--ts);font-size:12.5px;font-weight:600;cursor:pointer;text-align:left;transition:all .12s}
+.dk-nav-item:hover{background:var(--hover);color:var(--tp)}
+.dk-nav-item.active{background:var(--brand-50);color:var(--brand-600)}
+[data-theme="dark"] .dk-nav-item.active{background:var(--brand-100)}
+.dk-main{flex:1;padding:24px 28px;overflow-y:auto;max-height:820px}
+.dk-h1{font-size:20px;font-weight:800;margin-bottom:2px}
+.dk-sub{font-size:12px;color:var(--tm);margin-bottom:18px}
+.dk-view{display:none}
+.dk-view.active{display:block}
+.dk-grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden}
+.tbl th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--tm);
+  padding:9px 12px;border-bottom:1px solid var(--border);background:var(--hover)}
+.tbl td{padding:9px 12px;font-size:12px;border-bottom:1px solid var(--border);color:var(--tp)}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:var(--hover)}
+.mono{font-family:var(--mono);font-size:11px;color:var(--tm)}
+
+/* ══ MODALES / OVERLAYS ══ */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:2000;display:none;align-items:center;
+  justify-content:center;padding:20px}
+.modal-overlay.visible{display:flex}
+.modal-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-2xl);padding:24px;max-width:340px;
+  width:100%;text-align:center;box-shadow:var(--sh-lg)}
+.modal-icon{font-size:34px;margin-bottom:10px}
+.modal-title{font-size:16px;font-weight:800;color:var(--tp);margin-bottom:6px}
+.modal-desc{font-size:12.5px;color:var(--ts);line-height:1.55;margin-bottom:16px}
+.modal-actions{display:flex;gap:10px}
+.modal-actions .btn{flex:1;font-size:13px;padding:9px}
+
+/* Celebración (RF-113) — overlay dentro del phone */
+.celebrate{position:absolute;inset:0;z-index:900;display:none;align-items:center;justify-content:center;padding:24px;
+  background:rgba(22,21,16,.55);backdrop-filter:blur(2px)}
+.celebrate.visible{display:flex}
+.celebrate-card{background:var(--card);border:1px solid var(--accent-200);border-radius:var(--r-2xl);padding:24px 20px;
+  text-align:center;box-shadow:var(--sh-lg);animation:cpop .35s cubic-bezier(.2,1.4,.4,1);position:relative;overflow:hidden}
+@keyframes cpop{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}
+.celebrate-ico{font-size:40px;animation:bounce 1.1s ease infinite}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.celebrate-title{font-size:16px;font-weight:800;color:var(--accent-600);margin:8px 0 4px}
+.celebrate-text{font-size:12.5px;color:var(--ts);line-height:1.55;margin-bottom:14px}
+.confetti{position:absolute;width:6px;height:10px;border-radius:1px;opacity:.9;animation:fall 1.6s linear infinite}
+@keyframes fall{0%{transform:translateY(-30px) rotate(0);opacity:1}100%{transform:translateY(320px) rotate(340deg);opacity:0}}
+
+/* ══ TOAST ══ */
+.toast-wrap{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:3000;display:flex;
+  flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+.toast{background:var(--n900);color:var(--n0);border-radius:var(--r-full);padding:9px 18px;font-size:12px;font-weight:600;
+  box-shadow:var(--sh-lg);display:flex;align-items:center;gap:7px;animation:toastin .25s ease,toastout .25s ease 3.1s forwards;
+  max-width:360px;text-align:center}
+[data-theme="dark"] .toast{background:var(--n100);color:var(--n900)}
+.toast.t-success{background:var(--success);color:#fff}
+.toast.t-error{background:var(--danger);color:#fff}
+.toast.t-warning{background:var(--warning);color:#fff}
+.toast.t-info{background:var(--info);color:#fff}
+@keyframes toastin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes toastout{from{opacity:1}to{opacity:0;transform:translateY(10px)}}
+
+/* ══ UTILS ══ */
+.mt4{margin-top:4px}.mt8{margin-top:8px}.mt12{margin-top:12px}.mt16{margin-top:16px}
+.mb8{margin-bottom:8px}.mb12{margin-bottom:12px}
+.row{display:flex;align-items:center;gap:8px}
+.between{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.wrap{flex-wrap:wrap}
+.text-center{text-align:center}
+.text-sm{font-size:11.5px;color:var(--ts);line-height:1.55}
+.text-xs{font-size:10.5px;color:var(--tm);line-height:1.5}
+.hidden{display:none!important}
+.flex1{flex:1}
+
+/* ══ v1.1 · GESTOR DE ACTIVOS (RF-109/115) ══ */
+.asset-row{display:flex;gap:10px;align-items:center;padding:10px;border:1px solid var(--border);border-radius:var(--r-lg);background:var(--card);margin-bottom:8px}
+.asset-thumb{width:44px;height:44px;border-radius:var(--r-md);background:var(--accent-50);border:1px solid var(--accent-200);
+  display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0}
+.asset-thumb img{width:100%;height:100%;object-fit:contain}
+.asset-thumb.fallback{background:var(--warning-bg);border-color:var(--warning-border)}
+.mascot-img{display:block;transition:opacity .35s}
+.mascot-fallback-tag{position:absolute;top:6px;right:6px}
+/* ══ v1.1 · PERMISO EXPLÍCITO (RF-130) ══ */
+.perm-bar{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--r-lg);border:1px solid var(--warning-border);
+  background:var(--warning-bg);color:var(--warning-text);margin-bottom:10px}
+.perm-bar.on{border-color:var(--danger-border);background:var(--danger-bg);color:var(--danger-text)}
+.pseudo{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--tp)}
+/* ══ v1.1 · BORRADOR DE MAPEO (RF-151) ══ */
+.draft-chip{font-family:var(--mono);font-size:9px;padding:1px 6px;border-radius:var(--r-full);border:1px solid var(--info-border);
+  background:var(--info-bg);color:var(--info-text)}
+.map-row.dirty{border-color:var(--info-border);box-shadow:0 0 0 3px rgba(30,111,168,.10)}
+.m08-tag{font-family:var(--mono);font-size:9px;color:var(--brand-600);background:var(--brand-50);border:1px solid var(--brand-200);
+  border-radius:var(--r-sm);padding:1px 5px;white-space:nowrap}
+[data-theme="dark"] .m08-tag{background:var(--brand-100);border-color:var(--brand-300)}
+.contract-key{font-family:var(--mono);font-size:11px;color:var(--brand-600)}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════ DEMO BAR ══════════════════ -->
+<div class="demo-bar">
+  <strong>Brisa · M06</strong>
+  <span class="demo-sep">|</span>
+  <span class="demo-screen-pill" id="dp-screen">resumen</span>
+  <span id="dp-role" class="role-badge student">👤 estudiante</span>
+  <span class="demo-sep">|</span>
+  <button class="demo-btn active" id="btn-role-student" onclick="setRole('student')">👤 Estudiante</button>
+  <button class="demo-btn" id="btn-role-admin" onclick="setRole('admin')">🔑 Admin</button>
+  <button class="demo-btn hidden" id="btn-layout" onclick="toggleAdminLayout()" title="Panel móvil ↔ shell de escritorio">🖥 Escritorio</button>
+  <span class="demo-sep">|</span>
+  <button class="demo-btn" onclick="prefill()" title="Rellena los campos de la pantalla activa">✎ Auto-rellenar</button>
+  <button class="demo-btn" onclick="avanzarUnidad()" title="RF-23/RF-106 · avanza la unidad temporal vigente del cronograma">⏭ Avanzar semana</button>
+  <button class="demo-btn" onclick="publicarCap4Demo()" title="RF-114/151 · publica el capítulo 4 para desbloquear la cobertura del mapeo">📄 Publicar Cap. 4</button>
+  <button class="demo-btn danger" id="btn-fa-rules" onclick="vaciarReglasDemo()" title="RF-111 FA · deja el sistema sin regla de cálculo activa">📐 Sin reglas de nivel</button>
+  <button class="demo-btn" onclick="saltarACierre()" title="RF-108 · lleva el cronograma a la Semana 5 (último capítulo de CIERRE)">🎓 Ir a cierre</button>
+  <span class="demo-sep">|</span>
+  <button class="demo-btn danger" id="btn-fa-map" onclick="toggleFlag('sinMapeo')" title="RF-106 FA · sin mapeo para la unidad vigente">🚫 Sin mapeo</button>
+  <button class="demo-btn danger" id="btn-fa-m04" onclick="toggleFlag('m04Down')" title="RF-106 FA · RF-23 no disponible">📡 M04 caído</button>
+  <button class="demo-btn warn" id="btn-fa-deg" onclick="toggleFlag('degraded')" title="RF-118 FA · M06 en modo degradado">📉 Degradado</button>
+  <button class="demo-btn warn" id="btn-fa-m07" onclick="toggleFlag('m07Limit')" title="RF-113 FA · límite diario de notificaciones alcanzado">🔕 Límite M07</button>
+  <button class="demo-btn danger" id="btn-fa-noprof" onclick="toggleFlag('noProfile')" title="RF-104 FA · usuario sin perfil narrativo">👻 Sin perfil</button>
+  <button class="demo-btn danger" id="btn-fa-corrupt" onclick="toggleFlag('corrupt')" title="RF-120 FA · estado narrativo corrupto al reactivar">💥 Estado corrupto</button>
+  <button class="demo-btn" onclick="resetDemo()" title="Restablece el estado de demo">↺ Reset</button>
+  <span class="demo-spacer"></span>
+  <button class="demo-btn active" id="btn-dark" onclick="toggleDark()">☀ Claro</button>
+</div>
+
+<!-- ══════════════════ PHONE ══════════════════ -->
+<div class="frame-outer" id="frame-outer">
+<div class="phone" id="phone">
+
+  <div class="screens" id="screens">
+
+    <!-- ─── ESTUDIANTE · RESUMEN DE PROGRESIÓN (RF-112) ─── -->
+    <div class="screen active" id="s-home" data-name="resumen (RF-112)">
+      <div class="m6-header">
+        <div>
+          <div class="m6-header-name">Mi historia</div>
+          <div class="m6-header-sub" id="h-sub">Diana · Semana 2 del programa</div>
+        </div>
+        <div class="row">
+          <span class="badge b-neutral" id="h-estado-resumen" style="background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.3);color:#fff">DISPONIBLE</span>
+          <button class="m6-header-btn" onclick="go('s-config')" title="Configuración del módulo">⚙</button>
+        </div>
+      </div>
+      <div class="screen-inner" id="home-body"></div>
+    </div>
+
+    <!-- ─── ESTUDIANTE · CAPÍTULO ACTIVO (RF-107) ─── -->
+    <div class="screen" id="s-chapter" data-name="capítulo activo (RF-107)">
+      <div id="chapter-body"></div>
+    </div>
+
+    <!-- ─── ESTUDIANTE · MASCOTA (RF-109) ─── -->
+    <div class="screen" id="s-mascota" data-name="mascota (RF-109)">
+      <div class="app-bar">
+        <button class="app-bar-back" onclick="back('s-home')" aria-label="Volver">←</button>
+        <span class="app-bar-title">Mi mascota</span>
+        <span class="app-bar-spacer"></span>
+        <span class="rf-tag">RF-109</span>
+      </div>
+      <div class="screen-inner" id="mascota-body"></div>
+    </div>
+
+    <!-- ─── ESTUDIANTE · LOGROS (RF-110) ─── -->
+    <div class="screen" id="s-logros" data-name="logros narrativos (RF-110)">
+      <div class="app-bar">
+        <button class="app-bar-back" onclick="back('s-home')" aria-label="Volver">←</button>
+        <span class="app-bar-title">Logros narrativos</span>
+        <span class="app-bar-spacer"></span>
+        <span class="rf-tag">RF-110 · RF-115</span>
+      </div>
+      <div class="screen-inner" id="logros-body"></div>
+    </div>
+
+    <!-- ─── ESTUDIANTE · NIVEL (RF-111) ─── -->
+    <div class="screen" id="s-nivel" data-name="nivel (RF-111)">
+      <div class="app-bar">
+        <button class="app-bar-back" onclick="back('s-home')" aria-label="Volver">←</button>
+        <span class="app-bar-title">Mi nivel</span>
+        <span class="app-bar-spacer"></span>
+        <span class="rf-tag">RF-111</span>
+      </div>
+      <div class="screen-inner" id="nivel-body"></div>
+    </div>
+
+    <!-- ─── ESTUDIANTE · GRADUACIÓN (RF-108) ─── -->
+    <div class="screen" id="s-graduacion" data-name="graduación simbólica (RF-108)">
+      <div class="screen-inner" id="grad-body" style="padding-top:44px"></div>
+    </div>
+
+    <!-- ─── ESTUDIANTE · CONFIGURACIÓN DEL MÓDULO (RF-120) ─── -->
+    <div class="screen" id="s-config" data-name="configuración M06 (RF-120)">
+      <div class="app-bar">
+        <button class="app-bar-back" onclick="back('s-home')" aria-label="Volver">←</button>
+        <span class="app-bar-title">Configuración</span>
+        <span class="app-bar-spacer"></span>
+        <span class="rf-tag">RF-120</span>
+      </div>
+      <div class="screen-inner" id="config-body"></div>
+    </div>
+
+    <!-- ─── ESTUDIANTE · MÓDULO DESACTIVADO (RF-120) ─── -->
+    <div class="screen" id="s-off" data-name="módulo desactivado (RF-120)">
+      <div class="screen-inner" style="padding-top:60px" id="off-body"></div>
+    </div>
+
+    <!-- ─── ESTUDIANTE · SIN PERFIL NARRATIVO (RF-104 FA · 404) ─── -->
+    <div class="screen" id="s-noprofile" data-name="sin perfil narrativo (404)">
+      <div class="screen-inner" style="padding-top:60px" id="noprofile-body"></div>
+    </div>
+
+    <!-- ─── ADMIN · PANEL MÓVIL ─── -->
+    <div class="screen" id="s-admin-home" data-name="panel admin (móvil)">
+      <div class="admin-header">
+        <span class="admin-logo-chip">BRISA</span>
+        <span class="flex1" style="font-size:12px;font-weight:700;color:#EDEAE2">Gamificación · M06</span>
+        <span class="admin-role-chip">admin</span>
+      </div>
+      <div class="admin-tab-bar" id="admin-tabs">
+        <button class="admin-tab active" onclick="adminTab('arq')">Arquitectura</button>
+        <button class="admin-tab" onclick="adminTab('cont')">Contenido</button>
+        <button class="admin-tab" onclick="adminTab('log')">Logros y niveles</button>
+        <button class="admin-tab" onclick="adminTab('map')">Mapeo</button>
+        <button class="admin-tab" onclick="adminTab('coh')">Cohorte</button>
+        <button class="admin-tab" onclick="adminTab('act')">Activos</button>
+        <button class="admin-tab" onclick="adminTab('m05')">Datos a M05</button>
+        <button class="admin-tab" onclick="adminTab('aud')">Auditoría</button>
+      </div>
+      <div class="screen-inner" style="padding-top:14px">
+        <div class="tabpane active" id="tab-arq"></div>
+        <div class="tabpane" id="tab-cont"></div>
+        <div class="tabpane" id="tab-log"></div>
+        <div class="tabpane" id="tab-map"></div>
+        <div class="tabpane" id="tab-coh"></div>
+        <div class="tabpane" id="tab-act"></div>
+        <div class="tabpane" id="tab-m05"></div>
+        <div class="tabpane" id="tab-aud"></div>
+      </div>
+    </div>
+
+    <!-- ─── ADMIN · EDITOR DE CONTENIDO (RF-114) ─── -->
+    <div class="screen" id="s-editor-cont" data-name="editor de contenido (RF-114)">
+      <div class="app-bar">
+        <button class="app-bar-back" onclick="go('s-admin-home', true)" aria-label="Volver">←</button>
+        <span class="app-bar-title" id="ec-title">Contenido del capítulo</span>
+        <span class="app-bar-spacer"></span>
+        <span class="rf-tag">RF-114</span>
+      </div>
+      <div class="screen-inner" id="editor-cont-body"></div>
+    </div>
+
+    <!-- ─── ADMIN · EDITOR DE LOGRO (RF-115) ─── -->
+    <div class="screen" id="s-editor-logro" data-name="editor de logro (RF-115)">
+      <div class="app-bar">
+        <button class="app-bar-back" onclick="go('s-admin-home', true)" aria-label="Volver">←</button>
+        <span class="app-bar-title" id="el-title">Logro narrativo</span>
+        <span class="app-bar-spacer"></span>
+        <span class="rf-tag">RF-115</span>
+      </div>
+      <div class="screen-inner" id="editor-logro-body"></div>
+    </div>
+
+  </div><!-- /screens -->
+
+  <!-- BOTTOM NAV (estudiante) -->
+  <div class="bottom-nav" id="bottom-nav">
+    <button class="bnav-item active" id="bn-home" onclick="go('s-home')"><span class="bnav-icon">📖</span>Historia</button>
+    <button class="bnav-item" id="bn-mascota" onclick="go('s-mascota')"><span class="bnav-icon">🌱</span>Mascota</button>
+    <button class="bnav-item" id="bn-logros" onclick="go('s-logros')"><span class="bnav-icon">🏅</span>Logros</button>
+    <button class="bnav-item" id="bn-nivel" onclick="go('s-nivel')"><span class="bnav-icon">⭐</span>Nivel</button>
+    <button class="bnav-item" id="bn-config" onclick="go('s-config')"><span class="bnav-icon">⚙</span>Ajustes</button>
+  </div>
+
+  <!-- CELEBRACIÓN (RF-113) -->
+  <div class="celebrate" id="celebrate" onclick="closeCelebrate()">
+    <div class="celebrate-card" onclick="event.stopPropagation()">
+      <div id="confetti-holder"></div>
+      <div class="celebrate-ico" id="cel-ico">🎉</div>
+      <div class="celebrate-title" id="cel-title">¡Nuevo logro!</div>
+      <div class="celebrate-text" id="cel-text"></div>
+      <div id="cel-sinmsg" class="alert alert-info hidden" style="text-align:left">
+        <span class="alert-icon">✎</span>
+        <div>
+          <div class="alert-title">Mensaje sin configurar</div>
+          <div class="alert-desc">El catálogo no tiene <span class="mono">mensaje_celebracion</span> para este evento; se muestra un texto de respaldo. Configúralo en Logros y niveles (RF-115 → RF-113).</div>
+        </div>
+      </div>
+      <div id="cel-omitido" class="alert alert-warning hidden" style="text-align:left">
+        <span class="alert-icon">🔕</span>
+        <div>
+          <div class="alert-title">No enviado como notificación</div>
+          <div class="alert-desc">Se alcanzó el límite diario de M07 (RF-87). Se muestra solo en la interfaz. <span class="mono">estado_presentacion = OMITIDO_LIMITE_DIARIO</span></div>
+        </div>
+      </div>
+      <button class="btn btn-accent btn-block btn-sm" onclick="closeCelebrate()">Continuar</button>
+    </div>
+  </div>
+
+</div><!-- /phone -->
+</div><!-- /frame-outer -->
+
+<!-- ══════════════════ SHELL DE ESCRITORIO (admin) ══════════════════ -->
+<div class="desktop" id="desktop">
+  <aside class="dk-side">
+    <div class="dk-logo">
+      <span class="admin-logo-chip">BRISA</span>
+      <span class="dk-logo-name">M06</span>
+    </div>
+    <nav class="dk-nav" id="dk-nav">
+      <button class="dk-nav-item active" onclick="dkView('arq')"><span>🗂</span>Arquitectura narrativa</button>
+      <button class="dk-nav-item" onclick="dkView('cont')"><span>📝</span>Contenido de capítulos</button>
+      <button class="dk-nav-item" onclick="dkView('log')"><span>🏅</span>Logros y niveles</button>
+      <button class="dk-nav-item" onclick="dkView('map')"><span>🔗</span>Mapeo unidad ↔ capítulo</button>
+      <button class="dk-nav-item" onclick="dkView('coh')"><span>👥</span>Cohorte narrativa</button>
+      <button class="dk-nav-item" onclick="dkView('act')"><span>🖼</span>Activos gráficos</button>
+      <button class="dk-nav-item" onclick="dkView('m05')"><span>🔌</span>Datos expuestos a M05</button>
+      <button class="dk-nav-item" onclick="dkView('aud')"><span>🧾</span>Bitácora de auditoría</button>
+    </nav>
+    <div class="divider"></div>
+    <div class="text-xs" style="padding:0 8px">
+      Shell de escritorio · ≥1024px<br>Anticipa el panel unificado de M08.
+    </div>
+  </aside>
+  <main class="dk-main">
+    <div class="dk-view active" id="dk-arq"></div>
+    <div class="dk-view" id="dk-cont"></div>
+    <div class="dk-view" id="dk-log"></div>
+    <div class="dk-view" id="dk-map"></div>
+    <div class="dk-view" id="dk-coh"></div>
+    <div class="dk-view" id="dk-act"></div>
+    <div class="dk-view" id="dk-m05"></div>
+    <div class="dk-view" id="dk-aud"></div>
+  </main>
+</div>
+
+<!-- MODAL GENÉRICO -->
+<div class="modal-overlay" id="modal">
+  <div class="modal-card" id="modal-card">
+    <div class="modal-icon" id="modal-ico">⚠️</div>
+    <div class="modal-title" id="modal-title"></div>
+    <div class="modal-desc" id="modal-desc"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="modal-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" id="modal-ok">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toasts"></div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   BRISA · M06 · Gamificación y Storytelling · prototipo v1.0
+   RFs implementados: RF-104 → RF-121 (hoja "MO6- GamificacionStorytelling ",
+   Especificacion_Requerimientos_0710.xlsx).
+   Nota de alcance: la guía v1.7 describía RF-103→RF-106 y una mascota de 3
+   estados de ánimo condicionados por conducta (craving / inactividad). El Excel
+   (RF-109) lo prohíbe expresamente: la mascota evoluciona SOLO por avance
+   narrativo y nunca retrocede. Se sigue el Excel. La personalización de la
+   mascota (Matriz M-6 y RF-112) no tiene RF que la defina → omitida y reportada.
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ══ CATÁLOGOS (RF-105 · RF-109 · RF-114 · RF-115 · RF-121) ══ */
+const FASES = ['INICIO','DESARROLLO','CIERRE'];
+
+/* RF-109 · tabla de mapeo progresión narrativa → estado visual (parametrizable) */
+const MASCOT_STATES = [
+  { id:1, nombre:'Semilla',       emoji:'🌰', capsMin:0 },
+  { id:2, nombre:'Brote',         emoji:'🌱', capsMin:1 },
+  { id:3, nombre:'Planta joven',  emoji:'🪴', capsMin:2 },
+  { id:4, nombre:'Planta madura', emoji:'🌿', capsMin:3 },
+  { id:5, nombre:'Flor',          emoji:'🌸', capsMin:5 }  // estado_visual_maximo (RF-108)
+];
+
+/* RF-109 · activos gráficos gestionados administrativamente.
+   NOTA DE ESPECIFICACIÓN: RF-109 declara como dependencia «RF-21 Gestión administrativa de
+   recursos y activos gráficos», pero en la hoja M04 el RF-21 es «Consulta del contenido vigente
+   por usuario»: hay colisión de código y NINGÚN RF define este gestor (tampoco RF-139 de M08).
+   Vacío documentado — se construye igual porque RF-109 exige que los recursos no estén
+   hardcodeados y se consuman por URL, con recurso de respaldo (fallback). */
+let ASSETS = [
+  { id:1, ruta:'/assets/m06/mascota_semilla.svg',       estado:'CONFIGURADO', roto:false },
+  { id:2, ruta:'/assets/m06/mascota_brote.svg',         estado:'CONFIGURADO', roto:false },
+  { id:3, ruta:'/assets/m06/mascota_planta_joven.svg',  estado:'CONFIGURADO', roto:false },
+  { id:4, ruta:'/assets/m06/mascota_planta_madura.svg', estado:'CONFIGURADO', roto:false },
+  { id:5, ruta:'/assets/m06/mascota_flor.svg',          estado:'CONFIGURADO', roto:false }
+];
+const FORMATOS_OK = ['svg','png','webp'];
+const formatoDe = ruta => (String(ruta).split('.').pop() || '').toLowerCase();
+const formatoValido = ruta => FORMATOS_OK.includes(formatoDe(ruta));
+/* El "servidor de activos" del prototipo: resuelve la ruta configurada a un recurso real
+   (data URI generado con el mismo SVG). Si el activo está marcado como roto o el formato no
+   es válido, devuelve null → el frontend cae al recurso de respaldo embebido. */
+function resolverActivo(ruta){
+  const a = ASSETS.find(x => x.ruta === ruta);
+  if (!a || a.roto || a.estado !== 'CONFIGURADO' || !formatoValido(ruta)) return null;
+  return 'data:image/svg+xml;utf8,' + encodeURIComponent(mascotSVG(a.id, 200, true));
+}
+
+/* RF-105 · arquitectura lineal + RF-114 · contenido narrativo publicado */
+const CHAPTERS = [
+  { id:1, fase:'INICIO', orden:1, unidad:1, unidadNombre:'Semana 1 · Flexibilidad cognitiva',
+    estructura:'EN_USO',
+    contenido:{
+      estado:'PUBLICADO', version:'1.2', responsable:'psicologia@usco.edu.co', fecha:'2026-05-04',
+      titulo:'Una semilla en el bolsillo',
+      historia:['Brisa llega a tu ventana con algo diminuto entre las manos: una semilla que alguien olvidó sembrar. No sabe todavía qué planta será. Nadie lo sabe al principio.',
+                'La deja en tu maceta y se queda mirándola un rato largo, como quien espera una respuesta que no llega hoy. Antes de irse te dice que volverá cada semana, sin apuro, a ver cómo va la cosa.'],
+      terapeutico:'Empezar algo no exige tenerlo claro. Basta con dejar la semilla en tierra y volver mañana.',
+      instruccion:'La mascota aparece en estado semilla, quieta y expectante. Saluda con curiosidad, sin celebrar todavía.'
+    }},
+  { id:2, fase:'DESARROLLO', orden:1, unidad:2, unidadNombre:'Semana 2 · Evaluación emocional',
+    estructura:'EN_USO',
+    contenido:{
+      estado:'PUBLICADO', version:'1.1', responsable:'psicologia@usco.edu.co', fecha:'2026-05-11',
+      titulo:'Lo que la semilla necesita',
+      historia:['Algo verde asoma. Brisa se acerca con una regadera enorme y, justo antes de volcarla entera, se detiene: demasiada agua de golpe también ahoga.',
+                'Aprende, entonces, a preguntar antes de actuar. ¿Qué necesitas hoy: agua, sombra, o que simplemente te dejen crecer en paz? La respuesta cambia según el día, y eso está bien.'],
+      terapeutico:'Notar lo que sientes antes de responder es, en sí mismo, un cuidado.',
+      instruccion:'La mascota pasa a brote. Se mueve poco, atenta. Su gesto es de acompañamiento, nunca de exigencia.'
+    }},
+  { id:3, fase:'DESARROLLO', orden:2, unidad:3, unidadNombre:'Semana 3 · Conciencia emocional',
+    estructura:'DEFINIDO',
+    contenido:{
+      estado:'PUBLICADO', version:'1.0', responsable:'psicologia@usco.edu.co', fecha:'2026-05-18',
+      titulo:'Días de viento',
+      historia:['Hubo viento toda la semana. Brisa se sentó al lado de la maceta a mirar cómo el tallo se doblaba hasta casi tocar el borde, y no hizo nada: sostener no siempre es agarrar.',
+                'Al tercer día el viento paró. El tallo seguía ahí, un poco torcido, bastante más fuerte. Brisa anotó algo en su libreta y sonrió sin decir qué.'],
+      terapeutico:'Lo incómodo pasa. Puedes doblarte con ello sin que eso signifique romperte.',
+      instruccion:'La mascota pasa a planta joven. Ligero balanceo constante, resistiendo el viento sin dramatismo.'
+    }},
+  { id:4, fase:'DESARROLLO', orden:3, unidad:4, unidadNombre:'Semana 4 · (por definir por psicología)',
+    estructura:'DEFINIDO',
+    contenido:{
+      estado:'BORRADOR', version:'0.1', responsable:'—', fecha:'—',
+      titulo:'', historia:[], terapeutico:'', instruccion:''
+    }},
+  { id:5, fase:'CIERRE', orden:1, unidad:5, unidadNombre:'Semana 5 · Exposición a desencadenantes',
+    estructura:'DEFINIDO',
+    contenido:{
+      estado:'PUBLICADO', version:'1.0', responsable:'psicologia@usco.edu.co', fecha:'2026-06-01',
+      titulo:'El primer capullo',
+      historia:['Una mañana hay un bulto en la punta del tallo. Brisa lo mira de cerca, con las manos atrás, sin tocarlo. Un capullo se abre cuando le toca, y solo entonces.',
+                'Esta es la última vez que Brisa viene a revisar. No porque la planta esté terminada —ninguna lo está— sino porque ya no hace falta que alguien venga a mirarla para que siga creciendo.'],
+      terapeutico:'Lo que sostuviste hasta aquí lo sostuviste tú. La historia se cierra; tu proceso sigue contigo.',
+      instruccion:'La mascota alcanza su estado máximo (flor). Celebra en calma, con gratitud, sin evaluar resultados.',
+      culminacion:'Tu historia con Brisa llega a su capítulo final. No importa cómo hayan sido tus semanas: llegaste hasta acá, y eso ya está escrito. La flor es tuya. 🌸'
+    }}
+];
+
+/* RF-121 · mapeo unidad temporal ↔ capítulo (1:1 en v1.0.0) */
+let MAPPING = [
+  { unidad:1, unidadNombre:'Semana 1 · Flexibilidad cognitiva', capitulo:1, orden:1, estado:'ACTIVO' },
+  { unidad:2, unidadNombre:'Semana 2 · Evaluación emocional',   capitulo:2, orden:1, estado:'ACTIVO' },
+  { unidad:3, unidadNombre:'Semana 3 · Conciencia emocional',   capitulo:3, orden:1, estado:'ACTIVO' },
+  { unidad:4, unidadNombre:'Semana 4 · (por definir)',          capitulo:4, orden:1, estado:'ACTIVO' },
+  { unidad:5, unidadNombre:'Semana 5 · Exposición a desenc.',   capitulo:5, orden:1, estado:'ACTIVO' }
+];
+
+/* RF-115 · catálogo de logros narrativos */
+let LOGROS = [
+  { id:'L1', nombre:'Primer paso',        desc:'Comenzaste la historia de Brisa.',              emoji:'🌰', cond:'CAPITULO_COMPLETADO', valor:1,           estado:'ACTIVO',   recurso:'/assets/m06/logro_semilla.svg', version:'1.0',
+    mensaje:'Sembraste la primera semilla. Nada más hacía falta hoy.' },
+  { id:'L2', nombre:'La historia avanza', desc:'Entraste en la fase de desarrollo del relato.', emoji:'📖', cond:'FASE_ALCANZADA',      valor:'DESARROLLO', estado:'ACTIVO',  recurso:'/assets/m06/logro_libro.svg',   version:'1.0',
+    mensaje:'La historia se puso en marcha contigo dentro.' },
+  { id:'L3', nombre:'A mitad del camino', desc:'Tres capítulos de la historia quedaron atrás.', emoji:'🧭', cond:'CAPITULO_COMPLETADO', valor:3,           estado:'ACTIVO',   recurso:'/assets/m06/logro_brujula.svg', version:'1.0',
+    mensaje:'Tres capítulos atrás. El camino ya te reconoce.' },
+  { id:'L4', nombre:'Recta final',        desc:'Llegaste a la fase de cierre.',                 emoji:'🌤', cond:'FASE_ALCANZADA',      valor:'CIERRE',    estado:'ACTIVO',   recurso:'/assets/m06/logro_cierre.svg',  version:'1.0',
+    mensaje:'Lo que viene es el cierre, y llegas entero.' },
+  { id:'L5', nombre:'Graduación',         desc:'Completaste la historia de principio a fin.',   emoji:'🎓', cond:'PROGRAMA_FINALIZADO', valor:null,        estado:'ACTIVO',   recurso:'/assets/m06/logro_flor.svg',    version:'1.0',
+    mensaje:'La historia se cierra. La flor es tuya.' },
+  { id:'L6', nombre:'Constancia',         desc:'(sin recurso visual asociado)',                 emoji:'⏳', cond:'CAPITULO_COMPLETADO', valor:2,           estado:'BORRADOR', recurso:'',                              version:'0.1',
+    mensaje:'' }
+];
+
+/* RF-115 · tabla de correspondencia nivel–capítulos–logros (consumida por RF-111) */
+let NIVEL_RULES = [
+  { id:'N1', nivel:1, caps:0, logros:0, estado:'ACTIVA', mensaje:'' },
+  { id:'N2', nivel:2, caps:1, logros:1, estado:'ACTIVA', mensaje:'Nivel 2. Tu historia empezó a tener forma.' },
+  { id:'N3', nivel:3, caps:2, logros:2, estado:'ACTIVA', mensaje:'Nivel 3. Brisa ya no cabe en la maceta pequeña.' },
+  { id:'N4', nivel:4, caps:3, logros:3, estado:'ACTIVA', mensaje:'Nivel 4. Falta poco para el capítulo final.' },
+  { id:'N5', nivel:5, caps:5, logros:5, estado:'ACTIVA', mensaje:'Nivel 5. Recorriste la historia completa.' }
+];
+
+/* Cohorte (RF-117) — mismos nombres que M01/M02/M04/M05/M07 */
+const COHORTE = [
+  { nombre:'Diana Rincón',  self:true },
+  { nombre:'Brayan Muñoz',  fase:'DESARROLLO', caps:2, logros:2, estado:'ACTIVO' },
+  { nombre:'Legna Ospina',  fase:'DESARROLLO', caps:3, logros:3, estado:'ACTIVO' },
+  { nombre:'Tatiana Rincón',fase:'INICIO',     caps:0, logros:0, estado:'DESACTIVADO' },
+  { nombre:'Andrea G.',     fase:'CIERRE',     caps:5, logros:5, estado:'GRADUADO' }
+];
+
+/* ══ ESTADO ══ */
+const S = {
+  dark:false,
+  role:'student',
+  adminLayout:'mobile',
+  adminTab:'arq',
+  dkView:'arq',
+  unidadVigente:2,          // RF-23 · expuesto por M04
+  profile:null,             // RF-104
+  flags:{ sinMapeo:false, m04Down:false, degraded:false, m07Limit:false, noProfile:false, corrupt:false },
+  audit:[],
+  celQueue:[],
+  celShown:new Set(),
+  editing:{ cap:null, logro:null, regla:null, asset:null },
+  permisoIndividual:false,      // RF-130 · permiso explícito de consulta individual
+  permisoOtorgadoEn:null,
+  verIndividual:null,           // participante consultado en modo solo lectura
+  mapDraft:null,                // RF-151 · configuración en borrador (transaccionalidad)
+  agregado:{ estado:'ACTUALIZADO', fecha:'2026-07-14 06:00' }
+};
+
+function nowStamp(){
+  const d = new Date();
+  const p = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
+
+/* Perfil narrativo inicial (RF-104) — Diana, Semana 2, capítulo 2 */
+function seedProfile(){
+  return {
+    id_usuario: 1042,
+    fase_narrativa:'DESARROLLO',
+    capitulo_activo:2,
+    nivel_mascota:2,
+    nivel_gamificacion:2,
+    logros:[ {id:'L1', fecha:'2026-05-10 09:14'}, {id:'L2', fecha:'2026-05-11 08:02'} ],
+    estado_perfil:'ACTIVO',
+    fecha_inicializacion:'2026-05-04 07:31',
+    ts:'2026-05-11 08:02',
+    ultimaUnidadEvaluada:2,
+    capituloAlDesactivar:null
+  };
+}
+
+/* ══ AUDITORÍA (RF-119) — append-only ══ */
+function audit(tipo_evento, recurso, extra){
+  S.audit.unshift({ ts: nowStamp(), tipo_evento, recurso: recurso || '—', extra: extra || '', usuario:'usr_1042' });
+  renderAdmin();
+}
+
+/* ══ TOAST ══ */
+function showToast(msg, type){
+  const el = document.createElement('div');
+  el.className = 'toast t-' + (type || 'info');
+  el.textContent = msg;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 3400);
+}
+
+/* ══ NAVEGACIÓN ══ */
+let _history = ['s-home'];
+function go(id, back_ = false){
+  const prev = document.querySelector('.screen.active');
+  const next = document.getElementById(id);
+  if (!next) return;
+  if (prev === next) { renderAll(); return; }
+  if (prev){ prev.classList.remove('active'); if (back_) prev.classList.add('slide-back'); }
+  next.classList.remove('slide-back');
+  next.classList.add('active');
+  if (!back_) _history.push(id);
+  document.getElementById('dp-screen').textContent = next.dataset.name || id;
+  if (S.role === 'student' && (id === 's-home' || id === 's-chapter')) evaluarAvance();
+  renderAll();
+  updateNav(id);
+}
+function back(def){
+  if (_history.length > 1) _history.pop();
+  go(_history[_history.length - 1] || def, true);
+}
+function updateNav(id){
+  const studentScreens = ['s-home','s-chapter','s-mascota','s-logros','s-nivel','s-config','s-graduacion','s-off','s-noprofile'];
+  const show = S.role === 'student' && studentScreens.includes(id) && !S.flags.noProfile;
+  document.getElementById('bottom-nav').className = show ? 'bottom-nav visible' : 'bottom-nav';
+  const map = { 's-home':'bn-home','s-chapter':'bn-home','s-mascota':'bn-mascota','s-logros':'bn-logros','s-nivel':'bn-nivel','s-config':'bn-config' };
+  ['bn-home','bn-mascota','bn-logros','bn-nivel','bn-config'].forEach(b => {
+    const el = document.getElementById(b);
+    el.className = (map[id] === b) ? 'bnav-item active' : 'bnav-item';
+  });
+  const rp = document.getElementById('dp-role');
+  rp.className = 'role-badge ' + (S.role === 'admin' ? 'admin' : 'student');
+  rp.textContent = S.role === 'admin' ? '🔑 admin' : '👤 estudiante';
+}
+
+/* ══ ROL / LAYOUT / TEMA ══ */
+function setRole(r){
+  S.role = r;
+  document.getElementById('btn-role-student').className = r === 'student' ? 'demo-btn active' : 'demo-btn';
+  document.getElementById('btn-role-admin').className   = r === 'admin'   ? 'demo-btn active' : 'demo-btn';
+  document.getElementById('btn-layout').className = r === 'admin' ? 'demo-btn' : 'demo-btn hidden';
+  if (r === 'admin'){
+    S.adminLayout = 'mobile';
+    document.getElementById('btn-layout').textContent = '🖥 Escritorio';
+    document.getElementById('desktop').classList.remove('visible');
+    document.getElementById('frame-outer').classList.remove('hidden');
+    _history = ['s-admin-home'];
+    go('s-admin-home');
+  } else {
+    document.getElementById('desktop').classList.remove('visible');
+    document.getElementById('frame-outer').classList.remove('hidden');
+    _history = ['s-home'];
+    go(entryScreen());
+  }
+}
+function entryScreen(){
+  if (S.flags.noProfile) return 's-noprofile';
+  if (S.profile.estado_perfil === 'DESACTIVADO') return 's-off';
+  return 's-home';
+}
+function toggleAdminLayout(){
+  S.adminLayout = S.adminLayout === 'mobile' ? 'desktop' : 'mobile';
+  const dk = S.adminLayout === 'desktop';
+  document.getElementById('desktop').classList.toggle('visible', dk);
+  document.getElementById('frame-outer').classList.toggle('hidden', dk);
+  document.getElementById('btn-layout').textContent = dk ? '📱 Móvil' : '🖥 Escritorio';
+  document.getElementById('btn-layout').className = dk ? 'demo-btn active' : 'demo-btn';
+  document.getElementById('dp-screen').textContent = dk ? 'panel admin (escritorio)' : 'panel admin (móvil)';
+  renderAll();
+}
+function toggleDark(){
+  S.dark = !S.dark;
+  const t = S.dark ? 'dark' : '';
+  document.getElementById('phone').setAttribute('data-theme', t);
+  document.getElementById('desktop').setAttribute('data-theme', t);
+  document.getElementById('modal-card').setAttribute('data-theme', t);
+  const b = document.getElementById('btn-dark');
+  b.textContent = S.dark ? '☽ Oscuro' : '☀ Claro';
+  b.className = S.dark ? 'demo-btn' : 'demo-btn active';
+}
+
+/* ══ MODAL ══ */
+function openModal(ico, title, desc, okText, okFn, cancelText){
+  document.getElementById('modal-ico').textContent = ico;
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-desc').innerHTML = desc;
+  const ok = document.getElementById('modal-ok');
+  ok.textContent = okText;
+  ok.onclick = () => { closeModal(); if (okFn) okFn(); };
+  const cx = document.getElementById('modal-cancel');
+  cx.textContent = cancelText || 'Cancelar';
+  document.getElementById('modal').classList.add('visible');
+}
+function closeModal(){ document.getElementById('modal').classList.remove('visible'); }
+
+/* ══ FLAGS DE DEMO ══ */
+function toggleFlag(f){
+  S.flags[f] = !S.flags[f];
+  const ids = { sinMapeo:'btn-fa-map', m04Down:'btn-fa-m04', degraded:'btn-fa-deg', m07Limit:'btn-fa-m07', noProfile:'btn-fa-noprof', corrupt:'btn-fa-corrupt' };
+  const btn = document.getElementById(ids[f]);
+  btn.classList.toggle('active', S.flags[f]);
+  const msgs = {
+    sinMapeo:['RF-106 FA · no hay mapeo para la unidad vigente','Mapeo restablecido'],
+    m04Down:['RF-106 FA · RF-23 no disponible (M04 caído)','M04 disponible de nuevo'],
+    degraded:['RF-118 FA · M06 en modo degradado','M06 restablecido'],
+    m07Limit:['RF-113 FA · límite diario de M07 alcanzado','Límite diario liberado'],
+    noProfile:['RF-104 FA · usuario sin perfil narrativo','Perfil narrativo disponible'],
+    corrupt:['RF-120 FA · el estado persistido quedará corrupto al reactivar','Estado persistido íntegro']
+  };
+  showToast(S.flags[f] ? msgs[f][0] : msgs[f][1], S.flags[f] ? 'warning' : 'info');
+  if (S.role === 'student') go(entryScreen());
+  renderAll();
+}
+function resetDemo(){
+  S.profile = seedProfile();
+  S.unidadVigente = 2;
+  Object.keys(S.flags).forEach(k => { S.flags[k] = false; document.querySelectorAll('.demo-btn').forEach(b => {}); });
+  ['btn-fa-map','btn-fa-m04','btn-fa-deg','btn-fa-m07','btn-fa-noprof','btn-fa-corrupt'].forEach(id => document.getElementById(id).classList.remove('active'));
+  S.celShown = new Set();
+  S.celQueue = [];
+  closeCelebrate();
+  S.audit = seedAudit();
+  MAPPING.forEach(m => m.estado = 'ACTIVO');
+  CHAPTERS[3].contenido.estado = 'BORRADOR';
+  CHAPTERS[3].contenido.titulo = ''; CHAPTERS[3].contenido.historia = [];
+  CHAPTERS[3].contenido.terapeutico = ''; CHAPTERS[3].contenido.instruccion = '';
+  CHAPTERS[3].contenido.version = '0.1'; CHAPTERS[3].contenido.responsable = '—'; CHAPTERS[3].contenido.fecha = '—';
+  ASSETS.forEach(a => { a.roto = false; a.estado = 'CONFIGURADO'; });
+  NIVEL_RULES.forEach(r => r.estado = 'ACTIVA');
+  document.getElementById('btn-fa-rules').classList.remove('active');
+  S.permisoIndividual = false; S.permisoOtorgadoEn = null; S.verIndividual = null; S.mapDraft = null;
+  showToast('Estado de demo restablecido','info');
+  if (S.role === 'student'){ _history = ['s-home']; go(entryScreen()); } else { go('s-admin-home'); }
+  renderAll();
+}
+function seedAudit(){
+  return [
+    { ts:'2026-05-11 08:02', tipo_evento:'DESBLOQUEO_LOGRO', recurso:'L2', extra:'FASE_ALCANZADA · DESARROLLO', usuario:'usr_1042' },
+    { ts:'2026-05-11 08:02', tipo_evento:'CAMBIO_NIVEL',     recurso:'nivel 1 → 2', extra:'regla N2', usuario:'usr_1042' },
+    { ts:'2026-05-11 08:02', tipo_evento:'AVANCE_CAPITULO',  recurso:'cap. 1 → 2', extra:'unidad temporal 2', usuario:'usr_1042' },
+    { ts:'2026-05-10 09:14', tipo_evento:'DESBLOQUEO_LOGRO', recurso:'L1', extra:'CAPITULO_COMPLETADO · 1', usuario:'usr_1042' },
+    { ts:'2026-05-04 07:31', tipo_evento:'ACTIVACION_PERFIL',recurso:'perfil narrativo', extra:'INICIALIZACION_CRONOGRAMA (RF-17)', usuario:'usr_1042' }
+  ];
+}
+
+/* ══ HELPERS DE DOMINIO ══ */
+const chapterById = id => CHAPTERS.find(c => c.id === id);
+const capsCompletados = () => {
+  if (!S.profile) return 0;
+  if (S.profile.estado_perfil === 'GRADUADO') return 5;
+  return Math.max(0, S.profile.capitulo_activo - 1);
+};
+function estadoVisual(){
+  if (!S.profile) return 1;
+  if (S.profile.estado_perfil === 'GRADUADO') return 5;
+  const caps = capsCompletados();
+  let st = 1;
+  MASCOT_STATES.forEach(m => { if (caps >= m.capsMin && m.id < 5) st = m.id; });
+  return Math.max(st, S.profile.nivel_mascota ? Math.min(S.profile.nivel_mascota, 5) : 1); // RF-109: nunca retrocede
+}
+function reglaActiva(){ return NIVEL_RULES.filter(r => r.estado === 'ACTIVA'); }
+
+/* ══ RF-106 · avance automático diferido ══ */
+function evaluarAvance(){
+  if (!S.profile || S.flags.noProfile) return;
+  if (S.profile.estado_perfil === 'DESACTIVADO'){ return; }                 // FA: módulo desactivado
+  if (S.profile.estado_perfil === 'GRADUADO') return;                        // estado terminal
+  if (S.flags.m04Down){                                                      // FA: RF-23 no disponible
+    showToast('503 · No fue posible verificar el avance narrativo en este momento','error');
+    return;
+  }
+  if (S.unidadVigente === S.profile.ultimaUnidadEvaluada) return;            // FA: sin cambio de unidad
+  const map = MAPPING.find(m => m.unidad === S.unidadVigente && m.estado === 'ACTIVO');
+  if (!map){                                                                 // FA: sin mapeo
+    showToast('500 · No fue posible determinar el capítulo de la unidad temporal vigente','error');
+    return;
+  }
+  if (S.flags.sinMapeo){
+    showToast('500 · No fue posible determinar el capítulo de la unidad temporal vigente','error');
+    return;
+  }
+  const nuevoCap = map.capitulo;
+  if (nuevoCap <= S.profile.capitulo_activo){ S.profile.ultimaUnidadEvaluada = S.unidadVigente; return; } // linealidad
+  const cap = chapterById(nuevoCap);
+  const ultimoCierre = CHAPTERS.filter(c => c.fase === 'CIERRE').slice(-1)[0];
+  S.profile.ultimaUnidadEvaluada = S.unidadVigente;
+  if (cap.id === ultimoCierre.id){ graduar(); return; }                      // delega a RF-108
+  const faseAnterior = S.profile.fase_narrativa;
+  S.profile.capitulo_activo = nuevoCap;
+  S.profile.fase_narrativa = cap.fase;
+  S.profile.ts = nowStamp();
+  audit('AVANCE_CAPITULO', 'cap. ' + (nuevoCap - 1) + ' → ' + nuevoCap, 'unidad temporal ' + S.unidadVigente);
+  actualizarMascota();
+  desbloquearLogros('AVANCE_CAPITULO', faseAnterior !== cap.fase);
+  calcularNivel();
+  showToast('Nuevo capítulo disponible: ' + (cap.contenido.titulo || 'sin contenido publicado'), 'success');
+}
+
+/* RF-109 · estado visual (nunca retrocede, jamás consulta M05) */
+function actualizarMascota(){
+  const nuevo = estadoVisual();
+  if (nuevo > S.profile.nivel_mascota){
+    S.profile.nivel_mascota = nuevo;
+    S.profile.ts = nowStamp();
+  }
+}
+
+/* RF-110 · desbloqueo de logros narrativos */
+function desbloquearLogros(evento, faseNueva){
+  const previos = S.profile.logros.map(l => l.id);
+  const caps = capsCompletados();
+  LOGROS.filter(l => l.estado === 'ACTIVO').forEach(l => {
+    if (previos.includes(l.id)) return;                                       // FA: ya desbloqueado
+    let ok = false;
+    if (evento === 'AVANCE_CAPITULO' && l.cond === 'CAPITULO_COMPLETADO') ok = caps >= l.valor;
+    if (evento === 'AVANCE_CAPITULO' && l.cond === 'FASE_ALCANZADA')      ok = S.profile.fase_narrativa === l.valor;
+    if (evento === 'GRADUACION_SIMBOLICA' && l.cond === 'PROGRAMA_FINALIZADO') ok = true;
+    if (evento === 'GRADUACION_SIMBOLICA' && l.cond === 'FASE_ALCANZADA') ok = (l.valor === 'CIERRE');
+    if (evento === 'GRADUACION_SIMBOLICA' && l.cond === 'CAPITULO_COMPLETADO') ok = caps >= l.valor;
+    if (!ok) return;
+    S.profile.logros.push({ id:l.id, fecha: nowStamp() });
+    S.profile.ts = nowStamp();
+    audit('DESBLOQUEO_LOGRO', l.id, l.cond + (l.valor ? ' · ' + l.valor : ''));
+    queueCelebration('LOGRO_DESBLOQUEADO', l);
+  });
+}
+
+/* RF-111 · cálculo de nivel */
+function calcularNivel(){
+  const activas = reglaActiva();
+  if (!activas.length){                                                        // FA: sin regla válida
+    showToast('422 · No existe una regla de cálculo válida para el nivel de gamificación','error');
+    S.profile.estado_nivel = 'ERROR_CALCULO';
+    return;
+  }
+  const caps = capsCompletados();
+  const nLogros = S.profile.logros.length;
+  let nivel = activas[0].nivel;
+  activas.forEach(r => { if (caps >= r.caps && nLogros >= r.logros && r.nivel > nivel) nivel = r.nivel; });
+  S.profile.estado_nivel = 'ACTUALIZADO';
+  if (nivel !== S.profile.nivel_gamificacion){
+    const antes = S.profile.nivel_gamificacion;
+    S.profile.nivel_gamificacion = nivel;
+    S.profile.ts = nowStamp();
+    audit('CAMBIO_NIVEL', 'nivel ' + antes + ' → ' + nivel, 'regla vigente RF-115');
+    queueCelebration('AVANCE_NIVEL', { nivel, antes });
+  }
+}
+
+/* RF-108 · graduación simbólica */
+function graduar(force){
+  if (!S.profile) return;
+  if (S.profile.estado_perfil === 'GRADUADO'){                                 // FA: reprocesamiento
+    showToast('200 · El usuario ya se encuentra en estado de graduación. No se reprocesa','info');
+    return;
+  }
+  const ultimo = CHAPTERS.filter(c => c.fase === 'CIERRE').slice(-1)[0];
+  const mapCierre = MAPPING.find(m => m.capitulo === ultimo.id && m.estado === 'ACTIVO');
+  if (force && (!mapCierre || S.unidadVigente < mapCierre.unidad)){           // FA: 409 sin completar CIERRE
+    showToast('409 · No es posible registrar la graduación: el usuario no ha completado la fase de cierre','error');
+    return;
+  }
+  if (ultimo.contenido.estado !== 'PUBLICADO' || !ultimo.contenido.culminacion){ // FA: mensaje no publicado
+    showToast('500 · No fue posible registrar la graduación por un error de configuración del contenido','error');
+    return;
+  }
+  S.profile.fase_narrativa = 'CIERRE';
+  S.profile.capitulo_activo = ultimo.id;
+  S.profile.nivel_mascota = 5;
+  S.profile.estado_perfil = 'GRADUADO';
+  S.profile.fecha_graduacion = nowStamp();
+  S.profile.ts = nowStamp();
+  audit('GRADUACION_SIMBOLICA', 'cap. ' + ultimo.id + ' · fase CIERRE', 'estado terminal del perfil');
+  desbloquearLogros('GRADUACION_SIMBOLICA');
+  calcularNivel();
+  renderAll();
+  go('s-graduacion');
+}
+
+/* RF-113 · mensajes de celebración */
+function queueCelebration(tipo, data){
+  const key = tipo + ':' + (tipo === 'LOGRO_DESBLOQUEADO' ? data.id : data.nivel);
+  if (S.celShown.has(key)) return;                                            // FA: mensaje ya presentado
+  S.celShown.add(key);
+  S.celQueue.push({ tipo, data });
+  setTimeout(showNextCelebration, 320);
+}
+function showNextCelebration(){
+  if (!S.celQueue.length) return;
+  if (document.getElementById('celebrate').classList.contains('visible')) return;
+  if (S.role !== 'student') { S.celQueue = []; return; }
+  const c = S.celQueue.shift();
+  const ico = c.tipo === 'LOGRO_DESBLOQUEADO' ? c.data.emoji : '⭐';
+  const title = c.tipo === 'LOGRO_DESBLOQUEADO' ? '¡Nuevo logro narrativo!' : '¡Subiste de nivel!';
+  /* RF-113 · el mensaje proviene del catálogo gestionado por el admin (RF-115), no del código.
+     Si el catálogo no tiene mensaje configurado, se usa un texto neutro de respaldo y se avisa. */
+  let text, sinConfigurar = false;
+  if (c.tipo === 'LOGRO_DESBLOQUEADO'){
+    text = (c.data.mensaje || '').trim();
+    if (!text){ text = c.data.nombre + ' · ' + c.data.desc; sinConfigurar = true; }
+  } else {
+    const regla = NIVEL_RULES.find(r => r.nivel === c.data.nivel);
+    text = ((regla && regla.mensaje) || '').trim();
+    if (!text){ text = 'Nivel ' + c.data.antes + ' → nivel ' + c.data.nivel + '.'; sinConfigurar = true; }
+  }
+  document.getElementById('cel-ico').textContent = ico;
+  document.getElementById('cel-title').textContent = title;
+  document.getElementById('cel-text').textContent = text;
+  document.getElementById('cel-sinmsg').classList.toggle('hidden', !sinConfigurar);
+  document.getElementById('cel-omitido').classList.toggle('hidden', !S.flags.m07Limit);
+  spawnConfetti();
+  document.getElementById('celebrate').classList.add('visible');
+}
+function closeCelebrate(){
+  document.getElementById('celebrate').classList.remove('visible');
+  setTimeout(showNextCelebration, 260);
+}
+function spawnConfetti(){
+  const h = document.getElementById('confetti-holder');
+  h.innerHTML = '';
+  const colors = ['var(--accent-500)','var(--accent-300)','var(--brand-500)','var(--warning)'];
+  for (let i = 0; i < 14; i++){
+    const d = document.createElement('div');
+    d.className = 'confetti';
+    d.style.left = (5 + Math.random() * 90) + '%';
+    d.style.background = colors[i % colors.length];
+    d.style.animationDelay = (Math.random() * 1.2) + 's';
+    h.appendChild(d);
+  }
+}
+
+/* ══ DEMO: cronograma ══ */
+function avanzarUnidad(){
+  if (S.unidadVigente >= 5){ showToast('El cronograma ya está en la última unidad temporal (Semana 5)','info'); return; }
+  S.unidadVigente++;
+  showToast('RF-23 · unidad temporal vigente: Semana ' + S.unidadVigente, 'info');
+  if (S.role === 'student') evaluarAvance();
+  renderAll();
+}
+function publicarCap4Demo(){
+  const c = chapterById(4);
+  if (!c){ showToast('No existe el capítulo 4','error'); return; }
+  if (c.contenido.estado === 'PUBLICADO'){ showToast('El capítulo 4 ya está publicado','info'); return; }
+  c.contenido.titulo = 'Lo que no se ve';
+  c.contenido.historia = ['Brisa llegó sin nada en las manos esta semana. Se sentó al lado de la maceta y se quedó ahí, sin regar, sin podar, sin decir nada.',
+                          'A veces cuidar es solo hacer compañía. La planta creció igual, esa semana, sin que nadie la mirara crecer.'];
+  c.contenido.terapeutico = 'No todo avance se nota el mismo día en que ocurre.';
+  c.contenido.instruccion = 'La mascota mantiene su estado actual. Presencia serena, sin celebración.';
+  c.contenido.estado = 'PUBLICADO'; c.contenido.version = '1.0';
+  c.contenido.responsable = 'psicologia@usco.edu.co (texto de demo · pendiente de validación)';
+  c.contenido.fecha = nowStamp().slice(0,10);
+  c.unidad = 4; c.unidadNombre = 'Semana 4 · (por definir por psicología)';
+  audit('PUBLICACION_CONTENIDO', 'cap. 4', 'texto de demo · habilita la cobertura de RF-151');
+  showToast('Capítulo 4 publicado · la cobertura narrativa del mapeo queda completa (RF-114 → RF-151)','success');
+  renderAll();
+}
+function vaciarReglasDemo(){
+  const activas = reglaActiva().length;
+  const btn = document.getElementById('btn-fa-rules');
+  if (activas){
+    NIVEL_RULES.forEach(r => r.estado = 'INACTIVA');
+    btn.classList.add('active');
+    showToast('RF-111 FA · no existe regla de cálculo activa: el nivel deja de estar disponible','warning');
+  } else {
+    NIVEL_RULES.forEach(r => r.estado = 'ACTIVA');
+    btn.classList.remove('active');
+    showToast('Reglas de nivel restablecidas','info');
+  }
+  if (S.profile) calcularNivel();
+  renderAll();
+}
+function saltarACierre(){
+  S.unidadVigente = 5;
+  showToast('RF-23 · unidad temporal vigente: Semana 5 (fase CIERRE)','info');
+  if (S.role === 'student') evaluarAvance();
+  renderAll();
+}
+
+/* ══ RF-120 · activar / desactivar módulo ══ */
+function toggleModulo(){
+  if (!S.profile) return;
+  if (S.profile.estado_perfil === 'GRADUADO'){
+    showToast('El perfil está en estado terminal (GRADUADO): no admite más transiciones','warning');
+    return;
+  }
+  if (S.profile.estado_perfil === 'ACTIVO'){
+    openModal('🌙','Desactivar la historia',
+      'Tu progreso se guarda tal como está: nivel, logros, mascota y capítulo. <b>No perderás nada</b> y podrás reactivarlo cuando quieras.<br><br>El diario y el chat siguen funcionando igual. <span class="mono">Nadie del equipo recibe aviso de esta decisión.</span>',
+      'Desactivar', () => {
+        S.profile.estado_perfil = 'DESACTIVADO';
+        S.profile.capituloAlDesactivar = S.profile.capitulo_activo;
+        S.profile.ts = nowStamp();
+        audit('DESACTIVACION_MODULO', 'perfil narrativo', 'capítulo congelado en ' + S.profile.capitulo_activo);
+        showToast('Módulo desactivado · tu progreso quedó guardado','info');
+        renderAll(); go('s-off');
+      });
+  } else {
+    if (S.flags.corrupt){                                                     // FA: estado corrupto
+      openModal('💥','No fue posible recuperar tu progreso',
+        '422 · <span class="mono">Unprocessable Entity</span><br><br>No fue posible recuperar su progreso narrativo anterior de forma segura. El módulo se activará, pero su estado de gamificación podría haberse reiniciado.',
+        'Activar de todos modos', () => {
+          S.profile = seedProfile();
+          S.profile.fase_narrativa = 'INICIO'; S.profile.capitulo_activo = 1; S.profile.nivel_mascota = 1;
+          S.profile.nivel_gamificacion = 1; S.profile.logros = []; S.profile.ultimaUnidadEvaluada = S.unidadVigente;
+          S.profile.estado_perfil = 'ACTIVO';
+          S.celShown = new Set();
+          audit('ACTIVACION_MODULO', 'perfil narrativo', 'estado previo corrupto · reinicializado + alerta técnica');
+          showToast('Módulo activado · alerta interna generada para el equipo técnico','warning');
+          renderAll(); go('s-home');
+        });
+      return;
+    }
+    S.profile.estado_perfil = 'ACTIVO';
+    // RF-120: retoma el capítulo del momento de la desactivación, NO el del cronograma.
+    S.profile.ultimaUnidadEvaluada = S.unidadVigente;
+    S.profile.ts = nowStamp();
+    audit('ACTIVACION_MODULO', 'perfil narrativo', 'retoma capítulo ' + S.profile.capitulo_activo + ' (sin retroalimentar unidades omitidas)');
+    showToast('Módulo activado · retomas en el capítulo ' + S.profile.capitulo_activo, 'success');
+    renderAll(); go('s-home');
+  }
+}
+
+/* ══ RF-104 · inicialización del perfil ══ */
+function inicializarPerfil(){
+  if (!S.flags.noProfile){                                                    // FA: inicialización duplicada
+    showToast('200 · El usuario ya cuenta con un perfil narrativo activo. Se conserva el estado existente','info');
+    return;
+  }
+  S.flags.noProfile = false;
+  document.getElementById('btn-fa-noprof').classList.remove('active');
+  S.profile = seedProfile();
+  S.profile.fase_narrativa = 'INICIO'; S.profile.capitulo_activo = 1; S.profile.nivel_mascota = 1;
+  S.profile.nivel_gamificacion = 1; S.profile.logros = []; S.profile.ultimaUnidadEvaluada = 1;
+  S.audit = [];
+  audit('ACTIVACION_PERFIL', 'perfil narrativo', 'INICIALIZACION_CRONOGRAMA (RF-17)');
+  showToast('Perfil narrativo inicializado (RF-17 → RF-104)','success');
+  go('s-home');
+}
+</script>
+
+<script>
+/* ══════════════ MASCOTA · SVG INLINE (RF-109) ══════════════
+   5 estados visuales. La evolución depende SOLO de capítulos completados.
+   Prohibido derivarla de métricas de M05 (RF-109 restricción explícita).
+   El gesto es siempre de crecimiento/apoyo: nunca deterioro ni castigo.        */
+function mascotSVG(state, size, forAsset){
+  const s = size || 190;
+  const on = n => state >= n ? 'grp on' : 'grp';
+  const V = forAsset ? cssVarSnapshot() : null;
+  const c = n => V ? V[n] : `var(${n})`;
+  return `
+  <svg class="mascot-svg" ${forAsset ? 'xmlns="http://www.w3.org/2000/svg"' : ''} viewBox="0 0 200 200" width="${s}" height="${s}" role="img" aria-label="Mascota Brisa · estado ${MASCOT_STATES[state-1].nombre}">
+    <defs>
+      <linearGradient id="potg" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${c('--m6-pot-soft')}"/><stop offset="100%" stop-color="${c('--m6-pot')}"/>
+      </linearGradient>
+    </defs>
+    <!-- halo -->
+    <circle cx="100" cy="104" r="78" fill="${c('--accent-50')}" opacity=".55"/>
+    <g class="sway">
+      <!-- semilla -->
+      <g class="${state === 1 ? 'grp on' : 'grp'}">
+        <ellipse cx="100" cy="128" rx="9" ry="7" fill="${c('--m6-pot')}"/>
+        <path d="M100 121 q6 4 0 8" stroke="${c('--m6-leaf')}" stroke-width="2" fill="none" stroke-linecap="round"/>
+      </g>
+      <!-- tallo por tramos -->
+      <g class="${on(2)}"><path d="M100 132 L100 108" stroke="${c('--m6-leaf')}" stroke-width="4" stroke-linecap="round"/></g>
+      <g class="${on(3)}"><path d="M100 110 L100 84"  stroke="${c('--m6-leaf')}" stroke-width="4" stroke-linecap="round"/></g>
+      <g class="${on(4)}"><path d="M100 86 L100 62"   stroke="${c('--m6-leaf')}" stroke-width="4" stroke-linecap="round"/></g>
+      <!-- hojas -->
+      <g class="${on(2)}">
+        <path d="M100 116 q-16 -4 -20 -14 q14 -2 20 14z" fill="${c('--m6-leaf')}"/>
+      </g>
+      <g class="${on(3)}">
+        <path d="M100 98 q18 -5 23 -17 q-16 -2 -23 17z" fill="${c('--m6-leaf')}"/>
+        <path d="M100 92 q-20 -6 -26 -19 q18 -2 26 19z" fill="${c('--m6-leaf-soft')}"/>
+      </g>
+      <g class="${on(4)}">
+        <path d="M100 76 q22 -6 28 -20 q-20 -3 -28 20z" fill="${c('--m6-leaf')}"/>
+        <path d="M100 70 q-22 -7 -28 -21 q20 -3 28 21z" fill="${c('--m6-leaf-soft')}"/>
+      </g>
+      <!-- capullo (estado 4) -->
+      <g class="${state === 4 ? 'grp on' : 'grp'}">
+        <ellipse cx="100" cy="54" rx="8" ry="12" fill="${c('--m6-flower-soft')}"/>
+        <path d="M100 44 q5 10 0 20" stroke="${c('--m6-flower')}" stroke-width="1.6" fill="none"/>
+      </g>
+      <!-- flor (estado 5 · estado_visual_maximo) -->
+      <g class="${state === 5 ? 'grp on' : 'grp'}">
+        <circle cx="100" cy="46" r="11" fill="${c('--m6-flower-soft')}"/>
+        <circle cx="84"  cy="52" r="11" fill="${c('--m6-flower')}"/>
+        <circle cx="116" cy="52" r="11" fill="${c('--m6-flower')}"/>
+        <circle cx="91"  cy="36" r="11" fill="${c('--m6-flower-soft')}"/>
+        <circle cx="109" cy="36" r="11" fill="${c('--m6-flower-soft')}"/>
+        <circle cx="100" cy="45" r="7"  fill="${c('--warning')}"/>
+      </g>
+    </g>
+    <!-- maceta con cara (siempre amable) -->
+    <path d="M68 132 h64 l-7 42 a8 8 0 0 1 -8 7 h-34 a8 8 0 0 1 -8 -7 z" fill="url(#potg)"/>
+    <rect x="64" y="126" width="72" height="12" rx="5" fill="${c('--m6-pot')}"/>
+    <circle cx="88"  cy="152" r="3.2" fill="${c('--n0')}"/>
+    <circle cx="112" cy="152" r="3.2" fill="${c('--n0')}"/>
+    <path d="M91 161 q9 7 18 0" stroke="${c('--n0')}" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+  </svg>`;
+}
+
+
+/* Snapshot de los tokens vigentes: un data URI no hereda las variables CSS del documento,
+   así que el "servidor de activos" (RF-21 simulado) las resuelve a literales al exportar. */
+function cssVarSnapshot(){
+  const cs = getComputedStyle(document.getElementById('phone'));
+  const names = ['--accent-50','--m6-flower','--m6-flower-soft','--m6-pot','--m6-pot-soft','--m6-leaf','--m6-leaf-soft','--n0','--warning'];
+  const out = {};
+  names.forEach(n => { out[n] = (cs.getPropertyValue(n) || '').trim() || '#C8501F'; });
+  return out;
+}
+
+/* RF-109 · el frontend consume la URL del recurso gestionado administrativamente.
+   Si el recurso no está disponible, usa el recurso de respaldo embebido y lo señala. */
+function mascotRender(state, size){
+  const asset = ASSETS.find(a => a.id === state);
+  const url = asset ? resolverActivo(asset.ruta) : null;
+  if (url){
+    return `<img class="mascot-img" src="${url}" width="${size}" height="${size}" alt="Mascota Brisa · ${MASCOT_STATES[state-1].nombre}"
+      onerror="this.outerHTML=mascotSVG(${state}, ${size}) + '<span class=&quot;badge b-warning mascot-fallback-tag&quot;>respaldo</span>'">`;
+  }
+  return mascotSVG(state, size) + `<span class="badge b-warning mascot-fallback-tag" title="RF-109 FA · recurso gráfico no disponible">respaldo</span>`;
+}
+
+function evoRow(current){
+  return `<div class="evo-row">` + MASCOT_STATES.map(m => {
+    const cls = 'evo-step' + (current >= m.id ? ' done' : '') + (current === m.id ? ' current' : '');
+    return `<div class="${cls}"><span class="evo-emoji">${m.emoji}</span><span class="evo-label">${m.nombre}</span></div>`;
+  }).join('') + `</div>`;
+}
+
+/* ══════════════ ESTUDIANTE ══════════════ */
+function renderHome(){
+  const el = document.getElementById('home-body');
+  if (!el) return;
+  if (S.flags.noProfile || !S.profile) return;
+  const p = S.profile;
+  const cap = chapterById(p.capitulo_activo);
+  const publicado = cap && cap.contenido.estado === 'PUBLICADO';
+  const st = estadoVisual();
+  const nLog = p.logros.length;
+  const parcial = S.flags.degraded;
+  const estadoResumen = parcial ? 'PARCIAL' : 'DISPONIBLE';
+  document.getElementById('h-estado-resumen').textContent = estadoResumen;
+  document.getElementById('h-sub').textContent = 'Diana · Semana ' + S.unidadVigente + ' del programa';
+
+  let html = '';
+  if (S.flags.degraded){
+    html += `<div class="alert alert-warning">
+      <span class="alert-icon">📉</span>
+      <div><div class="alert-title">Datos provisionales</div>
+      <div class="alert-desc">M06 está en modo degradado: mostramos tu último estado guardado. El diario y el chat no se ven afectados. <span class="mono">RF-118</span></div></div></div>`;
+  }
+  if (p.estado_perfil === 'GRADUADO'){
+    html += `<div class="alert alert-success"><span class="alert-icon">🎓</span>
+      <div><div class="alert-title">Historia completada</div>
+      <div class="alert-desc">Tu perfil narrativo está en su estado final. <button class="btn-link" onclick="go('s-graduacion')">Ver el cierre</button></div></div></div>`;
+  }
+
+  /* mascota + capítulo */
+  html += `<div class="mascot-stage">
+    <div class="mascot-holder" id="home-mascot" onclick="tapMascot('home-mascot','home-speech')" title="Tócala">${mascotRender(st,168)}</div>
+    <div class="mascot-name">Brisa</div>
+    <div class="mascot-state-pill">${MASCOT_STATES[st-1].emoji} ${MASCOT_STATES[st-1].nombre} · estado ${st}/5</div>
+    <div id="home-speech"></div>
+  </div>`;
+
+  html += `<div class="section-label">Capítulo activo <span class="rf-tag">RF-107</span></div>`;
+  if (publicado){
+    html += `<div class="card" style="cursor:pointer" onclick="go('s-chapter')">
+      <div class="between"><span class="badge b-accent">${p.fase_narrativa}</span><span class="rf-tag">cap. ${cap.id}/5</span></div>
+      <div class="card-title mt8">${cap.contenido.titulo}</div>
+      <div class="card-sub">${cap.unidadNombre}</div>
+      <button class="btn btn-primary btn-sm btn-block mt12">Leer capítulo</button>
+    </div>`;
+  } else {
+    html += `<div class="card">
+      <div class="between"><span class="badge b-warning">SIN CONTENIDO</span><span class="rf-tag">503</span></div>
+      <div class="card-title mt8">Capítulo ${cap.id} · aún no disponible</div>
+      <div class="card-sub">El contenido del capítulo activo no está disponible en este momento. Tu diario y tu chat siguen funcionando con normalidad.</div>
+    </div>`;
+  }
+
+  /* nivel */
+  const nivel = parcial && !p.nivel_gamificacion ? 1 : p.nivel_gamificacion;
+  const next = NIVEL_RULES.find(r => r.nivel === nivel + 1 && r.estado === 'ACTIVA');
+  const caps = capsCompletados();
+  const pct = next ? Math.min(100, Math.round(((caps / Math.max(1,next.caps)) * 0.5 + (nLog / Math.max(1,next.logros)) * 0.5) * 100)) : 100;
+  html += `<div class="section-label">Nivel de gamificación <span class="rf-tag">RF-111</span></div>
+  <div class="card" style="cursor:pointer" onclick="go('s-nivel')">
+    <div class="between mb8"><span class="level-chip">⭐ Nivel ${nivel}</span>
+      <span class="text-xs">${next ? 'Siguiente: nivel ' + next.nivel : 'Nivel máximo'}</span></div>
+    <div class="xp-track"><div class="xp-fill" style="width:${pct}%"></div></div>
+    <div class="text-xs mt4">${caps} capítulo(s) completado(s) · ${nLog} logro(s) desbloqueado(s)</div>
+  </div>`;
+
+  /* logros */
+  html += `<div class="section-label between">Logros narrativos <span class="rf-tag">RF-110</span></div>`;
+  const activos = LOGROS.filter(l => l.estado === 'ACTIVO');
+  const desb = activos.filter(l => p.logros.some(x => x.id === l.id));
+  if (!desb.length){
+    html += `<div class="card"><div class="empty" style="padding:16px 8px">
+      <div class="empty-icon">🏅</div>
+      <div class="empty-title">Todavía sin logros</div>
+      <div class="empty-desc">Aparecerán a medida que la historia avance.</div>
+      <button class="btn btn-secondary btn-sm mt12" onclick="go('s-logros')">Ver catálogo</button>
+    </div></div>`;
+  } else {
+    html += `<div class="card" style="cursor:pointer" onclick="go('s-logros')">
+      <div class="row wrap">${desb.map(l => `<span class="badge b-accent">${l.emoji} ${l.nombre}</span>`).join('')}</div>
+      <div class="text-xs mt8">${desb.length} de ${activos.length} logros del catálogo · toca para ver todos</div>
+    </div>`;
+  }
+
+  /* nota de personalización (vacío documentado) */
+  html += `<div class="card mt12" style="border-style:dashed">
+    <div class="between"><span class="card-title" style="font-size:12px">Personalización de la mascota</span><span class="badge b-info">PENDIENTE DE RF</span></div>
+    <div class="card-sub">RF-112 expone <span class="mono">elementos_personalizacion_activos</span> y la Matriz M-6 lista el desbloqueo de elementos visuales, pero <b>ningún RF del módulo define su catálogo ni sus condiciones</b>. Se omite del prototipo y se reporta el vacío al equipo.</div>
+  </div>`;
+
+  html += `<div class="text-xs mt12 mono">estado_resumen = ${estadoResumen} · fecha_actualizacion = ${p.ts}</div>`;
+  el.innerHTML = html;
+}
+
+function tapMascot(holderId, speechId){
+  const h = document.getElementById(holderId);
+  if (!h) return;
+  h.classList.remove('tapped'); void h.offsetWidth; h.classList.add('tapped');
+  const cap = chapterById(S.profile.capitulo_activo);
+  const frases = {
+    1:['Aún no sé qué voy a ser. Pero ya estoy aquí.','Todo empieza bajo tierra, donde no se ve nada.'],
+    2:['Asomé un poquito. Con eso basta por hoy.','Hoy solo necesito un poco de luz.'],
+    3:['El viento me dobla, pero mira: sigo.','Crecer también es aguantar los días raros.'],
+    4:['Algo se está formando arriba. No lo apures.','Ya casi. Y "ya casi" también cuenta.'],
+    5:['Se abrió. Llegaste hasta acá conmigo.','Gracias por volver cada semana.']
+  };
+  const st = estadoVisual();
+  const pool = frases[st];
+  let txt = pool[Math.floor(Math.random() * pool.length)];
+  if (cap && cap.contenido.estado === 'PUBLICADO' && Math.random() > .55) txt = cap.contenido.instruccion.split('.')[1] ? txt : txt;
+  const sp = document.getElementById(speechId);
+  if (sp) sp.innerHTML = `<div class="mascot-speech">💬 ${txt}</div>`;
+}
+
+function renderChapter(){
+  const el = document.getElementById('chapter-body');
+  if (!el || !S.profile) return;
+  const cap = chapterById(S.profile.capitulo_activo);
+  if (!cap) return;
+  const c = cap.contenido;
+  if (c.estado !== 'PUBLICADO'){                                             // FA RF-107 · 503
+    el.innerHTML = `
+      <div class="app-bar"><button class="app-bar-back" onclick="back('s-home')" aria-label="Volver">←</button>
+        <span class="app-bar-title">Capítulo ${cap.id}</span><span class="app-bar-spacer"></span><span class="rf-tag">RF-107 · 503</span></div>
+      <div class="screen-inner">
+        <div class="empty">
+          <div class="empty-icon">📭</div>
+          <div class="empty-title">El contenido de este capítulo no está disponible</div>
+          <div class="empty-desc">Estamos preparando esta parte de la historia. Vuelve pronto: tu progreso no se ve afectado.</div>
+        </div>
+        <div class="alert alert-info mt12"><span class="alert-icon">ℹ️</span>
+          <div><div class="alert-title">Nota técnica (visible solo en el prototipo)</div>
+          <div class="alert-desc">503 · "El contenido del capítulo activo no está disponible en este momento". El capítulo ${cap.id} (${cap.unidadNombre}) está en estado <span class="mono">BORRADOR</span> en RF-114. La Semana 4 nunca fue documentada por psicología: se deja como flujo alterno real, no como placeholder. No bloquea M02 ni M03 y genera alerta técnica.</div></div></div>
+        <button class="btn btn-secondary btn-block mt12" onclick="back('s-home')">Volver a mi historia</button>
+      </div>`;
+    return;
+  }
+  const st = estadoVisual();
+  el.innerHTML = `
+    <div class="chapter-hero">
+      <div class="row" style="justify-content:space-between">
+        <button class="app-bar-back" style="background:rgba(255,255,255,.2);color:#fff" onclick="back('s-home')" aria-label="Volver">←</button>
+        <span class="rf-tag" style="background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.3);color:#fff">RF-107 · solo lectura</span>
+      </div>
+      <div class="chapter-fase mt12">Fase ${cap.fase} · capítulo ${cap.id} de 5</div>
+      <div class="chapter-title">${c.titulo}</div>
+      <div class="chapter-meta">${cap.unidadNombre} · contenido v${c.version}</div>
+    </div>
+    <div class="screen-inner">
+      <div class="mascot-stage" style="padding-top:0">
+        <div class="mascot-holder" id="chap-mascot" onclick="tapMascot('chap-mascot','chap-speech')">${mascotRender(st,130)}</div>
+        <div class="mascot-state-pill">${MASCOT_STATES[st-1].emoji} ${MASCOT_STATES[st-1].nombre}</div>
+        <div id="chap-speech"></div>
+      </div>
+      <div class="story-text mt16">${c.historia.map(p => '<p>' + p + '</p>').join('')}</div>
+      <div class="tip-card">
+        <div class="tip-label">Para llevarte</div>
+        <div class="tip-text">${c.terapeutico}</div>
+      </div>
+      <div class="alert alert-info mt16"><span class="alert-icon">🔒</span>
+        <div><div class="alert-title">Esta pantalla no te pide nada</div>
+        <div class="alert-desc">Leer el capítulo no registra respuestas ni hace avanzar la historia: el avance depende solo de tu semana en el cronograma (RF-107 · sin efectos secundarios sobre el perfil).</div></div></div>
+      <div class="text-xs mt12 mono">instruccion_narrativa_mascota: ${c.instruccion}</div>
+    </div>`;
+}
+
+function renderMascota(){
+  const el = document.getElementById('mascota-body');
+  if (!el || !S.profile) return;
+  const st = estadoVisual();
+  const caps = capsCompletados();
+  const nextState = MASCOT_STATES.find(m => m.id === st + 1);
+  el.innerHTML = `
+    <div class="mascot-stage">
+      <div class="mascot-holder" id="m-mascot" onclick="tapMascot('m-mascot','m-speech')">${mascotRender(st,200)}</div>
+      <div class="mascot-name">Brisa</div>
+      <div class="mascot-state-pill">${MASCOT_STATES[st-1].emoji} ${MASCOT_STATES[st-1].nombre} · estado ${st}/5</div>
+      <div class="mascot-hint">Tócala para que te diga algo</div>
+      <div id="m-speech"></div>
+    </div>
+    <div class="section-label">Su evolución</div>
+    ${evoRow(st)}
+    <div class="card mt12">
+      <div class="card-title">¿Cómo crece?</div>
+      <div class="card-sub">Brisa crece con los capítulos que va viviendo tu historia: ${caps} de 5 completados.
+      ${nextState ? 'Pasará a <b>' + nextState.nombre + '</b> cuando completes ' + nextState.capsMin + ' capítulo(s).' : 'Ya alcanzó su forma final.'}</div>
+      <div class="divider"></div>
+      <div class="text-xs"><b>Nunca retrocede.</b> Pase lo que pase con tu proceso, Brisa no se marchita ni se pone triste: su forma solo depende de lo que la historia ya recorrió.</div>
+    </div>
+    <div class="alert alert-info"><span class="alert-icon">🧭</span>
+      <div><div class="alert-title">Separación estricta con M05 (RF-109)</div>
+      <div class="alert-desc">El estado visual se calcula <b>solo</b> con hitos narrativos. El módulo tiene prohibido consultar indicadores de conducta, craving o adherencia: no existe retroalimentación visual de castigo. <span class="mono">Corrige la propuesta de la guía v1.7 (Enérgico/Aburrido/Asustado).</span></div></div></div>
+    <div class="text-xs mono">id_estado_visual = ${st} · url_recurso_grafico = /assets/m06/mascota_${MASCOT_STATES[st-1].nombre.toLowerCase().replace(/ /g,'_')}.svg (gestionado vía RF-21)</div>`;
+}
+
+function renderLogros(){
+  const el = document.getElementById('logros-body');
+  if (!el || !S.profile) return;
+  const activos = LOGROS.filter(l => l.estado === 'ACTIVO');
+  const desbIds = S.profile.logros.map(l => l.id);
+  const condTxt = l => l.cond === 'CAPITULO_COMPLETADO' ? 'Completar ' + l.valor + ' capítulo(s)'
+    : l.cond === 'FASE_ALCANZADA' ? 'Llegar a la fase ' + l.valor
+    : 'Completar la historia';
+  let html = `<div class="row wrap mb12">
+    <span class="badge b-accent">${desbIds.length} desbloqueados</span>
+    <span class="badge b-neutral">${activos.length - desbIds.length} por descubrir</span></div>`;
+  if (!activos.length){
+    html += `<div class="empty"><div class="empty-icon">🏅</div><div class="empty-title">Catálogo vacío</div>
+      <div class="empty-desc">No hay logros narrativos activos configurados.</div></div>`;
+  }
+  activos.forEach(l => {
+    const un = desbIds.includes(l.id);
+    const fecha = un ? S.profile.logros.find(x => x.id === l.id).fecha : null;
+    html += `<div class="logro-card ${un ? 'unlocked' : 'locked'}">
+      <div class="logro-ico">${un ? l.emoji : '🔒'}</div>
+      <div class="flex1">
+        <div class="between"><span class="logro-name">${l.nombre}</span>${un ? '<span class="badge b-accent">Desbloqueado</span>' : '<span class="badge b-neutral">Bloqueado</span>'}</div>
+        <div class="logro-desc">${un ? l.desc : 'Sigue la historia para descubrirlo.'}</div>
+        <div class="logro-cond"><span class="rf-tag">${l.cond}</span> ${condTxt(l)}${fecha ? ' · ' + fecha : ''}</div>
+      </div></div>`;
+  });
+  html += `<div class="alert alert-info mt12"><span class="alert-icon">🧩</span>
+    <div><div class="alert-title">Logros narrativos ≠ logros conductuales</div>
+    <div class="alert-desc">Estos logros dependen solo de tu avance en la historia. Los logros de conducta viven en Progreso (M05 · RF-72) y se mantienen en registros separados (RF-110).</div></div></div>`;
+  el.innerHTML = html;
+}
+
+function renderNivel(){
+  const el = document.getElementById('nivel-body');
+  if (!el || !S.profile) return;
+  const p = S.profile;
+  const caps = capsCompletados(), nLog = p.logros.length;
+  const activas = reglaActiva();
+  if (!activas.length){
+    el.innerHTML = `<div class="empty"><div class="empty-icon">⚙️</div>
+      <div class="empty-title">Nivel no disponible</div>
+      <div class="empty-desc">422 · No existe una regla de cálculo válida para el nivel de gamificación (RF-111). El equipo ya fue avisado.</div></div>`;
+    return;
+  }
+  const next = activas.find(r => r.nivel === p.nivel_gamificacion + 1);
+  const pct = next ? Math.min(100, Math.round(((Math.min(caps,next.caps) / Math.max(1,next.caps)) * 0.5 + (Math.min(nLog,next.logros) / Math.max(1,next.logros)) * 0.5) * 100)) : 100;
+  el.innerHTML = `
+    <div class="card text-center">
+      <div class="level-chip" style="font-size:14px;padding:6px 16px">⭐ Nivel ${p.nivel_gamificacion}</div>
+      <div class="xp-track mt12"><div class="xp-fill" style="width:${pct}%"></div></div>
+      <div class="text-xs mt8">${next ? 'Te faltan ' + Math.max(0, next.caps - caps) + ' capítulo(s) y ' + Math.max(0, next.logros - nLog) + ' logro(s) para el nivel ' + next.nivel : 'Alcanzaste el nivel máximo de la historia'}</div>
+    </div>
+    <div class="section-label">Tabla de correspondencia vigente <span class="rf-tag">RF-115 → RF-111</span></div>
+    ${activas.map(r => {
+      const reached = caps >= r.caps && nLog >= r.logros;
+      const now = r.nivel === p.nivel_gamificacion;
+      return `<div class="level-row ${reached ? 'reached' : ''} ${now ? 'now' : ''}">
+        <div class="level-num">${r.nivel}</div>
+        <div class="flex1"><div class="li-title">Nivel ${r.nivel}</div>
+          <div class="li-sub">${r.caps} capítulo(s) · ${r.logros} logro(s)</div></div>
+        ${now ? '<span class="badge b-accent">Actual</span>' : reached ? '<span class="badge b-neutral">Superado</span>' : ''}
+      </div>`;
+    }).join('')}
+    <div class="alert alert-info mt12"><span class="alert-icon">🔐</span>
+      <div><div class="alert-title">El nivel se calcula solo</div>
+      <div class="alert-desc">Se recalcula automáticamente con tus capítulos y logros narrativos. No se puede editar a mano, y no cambia la historia ni ninguna decisión de tu proceso (RF-111).</div></div></div>
+    <div class="text-xs mono">estado_nivel = ${p.estado_nivel || 'ACTUALIZADO'} · fecha_actualizacion = ${p.ts}</div>`;
+}
+
+function renderGrad(){
+  const el = document.getElementById('grad-body');
+  if (!el || !S.profile) return;
+  const ultimo = CHAPTERS.filter(c => c.fase === 'CIERRE').slice(-1)[0];
+  if (S.profile.estado_perfil !== 'GRADUADO'){
+    el.innerHTML = `<div class="empty"><div class="empty-icon">🎓</div>
+      <div class="empty-title">Aún no llegas al cierre</div>
+      <div class="empty-desc">La graduación simbólica se registra al completar el último capítulo de la fase CIERRE (RF-108).</div>
+      <button class="btn btn-secondary btn-sm mt12" onclick="go('s-home')">Volver</button></div>`;
+    return;
+  }
+  el.innerHTML = `
+    <div class="mascot-stage">
+      <div class="mascot-holder" id="g-mascot" onclick="tapMascot('g-mascot','g-speech')">${mascotRender(5,190)}</div>
+      <div class="mascot-name">Brisa · en flor</div>
+      <div class="mascot-state-pill">🌸 Estado máximo alcanzado</div>
+      <div id="g-speech"></div>
+    </div>
+    <div class="card mt16" style="border-color:var(--accent-300)">
+      <div class="badge b-accent mb8">🎓 Graduación simbólica</div>
+      <div class="story-text" style="font-size:13px">${ultimo.contenido.culminacion}</div>
+    </div>
+    <div class="alert alert-info"><span class="alert-icon">🫱</span>
+      <div><div class="alert-title">Este cierre no evalúa tu proceso</div>
+      <div class="alert-desc">La graduación depende solo de haber recorrido la historia, nunca de tus indicadores de conducta. Es distinta de la retroalimentación de progreso de Seguimiento (RF-74 · M05). <span class="mono">RF-108</span></div></div></div>
+    <div class="text-xs mono">estado_perfil = GRADUADO (terminal) · fecha_graduacion = ${S.profile.fecha_graduacion || nowStamp()}</div>
+    <button class="btn btn-secondary btn-block mt12" onclick="go('s-home')">Volver a mi historia</button>`;
+}
+
+function renderConfig(){
+  const el = document.getElementById('config-body');
+  if (!el || !S.profile) return;
+  const on = S.profile.estado_perfil === 'ACTIVO' || S.profile.estado_perfil === 'GRADUADO';
+  el.innerHTML = `
+    <div class="card">
+      <div class="toggle-row">
+        <div class="flex1">
+          <div class="card-title">Historia y mascota</div>
+          <div class="card-sub">Mostrar el módulo de gamificación y storytelling en la aplicación.</div>
+        </div>
+        <button class="toggle ${on ? 'on' : ''}" id="tg-m06" onclick="toggleModulo()" ${S.profile.estado_perfil === 'GRADUADO' ? 'disabled' : ''} aria-label="Activar o desactivar el módulo"></button>
+      </div>
+      <div class="divider"></div>
+      <div class="text-xs">Si lo desactivas: tu <b>diario</b> y tu <b>chat</b> siguen funcionando igual, no se avisa a nadie del equipo, y tu progreso (nivel, logros, mascota y capítulo) queda guardado tal cual. Al reactivarlo retomas justo donde lo dejaste; no te haremos ver los capítulos que pasaron mientras tanto.</div>
+    </div>
+    <div class="section-label">Estado del perfil narrativo <span class="rf-tag">RF-104</span></div>
+    <div class="card">
+      <div class="between mb8"><span class="text-sm">estado_perfil</span><span class="badge ${S.profile.estado_perfil === 'ACTIVO' ? 'b-success' : S.profile.estado_perfil === 'GRADUADO' ? 'b-accent' : 'b-neutral'}">${S.profile.estado_perfil}</span></div>
+      <div class="between mb8"><span class="text-sm">fase_narrativa</span><span class="mono">${S.profile.fase_narrativa}</span></div>
+      <div class="between mb8"><span class="text-sm">capitulo_activo</span><span class="mono">${S.profile.capitulo_activo}</span></div>
+      <div class="between mb8"><span class="text-sm">nivel_mascota</span><span class="mono">${S.profile.nivel_mascota}</span></div>
+      <div class="between mb8"><span class="text-sm">nivel_gamificacion</span><span class="mono">${S.profile.nivel_gamificacion}</span></div>
+      <div class="between"><span class="text-sm">timestamp_ultima_actualizacion</span><span class="mono">${S.profile.ts}</span></div>
+    </div>
+    <div class="alert alert-info"><span class="alert-icon">🔒</span>
+      <div><div class="alert-title">Tu historia es solo tuya</div>
+      <div class="alert-desc">Todo lo de esta sección se consulta filtrado por tu sesión; nadie con tu mismo rol puede verla, y el equipo administrativo solo ve datos agregados de todo el grupo (RF-118 · RF-117).</div></div></div>`;
+}
+
+function renderOff(){
+  const el = document.getElementById('off-body');
+  if (!el || !S.profile) return;
+  el.innerHTML = `
+    <div class="empty">
+      <div class="empty-icon">🌙</div>
+      <div class="empty-title">La historia está en pausa</div>
+      <div class="empty-desc">Desactivaste el módulo de gamificación. Tu progreso quedó guardado en el capítulo ${S.profile.capituloAlDesactivar || S.profile.capitulo_activo}.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Mientras tanto</div>
+      <div class="card-sub">Tu diario y tu chat funcionan con normalidad: la historia no es parte de tu proceso terapéutico, es solo un acompañamiento.</div>
+      <div class="divider"></div>
+      <div class="text-xs">Semana vigente del cronograma: <b>${S.unidadVigente}</b>. Cuando reactives, retomarás en el capítulo ${S.profile.capituloAlDesactivar || S.profile.capitulo_activo} — no en el que te tocaría por tu semana actual (RF-120).</div>
+    </div>
+    <button class="btn btn-accent btn-block mt12" onclick="toggleModulo()">Reactivar mi historia</button>
+    <button class="btn btn-ghost btn-block btn-sm mt8" onclick="go('s-config')">Ver configuración</button>`;
+}
+
+function renderNoProfile(){
+  const el = document.getElementById('noprofile-body');
+  if (!el) return;
+  el.innerHTML = `
+    <div class="empty">
+      <div class="empty-icon">👻</div>
+      <div class="empty-title">Aún no tienes una historia</div>
+      <div class="empty-desc">404 · El usuario aún no cuenta con un perfil narrativo activo (RF-104).</div>
+    </div>
+    <div class="alert alert-info"><span class="alert-icon">ℹ️</span>
+      <div><div class="alert-title">Nota técnica (visible solo en el prototipo)</div>
+      <div class="alert-desc">El perfil se inicializa <b>automáticamente</b> cuando el sistema ejecuta RF-17 (inicialización del cronograma), sin intervención del usuario ni del admin. Este botón simula ese evento.</div></div></div>
+    <button class="btn btn-primary btn-block mt12" onclick="inicializarPerfil()">Simular evento RF-17 → inicializar perfil</button>
+    <button class="btn btn-secondary btn-block btn-sm mt8" onclick="inicializarPerfilDuplicado()">Simular evento RF-17 duplicado</button>`;
+}
+function inicializarPerfilDuplicado(){
+  showToast('200 · El usuario ya cuenta con un perfil narrativo activo. Se conserva el estado existente','info');
+  audit('ACTIVACION_PERFIL','perfil narrativo','evento duplicado ignorado (RF-104 FA)');
+}
+</script>
+
+<script>
+/* ══════════════ ADMIN · UTILIDADES ══════════════ */
+const TABS = ['arq','cont','log','map','coh','act','m05','aud'];
+const TAB_LABEL = { arq:'arquitectura', cont:'contenido', log:'logros y niveles', map:'mapeo',
+                    coh:'cohorte', act:'activos gráficos', m05:'datos a M05', aud:'auditoría' };
+function adminTab(t){
+  S.adminTab = t;
+  document.querySelectorAll('#admin-tabs .admin-tab').forEach((b, i) => {
+    b.className = 'admin-tab' + (TABS[i] === t ? ' active' : '');
+  });
+  TABS.forEach(k => { document.getElementById('tab-' + k).className = 'tabpane' + (k === t ? ' active' : ''); });
+  document.getElementById('dp-screen').textContent = 'panel admin · ' + TAB_LABEL[t];
+  renderAdmin();
+}
+function dkView(v){
+  S.dkView = v;
+  document.querySelectorAll('#dk-nav .dk-nav-item').forEach((b, i) => {
+    b.className = 'dk-nav-item' + (TABS[i] === v ? ' active' : '');
+  });
+  TABS.forEach(k => { document.getElementById('dk-' + k).className = 'dk-view' + (k === v ? ' active' : ''); });
+  renderAdmin();
+}
+const capEnUso = c => c.estructura === 'EN_USO';
+const capsPublicados = () => CHAPTERS.filter(c => c.contenido.estado === 'PUBLICADO').length;
+
+/* ══ RF-105 · arquitectura narrativa ══ */
+function renderArq(){
+  let html = `<div class="alert alert-info"><span class="alert-icon">🧱</span>
+    <div><div class="alert-title">Arquitectura lineal e inmutable</div>
+    <div class="alert-desc">Tres fases fijas en orden INICIO → DESARROLLO → CIERRE. Sin rutas alternativas, sin repetición de capítulos. Los capítulos <span class="mono">EN_USO</span> (completados por al menos un usuario) no se pueden editar, reordenar ni eliminar. <span class="mono">RF-105</span></div></div></div>`;
+  FASES.forEach(f => {
+    const caps = CHAPTERS.filter(c => c.fase === f).sort((a,b) => a.orden - b.orden);
+    html += `<div class="phase-head"><span class="phase-name">${f}</span><span class="phase-line"></span>
+      <span class="badge b-neutral">${caps.length} capítulo(s)</span></div>`;
+    if (!caps.length) html += `<div class="empty" style="padding:14px"><div class="empty-desc">Sin capítulos definidos en esta fase.</div></div>`;
+    caps.forEach(c => {
+      const badge = c.estructura === 'EN_USO' ? 'b-warning' : 'b-info';
+      html += `<div class="list-item">
+        <div class="level-num">${c.orden}</div>
+        <div class="li-body">
+          <div class="li-title">Cap. ${c.id} · ${c.contenido.titulo || '(sin título publicado)'}</div>
+          <div class="li-sub">${c.unidadNombre}</div>
+        </div>
+        <div class="li-side">
+          <span class="badge ${badge}">${c.estructura}</span>
+          <div class="row">
+            <button class="btn btn-secondary btn-xs" onclick="editarEstructura(${c.id})">Editar</button>
+            <button class="btn btn-secondary btn-xs" onclick="eliminarCapitulo(${c.id})">Eliminar</button>
+          </div>
+        </div></div>`;
+    });
+  });
+  html += `<div class="card mt16">
+    <div class="card-title mb8">+ Nuevo capítulo</div>
+    <div class="grid2">
+      <div class="field"><label class="field-label" for="nc-fase">Fase</label>
+        <select class="select" id="nc-fase">${FASES.map(f => `<option>${f}</option>`).join('')}<option>EXPLORACION</option></select>
+        <div class="fhint">"EXPLORACION" no es una fase válida → 400.</div></div>
+      <div class="field"><label class="field-label" for="nc-orden">Orden en la fase</label>
+        <input class="input" id="nc-orden" type="number" min="1" value="1" oninput="valNuevoCap()">
+        <div class="ferr hidden" id="nc-err"></div></div>
+    </div>
+    <button class="btn btn-primary btn-block btn-sm" id="nc-btn" onclick="crearCapitulo()">Crear capítulo</button>
+  </div>`;
+  return html;
+}
+function valNuevoCap(){
+  const fase = document.getElementById('nc-fase').value;
+  const orden = parseInt(document.getElementById('nc-orden').value || '0', 10);
+  const err = document.getElementById('nc-err');
+  const inp = document.getElementById('nc-orden');
+  const dup = CHAPTERS.some(c => c.fase === fase && c.orden === orden);
+  if (!orden || orden < 1){ err.textContent = '⚠ El orden debe ser un entero positivo'; err.classList.remove('hidden'); inp.classList.add('err'); return false; }
+  if (dup){ err.textContent = '⚠ 409 · Ya existe un capítulo con ese orden dentro de la fase seleccionada'; err.classList.remove('hidden'); inp.classList.add('err'); return false; }
+  err.classList.add('hidden'); inp.classList.remove('err'); inp.classList.add('ok');
+  return true;
+}
+function crearCapitulo(){
+  const fase = document.getElementById('nc-fase').value;
+  if (!FASES.includes(fase)){ showToast('400 · La fase indicada no es válida. Valores permitidos: INICIO, DESARROLLO, CIERRE','error'); return; }
+  if (!valNuevoCap()){ showToast('409 · Ya existe un capítulo con ese orden dentro de la fase seleccionada','error'); return; }
+  const orden = parseInt(document.getElementById('nc-orden').value, 10);
+  const id = Math.max(...CHAPTERS.map(c => c.id)) + 1;
+  CHAPTERS.push({ id, fase, orden, unidad:null, unidadNombre:'(sin unidad temporal asociada)', estructura:'DEFINIDO',
+    contenido:{ estado:'BORRADOR', version:'0.1', responsable:'—', fecha:'—', titulo:'', historia:[], terapeutico:'', instruccion:'' } });
+  audit('CREACION_CAPITULO', 'cap. ' + id, fase + ' · orden ' + orden);
+  showToast('Capítulo creado en estado DEFINIDO · contenido en BORRADOR','success');
+  renderAdmin();
+}
+function editarEstructura(id){
+  const c = chapterById(id);
+  if (capEnUso(c)){ showToast('409 · No es posible modificar un capítulo que ya ha sido completado por usuarios del programa','error'); return; }
+  openModal('✏️','Reordenar capítulo ' + id,
+    'En el prototipo el reordenamiento se limita a aumentar el orden dentro de la fase. Los capítulos <span class="mono">EN_USO</span> quedan protegidos (RF-105).',
+    'Aumentar orden', () => { c.orden = c.orden + 1; showToast('Orden actualizado a ' + c.orden,'success'); renderAdmin(); });
+}
+function eliminarCapitulo(id){
+  const c = chapterById(id);
+  if (capEnUso(c)){ showToast('409 · No es posible eliminar un capítulo completado por usuarios del programa','error'); return; }
+  openModal('🗑','Eliminar capítulo ' + id, '¿Eliminar el capítulo <b>' + (c.contenido.titulo || 'sin título') + '</b> de la fase ' + c.fase + '?', 'Eliminar', () => {
+    CHAPTERS.splice(CHAPTERS.findIndex(x => x.id === id), 1);
+    MAPPING = MAPPING.filter(m => m.capitulo !== id);
+    S.mapDraft = null;
+    audit('ELIMINACION_CAPITULO', 'cap. ' + id, 'capítulo no iniciado por usuarios');
+    showToast('Capítulo eliminado','success'); renderAdmin();
+  });
+}
+
+/* ══ RF-114 · contenido de capítulos ══ */
+function renderCont(){
+  const pubs = capsPublicados();
+  let html = `<div class="alert alert-info"><span class="alert-icon">📝</span>
+    <div><div class="alert-title">Gestión de contenido sin código</div>
+    <div class="alert-desc">Psicología crea, edita y publica el texto de cada capítulo. Un capítulo en <span class="mono">BORRADOR</span> no se muestra al estudiante; editar uno publicado genera una nueva versión. <span class="mono">RF-114</span></div></div></div>`;
+  html += `<div class="stat-grid">
+    <div class="stat-card"><div class="stat-value">${pubs}/${CHAPTERS.length}</div><div class="stat-label">Cobertura narrativa (RF-139)</div></div>
+    <div class="stat-card"><div class="stat-value" style="color:var(--warning)">${CHAPTERS.length - pubs}</div><div class="stat-label">Sin publicar</div></div>
+  </div>`;
+  if (pubs < CHAPTERS.length){
+    html += `<div class="alert alert-warning"><span class="alert-icon">📉</span>
+      <div><div class="alert-title">Cobertura incompleta</div>
+      <div class="alert-desc">Vista informativa, sin bloqueo propio (RF-139). El bloqueo real ocurre al confirmar el mapeo (RF-151).</div></div></div>`;
+  }
+  CHAPTERS.forEach(c => {
+    const st = c.contenido.estado;
+    const badge = st === 'PUBLICADO' ? 'b-success' : st === 'BORRADOR' ? 'b-warning' : 'b-neutral';
+    html += `<div class="list-item click" onclick="abrirEditorContenido(${c.id})">
+      <div class="li-body">
+        <div class="li-title">Cap. ${c.id} · ${c.contenido.titulo || '(sin título)'}</div>
+        <div class="li-sub">${c.fase} · ${c.unidadNombre} · v${c.contenido.version}</div>
+      </div>
+      <div class="li-side"><span class="badge ${badge}">${st}</span>
+        ${capEnUso(c) ? '<span class="badge b-warning">EN_USO</span>' : `<span class="rf-tag">${c.contenido.fecha}</span>`}</div>
+    </div>`;
+  });
+  return html;
+}
+function abrirEditorContenido(id){ S.editing.cap = id; go('s-editor-cont'); }
+function renderEditorCont(){
+  const el = document.getElementById('editor-cont-body');
+  if (!el || !S.editing.cap) return;
+  const c = chapterById(S.editing.cap);
+  if (!c) return;
+  document.getElementById('ec-title').textContent = 'Capítulo ' + c.id;
+  el.innerHTML = `
+    <div class="between mb12">
+      <span class="badge ${c.contenido.estado === 'PUBLICADO' ? 'b-success' : 'b-warning'}">${c.contenido.estado}</span>
+      <span class="rf-tag">v${c.contenido.version} · ${c.fase}</span>
+    </div>
+    ${capEnUso(c) ? `<div class="alert alert-warning"><span class="alert-icon">👥</span>
+      <div><div class="alert-title">Este capítulo ya fue completado por usuarios del programa</div>
+      <div class="alert-desc">Los cambios generarán una <b>nueva versión</b> del contenido (v${bumpVer(c.contenido.version)}) y no alterarán la experiencia ya vivida por quienes lo cursaron. Su orden y su existencia están bloqueados (RF-105 · RF-114 FA).</div></div></div>` : ''}
+    <div class="field"><label class="field-label" for="ec-unidad">Unidad temporal asociada</label>
+      <select class="select" id="ec-unidad" oninput="valEditorCont()">
+        <option value="">— sin asociar —</option>
+        ${[1,2,3,4,5].map(u => `<option value="${u}" ${c.unidad === u ? 'selected' : ''}>Semana ${u}</option>`).join('')}
+      </select>
+      <div class="fhint">Publicar sin unidad temporal → 422.</div></div>
+    <div class="field"><label class="field-label" for="ec-titulo">Título del capítulo <span class="rf-tag">obligatorio</span></label>
+      <input class="input" id="ec-titulo" value="${c.contenido.titulo.replace(/"/g,'&quot;')}" oninput="valEditorCont()"></div>
+    <div class="field"><label class="field-label" for="ec-historia">Texto de la historia <span class="rf-tag">obligatorio</span></label>
+      <textarea class="ta" id="ec-historia" oninput="valEditorCont()">${c.contenido.historia.join('\n\n')}</textarea>
+      <div class="fhint">Separa los párrafos con una línea en blanco.</div></div>
+    <div class="field"><label class="field-label" for="ec-terap">Mensaje terapéutico ligero <span class="rf-tag">obligatorio</span></label>
+      <textarea class="ta" id="ec-terap" style="min-height:54px" oninput="valEditorCont()">${c.contenido.terapeutico}</textarea></div>
+    <div class="field"><label class="field-label" for="ec-instr">Instrucción narrativa de la mascota <span class="rf-tag">obligatorio</span></label>
+      <textarea class="ta" id="ec-instr" style="min-height:54px" oninput="valEditorCont()">${c.contenido.instruccion}</textarea>
+      <div class="fhint">Campo independiente: describe cómo se comporta la mascota en este capítulo. No forma parte del texto de la historia.</div></div>
+    <div class="ferr hidden" id="ec-err"></div>
+    <div class="row mt12">
+      <button class="btn btn-secondary btn-sm flex1" onclick="guardarContenido(false)">Guardar borrador</button>
+      <button class="btn btn-primary btn-sm flex1" id="ec-pub" onclick="guardarContenido(true)">Publicar</button>
+    </div>
+    <div class="text-xs mt12 mono">responsable = ${c.contenido.responsable} · fecha_actualizacion = ${c.contenido.fecha}</div>`;
+  valEditorCont();
+}
+function bumpVer(v){ const p = String(v).split('.'); return p[0] + '.' + (parseInt(p[1] || '0', 10) + 1); }
+function valEditorCont(){
+  const t = document.getElementById('ec-titulo'), h = document.getElementById('ec-historia'),
+        te = document.getElementById('ec-terap'), i = document.getElementById('ec-instr'),
+        u = document.getElementById('ec-unidad'), err = document.getElementById('ec-err'), btn = document.getElementById('ec-pub');
+  if (!t) return;
+  const faltantes = [];
+  [[t,'título'],[h,'texto de la historia'],[te,'mensaje terapéutico'],[i,'instrucción narrativa de la mascota']].forEach(([el, name]) => {
+    const empty = !el.value.trim();
+    el.classList.toggle('err', empty); el.classList.toggle('ok', !empty);
+    if (empty) faltantes.push(name);
+  });
+  const sinUnidad = !u.value;
+  u.classList.toggle('err', sinUnidad);
+  if (faltantes.length){ err.innerHTML = '⚠ 400 · El contenido narrativo obligatorio está incompleto: falta ' + faltantes.join(', '); err.classList.remove('hidden'); }
+  else if (sinUnidad){ err.innerHTML = '⚠ 422 · El capítulo debe estar asociado a una unidad temporal del cronograma'; err.classList.remove('hidden'); }
+  else err.classList.add('hidden');
+  btn.disabled = faltantes.length > 0 || sinUnidad;
+}
+function guardarContenido(publicar){
+  const c = chapterById(S.editing.cap);
+  const t = document.getElementById('ec-titulo').value.trim();
+  const h = document.getElementById('ec-historia').value.trim();
+  const te = document.getElementById('ec-terap').value.trim();
+  const i = document.getElementById('ec-instr').value.trim();
+  const u = document.getElementById('ec-unidad').value;
+  if (publicar){
+    if (!t || !h || !te || !i){ showToast('400 · El contenido narrativo obligatorio está incompleto','error'); return; }
+    if (!u){ showToast('422 · El capítulo debe estar asociado a una unidad temporal del cronograma','error'); return; }
+  }
+  const eraPublicado = c.contenido.estado === 'PUBLICADO';
+  c.contenido.titulo = t;
+  c.contenido.historia = h ? h.split(/\n{2,}/).map(x => x.trim()).filter(Boolean) : [];
+  c.contenido.terapeutico = te;
+  c.contenido.instruccion = i;
+  c.unidad = u ? parseInt(u, 10) : null;
+  if (c.unidad){ const m = MAPPING.find(x => x.unidad === c.unidad); c.unidadNombre = m ? m.unidadNombre : 'Semana ' + c.unidad; }
+  c.contenido.fecha = nowStamp().slice(0, 10);
+  c.contenido.responsable = 'psicologia@usco.edu.co';
+  if (publicar){
+    if (eraPublicado){ c.contenido.version = bumpVer(c.contenido.version); showToast('200 · Publicado como nueva versión v' + c.contenido.version + ' (se conserva la anterior)','success'); }
+    else { c.contenido.estado = 'PUBLICADO'; c.contenido.version = '1.0'; showToast('El capítulo narrativo fue publicado correctamente','success'); }
+    audit('PUBLICACION_CONTENIDO', 'cap. ' + c.id, 'v' + c.contenido.version + (eraPublicado ? ' · nueva versión de capítulo EN_USO' : ''));
+    if (c.id === 5 && !c.contenido.culminacion) c.contenido.culminacion = te;
+  } else {
+    if (!eraPublicado) c.contenido.estado = 'BORRADOR';
+    showToast('Borrador guardado · no visible para el estudiante','info');
+  }
+  renderAll(); go('s-admin-home', true); adminTab('cont');
+}
+
+/* ══ RF-115 · logros, reglas de nivel y mensajes de celebración ══ */
+function renderLog(){
+  let html = `<div class="alert alert-info"><span class="alert-icon">🏅</span>
+    <div><div class="alert-title">Catálogo, reglas y mensajes configurables</div>
+    <div class="alert-desc">Condiciones permitidas: <span class="mono">CAPITULO_COMPLETADO · FASE_ALCANZADA · PROGRAMA_FINALIZADO</span>. Ninguna puede basarse en indicadores conductuales de M05 (RF-110/115). Los mensajes de celebración (RF-113) se editan aquí, no en el código.</div></div></div>`;
+  html += `<div class="section-label">Logros narrativos</div>`;
+  LOGROS.forEach(l => {
+    const badge = l.estado === 'ACTIVO' ? 'b-success' : l.estado === 'BORRADOR' ? 'b-warning' : 'b-neutral';
+    html += `<div class="list-item click" onclick="abrirEditorLogro('${l.id}')">
+      <div class="logro-ico" style="width:32px;height:32px;font-size:16px;filter:none">${l.emoji}</div>
+      <div class="li-body">
+        <div class="li-title">${l.nombre}</div>
+        <div class="li-sub">${l.cond}${l.valor ? ' · ' + l.valor : ''} · v${l.version}${l.mensaje ? '' : ' · sin mensaje'}</div>
+      </div>
+      <div class="li-side"><span class="badge ${badge}">${l.estado}</span>
+        ${l.recurso ? `<span class="rf-tag">${l.recurso.split('/').pop()}</span>` : '<span class="badge b-danger">sin recurso</span>'}</div>
+    </div>`;
+  });
+  html += `<button class="btn btn-secondary btn-sm btn-block mt8" onclick="abrirEditorLogro(null)">+ Nuevo logro narrativo</button>`;
+
+  html += `<div class="section-label between">Reglas de nivel <span class="m08-tag">RF-115 → RF-111 · presentado por RF-139</span></div>`;
+  NIVEL_RULES.forEach(r => {
+    html += `<div class="list-item">
+      <div class="level-num">${r.nivel}</div>
+      <div class="li-body"><div class="li-title">Nivel ${r.nivel}</div>
+        <div class="li-sub">${r.caps} capítulo(s) · ${r.logros} logro(s)${r.mensaje ? '' : ' · sin mensaje'}</div></div>
+      <div class="li-side"><span class="badge ${r.estado === 'ACTIVA' ? 'b-success' : 'b-neutral'}">${r.estado}</span>
+        <div class="row">
+          <button class="btn btn-secondary btn-xs" onclick="editarRegla('${r.id}')">✎</button>
+          <button class="btn btn-secondary btn-xs" onclick="toggleRegla('${r.id}')">${r.estado === 'ACTIVA' ? 'Inactivar' : 'Activar'}</button>
+          <button class="btn btn-secondary btn-xs" onclick="eliminarRegla('${r.id}')">🗑</button>
+        </div></div>
+    </div>`;
+  });
+  const ed = S.editing.regla ? NIVEL_RULES.find(r => r.id === S.editing.regla) : null;
+  html += `<div class="card mt8">
+    <div class="card-title mb8">${ed ? '✎ Editar regla del nivel ' + ed.nivel : '+ Nueva regla de nivel'}</div>
+    <div class="grid2">
+      <div class="field"><label class="field-label" for="nr-nivel">Nivel</label>
+        <input class="input" id="nr-nivel" type="number" min="1" value="${ed ? ed.nivel : ''}" oninput="valRegla()"></div>
+      <div class="field"><label class="field-label" for="nr-caps">Capítulos requeridos</label>
+        <input class="input" id="nr-caps" type="number" min="0" value="${ed ? ed.caps : ''}" oninput="valRegla()"></div>
+    </div>
+    <div class="field"><label class="field-label" for="nr-logros">Logros requeridos</label>
+      <input class="input" id="nr-logros" type="number" min="0" value="${ed ? ed.logros : ''}" oninput="valRegla()"></div>
+    <div class="field"><label class="field-label" for="nr-msg">Mensaje de celebración <span class="rf-tag">RF-113</span></label>
+      <textarea class="ta" id="nr-msg" style="min-height:48px" oninput="valRegla()">${ed ? ed.mensaje : ''}</textarea>
+      <div class="fhint">Si queda vacío, la celebración usa un texto de respaldo y lo señala en pantalla.</div></div>
+    <div class="ferr hidden" id="nr-err"></div>
+    <div class="row">
+      <button class="btn btn-primary btn-sm flex1" id="nr-btn" onclick="guardarRegla()">${ed ? 'Guardar cambios' : 'Crear regla'}</button>
+      ${ed ? `<button class="btn btn-ghost btn-sm" onclick="cancelarRegla()">Cancelar</button>` : ''}
+    </div>
+  </div>
+  <div class="text-xs mt8">Dejar todas las reglas inactivas reproduce el flujo alterno de RF-111 (422 · sin regla de cálculo válida) en la pantalla de nivel del estudiante.</div>`;
+  return html;
+}
+function editarRegla(id){ S.editing.regla = id; renderAdmin(); }
+function cancelarRegla(){ S.editing.regla = null; renderAdmin(); }
+function valRegla(){
+  const n = document.getElementById('nr-nivel'), c = document.getElementById('nr-caps'),
+        l = document.getElementById('nr-logros'), err = document.getElementById('nr-err'), btn = document.getElementById('nr-btn');
+  if (!n) return false;
+  const nivel = parseInt(n.value, 10), caps = parseInt(c.value, 10), logros = parseInt(l.value, 10);
+  let msg = '';
+  const vacio = n.value === '' || c.value === '' || l.value === '';
+  [[n, n.value === ''], [c, c.value === ''], [l, l.value === '']].forEach(([el, bad]) => el.classList.toggle('err', bad));
+  if (vacio) msg = '⚠ 400 · La información obligatoria de la regla de nivel está incompleta (nivel, capítulos y logros requeridos)';
+  else if (nivel < 1 || caps < 0 || logros < 0) msg = '⚠ 422 · Los valores deben ser enteros no negativos y el nivel debe ser ≥ 1';
+  else if (NIVEL_RULES.some(r => r.nivel === nivel && r.id !== S.editing.regla)) msg = '⚠ 409 · Ya existe una regla para el nivel ' + nivel;
+  else if (caps > CHAPTERS.length) msg = '⚠ 422 · La regla exige más capítulos (' + caps + ') de los definidos en la arquitectura narrativa (' + CHAPTERS.length + ')';
+  if (msg){ err.innerHTML = msg; err.classList.remove('hidden'); btn.disabled = true; return false; }
+  err.classList.add('hidden'); btn.disabled = false; return true;
+}
+function guardarRegla(){
+  if (!valRegla()){ showToast('400 · La información obligatoria de la regla de nivel está incompleta','error'); return; }
+  const nivel = parseInt(document.getElementById('nr-nivel').value, 10);
+  const caps = parseInt(document.getElementById('nr-caps').value, 10);
+  const logros = parseInt(document.getElementById('nr-logros').value, 10);
+  const mensaje = document.getElementById('nr-msg').value.trim();
+  if (S.editing.regla){
+    const r = NIVEL_RULES.find(x => x.id === S.editing.regla);
+    Object.assign(r, { nivel, caps, logros, mensaje });
+    audit('CONFIG_REGLA_NIVEL', r.id, 'editada · nivel ' + nivel + ' · ' + caps + ' caps · ' + logros + ' logros');
+    showToast('Regla actualizada · el nivel del estudiante se recalcula al instante','success');
+    S.editing.regla = null;
+  } else {
+    const r = { id:'N' + (NIVEL_RULES.length + 1), nivel, caps, logros, estado:'ACTIVA', mensaje };
+    NIVEL_RULES.push(r);
+    audit('CONFIG_REGLA_NIVEL', r.id, 'creada · nivel ' + nivel);
+    showToast('Regla de nivel creada y activa','success');
+  }
+  NIVEL_RULES.sort((a,b) => a.nivel - b.nivel);
+  if (S.profile) calcularNivel();
+  renderAll();
+}
+function eliminarRegla(id){
+  const r = NIVEL_RULES.find(x => x.id === id);
+  openModal('🗑','Eliminar regla del nivel ' + r.nivel, '¿Eliminar la regla del nivel <b>' + r.nivel + '</b>? El nivel de los estudiantes se recalculará con las reglas restantes.', 'Eliminar', () => {
+    NIVEL_RULES.splice(NIVEL_RULES.findIndex(x => x.id === id), 1);
+    if (S.editing.regla === id) S.editing.regla = null;
+    audit('CONFIG_REGLA_NIVEL', id, 'eliminada');
+    if (S.profile) calcularNivel();
+    showToast('Regla eliminada','success'); renderAll();
+  });
+}
+function toggleRegla(id){
+  const r = NIVEL_RULES.find(x => x.id === id);
+  r.estado = r.estado === 'ACTIVA' ? 'INACTIVA' : 'ACTIVA';
+  audit('CONFIG_REGLA_NIVEL', r.id, 'estado → ' + r.estado);
+  showToast('Regla del nivel ' + r.nivel + ' → ' + r.estado, 'info');
+  if (S.profile) calcularNivel();
+  renderAll();
+}
+function abrirEditorLogro(id){ S.editing.logro = id; go('s-editor-logro'); }
+function renderEditorLogro(){
+  const el = document.getElementById('editor-logro-body');
+  if (!el) return;
+  const l = S.editing.logro ? LOGROS.find(x => x.id === S.editing.logro) : null;
+  document.getElementById('el-title').textContent = l ? l.nombre : 'Nuevo logro narrativo';
+  const conds = ['CAPITULO_COMPLETADO','FASE_ALCANZADA','PROGRAMA_FINALIZADO','RACHA_CONDUCTUAL_M05'];
+  el.innerHTML = `
+    ${l ? `<div class="between mb12"><span class="badge ${l.estado === 'ACTIVO' ? 'b-success' : 'b-warning'}">${l.estado}</span><span class="rf-tag">v${l.version} · ${l.id}</span></div>` : ''}
+    <div class="field"><label class="field-label" for="el-nombre">Nombre</label>
+      <input class="input" id="el-nombre" value="${l ? l.nombre : ''}" oninput="valEditorLogro()"></div>
+    <div class="field"><label class="field-label" for="el-desc">Descripción</label>
+      <textarea class="ta" id="el-desc" style="min-height:52px" oninput="valEditorLogro()">${l ? l.desc : ''}</textarea></div>
+    <div class="field"><label class="field-label" for="el-cond">Condición de desbloqueo</label>
+      <select class="select" id="el-cond" oninput="valEditorLogro()">
+        ${conds.map(c => `<option ${l && l.cond === c ? 'selected' : ''}>${c}</option>`).join('')}
+      </select>
+      <div class="fhint">"RACHA_CONDUCTUAL_M05" es un valor conductual → 422 (RF-110).</div></div>
+    <div class="field" id="el-valor-field"><label class="field-label" for="el-valor">Valor de la condición</label>
+      <input class="input" id="el-valor" value="${l && l.valor ? l.valor : ''}" oninput="valEditorLogro()">
+      <div class="fhint">Capítulo (1–${CHAPTERS.length}) o fase (INICIO / DESARROLLO / CIERRE).</div></div>
+    <div class="field"><label class="field-label" for="el-rec">Recurso visual · ruta gestionada <span class="rf-tag">RF-109 · RF-115</span></label>
+      <input class="input" id="el-rec" value="${l ? l.recurso : ''}" placeholder="/assets/m06/logro_x.svg" oninput="valEditorLogro()">
+      <div class="fhint">Formatos permitidos: ${FORMATOS_OK.map(f => '.' + f).join(' · ')}. El recurso no se embebe en el código: se sirve desde la configuración administrativa.</div></div>
+    <div class="field"><label class="field-label" for="el-msg">Mensaje de celebración <span class="rf-tag">RF-113</span></label>
+      <textarea class="ta" id="el-msg" style="min-height:48px" oninput="valEditorLogro()">${l ? (l.mensaje || '') : ''}</textarea>
+      <div class="fhint">Texto que verá el estudiante al desbloquearlo. Sin términos relacionados con el consumo.</div></div>
+    <div class="ferr hidden" id="el-err"></div>
+    <div class="row mt12">
+      <button class="btn btn-secondary btn-sm flex1" onclick="guardarLogro(false)">Guardar borrador</button>
+      <button class="btn btn-primary btn-sm flex1" id="el-act" onclick="guardarLogro(true)">${l && l.estado === 'ACTIVO' ? 'Guardar (nueva versión)' : 'Activar'}</button>
+    </div>
+    ${l && l.estado === 'ACTIVO' ? `<button class="btn btn-ghost btn-sm btn-block mt8" onclick="inactivarLogro('${l.id}')">Inactivar logro</button>` : ''}`;
+  valEditorLogro();
+}
+function valEditorLogro(){
+  const n = document.getElementById('el-nombre'), d = document.getElementById('el-desc'),
+        c = document.getElementById('el-cond'), v = document.getElementById('el-valor'),
+        r = document.getElementById('el-rec'), err = document.getElementById('el-err'), btn = document.getElementById('el-act');
+  if (!n) return;
+  document.getElementById('el-valor-field').classList.toggle('hidden', c.value === 'PROGRAMA_FINALIZADO');
+  let msg = '';
+  const faltan = !n.value.trim() || !d.value.trim() || !r.value.trim();
+  n.classList.toggle('err', !n.value.trim()); d.classList.toggle('err', !d.value.trim()); r.classList.toggle('err', !r.value.trim());
+  if (faltan) msg = '⚠ 400 · La información obligatoria del logro narrativo está incompleta (nombre, descripción, condición y recurso visual)';
+  if (!msg && c.value === 'RACHA_CONDUCTUAL_M05') msg = '⚠ 422 · Los logros conductuales de M05 no pueden registrarse como logros narrativos de M06';
+  if (!msg && !formatoValido(r.value)) msg = '⚠ 422 · El recurso visual asociado al logro narrativo no es válido: formato .' + (formatoDe(r.value) || '—') + ' no permitido (' + FORMATOS_OK.join(', ') + ')';
+  if (!msg && c.value === 'CAPITULO_COMPLETADO'){
+    const num = parseInt(v.value, 10);
+    if (!num || !chapterById(num)) msg = '⚠ 422 · El capítulo asociado al logro narrativo no es válido';
+  }
+  if (!msg && c.value === 'FASE_ALCANZADA' && !FASES.includes((v.value || '').toUpperCase())) msg = '⚠ 422 · La fase narrativa asociada al logro narrativo no es válida';
+  if (msg){ err.innerHTML = msg; err.classList.remove('hidden'); btn.disabled = true; }
+  else { err.classList.add('hidden'); btn.disabled = false; }
+}
+function guardarLogro(activar){
+  const n = document.getElementById('el-nombre').value.trim();
+  const d = document.getElementById('el-desc').value.trim();
+  const c = document.getElementById('el-cond').value;
+  const vRaw = document.getElementById('el-valor').value.trim();
+  const r = document.getElementById('el-rec').value.trim();
+  const mensaje = document.getElementById('el-msg').value.trim();
+  if (activar){
+    if (c === 'RACHA_CONDUCTUAL_M05'){ showToast('422 · Los logros conductuales de M05 no pueden registrarse como logros narrativos de M06','error'); return; }
+    if (!n || !d || !r){ showToast('400 · La información obligatoria del logro narrativo está incompleta','error'); return; }
+    if (!formatoValido(r)){ showToast('422 · El recurso visual asociado al logro narrativo no es válido','error'); return; }
+  }
+  const valor = c === 'PROGRAMA_FINALIZADO' ? null : (c === 'CAPITULO_COMPLETADO' ? parseInt(vRaw, 10) : vRaw.toUpperCase());
+  let l = S.editing.logro ? LOGROS.find(x => x.id === S.editing.logro) : null;
+  if (!l){ l = { id:'L' + (LOGROS.length + 1), emoji:'✨', version:'0.1', estado:'BORRADOR' }; LOGROS.push(l); }
+  const eraActivo = l.estado === 'ACTIVO';
+  Object.assign(l, { nombre:n, desc:d, cond:c, valor, recurso:r, mensaje });
+  if (activar){
+    if (eraActivo){ l.version = bumpVer(l.version); showToast('200 · El logro activo se actualizó como nueva versión v' + l.version,'success'); }
+    else { l.estado = 'ACTIVO'; l.version = '1.0'; showToast('El logro narrativo fue activado correctamente','success'); }
+    audit('CONFIG_LOGRO', l.id, 'activo v' + l.version);
+    if (S.profile){ desbloquearLogros('AVANCE_CAPITULO'); calcularNivel(); }
+  } else {
+    if (!eraActivo) l.estado = 'BORRADOR';
+    showToast('Logro guardado en borrador · no disponible para desbloqueo','info');
+  }
+  renderAll(); go('s-admin-home', true); adminTab('log');
+}
+function inactivarLogro(id){
+  const l = LOGROS.find(x => x.id === id);
+  l.estado = 'INACTIVO';
+  audit('CONFIG_LOGRO', id, 'inactivado');
+  showToast('Logro inactivado · no se usará para nuevos desbloqueos','info');
+  renderAll(); go('s-admin-home', true); adminTab('log');
+}
+
+/* ══ RF-109 · gestor de activos gráficos ══ */
+function renderAct(){
+  let html = `<div class="alert alert-warning"><span class="alert-icon">⚠️</span>
+    <div><div class="alert-title">Vacío de especificación documentado</div>
+    <div class="alert-desc">RF-109 declara como dependencia «<b>RF-21 Gestión administrativa de recursos y activos gráficos</b>», pero en la hoja M04 el <span class="mono">RF-21</span> es «Consulta del contenido vigente por usuario»: <b>colisión de código</b>. Ningún RF define este gestor — tampoco RF-139 de M08. Se construye porque RF-109 exige que los recursos <b>no estén hardcodeados</b> y se consuman por URL, con recurso de respaldo.</div></div></div>`;
+  html += `<div class="section-label">Estados visuales de la mascota <span class="rf-tag">RF-109</span></div>`;
+  ASSETS.forEach(a => {
+    const st = MASCOT_STATES[a.id - 1];
+    const url = resolverActivo(a.ruta);
+    html += `<div class="asset-row">
+      <div class="asset-thumb ${url ? '' : 'fallback'}">${url ? `<img src="${url}" alt="${st.nombre}">` : '<span>🚫</span>'}</div>
+      <div class="li-body">
+        <div class="li-title">${st.emoji} ${st.nombre} <span class="rf-tag">estado ${a.id}</span></div>
+        <input class="input mt4 ${formatoValido(a.ruta) ? '' : 'err'}" value="${a.ruta}" onchange="cambiarRutaActivo(${a.id}, this.value)" style="font-family:var(--mono);font-size:11px">
+        <div class="li-sub mt4">${url ? 'Servido desde la configuración administrativa' : '<b>No disponible → recurso de respaldo embebido</b>'}</div>
+      </div>
+      <div class="li-side">
+        <span class="badge ${url ? 'b-success' : 'b-warning'}">${url ? 'DISPONIBLE' : 'FALLBACK'}</span>
+        <button class="btn btn-secondary btn-xs" onclick="romperActivo(${a.id})">${a.roto ? 'Restaurar' : 'Simular caída'}</button>
+      </div>
+    </div>`;
+  });
+  html += `<div class="section-label">Recursos de logros <span class="rf-tag">RF-115</span></div>`;
+  LOGROS.forEach(l => {
+    const ok = l.recurso && formatoValido(l.recurso);
+    html += `<div class="list-item">
+      <div class="logro-ico" style="width:30px;height:30px;font-size:15px;filter:none">${l.emoji}</div>
+      <div class="li-body"><div class="li-title">${l.nombre}</div>
+        <div class="li-sub mono">${l.recurso || '(sin recurso)'}</div></div>
+      <div class="li-side"><span class="badge ${ok ? 'b-success' : 'b-danger'}">${ok ? 'VÁLIDO' : 'NO VÁLIDO'}</span>
+        <button class="btn btn-secondary btn-xs" onclick="abrirEditorLogro('${l.id}')">✎ Editar</button></div>
+    </div>`;
+  });
+  html += `<div class="text-xs mt8">Formatos permitidos: ${FORMATOS_OK.map(f => '.' + f).join(' · ')}. En el prototipo, el "servidor de activos" resuelve cada ruta a un recurso real; al simular una caída, la interfaz cae al recurso de respaldo sin romper la pantalla (RF-109 FA).</div>`;
+  return html;
+}
+function cambiarRutaActivo(id, ruta){
+  const a = ASSETS.find(x => x.id === id);
+  a.ruta = String(ruta).trim();
+  a.estado = a.ruta ? 'CONFIGURADO' : 'NO_CONFIGURADO';
+  if (a.ruta && !formatoValido(a.ruta)) showToast('422 · Formato de recurso no permitido: .' + (formatoDe(a.ruta) || '—') + ' (permitidos: ' + FORMATOS_OK.join(', ') + ')','error');
+  else audit('CONFIG_ACTIVO', 'estado visual ' + id, a.ruta || 'sin ruta');
+  renderAll();
+}
+function romperActivo(id){
+  const a = ASSETS.find(x => x.id === id);
+  a.roto = !a.roto;
+  showToast(a.roto ? 'RF-109 FA · recurso gráfico no disponible: la mascota usa el recurso de respaldo' : 'Recurso restaurado', a.roto ? 'warning' : 'info');
+  renderAll();
+}
+
+/* ══ RF-121 + RF-151 · mapeo con borrador transaccional ══ */
+function draft(){ if (!S.mapDraft) S.mapDraft = MAPPING.map(m => ({ ...m })); return S.mapDraft; }
+function mapDirty(){ return !!S.mapDraft && S.mapDraft.some((d, i) => !MAPPING[i] || d.capitulo !== MAPPING[i].capitulo); }
+function validarMapeo(d){
+  const errs = [];
+  if (d.some(m => !m.capitulo)) errs.push({ code:422, msg:'El mapeo no es exhaustivo: hay unidades temporales sin capítulo narrativo asignado.' });
+  const idx = d.map(m => { const c = chapterById(m.capitulo); return c ? c.id : -1; });
+  for (let i = 1; i < idx.length; i++){
+    if (idx[i] <= idx[i-1]){ errs.push({ code:422, msg:'El mapeo propuesto rompe la linealidad narrativa. Los capítulos deben asignarse en orden secuencial estricto y ascendente.' }); break; }
+  }
+  const dup = d.map(m => m.capitulo).filter((v, i, arr) => v && arr.indexOf(v) !== i);
+  if (dup.length) errs.push({ code:422, msg:'La configuración propuesta no es válida: el capítulo ' + dup[0] + ' está asignado a más de una unidad temporal (mapeo 1:1).' });
+  const noPub = d.map(m => chapterById(m.capitulo)).filter(c => c && c.contenido.estado !== 'PUBLICADO');
+  if (noPub.length) errs.push({ code:422, msg:'Falta cobertura de contenido: el capítulo ' + noPub[0].id + ' está en estado ' + noPub[0].contenido.estado + '. Todos los capítulos mapeados deben estar PUBLICADOS (RF-114).' });
+  return errs;
+}
+function renderMap(){
+  const d = draft();
+  const errs = validarMapeo(d);
+  let html = `<div class="alert alert-info"><span class="alert-icon">🔗</span>
+    <div><div class="alert-title">Mapeo 1:1 con validación transaccional</div>
+    <div class="alert-desc">La configuración solo se persiste si <b>todas</b> las validaciones pasan: linealidad estricta, exhaustividad, unicidad 1:1 y <b>cobertura de contenido publicado</b>. <span class="m08-tag">RF-121 · confirmación y validaciones por RF-151 (M08)</span></div></div></div>`;
+  d.forEach((m, i) => {
+    const c = chapterById(m.capitulo);
+    const dirty = !MAPPING[i] || m.capitulo !== MAPPING[i].capitulo;
+    html += `<div class="map-row ${dirty ? 'dirty' : ''}">
+      <div class="map-unit">${m.unidadNombre}<div class="li-sub">unidad ${m.unidad} ${dirty ? '<span class="draft-chip">modificado</span>' : ''}</div></div>
+      <span class="map-arrow">→</span>
+      <div class="flex1">
+        <select class="select" onchange="cambiarMapeo(${m.unidad}, this.value)">
+          <option value="">— sin capítulo —</option>
+          ${CHAPTERS.map(ch => `<option value="${ch.id}" ${m.capitulo === ch.id ? 'selected' : ''}>Cap. ${ch.id} · ${ch.contenido.titulo || '(sin título)'}</option>`).join('')}
+        </select>
+        <div class="li-sub mt4">${c ? c.fase + ' · contenido ' + c.contenido.estado : 'sin capítulo'}</div>
+      </div>
+      <button class="btn btn-secondary btn-xs" onclick="editarMapeo(${m.unidad})" title="Editar esta fila">✎</button>
+    </div>`;
+  });
+  html += `<div class="card mt12">
+    <div class="card-title mb8">Secuencia resultante</div>
+    <div class="row wrap">${d.map(m => {
+      const c = chapterById(m.capitulo);
+      const pub = c && c.contenido.estado === 'PUBLICADO';
+      return `<span class="badge ${!c ? 'b-danger' : pub ? 'b-info' : 'b-warning'}">S${m.unidad} → ${c ? 'cap.' + c.id : '—'}${c && !pub ? ' (' + c.contenido.estado.toLowerCase() + ')' : ''}</span>`;
+    }).join(' ')}</div>
+  </div>`;
+  if (errs.length){
+    errs.forEach(e => {
+      html += `<div class="alert alert-error"><span class="alert-icon">⛔</span>
+        <div><div class="alert-title">HTTP ${e.code} · Unprocessable Entity</div>
+        <div class="alert-desc">${e.msg}</div></div></div>`;
+    });
+  } else {
+    html += `<div class="alert alert-success"><span class="alert-icon">✅</span>
+      <div><div class="alert-title">Configuración válida</div>
+      <div class="alert-desc">Linealidad, exhaustividad, unicidad 1:1 y cobertura de contenido verificadas.</div></div></div>`;
+  }
+  html += `<div class="row">
+    <button class="btn btn-primary btn-sm flex1" id="map-confirm" onclick="confirmarMapeo()" ${errs.length ? 'disabled' : ''}>Confirmar configuración</button>
+    <button class="btn btn-secondary btn-sm" onclick="descartarMapeo()" ${mapDirty() ? '' : 'disabled'}>Descartar cambios</button>
+  </div>
+  ${errs.length ? `<div class="text-xs mt8">Salida legítima: publica el contenido pendiente en la pestaña <b>Contenido</b> (RF-114) y vuelve aquí. El prototipo no ofrece "guardar de todos modos": RF-151 exige transaccionalidad.</div>` : ''}`;
+  return html;
+}
+function editarMapeo(unidad){
+  showToast('Edita la unidad ' + unidad + ' con el selector de su fila; los cambios quedan en borrador hasta confirmar (RF-151)','info');
+}
+function cambiarMapeo(unidad, capStr){
+  const d = draft();
+  const m = d.find(x => x.unidad === unidad);
+  if (!capStr){
+    m.capitulo = null;
+    showToast('404 · No se encontró el capítulo narrativo especificado para realizar el mapeo','error');
+    renderAdmin(); return;
+  }
+  m.capitulo = parseInt(capStr, 10);
+  const errs = validarMapeo(d);
+  if (errs.length) showToast(errs[0].code + ' · ' + errs[0].msg, 'error');
+  else showToast('Cambio en borrador · confirma la configuración para persistirla','info');
+  renderAdmin();
+}
+function confirmarMapeo(){
+  const d = draft();
+  const errs = validarMapeo(d);
+  if (errs.length){ showToast(errs[0].code + ' · ' + errs[0].msg, 'error'); return; }
+  MAPPING = d.map(m => ({ ...m }));
+  MAPPING.forEach(m => { const c = chapterById(m.capitulo); if (c){ c.unidad = m.unidad; c.unidadNombre = m.unidadNombre; } });
+  S.mapDraft = null;
+  audit('CONFIG_MAPEO', 'cronograma ↔ narrativa', MAPPING.map(m => 'S' + m.unidad + '→c' + m.capitulo).join(' · '));
+  showToast('Configuración de mapeo guardada · no afecta a usuarios que ya cursaron la unidad','success');
+  renderAll();
+}
+function descartarMapeo(){ S.mapDraft = null; showToast('Cambios descartados · se conserva la configuración vigente','info'); renderAdmin(); }
+
+/* ══ RF-117 · cohorte agregada + RF-130 · consulta individual ══ */
+function cohorteData(){
+  const rows = COHORTE.map((u, i) => {
+    const base = u.self
+      ? { nombre:'Diana Rincón', self:true, fase:S.profile ? S.profile.fase_narrativa : 'INICIO', caps:capsCompletados(),
+          logros:S.profile ? S.profile.logros.length : 0, estado:S.profile ? S.profile.estado_perfil : 'SIN_PERFIL' }
+      : { ...u };
+    base.pseudo = 'P-' + String(i + 1).padStart(3, '0');
+    return base;
+  });
+  return S.flags.noProfile ? rows.filter(r => !r.self) : rows;
+}
+function renderCoh(){
+  const rows = cohorteData();
+  if (!rows.length){
+    return `<div class="empty"><div class="empty-icon">👥</div><div class="empty-title">204 · Cohorte sin usuarios</div>
+      <div class="empty-desc">La cohorte no cuenta con usuarios asociados para consolidar progresión narrativa.</div></div>`;
+  }
+  const total = rows.length;
+  const grad = rows.filter(r => r.estado === 'GRADUADO').length;
+  const conLogros = rows.filter(r => r.logros > 0).length;
+  const totalLogros = rows.reduce((a, r) => a + r.logros, 0);
+  let html = `<div class="alert alert-info"><span class="alert-icon">🕶</span>
+    <div><div class="alert-title">Vista agregada · sin datos identificables</div>
+    <div class="alert-desc">Los participantes se listan seudonimizados. Esta vista no expone capítulo activo ni logros específicos de nadie y <b>no requiere permiso individual</b>. <span class="m08-tag">RF-117 → consumida por RF-133 (M08)</span></div></div></div>`;
+  html += `<div class="stat-grid">
+    <div class="stat-card"><div class="stat-value">${total}</div><div class="stat-label">Usuarios en cohorte</div></div>
+    <div class="stat-card"><div class="stat-value">${grad}</div><div class="stat-label">Programa completado</div></div>
+    <div class="stat-card"><div class="stat-value">${conLogros}</div><div class="stat-label">Con ≥1 logro</div></div>
+    <div class="stat-card"><div class="stat-value">${totalLogros}</div><div class="stat-label">Logros desbloqueados</div></div>
+  </div>
+  <div class="section-label">Distribución por fase narrativa</div>`;
+  FASES.forEach(f => {
+    const n = rows.filter(r => r.fase === f).length;
+    html += `<div class="bar-row"><div class="bar-head"><span class="bar-name">${f}</span><span class="bar-val">${n}/${total}</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:${total ? (n / total * 100) : 0}%"></div></div></div>`;
+  });
+  if (S.flags.noProfile){
+    html += `<div class="alert alert-warning mt8"><span class="alert-icon">ℹ️</span>
+      <div><div class="alert-title">Usuarios excluidos del agregado</div>
+      <div class="alert-desc">1 usuario sin perfil narrativo fue excluido del cálculo (RF-117 FA).</div></div></div>`;
+  }
+  html += `<div class="section-label">Participantes <span class="m08-tag">consulta individual · RF-130 (M08)</span></div>
+  <div class="perm-bar ${S.permisoIndividual ? 'on' : ''}">
+    <span>${S.permisoIndividual ? '🔓' : '🔒'}</span>
+    <div class="flex1">
+      <div class="li-title" style="color:inherit">${S.permisoIndividual ? 'Permiso individual concedido' : 'Permiso individual no concedido'}</div>
+      <div class="li-sub" style="color:inherit">${S.permisoIndividual ? 'Concedido ' + S.permisoOtorgadoEn + ' · cada consulta queda registrada' : 'La consulta de progresión narrativa individual exige permiso explícito (RF-130)'}</div>
+    </div>
+    <button class="toggle ${S.permisoIndividual ? 'on' : ''}" onclick="togglePermisoIndividual()" aria-label="Permiso de acceso individual"></button>
+  </div>`;
+  rows.forEach(r => {
+    html += `<div class="list-item">
+      <div class="li-body">
+        <div class="li-title"><span class="pseudo">${r.pseudo}</span>${S.permisoIndividual ? ' · ' + r.nombre : ''}</div>
+        <div class="li-sub">${S.permisoIndividual ? r.caps + ' capítulo(s) · ' + r.logros + ' logro(s)' : 'datos individuales ocultos'}</div>
+      </div>
+      <div class="li-side"><span class="badge ${r.estado === 'GRADUADO' ? 'b-accent' : r.estado === 'DESACTIVADO' ? 'b-neutral' : 'b-info'}">${r.fase}</span>
+        <button class="btn btn-secondary btn-xs" onclick="verPerfilIndividual('${r.pseudo}')">Ver progresión</button></div>
+    </div>`;
+  });
+  if (S.verIndividual){
+    const r = rows.find(x => x.pseudo === S.verIndividual);
+    if (r){
+      html += `<div class="card mt12" style="border-color:var(--danger-border)">
+        <div class="between mb8"><span class="card-title">Progresión narrativa · ${r.pseudo}</span><span class="badge b-danger">SOLO LECTURA</span></div>
+        <div class="between mb8"><span class="text-sm">participante</span><span class="mono">${r.nombre}</span></div>
+        <div class="between mb8"><span class="text-sm">fase_narrativa_activa</span><span class="mono">${r.fase}</span></div>
+        <div class="between mb8"><span class="text-sm">ultimo_capitulo_completado</span><span class="mono">${r.caps}</span></div>
+        <div class="between mb8"><span class="text-sm">logros_narrativos</span><span class="mono">${r.logros}</span></div>
+        <div class="text-xs">RF-130 no permite modificar la fase, los capítulos ni los logros desde esta consulta; no desbloquea logros ni calcula niveles. El acceso quedó registrado en la bitácora.</div>
+        <button class="btn btn-ghost btn-sm btn-block mt8" onclick="cerrarIndividual()">Cerrar</button>
+      </div>`;
+    }
+  }
+  html += `<div class="alert alert-info mt12"><span class="alert-icon">🕒</span>
+    <div><div class="alert-title">Actualización diferida (como RF-78 de M05)</div>
+    <div class="alert-desc"><span class="mono">estado_agregacion = ${S.agregado.estado} · fecha_actualizacion = ${S.agregado.fecha}</span></div></div></div>
+  <button class="btn btn-secondary btn-sm btn-block" onclick="recalcularAgregado()">Recalcular agregado</button>`;
+  return html;
+}
+function cerrarIndividual(){ S.verIndividual = null; renderAdmin(); }
+function togglePermisoIndividual(){
+  if (S.permisoIndividual){
+    S.permisoIndividual = false; S.verIndividual = null;
+    audit('REVOCACION_PERMISO_INDIVIDUAL', 'cohorte narrativa', 'admin@usco.edu.co');
+    showToast('Permiso individual revocado · vuelven los seudónimos','info');
+    renderAdmin(); return;
+  }
+  openModal('🔓','Conceder permiso individual',
+    'La consulta de progresión narrativa individual requiere <b>permiso explícito</b>, distinto del acceso a métricas agregadas (RF-130 · RF-118).<br><br>Al concederlo: la consulta será <b>solo lectura</b>, se aplicará aislamiento estricto por participante y <b>cada acceso quedará registrado</b> con tu identificador y la marca temporal.',
+    'Conceder y registrar', () => {
+      S.permisoIndividual = true; S.permisoOtorgadoEn = nowStamp();
+      audit('CONCESION_PERMISO_INDIVIDUAL', 'cohorte narrativa', 'admin@usco.edu.co · permiso explícito (RF-130)');
+      showToast('Permiso concedido · el acceso quedó registrado','warning');
+      renderAdmin();
+    });
+}
+function verPerfilIndividual(pseudo){
+  if (!S.permisoIndividual){
+    showToast('403 · Se requiere permiso explícito para consultar la progresión narrativa individual (RF-130)','error');
+    S.audit.unshift({ ts:nowStamp(), tipo_evento:'ACCESO_DENEGADO', recurso:'progresión de ' + pseudo, extra:'sin permiso explícito · RF-130 / RF-118', usuario:'admin@usco.edu.co' });
+    renderAdmin(); return;
+  }
+  const r = cohorteData().find(x => x.pseudo === pseudo);
+  if (!r){ showToast('404 · El participante seleccionado no existe','error'); return; }
+  if (r.estado === 'SIN_PERFIL'){ showToast('204 · El participante no cuenta con progresión narrativa disponible','info'); return; }
+  S.verIndividual = pseudo;
+  S.audit.unshift({ ts:nowStamp(), tipo_evento:'CONSULTA_INDIVIDUAL', recurso:'progresión de ' + pseudo, extra:'solo lectura · RF-130', usuario:'admin@usco.edu.co' });
+  renderAdmin();
+}
+function recalcularAgregado(){
+  S.agregado.estado = 'PENDIENTE'; renderAdmin();
+  setTimeout(() => {
+    S.agregado.estado = 'ACTUALIZADO'; S.agregado.fecha = nowStamp();
+    showToast('Agregado narrativo actualizado','success'); renderAdmin();
+  }, 700);
+}
+
+/* ══ RF-116 · contrato de datos expuesto a M05 ══ */
+function renderM05(){
+  const p = S.profile;
+  const payload = {
+    id_usuario: p ? p.id_usuario : null,
+    fase_narrativa_activa: p ? p.fase_narrativa : null,
+    ultimo_capitulo_completado: capsCompletados(),
+    nivel_gamificacion: p ? p.nivel_gamificacion : null,
+    logros_narrativos: p ? p.logros.map(l => l.id) : [],
+    estado_progresion_narrativa: S.flags.noProfile ? 'NO_DISPONIBLE' : (S.flags.degraded ? 'PARCIAL' : 'DISPONIBLE'),
+    fecha_actualizacion: p ? p.ts : null
+  };
+  return `<div class="alert alert-info"><span class="alert-icon">🔌</span>
+    <div><div class="alert-title">Interfaz de solo lectura, sin efectos</div>
+    <div class="alert-desc">M06 <b>expone</b> su estado narrativo; no consume nada de M05. La relación es unidireccional: RF-109 y RF-110 prohíben el sentido contrario. <span class="m08-tag">RF-116 → consumido por RF-130 (M08)</span></div></div></div>
+  <div class="card">
+    <div class="card-title mb8">Contrato expuesto</div>
+    ${Object.entries(payload).map(([k, v]) => `<div class="between mb8"><span class="contract-key">${k}</span><span class="mono">${JSON.stringify(v)}</span></div>`).join('')}
+  </div>
+  <div class="card">
+    <div class="card-title mb8">Consumidores</div>
+    <div class="list-item"><div class="li-body"><div class="li-title">M05 · Seguimiento</div>
+      <div class="li-sub">Contextualiza el progreso conductual con la fase narrativa. Solo lectura (RF-116).</div></div></div>
+    <div class="list-item"><div class="li-body"><div class="li-title">M08 · RF-130</div>
+      <div class="li-sub">Consulta individual con permiso explícito y auditoría (RF-123).</div></div></div>
+    <div class="list-item"><div class="li-body"><div class="li-title">M08 · RF-133</div>
+      <div class="li-sub">Vista agregada de cohorte; consume RF-117, nunca este contrato individual.</div></div></div>
+  </div>
+  <div class="alert alert-warning"><span class="alert-icon">🚫</span>
+    <div><div class="alert-title">Lo que M06 nunca pide de vuelta</div>
+    <div class="alert-desc">Rachas (RF-59), logros conductuales (RF-72), nivel de progreso (RF-70), craving (RF-63) ni inactividad (RF-68). La guía v1.9 lo daba por hecho; RF-109 lo prohíbe.</div></div></div>`;
+}
+
+/* ══ RF-119 · bitácora ══ */
+function renderAud(){
+  let html = `<div class="alert alert-info"><span class="alert-icon">🧾</span>
+    <div><div class="alert-title">Bitácora inmutable (append-only)</div>
+    <div class="alert-desc">Solo metadatos de estado y evento: nunca texto libre ni contenido clínico. Escritura asíncrona. <span class="m08-tag">RF-119 · accesos administrativos también en RF-123 (M08)</span></div></div></div>`;
+  if (!S.audit.length){
+    html += `<div class="empty"><div class="empty-icon">🧾</div><div class="empty-title">Sin registros</div>
+      <div class="empty-desc">No hay eventos de progreso narrativo registrados todavía.</div></div>`;
+    return html;
+  }
+  html += `<div class="row wrap mb12">${['AVANCE_CAPITULO','DESBLOQUEO_LOGRO','CAMBIO_NIVEL','GRADUACION_SIMBOLICA','CONSULTA_INDIVIDUAL','ACCESO_DENEGADO'].map(e => {
+    const n = S.audit.filter(a => a.tipo_evento === e).length;
+    return n ? `<span class="badge ${e === 'ACCESO_DENEGADO' ? 'b-danger' : 'b-neutral'}">${e} · ${n}</span>` : '';
+  }).join('')}</div>`;
+  S.audit.forEach(a => {
+    html += `<div class="audit-item">
+      <div class="audit-ev">${a.tipo_evento}</div>
+      <div class="li-sub">${a.recurso}${a.extra ? ' · ' + a.extra : ''}</div>
+      <div class="audit-meta">${a.ts} · ${a.usuario}</div>
+    </div>`;
+  });
+  html += `<button class="btn btn-secondary btn-sm btn-block mt12" onclick="intentarBorrarBitacora()">Intentar eliminar un registro</button>`;
+  return html;
+}
+function intentarBorrarBitacora(){
+  showToast('Operación no permitida · la bitácora es append-only e inmutable (RF-119 · RF-46 · RF-95)','error');
+}
+
+/* ══ RENDER ADMIN (móvil + escritorio) ══ */
+const PARTS = { arq:renderArq, cont:renderCont, log:renderLog, map:renderMap, coh:renderCoh, act:renderAct, m05:renderM05, aud:renderAud };
+const DK_TITLES = {
+  arq:['Arquitectura narrativa','Fases y capítulos · RF-105 · presentado en M08 por RF-139'],
+  cont:['Contenido de capítulos','Gestión y publicación por psicología · RF-114 · presentado en M08 por RF-139'],
+  log:['Logros y niveles','Catálogo, reglas y mensajes de celebración · RF-115 → RF-111/RF-113 · presentado en M08 por RF-139'],
+  map:['Mapeo unidad temporal ↔ capítulo','Configuración 1:1 · RF-121 · confirmación y validaciones por RF-151 (M08)'],
+  coh:['Cohorte narrativa','Agregado seudonimizado · RF-117 → RF-133 · consulta individual por RF-130 (M08)'],
+  act:['Activos gráficos','Recursos por estado visual y por logro · RF-109 · sin RF propio (vacío documentado)'],
+  m05:['Datos expuestos a M05','Contrato de solo lectura · RF-116 → consumido por RF-130 (M08)'],
+  aud:['Bitácora de auditoría','Eventos del perfil narrativo, append-only · RF-119 · accesos admin en RF-123 (M08)']
+};
+function renderAdmin(){
+  Object.keys(PARTS).forEach(k => {
+    const html = PARTS[k]();
+    const m = document.getElementById('tab-' + k);
+    if (m) m.innerHTML = html;
+    const d = document.getElementById('dk-' + k);
+    if (d) d.innerHTML = `<div class="dk-h1">${DK_TITLES[k][0]}</div><div class="dk-sub">${DK_TITLES[k][1]}</div><div style="max-width:760px">${html}</div>`;
+  });
+}
+
+/* ══ AUTO-RELLENAR ══ */
+function prefill(){
+  const active = document.querySelector('.screen.active');
+  const id = active ? active.id : '';
+  if (S.role === 'admin' && S.adminLayout === 'desktop'){
+    showToast('El shell de escritorio consume los mismos datos: usa el panel móvil para los formularios','info'); return;
+  }
+  if (id === 's-editor-cont'){
+    document.getElementById('ec-unidad').value = String(chapterById(S.editing.cap).unidad || 4);
+    document.getElementById('ec-titulo').value = 'Lo que no se ve';
+    document.getElementById('ec-historia').value = 'Brisa llegó sin nada en las manos esta semana. Se sentó al lado de la maceta y se quedó ahí, sin regar, sin podar, sin decir nada.\n\nA veces cuidar es solo hacer compañía. La planta creció igual, esa semana, sin que nadie la mirara crecer.';
+    document.getElementById('ec-terap').value = 'No todo avance se nota el mismo día en que ocurre.';
+    document.getElementById('ec-instr').value = 'La mascota mantiene su estado actual. Presencia serena, sin celebración.';
+    valEditorCont();
+    showToast('Contenido de demo cargado · pendiente de validación por psicología','info');
+    return;
+  }
+  if (id === 's-editor-logro'){
+    document.getElementById('el-nombre').value = 'Semana en silencio';
+    document.getElementById('el-desc').value = 'Llegaste al cuarto capítulo de la historia.';
+    document.getElementById('el-cond').value = 'CAPITULO_COMPLETADO';
+    document.getElementById('el-valor').value = '4';
+    document.getElementById('el-rec').value = '/assets/m06/logro_silencio.svg';
+    document.getElementById('el-msg').value = 'Cuatro capítulos. Seguir apareciendo también cuenta.';
+    valEditorLogro();
+    showToast('Logro de demo cargado','info');
+    return;
+  }
+  if (id === 's-admin-home' && S.adminTab === 'arq'){
+    document.getElementById('nc-fase').value = 'DESARROLLO';
+    document.getElementById('nc-orden').value = '2';
+    valNuevoCap();
+    showToast('Datos cargados · orden 2 de DESARROLLO ya existe → 409','warning');
+    return;
+  }
+  if (id === 's-admin-home' && S.adminTab === 'log'){
+    document.getElementById('nr-nivel').value = '6';
+    document.getElementById('nr-caps').value = '5';
+    document.getElementById('nr-logros').value = '6';
+    document.getElementById('nr-msg').value = 'Nivel 6. Más allá del final de la historia.';
+    valRegla();
+    showToast('Regla de demo cargada · nivel 6 sobre los 5 capítulos existentes','info');
+    return;
+  }
+  if (S.role === 'student'){ showToast('Ninguna pantalla del estudiante captura datos: M06 es presentacional (RF-107)','info'); return; }
+  showToast('Esta pantalla no tiene campos que rellenar','info');
+}
+
+/* ══ RENDER GLOBAL ══ */
+function renderAll(){
+  if (!S.profile) S.profile = seedProfile();
+  if (S.role === 'student'){
+    renderHome(); renderChapter(); renderMascota(); renderLogros(); renderNivel();
+    renderGrad(); renderConfig(); renderOff(); renderNoProfile();
+  }
+  renderAdmin();
+  renderEditorCont(); renderEditorLogro();
+}
+
+/* ══ INIT ══ */
+(function init(){
+  S.profile = seedProfile();
+  S.audit = seedAudit();
+  setRole('student');
+  renderAll();
+  updateNav('s-home');
+  document.getElementById('dp-screen').textContent = 'resumen (RF-112)';
+})();
+</script>
+</body>
+</html>
