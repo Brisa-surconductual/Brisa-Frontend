@@ -1,0 +1,1930 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brisa · M07 · Notificaciones & EMA · Prototipo v2.0 (post-QA)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ══ TOKENS (Design System v1.2) ══ */
+:root {
+  --brand-50:#EAF6F5;--brand-100:#CFECE9;--brand-200:#9ED9D2;--brand-300:#69BFB5;
+  --brand-400:#3CA399;--brand-500:#1D8378;--brand-600:#156A61;--brand-700:#11534C;
+  --brand-800:#0C3C37;--brand-900:#082724;
+  --accent-50:#FFF0E9;--accent-100:#FFD9C7;--accent-200:#FFB494;--accent-300:#FB8E5F;
+  --accent-400:#E96F3B;--accent-500:#C8501F;--accent-600:#A03D15;--accent-700:#782D10;
+  --n0:#FFFFFF;--n50:#FAF9F6;--n100:#F0EEE8;--n200:#E1DED5;--n300:#C7C3B6;
+  --n400:#A19C8C;--n500:#726C5A;--n600:#595549;--n700:#403D34;--n800:#282620;--n900:#161510;
+  --success:#2E7D4F;--success-bg:#E8F5ED;--success-text:#1F5C3A;--success-border:#8FCBA3;
+  --warning:#B07A12;--warning-bg:#FBF1DC;--warning-text:#7A5208;--warning-border:#E6C878;
+  --danger:#C13B30;--danger-bg:#FBEAE7;--danger-text:#8E2A21;--danger-border:#E8A99E;
+  --info:#1E6FA8;--info-bg:#E7F1FA;--info-text:#1E6FA8;--info-border:#A8CBE6;
+  --bg:var(--n50);--card:var(--n0);--border:var(--n200);--hover:var(--n100);
+  --tp:var(--n900);--ts:var(--n600);--tm:var(--n500);
+  --btn-pt:var(--n0);
+  --font:'Manrope',sans-serif;--mono:'IBM Plex Mono',monospace;
+  --r-sm:4px;--r-md:8px;--r-lg:12px;--r-xl:16px;--r-2xl:20px;--r-full:9999px;
+  --sh-sm:0 1px 2px rgba(22,21,16,.06);
+  --sh-md:0 2px 8px rgba(22,21,16,.09),0 1px 2px rgba(22,21,16,.06);
+  --sh-lg:0 8px 24px rgba(22,21,16,.10),0 2px 6px rgba(22,21,16,.06);
+}
+[data-theme="dark"] {
+  --brand-50:#082724;--brand-100:#0C3C37;--brand-200:#11534C;--brand-300:#156A61;
+  --brand-400:#1D8378;--brand-500:#3CA399;--brand-600:#69BFB5;--brand-700:#9ED9D2;
+  --success-bg:#13261B;--success-text:#9ED9AE;--success-border:#2F5C41;
+  --warning-bg:#2B2008;--warning-text:#F0C77A;--warning-border:#6B4D14;
+  --danger-bg:#2B1310;--danger-text:#F0A89E;--danger-border:#6B2A20;
+  --info-bg:#0E2233;--info-text:#9BC8E8;--info-border:#1F4566;
+  --bg:#100F0C;--card:#1E1C17;--border:#332F27;--hover:#262319;
+  --tp:#EDEAE2;--ts:#B8B3A4;--tm:#8C8676;
+  --btn-pt:var(--n900);
+  --sh-sm:0 1px 2px rgba(0,0,0,.35);--sh-md:0 2px 8px rgba(0,0,0,.45);--sh-lg:0 8px 24px rgba(0,0,0,.55);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-family:var(--font);background:#0e0e0e;color:var(--tp)}
+body{min-height:100vh;display:flex;flex-direction:column;align-items:center;background:#111}
+:focus-visible{outline:2.5px solid var(--brand-500);outline-offset:2px;border-radius:var(--r-sm)}
+button{font-family:var(--font)}
+
+/* ══ DEMO BAR ══ */
+.demo-bar{width:100%;background:#0a0a0a;border-bottom:1px solid #222;font-family:var(--mono);font-size:10px;color:#888;position:sticky;top:0;z-index:1000}
+.dbar-row{padding:6px 14px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;border-bottom:1px solid #171717}
+.dbar-row:last-child{border-bottom:none}
+.dbar-row.off{display:none}
+.demo-bar strong{color:#aaa}
+.demo-btn{background:#1a1a1a;border:1px solid #333;color:#bbb;border-radius:4px;padding:3px 8px;font-size:9px;font-family:var(--mono);cursor:pointer;transition:all .1s}
+.demo-btn:hover{background:#2a2a2a;color:#fff;border-color:#555}
+.demo-btn.active{background:#1D8378;border-color:#1D8378;color:#fff}
+.demo-btn.warn{border-color:#7A5208;color:#F0C77A}
+.demo-btn.warn.active{background:#B07A12;border-color:#B07A12;color:#fff}
+.demo-btn.danger.active{background:#C13B30;border-color:#C13B30;color:#fff}
+.demo-sep{color:#333;user-select:none}
+.demo-screen-pill{background:#222;border:1px solid #333;border-radius:var(--r-full);padding:2px 8px;color:#6BC4B8;font-size:9px}
+.demo-spacer{flex:1}
+.dgl{color:#555;font-size:8.5px;text-transform:uppercase;letter-spacing:.5px}
+.role-badge{padding:2px 7px;border-radius:var(--r-full);font-size:9px;font-weight:600}
+.role-badge.student{background:rgba(29,131,120,.25);color:#6BC4B8;border:1px solid rgba(29,131,120,.4)}
+.role-badge.admin{background:rgba(200,80,31,.25);color:#FFC09E;border:1px solid rgba(200,80,31,.4)}
+.clock{background:#161616;border:1px solid #2a2a2a;border-radius:4px;padding:3px 9px;color:#6BC4B8;font-size:10px;letter-spacing:.4px}
+.clock.finde{color:#FFC09E}
+.gauge{background:#161616;border:1px solid #2a2a2a;border-radius:4px;padding:3px 8px;color:#999;font-size:9px}
+.gauge b{color:#ddd}
+
+/* ══ FRAME ══ */
+.frame-outer{display:flex;justify-content:center;align-items:flex-start;padding:24px 16px 40px;flex:1;width:100%}
+.phone{width:390px;background:var(--bg);border-radius:36px;overflow:hidden;position:relative;box-shadow:0 0 0 10px #1a1a1a,0 30px 80px rgba(0,0,0,.7);height:800px;display:flex;flex-direction:column;transition:background .2s}
+.phone::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:100px;height:28px;background:#1a1a1a;border-radius:0 0 18px 18px;z-index:50}
+.screens{flex:1;position:relative;overflow:hidden}
+.screen{position:absolute;inset:0;overflow-y:auto;background:var(--bg);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;transform:translateX(20px)}
+.screen.active{opacity:1;pointer-events:all;transform:translateX(0)}
+.screen-inner{padding:48px 20px 24px;min-height:100%}
+.app-bar{padding:44px 18px 10px;display:flex;align-items:center;gap:12px;position:relative;z-index:10;flex-shrink:0;border-bottom:1px solid var(--border);background:var(--bg)}
+.app-bar-back{width:34px;height:34px;border-radius:50%;background:var(--hover);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--tp);font-size:18px;flex-shrink:0}
+.app-bar-back:hover{background:var(--border)}
+.app-bar-title{font-size:15px;font-weight:800;color:var(--tp)}
+.app-bar-sub{font-size:10.5px;color:var(--tm);font-weight:500}
+.app-bar-spacer{flex:1}
+.app-bar-act{width:34px;height:34px;border-radius:50%;background:transparent;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ts);font-size:17px}
+.app-bar-act:hover{background:var(--hover)}
+.bottom-nav{display:none;background:var(--card);border-top:1px solid var(--border);padding:8px 0 18px;z-index:20;flex-shrink:0}
+.bottom-nav.visible{display:flex}
+.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;cursor:pointer;border:none;background:none;color:var(--tm);font-size:9.5px;font-family:var(--font);font-weight:600}
+.bnav-item.active{color:var(--brand-500)}
+.bnav-icon{font-size:19px;line-height:1}
+
+/* ══ BUTTONS / INPUTS ══ */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;font-weight:700;font-size:14px;border-radius:var(--r-md);border:1.5px solid transparent;padding:11px 20px;cursor:pointer;transition:all .12s;line-height:1.2}
+.btn-primary{background:var(--brand-500);color:var(--btn-pt)}
+.btn-primary:hover:not(:disabled){background:var(--brand-600)}
+.btn-secondary{background:var(--card);color:var(--tp);border-color:var(--border)}
+.btn-secondary:hover:not(:disabled){background:var(--hover)}
+.btn-ghost{background:transparent;color:var(--ts)}
+.btn-ghost:hover:not(:disabled){background:var(--hover)}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-block{width:100%}
+.btn:disabled{opacity:.42;cursor:not-allowed}
+.btn-sm{padding:7px 13px;font-size:12.5px}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.field-label{font-size:12.5px;font-weight:700;color:var(--tp)}
+.input,.select,.textarea{font-family:var(--font);font-size:14px;color:var(--tp);background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-md);padding:11px 14px;width:100%;appearance:none}
+.textarea{resize:vertical;min-height:74px;line-height:1.5}
+.input:focus,.select:focus,.textarea:focus{border-color:var(--brand-400);box-shadow:0 0 0 3px rgba(29,131,120,.12);outline:none}
+.input.err,.textarea.err{border-color:var(--danger)}
+.input.ok,.textarea.ok{border-color:var(--success)}
+.select{cursor:pointer}
+.ferr{font-size:11px;color:var(--danger-text);font-weight:600;margin-top:2px;line-height:1.4}
+.fhint{font-size:11px;color:var(--tm);margin-top:2px;line-height:1.4}
+
+/* ══ CARDS / BADGES ══ */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;box-shadow:var(--sh-sm)}
+.section-title{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--tm);margin:18px 2px 10px}
+.section-title:first-child{margin-top:0}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;padding:3px 8px;border-radius:var(--r-full);border:1px solid;white-space:nowrap}
+.b-success{background:var(--success-bg);border-color:var(--success-border);color:var(--success-text)}
+.b-warning{background:var(--warning-bg);border-color:var(--warning-border);color:var(--warning-text)}
+.b-danger{background:var(--danger-bg);border-color:var(--danger-border);color:var(--danger-text)}
+.b-info{background:var(--info-bg);border-color:var(--info-border);color:var(--info-text)}
+.b-brand{background:var(--brand-50);border-color:var(--brand-200);color:var(--brand-700)}
+[data-theme="dark"] .b-brand{color:var(--brand-600)}
+.b-neutral{background:var(--hover);border-color:var(--border);color:var(--tm)}
+.alert{display:flex;gap:10px;padding:12px;border-radius:var(--r-md);border:1px solid;font-size:12.5px;line-height:1.5;margin-bottom:12px}
+.alert-icon{font-size:15px;flex-shrink:0;margin-top:1px}
+.alert-title{font-weight:700;font-size:12.5px}
+.alert-desc{font-size:11.5px;opacity:.9}
+.alert-info{background:var(--info-bg);border-color:var(--info-border);color:var(--info-text)}
+.alert-warning{background:var(--warning-bg);border-color:var(--warning-border);color:var(--warning-text)}
+.alert-success{background:var(--success-bg);border-color:var(--success-border);color:var(--success-text)}
+
+/* ══ SWITCH ══ */
+.switch{position:relative;width:46px;height:27px;border-radius:999px;background:var(--n300);cursor:pointer;transition:background .18s;border:none;flex-shrink:0}
+[data-theme="dark"] .switch{background:var(--n700)}
+.switch.on{background:var(--brand-500)}
+.switch::after{content:'';position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:50%;background:#fff;transition:transform .18s;box-shadow:var(--sh-sm)}
+.switch.on::after{transform:translateX(19px)}
+.switch:disabled{opacity:.4;cursor:not-allowed}
+.switch-sm{width:36px;height:21px}
+.switch-sm::after{width:15px;height:15px}
+.switch-sm.on::after{transform:translateX(15px)}
+.pref-row{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--border)}
+.pref-row:last-child{border-bottom:none}
+.pref-ico{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.pref-txt{flex:1;min-width:0}
+.pref-name{font-size:13.5px;font-weight:700;color:var(--tp)}
+.pref-desc{font-size:11px;color:var(--tm);margin-top:1px;line-height:1.4}
+
+/* ══ NOTI ══ */
+.filter-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.chip{border:1.5px solid var(--border);background:var(--card);color:var(--ts);border-radius:var(--r-full);padding:6px 13px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+.chip.sel{background:var(--brand-500);border-color:var(--brand-500);color:var(--btn-pt)}
+.noti-card{display:flex;gap:12px;padding:14px;border:1px solid var(--border);border-radius:var(--r-lg);background:var(--card);cursor:pointer;margin-bottom:10px;position:relative}
+.noti-card:hover{background:var(--hover);border-color:var(--brand-300)}
+.noti-card.unread{border-left:3px solid var(--brand-500);padding-left:11px}
+.noti-card.dimmed{opacity:.6}
+.noti-ico{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+.noti-body{flex:1;min-width:0}
+.noti-title{font-size:13px;font-weight:700;color:var(--tp)}
+.noti-text{font-size:12px;color:var(--ts);line-height:1.45;margin-top:2px}
+.noti-meta{display:flex;align-items:center;gap:6px;margin-top:7px;font-size:10px;color:var(--tm);font-family:var(--mono);flex-wrap:wrap}
+.unread-dot{position:absolute;top:14px;right:14px;width:9px;height:9px;border-radius:50%;background:var(--brand-500)}
+.ttl-bar{margin-top:7px;font-family:var(--mono);font-size:10px;color:var(--warning-text);background:var(--warning-bg);border:1px solid var(--warning-border);border-radius:var(--r-sm);padding:4px 7px;display:flex;gap:10px;flex-wrap:wrap}
+
+/* ══ PUSH ══ */
+.push-banner{position:absolute;top:34px;left:12px;right:12px;z-index:300;background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:var(--sh-lg);padding:13px;display:flex;gap:11px;transform:translateY(-200%);transition:transform .4s cubic-bezier(.2,.9,.25,1);align-items:flex-start}
+.push-banner.show{transform:translateY(0)}
+.push-ico{width:40px;height:40px;border-radius:11px;background:var(--brand-500);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.push-body{flex:1;min-width:0}
+.push-app{font-size:10px;font-weight:700;color:var(--brand-600);text-transform:uppercase;letter-spacing:.4px}
+[data-theme="dark"] .push-app{color:var(--brand-500)}
+.push-title{font-size:13px;font-weight:700;color:var(--tp);margin-top:2px}
+.push-msg{font-size:12px;color:var(--ts);line-height:1.4;margin-top:1px}
+.push-actions{display:flex;gap:8px;margin-top:10px}
+
+/* ══ EMPTY ══ */
+.empty{text-align:center;padding:46px 20px}
+.empty-ico{font-size:40px;margin-bottom:12px;opacity:.55}
+.empty-title{font-size:14px;font-weight:700;color:var(--tp);margin-bottom:5px}
+.empty-desc{font-size:12px;color:var(--tm);line-height:1.5;max-width:240px;margin:0 auto}
+
+/* ══ TABS ══ */
+.tabbar{display:flex;gap:2px;padding:4px;background:var(--hover);border-radius:var(--r-md);margin-bottom:16px}
+.tab{flex:1;padding:8px 4px;border:none;background:transparent;color:var(--ts);font-size:11px;font-weight:700;border-radius:var(--r-sm);cursor:pointer}
+.tab.active{background:var(--card);color:var(--brand-600);box-shadow:var(--sh-sm)}
+[data-theme="dark"] .tab.active{color:var(--brand-500)}
+.tabview{display:none}
+.tabview.active{display:block}
+
+/* ══ MSG CARD ══ */
+.msg-card{border:1px solid var(--border);border-radius:var(--r-lg);background:var(--card);padding:13px;margin-bottom:10px}
+.msg-card-top{display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.msg-card-title{font-size:12.5px;font-weight:800;color:var(--tp);margin-bottom:3px}
+.msg-card-text{font-size:12.5px;color:var(--ts);line-height:1.45}
+.msg-card-foot{display:flex;align-items:center;gap:6px;margin-top:9px;flex-wrap:wrap}
+.msg-meta{font-size:9.5px;color:var(--tm);font-family:var(--mono);margin-top:8px;line-height:1.6;border-top:1px dashed var(--border);padding-top:7px}
+.icon-btn{width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--ts);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
+.icon-btn:hover{background:var(--hover);color:var(--tp)}
+.mom-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mom-chip{display:flex;align-items:center;gap:7px;padding:9px 11px;border:1.5px solid var(--border);border-radius:var(--r-md);background:var(--card);cursor:pointer;font-size:12.5px;font-weight:600;color:var(--ts)}
+.mom-chip.sel{border-color:var(--brand-500);background:var(--brand-50);color:var(--brand-700)}
+[data-theme="dark"] .mom-chip.sel{background:var(--brand-100);color:var(--brand-600)}
+.mom-check{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--n300);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff}
+.mom-chip.sel .mom-check{background:var(--brand-500);border-color:var(--brand-500)}
+.term-preview{font-size:12px;line-height:1.5;padding:10px 12px;border:1px dashed var(--border);border-radius:var(--r-md);background:var(--hover);color:var(--ts);min-height:42px;margin-top:6px}
+.term-hit{background:var(--danger-bg);color:var(--danger-text);border-radius:3px;padding:0 3px;font-weight:700;text-decoration:underline wavy var(--danger)}
+
+/* ══ RULES ══ */
+.rule-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.rule-row:last-child{border-bottom:none}
+.rule-txt{flex:1}
+.rule-name{font-size:13px;font-weight:700;color:var(--tp)}
+.rule-desc{font-size:11px;color:var(--tm);margin-top:1px;line-height:1.4}
+.rule-input{width:64px;text-align:center;padding:8px;font-size:14px;font-weight:700}
+.franja-block{padding:11px 0;border-bottom:1px solid var(--border)}
+.franja-block:last-child{border-bottom:none}
+.franja-head{display:grid;grid-template-columns:74px 1fr auto 1fr;gap:8px;align-items:center}
+.franja-name{font-size:12.5px;font-weight:700;color:var(--tp)}
+.time-input{padding:7px 8px;font-size:12.5px;text-align:center;font-family:var(--mono)}
+.franja-dash{color:var(--tm);text-align:center;font-size:11px}
+.franja-days{display:flex;gap:14px;margin-top:9px;padding-left:2px}
+.fday{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--ts);font-weight:600}
+.term-list{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.term-tag{display:inline-flex;align-items:center;gap:6px;background:var(--danger-bg);border:1px solid var(--danger-border);color:var(--danger-text);border-radius:var(--r-full);padding:4px 6px 4px 10px;font-size:11px;font-weight:700}
+.term-x{background:none;border:none;color:var(--danger-text);cursor:pointer;font-size:13px;line-height:1;padding:0 2px;opacity:.7}
+.term-x:hover{opacity:1}
+
+/* ══ METRICS ══ */
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px}
+.kpi-val{font-size:24px;font-weight:800;color:var(--tp);font-family:var(--mono);line-height:1}
+.kpi-label{font-size:10.5px;color:var(--tm);margin-top:5px;font-weight:600}
+.kpi-sub{font-size:10px;color:var(--tm);margin-top:2px}
+.bar-chart{display:flex;align-items:flex-end;gap:10px;height:130px;padding:10px 4px 0}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
+.bar{width:100%;max-width:34px;background:var(--brand-400);border-radius:5px 5px 0 0}
+.bar:hover{background:var(--brand-500)}
+.bar-val{font-size:9px;font-weight:700;color:var(--ts);font-family:var(--mono)}
+.bar-lbl{font-size:9.5px;color:var(--tm);font-weight:600}
+
+/* ══ MODAL ══ */
+.modal-overlay{position:absolute;inset:0;background:rgba(0,0,0,.6);z-index:2000;display:none;align-items:center;justify-content:center;padding:20px;border-radius:36px}
+.modal-overlay.visible{display:flex}
+.modal-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-2xl);padding:24px 22px;max-width:310px;width:100%;text-align:center;box-shadow:var(--sh-lg)}
+.modal-icon{font-size:32px;margin-bottom:10px}
+.modal-title{font-size:16px;font-weight:800;color:var(--tp);margin-bottom:6px}
+.modal-desc{font-size:12.5px;color:var(--ts);line-height:1.5;margin-bottom:16px}
+.modal-actions{display:flex;gap:10px}
+.modal-actions .btn{flex:1;font-size:13px;padding:9px}
+.dk-modal{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:4000;display:none;align-items:center;justify-content:center;padding:20px}
+.dk-modal.visible{display:flex}
+
+/* ══ TOAST ══ */
+.toast-wrap{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:3000;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+.toast{background:var(--n900);color:var(--n0);border-radius:var(--r-lg);padding:10px 18px;font-size:12.5px;font-weight:600;box-shadow:var(--sh-lg);animation:toastin .25s ease;max-width:420px;text-align:center;line-height:1.4}
+[data-theme="dark"] .toast{background:var(--n100);color:var(--n900)}
+.toast.t-success{background:var(--success);color:#fff}
+.toast.t-error{background:var(--danger);color:#fff}
+.toast.t-warning{background:var(--warning);color:#fff}
+.toast.t-info{background:var(--info);color:#fff}
+@keyframes toastin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ══ DESKTOP ══ */
+.desktop{display:none;width:100%;min-height:100vh;background:var(--bg)}
+.desktop.on{display:flex}
+.dk-side{width:242px;background:var(--card);border-right:1px solid var(--border);flex-shrink:0;display:flex;flex-direction:column;padding:20px 0}
+.dk-brand{display:flex;align-items:center;gap:10px;padding:0 20px 20px;border-bottom:1px solid var(--border);margin-bottom:12px}
+.dk-brand-ico{width:34px;height:34px;border-radius:9px;background:var(--brand-500);display:flex;align-items:center;justify-content:center}
+.dk-brand-txt{font-size:15px;font-weight:800;color:var(--tp)}
+.dk-brand-sub{font-size:10px;color:var(--tm);font-weight:600}
+.dk-nav{display:flex;flex-direction:column;padding:0 12px;gap:2px}
+.dk-nav-item{display:flex;align-items:center;gap:11px;padding:10px 12px;border:none;background:transparent;color:var(--ts);font-size:13px;font-weight:600;border-radius:var(--r-md);cursor:pointer;text-align:left;font-family:var(--font)}
+.dk-nav-item:hover{background:var(--hover);color:var(--tp)}
+.dk-nav-item.active{background:var(--brand-50);color:var(--brand-700)}
+[data-theme="dark"] .dk-nav-item.active{background:var(--brand-100);color:var(--brand-600)}
+.dk-side-foot{margin-top:auto;padding:12px 20px 0;border-top:1px solid var(--border)}
+.dk-user{display:flex;align-items:center;gap:10px}
+.dk-avatar{width:32px;height:32px;border-radius:50%;background:var(--accent-100);color:var(--accent-700);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px}
+.dk-main{flex:1;padding:26px 32px;overflow-y:auto;max-height:100vh}
+.dk-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:16px}
+.dk-title{font-size:21px;font-weight:800;color:var(--tp)}
+.dk-subtitle{font-size:12.5px;color:var(--tm);margin-top:3px}
+.dk-view{display:none}
+.dk-view.active{display:block}
+.dk-kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden}
+.table th{text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--tm);padding:11px 13px;border-bottom:1px solid var(--border);background:var(--hover)}
+.table td{padding:11px 13px;font-size:12.5px;color:var(--tp);border-bottom:1px solid var(--border)}
+.table tr:last-child td{border-bottom:none}
+.table tr.clickable{cursor:pointer}
+.table tr.clickable:hover{background:var(--hover)}
+.dk-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;box-shadow:var(--sh-sm)}
+.dk-note{font-size:12px;display:flex;gap:8px;padding:11px 13px;background:var(--info-bg);border:1px solid var(--info-border);color:var(--info-text);border-radius:var(--r-md);line-height:1.5;margin-top:14px}
+.dk-note.warn{background:var(--warning-bg);border-color:var(--warning-border);color:var(--warning-text)}
+.perm-box{display:flex;align-items:center;gap:11px;padding:11px 14px;border:1px solid var(--border);background:var(--card);border-radius:var(--r-md)}
+
+.row{display:flex;align-items:center;gap:8px}
+.between{justify-content:space-between}
+.mt6{margin-top:6px}.mt10{margin-top:10px}.mt14{margin-top:14px}.mt18{margin-top:18px}
+.mb10{margin-bottom:10px}
+.txt-s{font-size:11.5px;color:var(--ts);line-height:1.5}
+.txt-t{font-size:16px;font-weight:800;color:var(--tp)}
+.mono{font-family:var(--mono)}
+.hidden{display:none!important}
+.grow{flex:1}
+</style>
+</head>
+<body>
+
+<!-- ════════ DEMO BAR ════════ -->
+<div class="demo-bar">
+  <div class="dbar-row">
+    <strong>Brisa · M07 v2.0</strong>
+    <span class="demo-screen-pill" id="dp-screen">inicio</span>
+    <span id="dp-role" style="display:none"></span>
+    <span class="demo-sep">|</span>
+    <span class="dgl">Rol</span>
+    <button class="demo-btn" id="rb-student" onclick="enterRole('student')">👤 Estudiante</button>
+    <button class="demo-btn" id="rb-admin" onclick="enterRole('admin')">🔑 Admin</button>
+    <span class="demo-group" id="grp-view" style="display:none">
+      <span class="demo-sep">|</span>
+      <span class="dgl">Vista</span>
+      <button class="demo-btn active" id="vb-mobile" onclick="setAdminLayout('mobile')">📱 Móvil</button>
+      <button class="demo-btn" id="vb-desktop" onclick="setAdminLayout('desktop')">🖥 Escritorio</button>
+    </span>
+    <span class="demo-spacer"></span>
+    <button class="demo-btn active" id="btn-dark" onclick="toggleDark()">☀ Claro</button>
+  </div>
+
+  <!-- Reloj simulado (RF-94 / RF-97) -->
+  <div class="dbar-row" id="row-clock">
+    <span class="dgl">Reloj sim</span>
+    <span class="clock" id="clock-disp">—</span>
+    <span class="dgl">Velocidad</span>
+    <button class="demo-btn" data-sp="1" onclick="setSpeed(1)">Real</button>
+    <button class="demo-btn active" data-sp="30" onclick="setSpeed(30)">×30</button>
+    <button class="demo-btn" data-sp="600" onclick="setSpeed(600)">×600</button>
+    <button class="demo-btn" id="btn-pause" onclick="togglePause()">⏸ Pausar</button>
+    <button class="demo-btn" onclick="jumpTime(1)">+1 h</button>
+    <span class="demo-sep">|</span>
+    <span class="dgl">Día</span>
+    <button class="demo-btn active" id="db-habil" onclick="setDayType('habil')">Hábil</button>
+    <button class="demo-btn" id="db-finde" onclick="setDayType('finde')">Fin de semana</button>
+    <span class="demo-spacer"></span>
+    <span class="gauge" id="gauge-envio">envíos hoy <b>0/2</b> · franja <b>—</b></span>
+  </div>
+
+  <!-- Eventos + servicio (estudiante) -->
+  <div class="dbar-row off" id="row-student">
+    <span class="dgl">Eventos</span>
+    <button class="demo-btn" onclick="evtRecordatorio()" title="RF-91 · ciclo batch de inactividad">🔔 Batch inactividad</button>
+    <button class="demo-btn" onclick="evtLogro()" title="RF-75 · logro conductual">⭐ Logro</button>
+    <button class="demo-btn" onclick="evtCraving()" title="RF-93 · registra señal de craving (TTL 4h)">🛡 Señal craving</button>
+    <button class="demo-btn" onclick="evtInicioUnidad()" title="RF-92 · inicio de unidad temporal">🤝 Inicio unidad</button>
+    <button class="demo-btn" onclick="nuevaUnidad()" title="Avanza a la siguiente unidad (habilita RF-92 otra vez)">⏭ Nueva unidad</button>
+    <span class="demo-sep">|</span>
+    <span class="dgl">Servicio push</span>
+    <button class="demo-btn warn" id="sv-down" onclick="togglePushDown()" title="RF-97 · modo degradado">⚠ Push caído</button>
+    <button class="demo-btn danger" id="sv-token" onclick="toggleToken()" title="RF-94 · token inválido → FALLIDA">🔑 Token inválido</button>
+    <button class="demo-btn danger" id="sv-store" onclick="toggleStore()" title="RF-95 · error de almacenamiento">💾 Error registro</button>
+    <span class="demo-sep">|</span>
+    <span class="dgl">Pruebas</span>
+    <button class="demo-btn" onclick="probarInmutabilidad()" title="RF-95 · intenta mutar un campo congelado">🧊 Mutar historial</button>
+    <button class="demo-btn" onclick="probarIdempotencia()" title="RF-94 · reentrega con el mismo id">♻ Idempotencia</button>
+    <button class="demo-btn" onclick="marcarInteraccion()" title="RF-91 · marca interacción de hoy">✓ Interactuó hoy</button>
+  </div>
+</div>
+
+<!-- ════════ PHONE ════════ -->
+<div class="frame-outer" id="frame-outer">
+<div class="phone" id="phone">
+
+  <div class="push-banner" id="push-banner">
+    <div class="push-ico" id="push-ico">
+      <svg width="22" height="22" viewBox="0 0 32 32" fill="none">
+        <path d="M4 22 C7 21, 9 18, 11 19 C13 20, 14 15, 17 13 C19.5 11.3,21 11.5,23 10" stroke="white" stroke-width="2.4" stroke-linecap="round"/>
+        <circle cx="23" cy="10" r="2.4" fill="white"/></svg>
+    </div>
+    <div class="push-body">
+      <div class="push-app">Brisa <span id="push-time" style="color:var(--tm);font-weight:500;text-transform:none">ahora</span></div>
+      <div class="push-title" id="push-title"></div>
+      <div class="push-msg" id="push-msg"></div>
+      <div class="push-actions">
+        <button class="btn btn-primary btn-sm" onclick="openFromPush()">Abrir</button>
+        <button class="btn btn-ghost btn-sm" onclick="dismissFromPush()">Descartar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="screens" id="screens">
+
+    <!-- HOME -->
+    <div class="screen active" id="s-home" data-name="inicio">
+      <div class="screen-inner" style="display:flex;flex-direction:column;justify-content:center;text-align:center;gap:8px">
+        <div style="width:60px;height:60px;border-radius:16px;background:var(--brand-500);display:flex;align-items:center;justify-content:center;margin:0 auto 6px">
+          <svg width="34" height="34" viewBox="0 0 32 32" fill="none">
+            <path d="M4 22 C7 21, 9 18, 11 19 C13 20, 14 15, 17 13 C19.5 11.3,21 11.5,23 10" stroke="white" stroke-width="2.2" stroke-linecap="round"/>
+            <circle cx="23" cy="10" r="2.4" fill="white"/></svg>
+        </div>
+        <div class="txt-t" style="font-size:22px">Brisa · Notificaciones</div>
+        <div class="txt-s" style="max-width:255px;margin:0 auto">Módulo M07 · EMA. Prototipo v2.0 con motor de envío real: cada push atraviesa opt-out, franja, límite diario, intervalo y selección del banco.</div>
+        <div style="display:flex;gap:10px;margin-top:16px;justify-content:center">
+          <button class="btn btn-primary" onclick="enterRole('student')">👤 Estudiante</button>
+          <button class="btn btn-secondary" onclick="enterRole('admin')">🔑 Admin</button>
+        </div>
+        <div class="mono" style="font-size:10px;color:var(--tm);margin-top:20px">RF-75 · RF-84 → RF-102</div>
+      </div>
+    </div>
+
+    <!-- CENTRO DE NOTIFICACIONES -->
+    <div class="screen" id="s-noti" data-name="notificaciones">
+      <div class="app-bar">
+        <div>
+          <div class="app-bar-title">Notificaciones</div>
+          <div class="app-bar-sub" id="noti-sub">Diana Rincón · Semana 2</div>
+        </div>
+        <div class="app-bar-spacer"></div>
+        <button class="app-bar-act" onclick="go('s-prefs')" title="Preferencias">⚙️</button>
+      </div>
+      <div class="screen-inner" style="padding-top:14px">
+        <div class="filter-row" id="noti-filters">
+          <button class="chip sel" data-f="all" onclick="setNotiFilter('all')">Todas</button>
+          <button class="chip" data-f="unread" onclick="setNotiFilter('unread')">No leídas <span id="unread-count"></span></button>
+          <button class="chip" data-f="cola" onclick="setNotiFilter('cola')">En cola</button>
+        </div>
+        <div id="noti-list"></div>
+      </div>
+    </div>
+
+    <!-- DETALLE -->
+    <div class="screen" id="s-noti-detail" data-name="detalle">
+      <div class="app-bar">
+        <button class="app-bar-back" onclick="back('s-noti')">‹</button>
+        <div class="app-bar-title">Detalle</div>
+      </div>
+      <div class="screen-inner" style="padding-top:16px" id="detail-body"></div>
+    </div>
+
+    <!-- PREFERENCIAS -->
+    <div class="screen" id="s-prefs" data-name="preferencias">
+      <div class="app-bar">
+        <button class="app-bar-back" onclick="back('s-noti')">‹</button>
+        <div class="app-bar-title">Preferencias de notificación</div>
+      </div>
+      <div class="screen-inner" style="padding-top:16px">
+        <div class="card">
+          <div class="row between">
+            <div class="pref-txt">
+              <div class="pref-name">Recibir notificaciones</div>
+              <div class="pref-desc">Interruptor principal. Puedes desactivarlas cuando quieras sin perder acceso a ningún módulo.</div>
+            </div>
+            <button class="switch on" id="sw-master" onclick="toggleMaster()"></button>
+          </div>
+        </div>
+        <div class="section-title">Tipos de mensaje</div>
+        <div class="card" id="pref-types"></div>
+        <div class="section-title">Cómo te cuidamos</div>
+        <div class="card">
+          <div class="txt-s"><b style="color:var(--tp)">Frecuencia controlada.</b> Máximo <span id="pf-lim">2</span> mensajes en días entre semana y <span id="pf-limf">3</span> los fines de semana, con al menos <span id="pf-int">3</span> horas entre uno y otro.</div>
+          <div class="txt-s mt10"><b style="color:var(--tp)">Solo en momentos oportunos.</b> <span id="pf-franjas">—</span> (hora de Colombia, UTC-5).</div>
+        </div>
+        <div class="fhint mt10" style="text-align:center">Tu preferencia se guarda al instante y se puede auditar (RF-96).</div>
+      </div>
+    </div>
+
+    <!-- STUB -->
+    <div class="screen" id="s-stub" data-name="destino">
+      <div class="app-bar">
+        <button class="app-bar-back" onclick="back('s-noti')">‹</button>
+        <div class="app-bar-title" id="stub-title">Chat</div>
+      </div>
+      <div class="screen-inner" style="padding-top:16px">
+        <div class="empty">
+          <div class="empty-ico" id="stub-ico">💬</div>
+          <div class="empty-title" id="stub-head">Abriste el chat desde una notificación</div>
+          <div class="empty-desc">La sesión quedó vinculada a la notificación de origen para medir su efectividad (RF-99). Esta interacción cuenta como actividad del día (RF-91).</div>
+          <div class="mono" style="font-size:10px;color:var(--tm);margin-top:16px" id="stub-trace"></div>
+          <button class="btn btn-secondary btn-sm mt18" onclick="back('s-noti')">Volver a notificaciones</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADMIN MÓVIL -->
+    <div class="screen" id="s-admin" data-name="admin · banco">
+      <div class="app-bar">
+        <div>
+          <div class="app-bar-title">Notificaciones · Admin</div>
+          <div class="app-bar-sub">Equipo de psicología</div>
+        </div>
+        <div class="app-bar-spacer"></div>
+        <button class="app-bar-act" onclick="doLogout()" title="Salir">⏻</button>
+      </div>
+      <div class="screen-inner" style="padding-top:14px">
+        <div class="tabbar">
+          <button class="tab active" data-tab="bank" onclick="switchTab('bank')">Banco</button>
+          <button class="tab" data-tab="rules" onclick="switchTab('rules')">Reglas</button>
+          <button class="tab" data-tab="metrics" onclick="switchTab('metrics')">Métricas</button>
+        </div>
+
+        <div class="tabview active" id="tv-bank">
+          <div class="row between mb10">
+            <div class="txt-s"><b style="color:var(--tp)" id="bank-count"></b> mensajes en el banco</div>
+            <button class="btn btn-primary btn-sm" onclick="openMsgForm()">+ Nuevo</button>
+          </div>
+          <div class="filter-row">
+            <button class="chip sel" data-bf="all" onclick="setBankFilter('all')">Todos</button>
+            <button class="chip" data-bf="ACTIVO" onclick="setBankFilter('ACTIVO')">Activos</button>
+            <button class="chip" data-bf="INACTIVO" onclick="setBankFilter('INACTIVO')">Inactivos</button>
+            <button class="chip" data-bf="RECHAZADO" onclick="setBankFilter('RECHAZADO')">Rechazados</button>
+          </div>
+          <div id="bank-list"></div>
+        </div>
+
+        <div class="tabview" id="tv-rules">
+          <div class="section-title" style="margin-top:0">Límite diario (RF-87)</div>
+          <div class="card">
+            <div class="rule-row">
+              <div class="rule-txt"><div class="rule-name">Días hábiles</div><div class="rule-desc">Máximo global, todas las categorías</div></div>
+              <input type="number" class="input rule-input" id="lim-week" value="2" min="0" max="10">
+            </div>
+            <div class="rule-row">
+              <div class="rule-txt"><div class="rule-name">Fines de semana</div><div class="rule-desc">Máximo global sábados y domingos</div></div>
+              <input type="number" class="input rule-input" id="lim-weekend" value="3" min="0" max="10">
+            </div>
+          </div>
+
+          <div class="section-title">Intervalo mínimo (RF-88)</div>
+          <div class="card">
+            <div class="rule-row">
+              <div class="rule-txt"><div class="rule-name">Horas entre mensajes</div><div class="rule-desc">Espera mínima entre dos envíos consecutivos</div></div>
+              <input type="number" class="input rule-input" id="min-interval" value="3" min="1" max="24">
+            </div>
+          </div>
+
+          <div class="section-title">Franjas horarias · UTC-5 (RF-89)</div>
+          <div class="card">
+            <div id="franja-editor"></div>
+            <div class="ferr hidden" id="franja-err"></div>
+            <button class="btn btn-ghost btn-sm mt10" onclick="restaurarFranjas()">↺ Restaurar valores por defecto</button>
+          </div>
+
+          <div class="section-title">Términos restringidos (RF-85)</div>
+          <div class="card">
+            <div class="txt-s mb10">Configurables sin modificar el código fuente. Se aplican en vivo al validar el contenido del banco.</div>
+            <div class="term-list" id="term-list"></div>
+            <div class="row" style="gap:8px">
+              <input class="input grow" id="term-new" placeholder="Añadir término…" onkeydown="if(event.key==='Enter')addTerm()">
+              <button class="btn btn-secondary btn-sm" onclick="addTerm()">Añadir</button>
+            </div>
+          </div>
+
+          <div class="section-title">Tiempo de vida (TTL) por tipo (RF-97)</div>
+          <div class="card">
+            <div id="ttl-editor"></div>
+            <div class="fhint mt6">Techo global: ninguna notificación permanece en cola más de 24 h desde su generación, sea cual sea su TTL individual.</div>
+          </div>
+
+          <button class="btn btn-primary btn-block mt14" onclick="saveRules()">Guardar configuración</button>
+        </div>
+
+        <div class="tabview" id="tv-metrics">
+          <div class="alert alert-info"><span class="alert-icon">📊</span><div><div class="alert-title">Efectividad calculada en vivo</div><div class="alert-desc">Se recalcula desde el historial real de la demo (RF-100). Vista completa en escritorio.</div></div></div>
+          <div class="kpi-grid" id="m-kpis"></div>
+          <div class="card">
+            <div class="section-title" style="margin-top:0">Apertura por semana del programa</div>
+            <div class="bar-chart" id="mini-bars"></div>
+          </div>
+          <div class="dk-note mt14">🔒 Solo agregados de cohorte. El historial individual exige permiso explícito (RF-102).</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FORM MENSAJE -->
+    <div class="screen" id="s-msg-form" data-name="admin · mensaje">
+      <div class="app-bar">
+        <button class="app-bar-back" onclick="back('s-admin')">‹</button>
+        <div class="app-bar-title" id="form-title">Nuevo mensaje</div>
+      </div>
+      <div class="screen-inner" style="padding-top:16px">
+        <div class="field">
+          <label class="field-label">Tipo de mensaje</label>
+          <select class="select" id="f-type"></select>
+        </div>
+        <div class="field">
+          <label class="field-label">Título</label>
+          <input class="input" id="f-title" placeholder="Título breve del push" oninput="validateContent()">
+          <div class="ferr hidden" id="f-title-err"></div>
+        </div>
+        <div class="field">
+          <label class="field-label">Contenido</label>
+          <textarea class="textarea" id="f-content" placeholder="Mensaje breve, emocional y sin términos explícitos…" oninput="validateContent()"></textarea>
+          <div class="fhint" id="f-count">0 / 140</div>
+          <div class="ferr hidden" id="f-content-err"></div>
+          <div class="fhint">Vista previa con términos restringidos resaltados (RF-85):</div>
+          <div class="term-preview" id="term-preview"><span style="color:var(--tm)">La vista previa aparecerá aquí…</span></div>
+        </div>
+        <div class="field">
+          <label class="field-label">Momentos de entrega (RF-86)</label>
+          <div class="mom-grid" id="mom-grid"></div>
+          <div class="ferr hidden" id="f-mom-err"></div>
+        </div>
+        <div class="field">
+          <label class="field-label">Estado</label>
+          <div class="row" style="gap:12px">
+            <label class="row" style="gap:6px;cursor:pointer;font-size:13px;color:var(--tp)"><input type="radio" name="f-state" value="ACTIVO" checked> Activo</label>
+            <label class="row" style="gap:6px;cursor:pointer;font-size:13px;color:var(--tp)"><input type="radio" name="f-state" value="INACTIVO"> Inactivo</label>
+          </div>
+        </div>
+        <div class="row" style="gap:10px;margin-top:8px">
+          <button class="btn btn-secondary grow" onclick="back('s-admin')">Cancelar</button>
+          <button class="btn btn-primary grow" onclick="saveMsg()">Guardar</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="bottom-nav" id="bottom-nav">
+    <button class="bnav-item active" id="bn-noti" onclick="go('s-noti')"><span class="bnav-icon">🔔</span>Notificaciones</button>
+    <button class="bnav-item" id="bn-prefs" onclick="go('s-prefs')"><span class="bnav-icon">⚙️</span>Preferencias</button>
+    <button class="bnav-item" id="bn-out" onclick="doLogout()"><span class="bnav-icon">⏻</span>Salir</button>
+  </div>
+
+  <div class="modal-overlay" id="phone-modal">
+    <div class="modal-card">
+      <div class="modal-icon" id="pm-ico">⏱️</div>
+      <div class="modal-title" id="pm-title"></div>
+      <div class="modal-desc" id="pm-desc"></div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closePhoneModal()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ════════ DESKTOP ════════ -->
+<div class="desktop" id="desktop">
+  <aside class="dk-side">
+    <div class="dk-brand">
+      <div class="dk-brand-ico">
+        <svg width="20" height="20" viewBox="0 0 32 32" fill="none">
+          <path d="M4 22 C7 21, 9 18, 11 19 C13 20, 14 15, 17 13 C19.5 11.3,21 11.5,23 10" stroke="white" stroke-width="2.4" stroke-linecap="round"/>
+          <circle cx="23" cy="10" r="2.4" fill="white"/></svg>
+      </div>
+      <div><div class="dk-brand-txt">Brisa</div><div class="dk-brand-sub">M07 · Notificaciones</div></div>
+    </div>
+    <nav class="dk-nav">
+      <button class="dk-nav-item active" data-v="bank" onclick="switchDeskView('bank')">📨 Banco de mensajes</button>
+      <button class="dk-nav-item" data-v="rules" onclick="switchDeskView('rules')">⚙️ Reglas de entrega</button>
+      <button class="dk-nav-item" data-v="metrics" onclick="switchDeskView('metrics')">📊 Métricas de efectividad</button>
+      <button class="dk-nav-item" data-v="history" onclick="switchDeskView('history')">🗂️ Historial · Auditoría</button>
+      <button class="dk-nav-item" data-v="bitacora" onclick="switchDeskView('bitacora')">🔐 Bitácora de accesos</button>
+    </nav>
+    <div class="dk-side-foot">
+      <div class="dk-user">
+        <div class="dk-avatar">P</div>
+        <div><div style="font-size:12.5px;font-weight:700;color:var(--tp)">Psicología</div><div style="font-size:10px;color:var(--tm)">admin@usco.edu.co</div></div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="dk-main">
+    <div class="dk-view active" id="dv-bank">
+      <div class="dk-head">
+        <div><div class="dk-title">Banco de mensajes</div><div class="dk-subtitle">Contenido validado por el equipo de psicología (RF-84 · RF-85 · RF-86)</div></div>
+        <button class="btn btn-primary" onclick="setAdminLayout('mobile');go('s-admin');switchTab('bank');openMsgForm()">+ Nuevo mensaje</button>
+      </div>
+      <table class="table">
+        <thead><tr><th>Título / Mensaje</th><th>Tipo</th><th>Momentos</th><th>Estado</th><th>Creado por</th><th>Últ. modificación</th></tr></thead>
+        <tbody id="dk-bank-body"></tbody>
+      </table>
+      <div class="dk-note">ℹ️ El motor de envío (RF-90) selecciona aleatoriamente solo entre mensajes <b>ACTIVOS</b> del tipo y momento vigentes, excluyendo los entregados el día anterior.</div>
+    </div>
+
+    <div class="dk-view" id="dv-rules">
+      <div class="dk-head"><div><div class="dk-title">Reglas de entrega</div><div class="dk-subtitle">Frecuencia, franjas, términos y TTL (RF-85 · RF-87 · RF-88 · RF-89 · RF-97)</div></div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="dk-card">
+          <div class="section-title" style="margin-top:0">Frecuencia</div>
+          <div class="rule-row"><div class="rule-txt"><div class="rule-name">Límite días hábiles</div></div><div class="mono txt-t" id="dk-lim-week">2</div></div>
+          <div class="rule-row"><div class="rule-txt"><div class="rule-name">Límite fin de semana</div></div><div class="mono txt-t" id="dk-lim-weekend">3</div></div>
+          <div class="rule-row"><div class="rule-txt"><div class="rule-name">Intervalo mínimo</div></div><div class="mono txt-t"><span id="dk-interval">3</span> h</div></div>
+        </div>
+        <div class="dk-card">
+          <div class="section-title" style="margin-top:0">Franjas horarias (UTC-5)</div>
+          <div id="dk-franjas"></div>
+        </div>
+        <div class="dk-card">
+          <div class="section-title" style="margin-top:0">Términos restringidos</div>
+          <div class="term-list" id="dk-terms"></div>
+        </div>
+        <div class="dk-card">
+          <div class="section-title" style="margin-top:0">TTL por tipo</div>
+          <div id="dk-ttl"></div>
+        </div>
+      </div>
+      <div class="dk-note">ℹ️ La edición se realiza en la vista móvil (tab Reglas) y se refleja aquí en vivo. La configuración se aplica al motor de envío de inmediato, sin reinicio ni cambios de código.</div>
+    </div>
+
+    <div class="dk-view" id="dv-metrics">
+      <div class="dk-head"><div><div class="dk-title">Métricas de efectividad</div><div class="dk-subtitle">Calculadas en vivo desde el historial (RF-100 · RF-101)</div></div></div>
+      <div class="dk-kpi-grid" id="dk-kpis"></div>
+      <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:16px">
+        <div class="dk-card">
+          <div class="section-title" style="margin-top:0">Apertura por semana del programa</div>
+          <div class="bar-chart" id="dk-bars" style="height:170px"></div>
+        </div>
+        <div class="dk-card">
+          <div class="section-title" style="margin-top:0">Por participante (cohorte)</div>
+          <table class="table" style="border:none">
+            <thead><tr><th>Participante</th><th>Enviadas</th><th>Apertura</th><th>Conversión</th></tr></thead>
+            <tbody id="dk-cohort-body"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="dk-note">🔒 Métricas agregadas de cohorte: accesibles a todo rol administrativo autorizado, sin permiso individual adicional (RF-101).</div>
+    </div>
+
+    <div class="dk-view" id="dv-history">
+      <div class="dk-head">
+        <div><div class="dk-title">Historial de notificaciones</div><div class="dk-subtitle">Registro inmutable de auditoría (RF-95 · RF-102)</div></div>
+        <div class="perm-box">
+          <div>
+            <div style="font-size:12.5px;font-weight:700;color:var(--tp)">Permiso de acceso individual</div>
+            <div style="font-size:10.5px;color:var(--tm)">Distinto del permiso de métricas agregadas (RF-102)</div>
+          </div>
+          <button class="switch" id="sw-perm" onclick="togglePermiso()"></button>
+        </div>
+      </div>
+      <table class="table">
+        <thead><tr><th>ID</th><th>Participante</th><th>Tipo</th><th>Evento</th><th>Canal</th><th>Estado</th><th>Creada</th></tr></thead>
+        <tbody id="dk-hist-body"></tbody>
+      </table>
+      <div class="dk-note warn" id="perm-note">🔒 Identidades seudonimizadas. Activa el permiso de acceso individual para revelarlas; el acceso quedará registrado en la bitácora.</div>
+    </div>
+
+    <div class="dk-view" id="dv-bitacora">
+      <div class="dk-head"><div><div class="dk-title">Bitácora de accesos</div><div class="dk-subtitle">Trazabilidad del permiso de acceso individual (RF-102)</div></div></div>
+      <table class="table">
+        <thead><tr><th>Fecha (sim)</th><th>Usuario admin</th><th>Acción</th></tr></thead>
+        <tbody id="dk-bit-body"></tbody>
+      </table>
+      <div class="dk-note">ℹ️ Toda activación del permiso de acceso individual al historial queda registrada aquí de forma inmutable.</div>
+    </div>
+  </main>
+</div>
+
+<div class="dk-modal" id="dk-modal">
+  <div class="modal-card">
+    <div class="modal-icon">🔐</div>
+    <div class="modal-title">Activar acceso individual</div>
+    <div class="modal-desc">Vas a revelar las identidades de los participantes en el historial de notificaciones. Este acceso es distinto del permiso de métricas agregadas y <b>quedará registrado en la bitácora</b> con tu usuario y la marca temporal.</div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="cancelPermiso()">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmPermiso()">Acepto y continúo</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toast-container"></div>
+
+<script>
+'use strict';
+
+/* ═══════════════════════════════════════════════════════════
+   M07 v2.0 — Motor de envío real (cierre de hallazgos QA)
+   ═══════════════════════════════════════════════════════════ */
+
+const H = 3600000; // 1 hora en ms
+
+/* ── Tipos (RF-84: ENUM corregido a ACOMPANAMIENTO_EMOCIONAL) ── */
+const TYPE = {
+  RECORDATORIO_USO:        {label:'Recordatorio',  icon:'🔔', badge:'b-info',    bg:'var(--info-bg)',    fg:'var(--info-text)',    dest:'diario', ttlDef:6},
+  MOTIVACIONAL:            {label:'Motivacional',  icon:'⭐', badge:'b-success', bg:'var(--success-bg)', fg:'var(--success-text)', dest:'chat',   ttlDef:24},
+  PREVENCION_RECAIDA:      {label:'Prevención',    icon:'🛡️', badge:'b-warning', bg:'var(--warning-bg)', fg:'var(--warning-text)', dest:'chat',   ttlDef:4},
+  ACOMPANAMIENTO_EMOCIONAL:{label:'Acompañamiento',icon:'🤝', badge:'b-brand',   bg:'var(--brand-50)',   fg:'var(--brand-700)',    dest:'chat',   ttlDef:12},
+};
+const MOMENTOS = ['MANANA','TARDE','NOCHE','FIN_DE_SEMANA'];
+const MOM_LABEL = {MANANA:'Mañana', TARDE:'Tarde', NOCHE:'Noche', FIN_DE_SEMANA:'Fin de semana'};
+const STATE_BADGE = {
+  entregada:['b-neutral','Entregada'], abierta:['b-success','Abierta'], descartada:['b-neutral','Descartada'],
+  programada:['b-info','Programada'], pendiente:['b-warning','En cola'], expirada:['b-danger','Expirada'],
+  cancelada:['b-neutral','Cancelada'], fallida:['b-danger','Fallida'], bloqueada:['b-neutral','No enviada'],
+};
+const FRANJAS_DEF = [
+  {seg:'MANANA', name:'Mañana', ini:'08:00', fin:'11:00', habil:true, finde:true},
+  {seg:'TARDE',  name:'Tarde',  ini:'14:00', fin:'17:00', habil:true, finde:true},
+  {seg:'NOCHE',  name:'Noche',  ini:'19:00', fin:'21:00', habil:true, finde:false},
+];
+
+/* ── Estado global ── */
+const S = {
+  dark:false, role:null, adminLayout:'mobile',
+  notiFilter:'all', bankFilter:'all',
+  master:true,
+  prefs:{RECORDATORIO_USO:true, MOTIVACIONAL:true, PREVENCION_RECAIDA:true, ACOMPANAMIENTO_EMOCIONAL:true},
+  currentNoti:null, currentMsg:null, currentMoms:[],
+  pendingPush:null,
+  // Reloj simulado (RF-94 / RF-97)
+  sim:{ now: Date.UTC(2026,6,15,9,30,0), factor:30, paused:false },
+  // Motor de envío
+  reglas:{ limHabil:2, limFinde:3, intervalo:3 },
+  ttl:{ RECORDATORIO_USO:6, MOTIVACIONAL:24, PREVENCION_RECAIDA:4, ACOMPANAMIENTO_EMOCIONAL:12 },
+  terminos:['vape','vapear','vapeo','vaper','cigarrillo','nicotina','adicto','adicta','débil','fracaso','drogadicto'],
+  envio:{ diaClave:null, notisDia:0, ultimoEnvio:null, inicioUnidadEnviado:false, unidad:2,
+          episodios:[], entregadosAyer:[], interaccionHoy:false },
+  push:{ disponible:true, tokenValido:true, storeOk:true },
+  cola:[],            // {id, intentos, proximo, vence}
+  programadas:[],     // {id, cuando}
+  entregadasIds:[],   // idempotencia (RF-94)
+  senales:[],         // craving (RF-93)
+  permisoIndividual:false,
+  bitacora:[],
+  _seq:1000,
+};
+
+/* ═══════ RELOJ SIMULADO ═══════ */
+function ahora(){ return S.sim.now; }
+function dObj(t){ return new Date(t); }
+function esFinde(t){ const d=dObj(t).getUTCDay(); return d===0||d===6; }
+function hhmm(t){ const d=dObj(t); return String(d.getUTCHours()).padStart(2,'0')+':'+String(d.getUTCMinutes()).padStart(2,'0'); }
+function claveDia(t){ const d=dObj(t); return d.getUTCFullYear()+'-'+d.getUTCMonth()+'-'+d.getUTCDate(); }
+function fmtFecha(t){
+  const d=dObj(t);
+  const dias=['dom','lun','mar','mié','jue','vie','sáb'];
+  return dias[d.getUTCDay()]+' '+String(d.getUTCDate()).padStart(2,'0')+'/'+String(d.getUTCMonth()+1).padStart(2,'0')+' '+hhmm(t);
+}
+function fmtDur(ms){
+  if(ms<0) ms=0;
+  const s=Math.floor(ms/1000), h=Math.floor(s/3600), m=Math.floor((s%3600)/60), ss=s%60;
+  if(h>0) return h+':'+String(m).padStart(2,'0')+':'+String(ss).padStart(2,'0');
+  if(m>0) return m+'m '+String(ss).padStart(2,'0')+'s';
+  return ss+'s';
+}
+function setSpeed(f){
+  S.sim.factor=f;
+  document.querySelectorAll('[data-sp]').forEach(b=>b.classList.toggle('active', Number(b.dataset.sp)===f));
+  showToast('Velocidad del reloj: '+(f===1?'tiempo real':'×'+f),'info');
+}
+function togglePause(){
+  S.sim.paused=!S.sim.paused;
+  const b=document.getElementById('btn-pause');
+  b.textContent = S.sim.paused?'▶ Reanudar':'⏸ Pausar';
+  b.classList.toggle('active', S.sim.paused);
+}
+function jumpTime(h){ S.sim.now += h*H; showToast('Reloj adelantado '+h+' h','info'); tickUI(); }
+function setDayType(kind){
+  const d=dObj(S.sim.now);
+  const base = kind==='finde' ? Date.UTC(2026,6,18) : Date.UTC(2026,6,15); // sáb 18 / mié 15 jul 2026
+  S.sim.now = base + (d.getUTCHours()*H + d.getUTCMinutes()*60000);
+  document.getElementById('db-habil').classList.toggle('active', kind!=='finde');
+  document.getElementById('db-finde').classList.toggle('active', kind==='finde');
+  rolloverDia();
+  showToast(kind==='finde'?'Simulando fin de semana (límite '+S.reglas.limFinde+')':'Simulando día hábil (límite '+S.reglas.limHabil+')','info');
+  tickUI();
+}
+
+/* ═══════ FRANJAS (RF-89) ═══════ */
+let FRANJAS = FRANJAS_DEF.map(f=>({...f}));
+function franjaActiva(t){
+  const finde = esFinde(t), h = hhmm(t);
+  for(const f of FRANJAS){
+    const on = finde ? f.finde : f.habil;
+    if(on && h >= f.ini && h < f.fin) return f;
+  }
+  return null;
+}
+function momentoActivo(t){
+  const f = franjaActiva(t);
+  if(!f) return null;
+  return esFinde(t) ? 'FIN_DE_SEMANA' : f.seg;
+}
+function proximaFranja(t){
+  // busca el próximo inicio de franja habilitada, hasta 7 días adelante
+  for(let d=0; d<8; d++){
+    const base = t + d*24*H;
+    const finde = esFinde(base);
+    const cands = FRANJAS.filter(f=> finde ? f.finde : f.habil)
+      .map(f=>{
+        const dd=dObj(base);
+        const [hh,mm]=f.ini.split(':').map(Number);
+        return {f, ts: Date.UTC(dd.getUTCFullYear(),dd.getUTCMonth(),dd.getUTCDate(),hh,mm)};
+      })
+      .filter(x=>x.ts>t)
+      .sort((a,b)=>a.ts-b.ts);
+    if(cands.length) return cands[0];
+  }
+  return null;
+}
+
+/* ═══════ REGISTRO INMUTABLE (RF-95) ═══════ */
+/* La identidad se congela; solo `state`, `delivered_at` y `sesion_origen`
+   se actualizan mediante setEstado(). Cualquier intento de mutar la
+   identidad lanza TypeError (modo estricto). */
+function nuevoRegistro({user, type, title, text, evento, canal, semana, msgId}){
+  const t = ahora();
+  const id = '#'+(++S._seq);
+  const identidad = Object.freeze({ id, user, type, title, text, evento, canal, semana, creada:t, msgId });
+  return { identidad, state:'generada', delivered_at:null, sesion_origen:null };
+}
+const TRANSICIONES = {
+  generada:['entregada','pendiente','programada','fallida','bloqueada','cancelada'],
+  programada:['entregada','pendiente','cancelada','expirada','fallida'],
+  pendiente:['entregada','expirada','cancelada','fallida'],
+  entregada:['abierta','descartada','expirada'],
+  abierta:[], descartada:[], expirada:[], cancelada:[], fallida:[], bloqueada:[],
+};
+function setEstado(reg, nuevo){
+  const permitidas = TRANSICIONES[reg.state] || [];
+  if(!permitidas.includes(nuevo)){
+    console.warn('Transición no permitida:', reg.state, '→', nuevo, reg.identidad.id);
+    return false;
+  }
+  reg.state = nuevo;
+  if(nuevo==='entregada') reg.delivered_at = ahora();
+  return true;
+}
+let REG = [];
+
+/* ═══════ BANCO DE MENSAJES (RF-84/85/86) ═══════ */
+let MSGS = [
+  {id:'m1', type:'MOTIVACIONAL', title:'¡Vas muy bien!', text:'Cada día que eliges cuidarte es una victoria que suma.', state:'ACTIVO', moms:['MANANA','TARDE'], creadoPor:'Psicología', creada:'02 jul 2026', modPor:'Psicología', mod:'02 jul 2026'},
+  {id:'m2', type:'MOTIVACIONAL', title:'Ese paso cuenta', text:'Hoy diste un paso más. Ese esfuerzo cuenta y te acerca a tu meta.', state:'ACTIVO', moms:['NOCHE','FIN_DE_SEMANA'], creadoPor:'Psicología', creada:'02 jul 2026', modPor:'Psicología', mod:'02 jul 2026'},
+  {id:'m3', type:'RECORDATORIO_USO', title:'Un momento para ti', text:'Tómate un momento para registrar cómo va tu día en Brisa.', state:'ACTIVO', moms:['TARDE','NOCHE'], creadoPor:'Psicología', creada:'02 jul 2026', modPor:'Psicología', mod:'05 jul 2026'},
+  {id:'m4', type:'RECORDATORIO_USO', title:'Hoy es buen día', text:'Hoy es un buen día para pasar por Brisa y anotar cómo te sientes.', state:'ACTIVO', moms:['MANANA','FIN_DE_SEMANA'], creadoPor:'Psicología', creada:'03 jul 2026', modPor:'Psicología', mod:'03 jul 2026'},
+  {id:'m5', type:'PREVENCION_RECAIDA', title:'Estamos contigo', text:'Si sientes ganas, prueba una respiración lenta y profunda. Este momento pasa.', state:'ACTIVO', moms:['TARDE','NOCHE','FIN_DE_SEMANA'], creadoPor:'Psicología', creada:'28 jun 2026', modPor:'Psicología', mod:'28 jun 2026'},
+  {id:'m6', type:'PREVENCION_RECAIDA', title:'Respira', text:'El impulso es una ola: sube, llega arriba y baja. No tienes que hacer nada más.', state:'ACTIVO', moms:['MANANA','TARDE','NOCHE'], creadoPor:'Psicología', creada:'28 jun 2026', modPor:'Psicología', mod:'28 jun 2026'},
+  {id:'m7', type:'ACOMPANAMIENTO_EMOCIONAL', title:'Nueva etapa', text:'Comienzas una nueva etapa del programa. Vamos paso a paso, a tu ritmo.', state:'ACTIVO', moms:['MANANA','TARDE'], creadoPor:'Psicología', creada:'25 jun 2026', modPor:'Psicología', mod:'25 jun 2026'},
+  {id:'m8', type:'ACOMPANAMIENTO_EMOCIONAL', title:'Aquí seguimos', text:'Estamos contigo en este tramo. No hay prisa, solo constancia.', state:'ACTIVO', moms:['NOCHE','FIN_DE_SEMANA'], creadoPor:'Psicología', creada:'25 jun 2026', modPor:'Psicología', mod:'25 jun 2026'},
+  {id:'m9', type:'RECORDATORIO_USO', title:'Hidrátate', text:'Recuerda tomar agua a lo largo del día.', state:'INACTIVO', moms:['TARDE'], creadoPor:'Psicología', creada:'20 jun 2026', modPor:'Psicología', mod:'20 jun 2026'},
+  {id:'m10', type:'PREVENCION_RECAIDA', title:'No recaigas', text:'No seas débil, no vuelvas al cigarrillo otra vez.', state:'RECHAZADO', moms:['NOCHE'], creadoPor:'Psicología', creada:'18 jun 2026', modPor:'Psicología', mod:'18 jun 2026'},
+];
+const ADMIN_USER = 'Psicología';
+
+/* RF-90 — muestreo aleatorio ponderado sobre el banco filtrado */
+function selectFromBank(tipo, momento){
+  let pool = MSGS.filter(m=>m.state==='ACTIVO' && m.type===tipo && m.moms.includes(momento));
+  const sinRepetir = pool.filter(m=>!S.envio.entregadosAyer.includes(m.id));
+  if(sinRepetir.length) pool = sinRepetir;
+  if(!pool.length) return null;
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+
+/* ═══════ COHORTE SEMBRADA (para métricas agregadas) ═══════ */
+const COHORT_USERS = ['Diana R.','Brayan O.','Legna M.','Tatiana R.','Andrea G.'];
+const SEUDO = {'Diana R.':'Participante A','Brayan O.':'Participante B','Legna M.':'Participante C','Tatiana R.':'Participante D','Andrea G.':'Participante E'};
+function seedHistorial(){
+  const seed = [
+    ['Brayan O.','PREVENCION_RECAIDA','craving_elevado','push_movil_fcm','abierta',1],
+    ['Brayan O.','RECORDATORIO_USO','inactividad','push_movil_fcm','abierta',1],
+    ['Brayan O.','MOTIVACIONAL','logro_conductual','web_push','entregada',2],
+    ['Brayan O.','RECORDATORIO_USO','inactividad','push_movil_fcm','abierta',3],
+    ['Brayan O.','PREVENCION_RECAIDA','craving_elevado','push_movil_fcm','descartada',4],
+    ['Legna M.','ACOMPANAMIENTO_EMOCIONAL','inicio_unidad','web_push','entregada',1],
+    ['Legna M.','MOTIVACIONAL','logro_conductual','web_push','abierta',2],
+    ['Legna M.','RECORDATORIO_USO','inactividad','web_push','abierta',3],
+    ['Legna M.','MOTIVACIONAL','logro_conductual','web_push','abierta',4],
+    ['Legna M.','ACOMPANAMIENTO_EMOCIONAL','inicio_unidad','web_push','entregada',5],
+    ['Tatiana R.','RECORDATORIO_USO','inactividad','push_movil_fcm','expirada',1],
+    ['Tatiana R.','RECORDATORIO_USO','inactividad','push_movil_fcm','descartada',2],
+    ['Tatiana R.','MOTIVACIONAL','logro_conductual','push_movil_fcm','entregada',3],
+    ['Tatiana R.','RECORDATORIO_USO','inactividad','push_movil_fcm','abierta',4],
+    ['Andrea G.','MOTIVACIONAL','logro_conductual','web_push','abierta',1],
+    ['Andrea G.','ACOMPANAMIENTO_EMOCIONAL','inicio_unidad','web_push','abierta',2],
+    ['Andrea G.','MOTIVACIONAL','logro_conductual','web_push','abierta',3],
+    ['Andrea G.','RECORDATORIO_USO','inactividad','web_push','entregada',4],
+    ['Andrea G.','MOTIVACIONAL','logro_conductual','web_push','abierta',5],
+    ['Diana R.','MOTIVACIONAL','logro_conductual','web_push','abierta',1],
+    ['Diana R.','RECORDATORIO_USO','inactividad','push_movil_fcm','descartada',1],
+  ];
+  seed.forEach((s,i)=>{
+    const [user,type,evento,canal,estado,semana]=s;
+    const msg = MSGS.find(m=>m.type===type) || MSGS[0];
+    const r = nuevoRegistro({user, type, title:msg.title, text:msg.text, evento, canal, semana, msgId:msg.id});
+    // los registros sembrados nacen ya resueltos
+    r.state = estado;
+    r.delivered_at = ahora() - (6-semana)*24*H;
+    if(estado==='abierta' && i%2===0) r.sesion_origen = TYPE[type].dest;
+    REG.push(r);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MOTOR DE ENVÍO — el gate único (RF-75/87/88/90/91/92/93/96)
+   ═══════════════════════════════════════════════════════════ */
+function rolloverDia(){
+  const k = claveDia(ahora());
+  if(S.envio.diaClave !== k){
+    // los mensajes entregados hoy pasan a ser "de ayer" (RF-90 no repetición)
+    if(S.envio.diaClave){
+      S.envio.entregadosAyer = REG.filter(r=>r.identidad.user==='Diana R.' && r.identidad.msgId &&
+        claveDia(r.identidad.creada)===S.envio.diaClave).map(r=>r.identidad.msgId);
+    }
+    S.envio.diaClave = k;
+    S.envio.notisDia = 0;
+    S.envio.interaccionHoy = false;
+  }
+}
+function limiteHoy(){ return esFinde(ahora()) ? S.reglas.limFinde : S.reglas.limHabil; }
+function puedeEnviarAhora(t){
+  if(S.envio.notisDia >= limiteHoy()) return false;
+  if(S.envio.ultimoEnvio && (t - S.envio.ultimoEnvio) < S.reglas.intervalo*H) return false;
+  return true;
+}
+function registrarBloqueo(tipo, evento, motivo){
+  // RF-87: "El sistema registra los intentos no enviados por límite diario alcanzado"
+  const r = nuevoRegistro({user:'Diana R.', type:tipo, title:'(intento no enviado)', text:motivo,
+    evento, canal:'—', semana:S.envio.unidad, msgId:null});
+  setEstado(r,'bloqueada');
+  REG.unshift(r);
+}
+
+function intentarEnviar(tipo, evento, opts){
+  opts = opts || {};
+  rolloverDia();
+  const t = ahora();
+
+  // 1 · opt-out maestro (RF-96)
+  if(!S.master){
+    showToast('🚫 No enviada: el usuario tiene las notificaciones desactivadas (RF-96)','warning');
+    registrarBloqueo(tipo, evento, 'Opt-out activo (RF-96)');
+    return {ok:false, motivo:'OPT_OUT'};
+  }
+  // 2 · preferencia por tipo (RF-96)
+  if(!S.prefs[tipo]){
+    showToast('🔕 No enviada: el usuario silenció "'+TYPE[tipo].label+'" (RF-96)','warning');
+    registrarBloqueo(tipo, evento, 'Tipo silenciado (RF-96)');
+    return {ok:false, motivo:'PREF'};
+  }
+  // 3 · deduplicación por unidad (RF-92) y por episodio (RF-93)
+  if(evento==='inicio_unidad' && S.envio.inicioUnidadEnviado){
+    showToast('Notificación de inicio de unidad ya enviada para esta unidad temporal (RF-92).','warning');
+    return {ok:false, motivo:'DEDUP_UNIDAD'};
+  }
+  if(evento==='craving_elevado' && opts.episodio && S.envio.episodios.includes(opts.episodio)){
+    showToast('Ya se notificó este episodio de craving ('+opts.episodio+') — máx. 1 por episodio (RF-93).','warning');
+    return {ok:false, motivo:'DEDUP_EPISODIO'};
+  }
+  // 4 · franja horaria (RF-89 / RF-92): fuera de franja → PROGRAMADA
+  const mom = momentoActivo(t);
+  if(!mom){
+    const prox = proximaFranja(t);
+    if(!prox){
+      showToast('No hay franjas habilitadas: no se puede programar el envío (RF-89).','error');
+      return {ok:false, motivo:'SIN_FRANJA'};
+    }
+    const msg = selectFromBank(tipo, esFinde(prox.ts)?'FIN_DE_SEMANA':prox.f.seg);
+    if(!msg){
+      showToast('Sin mensajes disponibles para este tipo en la franja activa (RF-90).','error');
+      return {ok:false, motivo:'SIN_MENSAJES'};
+    }
+    const reg = nuevoRegistro({user:'Diana R.', type:tipo, title:msg.title, text:msg.text, evento,
+      canal:'push_movil_fcm', semana:S.envio.unidad, msgId:msg.id});
+    if(!persistir(reg)) return {ok:false, motivo:'ERROR_REGISTRO'};
+    setEstado(reg,'programada');
+    S.programadas.push({id:reg.identidad.id, cuando:prox.ts});
+    if(evento==='inicio_unidad') S.envio.inicioUnidadEnviado = true;
+    if(opts.episodio) S.envio.episodios.push(opts.episodio);
+    showToast('⏰ Fuera de franja: envío programado para la próxima franja habilitada ('+prox.f.name+' '+prox.f.ini+') — RF-92.','info');
+    refrescar();
+    return {ok:false, motivo:'FUERA_FRANJA', programada:true};
+  }
+  // 5 · límite diario global (RF-87)
+  if(S.envio.notisDia >= limiteHoy()){
+    showToast('📵 No enviada: límite diario alcanzado ('+S.envio.notisDia+'/'+limiteHoy()+(esFinde(t)?' en fin de semana':' en día hábil')+') — RF-87.','warning');
+    registrarBloqueo(tipo, evento, 'Límite diario alcanzado ('+limiteHoy()+') (RF-87)');
+    refrescar();
+    return {ok:false, motivo:'LIMITE'};
+  }
+  // 6 · intervalo mínimo (RF-88)
+  if(S.envio.ultimoEnvio && (t - S.envio.ultimoEnvio) < S.reglas.intervalo*H){
+    const falta = S.reglas.intervalo*H - (t - S.envio.ultimoEnvio);
+    showToast('⏳ No enviada: faltan '+fmtDur(falta)+' para cumplir el intervalo mínimo de '+S.reglas.intervalo+' h (RF-88).','warning');
+    registrarBloqueo(tipo, evento, 'Intervalo mínimo no cumplido (RF-88)');
+    return {ok:false, motivo:'INTERVALO'};
+  }
+  // 7 · selección desde el banco (RF-90)
+  const msg = selectFromBank(tipo, mom);
+  if(!msg){
+    showToast('Sin mensajes disponibles para este tipo en la franja activa (RF-90).','error');
+    return {ok:false, motivo:'SIN_MENSAJES'};
+  }
+  // 8 · registro + entrega (RF-94/95)
+  const reg = nuevoRegistro({user:'Diana R.', type:tipo, title:msg.title, text:msg.text, evento,
+    canal: Math.random()<0.5?'push_movil_fcm':'web_push', semana:S.envio.unidad, msgId:msg.id});
+  if(!persistir(reg)) return {ok:false, motivo:'ERROR_REGISTRO'};
+  if(evento==='inicio_unidad') S.envio.inicioUnidadEnviado = true;
+  if(opts.episodio) S.envio.episodios.push(opts.episodio);
+  entregar(reg);
+  refrescar();
+  return {ok:true, reg};
+}
+
+/* RF-95 — persistencia con flujo alterno de error de almacenamiento */
+function persistir(reg){
+  if(!S.push.storeOk){
+    showToast('💾 Error al almacenar el registro de notificación: el envío se aborta y no se persiste (RF-95).','error');
+    return false;
+  }
+  REG.unshift(reg);
+  return true;
+}
+
+/* El cupo diario (RF-87) y el intervalo (RF-88) se consumen en la ENTREGA,
+   no en la generación: una notificación en cola todavía no ha sido "enviada". */
+function commitEntrega(reg){
+  S.entregadasIds.push(reg.identidad.id);
+  setEstado(reg,'entregada');
+  S.envio.notisDia++;
+  S.envio.ultimoEnvio = ahora();
+  mostrarPush(reg);
+}
+
+/* RF-94 — entrega con idempotencia, token inválido y cola de reintentos */
+function entregar(reg){
+  const id = reg.identidad.id;
+  // idempotencia
+  if(S.entregadasIds.includes(id)){
+    showToast('♻ Invocación duplicada para '+id+': ignorada por idempotencia (RF-94).','info');
+    return;
+  }
+  if(!S.push.tokenValido){
+    setEstado(reg,'fallida');
+    showToast('❌ Entrega FALLIDA: token de dispositivo inválido (RF-94). No se reintenta.','error');
+    return;
+  }
+  if(!S.push.disponible){
+    setEstado(reg,'pendiente');
+    const ttlMs = S.ttl[reg.identidad.type]*H;
+    const techo = 24*H; // techo global RF-97
+    S.cola.push({ id, intentos:0, proximo: ahora()+30000,
+                  vence: reg.identidad.creada + Math.min(ttlMs, techo) });
+    showToast('⚠ Servicio push no disponible: en cola de reintentos (TTL '+S.ttl[reg.identidad.type]+' h) — RF-97.','warning');
+    return;
+  }
+  commitEntrega(reg);
+}
+
+/* Worker de cola: backoff 30s → 60s → 120s + TTL + throttling al drenar (RF-94/97) */
+function procesarCola(){
+  const t = ahora();
+  for(const item of [...S.cola]){
+    const reg = REG.find(r=>r.identidad.id===item.id);
+    if(!reg){ S.cola.splice(S.cola.indexOf(item),1); continue; }
+    if(t >= item.vence){
+      setEstado(reg,'expirada');
+      S.cola.splice(S.cola.indexOf(item),1);
+      showToast('⌛ '+item.id+' descartada por expiración de TTL — registrada como EXPIRADA (RF-97).','warning');
+      refrescar();
+      continue;
+    }
+    if(t >= item.proximo){
+      if(S.push.disponible && S.push.tokenValido){
+        // throttling: al drenar, respetar RF-87 y RF-88
+        if(!puedeEnviarAhora(t)){
+          item.proximo = t + 30*60000; // reevaluar en 30 min simulados
+          continue;
+        }
+        S.cola.splice(S.cola.indexOf(item),1);
+        commitEntrega(reg);
+        showToast('✅ '+item.id+' entregada tras restablecerse el servicio (throttling RF-87/88 aplicado).','success');
+        refrescar();
+      } else if(!S.push.tokenValido){
+        setEstado(reg,'fallida');
+        S.cola.splice(S.cola.indexOf(item),1);
+        refrescar();
+      } else {
+        item.intentos++;
+        const backoff = [30000,60000,120000][Math.min(item.intentos,2)];
+        item.proximo = t + backoff;
+      }
+    }
+  }
+  // programadas (RF-92)
+  for(const p of [...S.programadas]){
+    if(t >= p.cuando){
+      const reg = REG.find(r=>r.identidad.id===p.id);
+      S.programadas.splice(S.programadas.indexOf(p),1);
+      if(!reg) continue;
+      if(!S.master){ setEstado(reg,'cancelada'); continue; }
+      if(!puedeEnviarAhora(t)){ setEstado(reg,'cancelada'); continue; }
+      entregar(reg);
+      refrescar();
+    }
+  }
+  // señales de craving: polling + TTL 4h (RF-93)
+  for(const sig of [...S.senales]){
+    if(t - sig.ts >= 4*H && !sig.evaluada){
+      sig.estado='EXPIRADA'; sig.evaluada=true;
+      showToast('⌛ Señal de craving '+sig.id+' expirada (TTL 4 h) sin notificar — RF-93.','warning');
+      continue;
+    }
+    if(sig.estado==='ACTIVA' && !sig.evaluada){
+      sig.evaluada = true;
+      const r = intentarEnviar('PREVENCION_RECAIDA','craving_elevado',{episodio:sig.id});
+      if(r.ok || r.programada) sig.estado='NOTIFICADA';
+      else sig.estado='ACTIVA', sig.evaluada=false, sig.reintento=t+30*60000;
+    }
+  }
+}
+
+/* ═══════ EVENTOS DESENCADENANTES ═══════ */
+function evtLogro(){ // RF-75
+  if(S.role!=='student') enterRole('student');
+  intentarEnviar('MOTIVACIONAL','logro_conductual');
+}
+function evtRecordatorio(){ // RF-91 — ciclo batch de inactividad
+  if(S.role!=='student') enterRole('student');
+  rolloverDia();
+  if(S.envio.interaccionHoy){
+    showToast('El usuario ya interactuó hoy (chat o diario): el batch no genera recordatorio (RF-91).','info');
+    return;
+  }
+  intentarEnviar('RECORDATORIO_USO','inactividad');
+}
+function evtInicioUnidad(){ // RF-92
+  if(S.role!=='student') enterRole('student');
+  intentarEnviar('ACOMPANAMIENTO_EMOCIONAL','inicio_unidad');
+}
+function nuevaUnidad(){
+  S.envio.unidad++;
+  S.envio.inicioUnidadEnviado = false;
+  document.getElementById('noti-sub').textContent = 'Diana Rincón · Semana '+S.envio.unidad;
+  showToast('Nueva unidad temporal: Semana '+S.envio.unidad+'. Se habilita de nuevo el acompañamiento de inicio (RF-92).','info');
+}
+function evtCraving(){ // RF-93 — registra señal, el polling la evalúa
+  if(S.role!=='student') enterRole('student');
+  const id = 'diario_'+(S.senales.length+1);
+  if(S.senales.some(s=>s.id===id && s.estado!=='EXPIRADA')){ showToast('Señal ya registrada','info'); return; }
+  S.senales.push({id, ts:ahora(), estado:'ACTIVA', evaluada:false});
+  showToast('🛡 Señal de craving elevado registrada ('+id+', TTL 4 h). El ciclo de consulta la evaluará (RF-93).','info');
+}
+function marcarInteraccion(){
+  S.envio.interaccionHoy = true;
+  showToast('Marcado: el estudiante interactuó hoy (chat/diario) — RF-91.','info');
+}
+function togglePushDown(){
+  S.push.disponible = !S.push.disponible;
+  const b=document.getElementById('sv-down');
+  b.classList.toggle('active', !S.push.disponible);
+  b.textContent = S.push.disponible?'⚠ Push caído':'⚠ Push CAÍDO';
+  showToast(S.push.disponible?'Servicio push restablecido: se drena la cola respetando RF-87/88.':'Servicio push no disponible: los envíos entran en cola (RF-97).', S.push.disponible?'success':'warning');
+}
+function toggleToken(){
+  S.push.tokenValido = !S.push.tokenValido;
+  const b=document.getElementById('sv-token');
+  b.classList.toggle('active', !S.push.tokenValido);
+  showToast(S.push.tokenValido?'Token de dispositivo válido.':'Token inválido: las entregas fallarán sin reintento (RF-94).','info');
+}
+function toggleStore(){
+  S.push.storeOk = !S.push.storeOk;
+  const b=document.getElementById('sv-store');
+  b.classList.toggle('active', !S.push.storeOk);
+  showToast(S.push.storeOk?'Almacenamiento del historial operativo.':'Simulando error de almacenamiento del registro (RF-95).','info');
+}
+function probarInmutabilidad(){ // RF-95
+  const reg = REG.find(r=>r.identidad.user==='Diana R.');
+  if(!reg){ showToast('No hay registros en el historial todavía.','info'); return; }
+  try{
+    reg.identidad.text = 'TEXTO ALTERADO';
+    showToast('⚠ La mutación NO fue bloqueada (revisar Object.freeze).','error');
+  }catch(e){
+    showToast('🧊 Bloqueado por inmutabilidad: '+e.name+' al intentar alterar '+reg.identidad.id+'. La identidad del registro es inmutable (RF-95).','success');
+  }
+}
+function probarIdempotencia(){ // RF-94
+  const reg = REG.find(r=>r.state==='entregada' && r.identidad.user==='Diana R.');
+  if(!reg){ showToast('Envía primero una notificación para probar la idempotencia.','info'); return; }
+  entregar(reg);
+}
+
+/* ═══════ PUSH BANNER ═══════ */
+function mostrarPush(reg){
+  S.pendingPush = reg.identidad.id;
+  const t = TYPE[reg.identidad.type];
+  document.getElementById('push-ico').style.background = t.fg;
+  document.getElementById('push-title').textContent = reg.identidad.title;
+  document.getElementById('push-msg').textContent = reg.identidad.text;
+  document.getElementById('push-time').textContent = hhmm(ahora());
+  const pb = document.getElementById('push-banner');
+  pb.classList.add('show');
+  clearTimeout(window._pushHide);
+  window._pushHide = setTimeout(()=>pb.classList.remove('show'), 7000);
+}
+function openFromPush(){
+  const reg = REG.find(r=>r.identidad.id===S.pendingPush);
+  document.getElementById('push-banner').classList.remove('show');
+  if(!reg) return;
+  setEstado(reg,'abierta');
+  S.currentNoti = reg.identidad.id;
+  refrescar();
+  openTarget(TYPE[reg.identidad.type].dest);
+}
+function dismissFromPush(){
+  const reg = REG.find(r=>r.identidad.id===S.pendingPush);
+  document.getElementById('push-banner').classList.remove('show');
+  if(!reg) return;
+  setEstado(reg,'descartada');
+  showToast('Notificación descartada (RF-98)','info');
+  refrescar();
+}
+
+/* ═══════ NAVEGACIÓN ═══════ */
+let _history = ['s-home'];
+function go(id, back){
+  const prev = document.querySelector('.screen.active');
+  const next = document.getElementById(id);
+  if(!next || prev===next) return;
+  if(prev) prev.classList.remove('active');
+  next.classList.add('active');
+  if(!back) _history.push(id);
+  document.getElementById('dp-screen').textContent = next.dataset.name || id;
+  updateBottomNav(id);
+}
+function back(def){
+  if(_history.length>1) _history.pop();
+  go(_history[_history.length-1] || def, true);
+}
+function updateBottomNav(id){
+  const show = S.role==='student' && ['s-noti','s-prefs'].includes(id);
+  document.getElementById('bottom-nav').className = show?'bottom-nav visible':'bottom-nav';
+  document.getElementById('bn-noti').classList.toggle('active', id==='s-noti');
+  document.getElementById('bn-prefs').classList.toggle('active', id==='s-prefs');
+}
+function enterRole(role){
+  S.role = role;
+  document.getElementById('rb-student').classList.toggle('active', role==='student');
+  document.getElementById('rb-admin').classList.toggle('active', role==='admin');
+  document.getElementById('row-student').classList.toggle('off', role!=='student');
+  document.getElementById('grp-view').style.display = role==='admin'?'inline-flex':'none';
+  const rp = document.getElementById('dp-role');
+  rp.style.display='inline-block';
+  rp.className = 'role-badge ' + (role==='admin'?'admin':'student');
+  rp.textContent = role==='admin'?'🔑 admin':'👤 estudiante';
+  if(role==='student'){ setAdminLayout('mobile', true); go('s-noti'); }
+  else { if(S.adminLayout==='desktop') setAdminLayout('desktop'); else { setAdminLayout('mobile'); go('s-admin'); } }
+  refrescar();
+}
+function doLogout(){
+  S.role=null; S.adminLayout='mobile';
+  document.getElementById('bottom-nav').className='bottom-nav';
+  document.getElementById('desktop').classList.remove('on');
+  document.getElementById('frame-outer').style.display='flex';
+  document.getElementById('rb-student').classList.remove('active');
+  document.getElementById('rb-admin').classList.remove('active');
+  document.getElementById('row-student').classList.add('off');
+  document.getElementById('grp-view').style.display='none';
+  document.getElementById('dp-role').style.display='none';
+  _history=['s-home']; go('s-home');
+}
+function setAdminLayout(mode, silent){
+  S.adminLayout = mode;
+  document.getElementById('vb-mobile').classList.toggle('active', mode==='mobile');
+  document.getElementById('vb-desktop').classList.toggle('active', mode==='desktop');
+  const desk = mode==='desktop' && S.role==='admin';
+  document.getElementById('desktop').classList.toggle('on', desk);
+  document.getElementById('frame-outer').style.display = desk?'none':'flex';
+  if(desk){ document.getElementById('dp-screen').textContent='admin · escritorio'; refrescar(); }
+  else if(S.role==='admin' && !silent) go('s-admin');
+}
+function switchTab(tab){
+  document.querySelectorAll('#s-admin .tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===tab));
+  document.querySelectorAll('#s-admin .tabview').forEach(v=>v.classList.remove('active'));
+  document.getElementById('tv-'+tab).classList.add('active');
+  document.getElementById('dp-screen').textContent = {bank:'admin · banco',rules:'admin · reglas',metrics:'admin · métricas'}[tab];
+  refrescar();
+}
+function switchDeskView(v){
+  document.querySelectorAll('.dk-nav-item').forEach(n=>n.classList.toggle('active', n.dataset.v===v));
+  document.querySelectorAll('.dk-view').forEach(x=>x.classList.remove('active'));
+  document.getElementById('dv-'+v).classList.add('active');
+  refrescar();
+}
+
+/* ═══════ ESTUDIANTE · CENTRO ═══════ */
+function misNotis(){ return REG.filter(r=>r.identidad.user==='Diana R.' && r.state!=='generada'); }
+function setNotiFilter(f){
+  S.notiFilter=f;
+  document.querySelectorAll('#noti-filters .chip').forEach(c=>c.classList.toggle('sel', c.dataset.f===f));
+  renderNotis();
+}
+function renderNotis(){
+  const list = document.getElementById('noti-list');
+  if(!list) return;
+  const all = misNotis();
+  const unread = all.filter(n=>n.state==='entregada').length;
+  document.getElementById('unread-count').textContent = unread?'('+unread+')':'';
+  let items = all;
+  if(S.notiFilter==='unread') items = all.filter(n=>n.state==='entregada');
+  if(S.notiFilter==='cola') items = all.filter(n=>['pendiente','programada'].includes(n.state));
+  if(!items.length){
+    list.innerHTML = '<div class="empty"><div class="empty-ico">🔕</div><div class="empty-title">Sin notificaciones aquí</div><div class="empty-desc">'+
+      (S.notiFilter==='unread'?'Estás al día: no tienes mensajes sin leer.':
+       S.notiFilter==='cola'?'No hay mensajes en cola ni programados.':
+       'Cuando el equipo te envíe un mensaje, aparecerá en este centro.')+'</div></div>';
+    return;
+  }
+  const t = ahora();
+  list.innerHTML = items.map(n=>{
+    const ty = TYPE[n.identidad.type];
+    const [bcls,blbl] = STATE_BADGE[n.state] || ['b-neutral', n.state];
+    const cola = S.cola.find(c=>c.id===n.identidad.id);
+    const prog = S.programadas.find(p=>p.id===n.identidad.id);
+    let extra='';
+    if(n.state==='pendiente' && cola){
+      extra = '<div class="ttl-bar"><span>⟳ Reintento en '+fmtDur(cola.proximo-t)+'</span><span>⌛ Expira en '+fmtDur(cola.vence-t)+'</span><span>intento '+cola.intentos+'/3</span></div>';
+    } else if(n.state==='programada' && prog){
+      extra = '<div class="ttl-bar"><span>⏰ Programada para '+fmtFecha(prog.cuando)+'</span></div>';
+    }
+    return '<div class="noti-card '+(n.state==='entregada'?'unread':'')+' '+(['descartada','expirada','cancelada','fallida','bloqueada'].includes(n.state)?'dimmed':'')+'" onclick="openNoti(\''+n.identidad.id+'\')">'+
+      (n.state==='entregada'?'<span class="unread-dot"></span>':'')+
+      '<div class="noti-ico" style="background:'+ty.bg+';color:'+ty.fg+'">'+ty.icon+'</div>'+
+      '<div class="noti-body"><div class="noti-title">'+esc(n.identidad.title)+'</div>'+
+      '<div class="noti-text">'+esc(n.identidad.text)+'</div>'+
+      '<div class="noti-meta"><span class="badge '+ty.badge+'">'+ty.label+'</span><span class="badge '+bcls+'">'+blbl+'</span><span>'+hhmm(n.identidad.creada)+'</span></div>'+
+      extra+'</div></div>';
+  }).join('');
+}
+function openNoti(id){
+  const n = REG.find(r=>r.identidad.id===id);
+  if(!n) return;
+  S.currentNoti = id;
+  if(n.state==='entregada') setEstado(n,'abierta'); // RF-98
+  const ty = TYPE[n.identidad.type];
+  const [bcls,blbl] = STATE_BADGE[n.state] || ['b-neutral',n.state];
+  const puede = ['abierta'].includes(n.state);
+  document.getElementById('detail-body').innerHTML =
+    '<div style="text-align:center;margin-bottom:18px">'+
+    '<div class="noti-ico" style="width:56px;height:56px;font-size:26px;border-radius:16px;margin:0 auto 12px;background:'+ty.bg+';color:'+ty.fg+'">'+ty.icon+'</div>'+
+    '<div class="txt-t" style="font-size:19px">'+esc(n.identidad.title)+'</div>'+
+    '<div class="row" style="justify-content:center;gap:6px;margin-top:8px"><span class="badge '+ty.badge+'">'+ty.label+'</span><span class="badge '+bcls+'">'+blbl+'</span></div></div>'+
+    '<div class="card"><div style="font-size:14px;line-height:1.6;color:var(--tp)">'+esc(n.identidad.text)+'</div></div>'+
+    '<div class="mono" style="font-size:10px;color:var(--tm);text-align:center;margin-top:14px;line-height:1.7">'+n.identidad.id+' · '+fmtFecha(n.identidad.creada)+'<br>evento: '+n.identidad.evento+' · canal: '+n.identidad.canal+'<br>mensaje del banco: '+(n.identidad.msgId||'—')+'</div>'+
+    (puede?'<button class="btn btn-primary btn-block mt18" onclick="openTarget(\''+ty.dest+'\')">'+(ty.dest==='diario'?'Ir al diario':'Ir al chat')+' →</button>'+
+      '<button class="btn btn-ghost btn-block mt10" onclick="dismissNoti(\''+id+'\')">Descartar</button>':'');
+  refrescar();
+  go('s-noti-detail');
+}
+function dismissNoti(id){
+  const n = REG.find(r=>r.identidad.id===id);
+  if(n) setEstado(n,'descartada'); // RF-98
+  showToast('Notificación descartada (RF-98)','info');
+  refrescar();
+  back('s-noti');
+}
+function openTarget(dest){ // RF-99 + RF-91
+  const isD = dest==='diario';
+  const reg = REG.find(r=>r.identidad.id===S.currentNoti);
+  if(reg) reg.sesion_origen = dest;
+  S.envio.interaccionHoy = true; // cuenta como actividad del día (RF-91)
+  document.getElementById('stub-title').textContent = isD?'Diario':'Chat';
+  document.getElementById('stub-ico').textContent = isD?'📔':'💬';
+  document.getElementById('stub-head').textContent = 'Abriste el '+(isD?'diario':'chat')+' desde una notificación';
+  document.getElementById('stub-trace').textContent = 'origen_sesion=NOTIFICACION · id='+S.currentNoti+' · destino='+(isD?'DIARIO':'CHAT');
+  showToast('Sesión vinculada a la notificación (RF-99). Cuenta como interacción de hoy (RF-91).','success');
+  refrescar();
+  go('s-stub');
+}
+
+/* ═══════ PREFERENCIAS (RF-96) ═══════ */
+function renderPrefs(){
+  const el = document.getElementById('pref-types');
+  if(!el) return;
+  el.innerHTML = Object.keys(TYPE).map(k=>{
+    const t = TYPE[k];
+    const desc = {RECORDATORIO_USO:'Un empujón amable si no has pasado por la app.',
+      MOTIVACIONAL:'Celebran tus logros y avances.',
+      PREVENCION_RECAIDA:'Apoyo en momentos de mayor impulso.',
+      ACOMPANAMIENTO_EMOCIONAL:'Al iniciar una nueva etapa del programa.'}[k];
+    return '<div class="pref-row"><div class="pref-ico" style="background:'+t.bg+';color:'+t.fg+'">'+t.icon+'</div>'+
+      '<div class="pref-txt"><div class="pref-name">'+t.label+'</div><div class="pref-desc">'+desc+'</div></div>'+
+      '<button class="switch '+(S.prefs[k]?'on':'')+'" data-t="'+k+'" onclick="togglePref(this)" '+(S.master?'':'disabled')+'></button></div>';
+  }).join('');
+  document.getElementById('pf-lim').textContent = S.reglas.limHabil;
+  document.getElementById('pf-limf').textContent = S.reglas.limFinde;
+  document.getElementById('pf-int').textContent = S.reglas.intervalo;
+  document.getElementById('pf-franjas').textContent = FRANJAS.filter(f=>f.habil||f.finde)
+    .map(f=>f.name+' '+f.ini+'–'+f.fin).join(' · ') || 'sin franjas habilitadas';
+}
+function toggleMaster(){
+  S.master = !S.master;
+  document.getElementById('sw-master').classList.toggle('on', S.master);
+  if(!S.master){
+    // RF-96: cancelar mensajes en cola/programados al activar el opt-out
+    let n=0;
+    [...S.cola].forEach(item=>{ const r=REG.find(x=>x.identidad.id===item.id); if(r&&setEstado(r,'cancelada')) n++; });
+    S.cola=[];
+    [...S.programadas].forEach(p=>{ const r=REG.find(x=>x.identidad.id===p.id); if(r&&setEstado(r,'cancelada')) n++; });
+    S.programadas=[];
+    showToast('Notificaciones desactivadas'+(n?'. '+n+' mensaje(s) en cola fueron cancelados (RF-96).':'.'),'info');
+  } else {
+    showToast('Notificaciones reactivadas. Los mensajes del periodo de desactivación no se reenviarán (RF-96).','success');
+  }
+  renderPrefs(); refrescar();
+}
+function togglePref(el){
+  const t = el.dataset.t;
+  S.prefs[t] = !S.prefs[t];
+  el.classList.toggle('on', S.prefs[t]);
+  showToast((S.prefs[t]?'Activaste ':'Silenciaste ')+TYPE[t].label.toLowerCase(),'info');
+}
+
+/* ═══════ ADMIN · BANCO ═══════ */
+function setBankFilter(f){
+  S.bankFilter=f;
+  document.querySelectorAll('[data-bf]').forEach(c=>c.classList.toggle('sel', c.dataset.bf===f));
+  renderBank();
+}
+function stateBadgeMsg(st){
+  return {ACTIVO:['b-success','Activo'],INACTIVO:['b-neutral','Inactivo'],RECHAZADO:['b-danger','Rechazado']}[st]||['b-neutral',st];
+}
+function renderBank(){
+  const list = document.getElementById('bank-list');
+  if(!list) return;
+  let items = S.bankFilter==='all' ? MSGS : MSGS.filter(m=>m.state===S.bankFilter);
+  document.getElementById('bank-count').textContent = MSGS.length;
+  if(!items.length){
+    list.innerHTML = '<div class="empty"><div class="empty-ico">📭</div><div class="empty-title">Sin mensajes con ese filtro</div><div class="empty-desc">Ajusta los filtros o crea un mensaje nuevo.</div></div>';
+    return;
+  }
+  list.innerHTML = items.map(m=>{
+    const t = TYPE[m.type]; const [scls,slbl]=stateBadgeMsg(m.state);
+    return '<div class="msg-card">'+
+      '<div class="msg-card-top"><span class="badge '+t.badge+'">'+t.icon+' '+t.label+'</span><span class="badge '+scls+'">'+slbl+'</span></div>'+
+      '<div class="msg-card-title">'+esc(m.title)+'</div>'+
+      '<div class="msg-card-text">'+esc(m.text)+'</div>'+
+      '<div class="msg-card-foot">'+m.moms.map(x=>'<span class="badge b-neutral">'+MOM_LABEL[x]+'</span>').join('')+
+      '<span style="margin-left:auto;display:flex;gap:6px">'+
+      '<button class="icon-btn" onclick="openMsgForm(\''+m.id+'\')" title="Editar">✎</button>'+
+      '<button class="icon-btn" onclick="toggleMsgState(\''+m.id+'\')" title="Activar/Inactivar">'+(m.state==='ACTIVO'?'⏸':'▶')+'</button></span></div>'+
+      '<div class="msg-meta">Creado por <b>'+m.creadoPor+'</b> · '+m.creada+'<br>Última modificación por <b>'+m.modPor+'</b> · '+m.mod+'</div>'+
+      '</div>';
+  }).join('');
+}
+function toggleMsgState(id){
+  const m = MSGS.find(x=>x.id===id); if(!m) return;
+  if(m.state==='RECHAZADO'){ showToast('Un mensaje rechazado debe editarse antes de activarse (RF-85).','warning'); return; }
+  if(m.state==='INACTIVO' && !m.moms.length){ showToast('No se puede activar sin momentos de entrega (RF-86).','error'); return; }
+  m.state = m.state==='ACTIVO'?'INACTIVO':'ACTIVO';
+  m.modPor = ADMIN_USER; m.mod = fmtFecha(ahora());
+  refrescar();
+  showToast(m.state==='ACTIVO'?'Mensaje activado':'Mensaje inactivado','success');
+}
+function openMsgForm(id){
+  S.currentMsg = id||null;
+  const sel = document.getElementById('f-type');
+  sel.innerHTML = Object.keys(TYPE).map(k=>'<option value="'+k+'">'+TYPE[k].label+' ('+k+')</option>').join('');
+  const grid = document.getElementById('mom-grid');
+  grid.innerHTML = MOMENTOS.map(m=>'<button class="mom-chip" data-m="'+m+'" onclick="toggleMom(this)"><span class="mom-check">✓</span> '+MOM_LABEL[m]+'</button>').join('');
+  if(id){
+    const m = MSGS.find(x=>x.id===id);
+    document.getElementById('form-title').textContent='Editar mensaje';
+    sel.value=m.type;
+    document.getElementById('f-title').value=m.title;
+    document.getElementById('f-content').value=m.text;
+    S.currentMoms = m.moms.slice();
+    document.querySelector('input[name="f-state"][value="'+(m.state==='RECHAZADO'?'INACTIVO':m.state)+'"]').checked=true;
+  } else {
+    document.getElementById('form-title').textContent='Nuevo mensaje';
+    sel.value='RECORDATORIO_USO';
+    document.getElementById('f-title').value='';
+    document.getElementById('f-content').value='';
+    S.currentMoms=[];
+    document.querySelector('input[name="f-state"][value="ACTIVO"]').checked=true;
+  }
+  grid.querySelectorAll('.mom-chip').forEach(c=>c.classList.toggle('sel', S.currentMoms.includes(c.dataset.m)));
+  document.getElementById('f-content-err').classList.add('hidden');
+  document.getElementById('f-title-err').classList.add('hidden');
+  document.getElementById('f-mom-err').classList.add('hidden');
+  validateContent();
+  go('s-msg-form');
+}
+function toggleMom(el){
+  const m = el.dataset.m;
+  S.currentMoms = S.currentMoms.includes(m) ? S.currentMoms.filter(x=>x!==m) : S.currentMoms.concat([m]);
+  el.classList.toggle('sel', S.currentMoms.includes(m));
+  document.getElementById('f-mom-err').classList.add('hidden');
+}
+function rxEsc(s){ return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+function findRestricted(text){
+  const low = (text||'').toLowerCase();
+  return S.terminos.filter(w=>new RegExp('\\b'+rxEsc(w.toLowerCase())).test(low));
+}
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function validateContent(){
+  const content = document.getElementById('f-content');
+  const title = document.getElementById('f-title');
+  if(!content) return [];
+  const txt = content.value, ttl = title.value;
+  document.getElementById('f-count').textContent = txt.length+' / 140';
+  const hits = findRestricted(txt + ' ' + ttl);
+  const prev = document.getElementById('term-preview');
+  if(!txt.trim() && !ttl.trim()){
+    prev.innerHTML = '<span style="color:var(--tm)">La vista previa aparecerá aquí…</span>';
+    content.classList.remove('err','ok'); return hits;
+  }
+  let html = esc((ttl?ttl+' — ':'')+txt);
+  hits.forEach(w=>{ html = html.replace(new RegExp('('+rxEsc(w)+')','gi'), '<span class="term-hit">$1</span>'); });
+  prev.innerHTML = html;
+  const errBox = document.getElementById('f-content-err');
+  if(hits.length){
+    content.classList.add('err'); content.classList.remove('ok');
+    errBox.textContent='⚠ Contiene términos restringidos: '+hits.join(', ')+' (RF-85)';
+    errBox.classList.remove('hidden');
+  } else {
+    content.classList.remove('err'); content.classList.add('ok');
+    errBox.classList.add('hidden');
+  }
+  return hits;
+}
+function saveMsg(){
+  const content = document.getElementById('f-content');
+  const titleEl = document.getElementById('f-title');
+  const txt = content.value.trim(), ttl = titleEl.value.trim();
+  const type = document.getElementById('f-type').value;
+  const wantState = document.querySelector('input[name="f-state"]:checked').value;
+  const hits = validateContent();
+  let ok = true;
+  if(!ttl){ const e=document.getElementById('f-title-err'); e.textContent='El título no puede estar vacío.'; e.classList.remove('hidden'); ok=false; }
+  if(!txt){ const e=document.getElementById('f-content-err'); e.textContent='El contenido no puede estar vacío.'; e.classList.remove('hidden'); content.classList.add('err'); ok=false; }
+  if(wantState==='ACTIVO' && !S.currentMoms.length){
+    const e=document.getElementById('f-mom-err'); e.textContent='Un mensaje activo necesita al menos un momento de entrega (RF-86).'; e.classList.remove('hidden'); ok=false;
+  }
+  if(!ok) return;
+  let finalState = wantState;
+  if(hits.length){ finalState='RECHAZADO'; showToast('Guardado como RECHAZADO por términos restringidos (RF-85)','warning'); }
+  else showToast(S.currentMsg?'Mensaje actualizado':'Mensaje creado','success');
+  const stamp = fmtFecha(ahora());
+  if(S.currentMsg){
+    const m = MSGS.find(x=>x.id===S.currentMsg);
+    m.type=type; m.title=ttl; m.text=txt; m.state=finalState; m.moms=S.currentMoms.slice();
+    m.modPor=ADMIN_USER; m.mod=stamp;
+  } else {
+    MSGS.unshift({id:'m'+Date.now(), type, title:ttl, text:txt, state:finalState, moms:S.currentMoms.slice(),
+      creadoPor:ADMIN_USER, creada:stamp, modPor:ADMIN_USER, mod:stamp});
+  }
+  refrescar();
+  back('s-admin');
+}
+
+/* ═══════ ADMIN · REGLAS (RF-85/87/88/89/97) ═══════ */
+function renderFranjaEditor(){
+  const el = document.getElementById('franja-editor');
+  if(!el) return;
+  el.innerHTML = FRANJAS.map((f,i)=>
+    '<div class="franja-block"><div class="franja-head">'+
+    '<span class="franja-name">'+f.name+'</span>'+
+    '<input type="time" class="input time-input" value="'+f.ini+'" oninput="updFranja('+i+',\'ini\',this.value)">'+
+    '<span class="franja-dash">—</span>'+
+    '<input type="time" class="input time-input" value="'+f.fin+'" oninput="updFranja('+i+',\'fin\',this.value)">'+
+    '</div><div class="franja-days">'+
+    '<span class="fday">Días hábiles <button class="switch switch-sm '+(f.habil?'on':'')+'" onclick="updFranja('+i+',\'habil\',null)"></button></span>'+
+    '<span class="fday">Fin de semana <button class="switch switch-sm '+(f.finde?'on':'')+'" onclick="updFranja('+i+',\'finde\',null)"></button></span>'+
+    '</div></div>').join('');
+}
+function updFranja(i,key,val){
+  if(key==='habil'||key==='finde') FRANJAS[i][key] = !FRANJAS[i][key];
+  else FRANJAS[i][key]=val;
+  document.getElementById('franja-err').classList.add('hidden');
+  renderFranjaEditor();
+}
+function restaurarFranjas(){
+  FRANJAS = FRANJAS_DEF.map(f=>({...f}));
+  renderFranjaEditor();
+  showToast('Franjas restauradas a los valores por defecto (RF-89).','info');
+}
+function solapan(a,b){ return a.ini < b.fin && b.ini < a.fin; }
+function saveRules(){
+  const err = document.getElementById('franja-err');
+  // RF-89.1 · inicio < fin
+  const bad = FRANJAS.find(f=>f.ini>=f.fin);
+  if(bad){
+    err.textContent='⚠ La hora de inicio de la franja debe ser anterior a su hora de fin. Verifique la configuración de la franja '+bad.seg+'. (RF-89)';
+    err.classList.remove('hidden'); showToast('Configuración rechazada: franja inválida','error'); return;
+  }
+  // RF-89.2 · solapamiento
+  for(let i=0;i<FRANJAS.length;i++) for(let j=i+1;j<FRANJAS.length;j++){
+    if(solapan(FRANJAS[i],FRANJAS[j])){
+      err.textContent='⚠ Las franjas horarias configuradas se solapan entre sí ('+FRANJAS[i].seg+' y '+FRANJAS[j].seg+'). (RF-89)';
+      err.classList.remove('hidden'); showToast('Configuración rechazada: solapamiento','error'); return;
+    }
+  }
+  // RF-89.3 · al menos una franja habilitada por tipo de día
+  if(!FRANJAS.some(f=>f.habil)){
+    err.textContent='⚠ Debe quedar al menos una franja habilitada para días hábiles. (RF-89)';
+    err.classList.remove('hidden'); showToast('Configuración rechazada','error'); return;
+  }
+  if(!FRANJAS.some(f=>f.finde)){
+    err.textContent='⚠ Debe quedar al menos una franja habilitada para fines de semana. (RF-89)';
+    err.classList.remove('hidden'); showToast('Configuración rechazada','error'); return;
+  }
+  err.classList.add('hidden');
+  S.reglas.limHabil = Number(document.getElementById('lim-week').value)||0;
+  S.reglas.limFinde = Number(document.getElementById('lim-weekend').value)||0;
+  S.reglas.intervalo = Number(document.getElementById('min-interval').value)||1;
+  Object.keys(TYPE).forEach(k=>{
+    const inp = document.getElementById('ttl-'+k);
+    if(inp) S.ttl[k] = Number(inp.value)||TYPE[k].ttlDef;
+  });
+  showToast('Configuración guardada y aplicada al motor de envío de inmediato (sin reinicio ni cambios de código).','success');
+  refrescar();
+}
+function renderTerms(){
+  const el = document.getElementById('term-list');
+  if(el) el.innerHTML = S.terminos.map((t,i)=>'<span class="term-tag">'+esc(t)+'<button class="term-x" onclick="delTerm('+i+')" title="Eliminar">✕</button></span>').join('') || '<span class="txt-s">Sin términos configurados.</span>';
+  const dk = document.getElementById('dk-terms');
+  if(dk) dk.innerHTML = S.terminos.map(t=>'<span class="term-tag" style="padding-right:10px">'+esc(t)+'</span>').join('') || '<span class="txt-s">Sin términos.</span>';
+}
+function addTerm(){
+  const inp = document.getElementById('term-new');
+  const v = inp.value.trim().toLowerCase();
+  if(!v) return;
+  if(S.terminos.includes(v)){ showToast('Ese término ya está en la lista','info'); inp.value=''; return; }
+  S.terminos.push(v); inp.value='';
+  renderTerms(); validateContent();
+  showToast('Término "'+v+'" añadido. Se aplica en vivo a la validación (RF-85).','success');
+}
+function delTerm(i){
+  const v = S.terminos[i];
+  S.terminos.splice(i,1);
+  renderTerms(); validateContent();
+  showToast('Término "'+v+'" eliminado de la lista (RF-85).','info');
+}
+function renderTTL(){
+  const el = document.getElementById('ttl-editor');
+  if(el) el.innerHTML = Object.keys(TYPE).map(k=>
+    '<div class="rule-row"><div class="rule-txt"><div class="rule-name">'+TYPE[k].label+'</div>'+
+    '<div class="rule-desc">'+k+(k==='ACOMPANAMIENTO_EMOCIONAL'?' · TTL no definido en el Excel; 12 h asumido':' · defecto '+TYPE[k].ttlDef+' h')+'</div></div>'+
+    '<div class="row" style="gap:6px"><input type="number" class="input rule-input" id="ttl-'+k+'" value="'+S.ttl[k]+'" min="1" max="24"><span class="txt-s">h</span></div></div>').join('');
+  const dk = document.getElementById('dk-ttl');
+  if(dk) dk.innerHTML = Object.keys(TYPE).map(k=>
+    '<div class="rule-row"><div class="rule-txt"><div class="rule-name">'+TYPE[k].label+'</div></div><div class="mono txt-t">'+S.ttl[k]+' h</div></div>').join('');
+}
+function renderDkRules(){
+  const a=document.getElementById('dk-lim-week'); if(a) a.textContent=S.reglas.limHabil;
+  const b=document.getElementById('dk-lim-weekend'); if(b) b.textContent=S.reglas.limFinde;
+  const c=document.getElementById('dk-interval'); if(c) c.textContent=S.reglas.intervalo;
+  const el=document.getElementById('dk-franjas');
+  if(el) el.innerHTML = FRANJAS.map(f=>
+    '<div class="rule-row"><div class="rule-txt"><div class="rule-name">'+f.name+'</div>'+
+    '<div class="rule-desc">'+(f.habil?'✓ hábiles':'✕ hábiles')+' · '+(f.finde?'✓ finde':'✕ finde')+'</div></div>'+
+    '<div class="mono" style="color:var(--ts)">'+f.ini+' – '+f.fin+'</div></div>').join('');
+}
+
+/* ═══════ MÉTRICAS EN VIVO (RF-100/101) ═══════ */
+function calcMetrics(){
+  const reales = REG.filter(r=>['entregada','abierta','descartada','expirada','fallida'].includes(r.state));
+  const entregadas = reales.filter(r=>['entregada','abierta','descartada'].includes(r.state));
+  const abiertas = reales.filter(r=>r.state==='abierta');
+  const conSesion = abiertas.filter(r=>r.sesion_origen);
+  const pct=(a,b)=> b? Math.round(a/b*100)+'%' : '—';
+  const porUsuario = COHORT_USERS.map(u=>{
+    const rs = reales.filter(r=>r.identidad.user===u);
+    const ent = rs.filter(r=>['entregada','abierta','descartada'].includes(r.state));
+    const ab = rs.filter(r=>r.state==='abierta');
+    const cs = ab.filter(r=>r.sesion_origen);
+    return {user:u, enviadas:rs.length, apertura:pct(ab.length,ent.length), conversion:pct(cs.length,ab.length)};
+  });
+  const semanas = [1,2,3,4,5].map(w=>{
+    const rs = reales.filter(r=>r.identidad.semana===w);
+    const ent = rs.filter(r=>['entregada','abierta','descartada'].includes(r.state));
+    const ab = rs.filter(r=>r.state==='abierta');
+    return {w:'S'+w, v: ent.length? Math.round(ab.length/ent.length*100) : 0};
+  });
+  return {
+    enviadas: reales.length,
+    entregadas: entregadas.length,
+    apertura: pct(abiertas.length, entregadas.length),
+    conversion: pct(conSesion.length, abiertas.length),
+    descartadas: reales.filter(r=>r.state==='descartada').length,
+    pctEntrega: pct(entregadas.length, reales.length),
+    porUsuario, semanas,
+  };
+}
+function renderMetrics(){
+  const m = calcMetrics();
+  const kpis = [
+    {v:m.apertura, l:'Tasa de apertura', s:'abiertas / entregadas'},
+    {v:m.conversion, l:'Conversión a interacción', s:'sesión / abiertas'},
+    {v:String(m.enviadas), l:'Notificaciones enviadas', s:m.pctEntrega+' entregadas'},
+    {v:String(m.descartadas), l:'Descartadas', s:'sobre '+m.entregadas+' entregadas'},
+  ];
+  const html = kpis.map(k=>'<div class="kpi"><div class="kpi-val">'+k.v+'</div><div class="kpi-label">'+k.l+'</div><div class="kpi-sub">'+k.s+'</div></div>').join('');
+  const a=document.getElementById('m-kpis'); if(a) a.innerHTML=html;
+  const b=document.getElementById('dk-kpis'); if(b) b.innerHTML=html;
+  renderBarsInto('mini-bars', m.semanas, 110);
+  renderBarsInto('dk-bars', m.semanas, 150);
+  const cb=document.getElementById('dk-cohort-body');
+  if(cb) cb.innerHTML = m.porUsuario.map(u=>'<tr><td>'+nombreVisible(u.user)+'</td><td class="mono">'+u.enviadas+'</td><td class="mono">'+u.apertura+'</td><td class="mono">'+u.conversion+'</td></tr>').join('');
+}
+function renderBarsInto(elId, data, maxH){
+  const el = document.getElementById(elId); if(!el) return;
+  const max = Math.max(1, ...data.map(d=>d.v));
+  el.innerHTML = data.map(d=>'<div class="bar-col"><span class="bar-val">'+d.v+'%</span>'+
+    '<div class="bar" style="height:'+(d.v/max*maxH)+'px"></div><span class="bar-lbl">'+d.w+'</span></div>').join('');
+}
+
+/* ═══════ HISTORIAL + PRIVACIDAD (RF-95/102) ═══════ */
+function nombreVisible(u){ return S.permisoIndividual ? u : (SEUDO[u]||'Participante ?'); }
+function renderHistory(){
+  const body=document.getElementById('dk-hist-body');
+  if(!body) return;
+  const rows = REG.filter(r=>r.state!=='generada').slice(0,40);
+  body.innerHTML = rows.map(r=>{
+    const t=TYPE[r.identidad.type]; const [bcls,blbl]=STATE_BADGE[r.state]||['b-neutral',r.state];
+    return '<tr><td class="mono">'+r.identidad.id+'</td><td>'+nombreVisible(r.identidad.user)+'</td>'+
+      '<td><span class="badge '+t.badge+'">'+t.label+'</span></td>'+
+      '<td class="mono" style="font-size:11px">'+r.identidad.evento+'</td>'+
+      '<td class="mono" style="font-size:11px">'+r.identidad.canal+'</td>'+
+      '<td><span class="badge '+bcls+'">'+blbl+'</span></td>'+
+      '<td class="mono" style="font-size:11px;color:var(--tm)">'+fmtFecha(r.identidad.creada)+'</td></tr>';
+  }).join('');
+  const note=document.getElementById('perm-note');
+  if(note){
+    note.className = S.permisoIndividual?'dk-note':'dk-note warn';
+    note.innerHTML = S.permisoIndividual
+      ? '🔓 Permiso de acceso individual <b>activo</b>: las identidades son visibles y este acceso quedó registrado en la bitácora (RF-102).'
+      : '🔒 Identidades seudonimizadas. Activa el permiso de acceso individual para revelarlas; el acceso quedará registrado en la bitácora.';
+  }
+  const bb=document.getElementById('dk-bit-body');
+  if(bb) bb.innerHTML = S.bitacora.length
+    ? S.bitacora.map(e=>'<tr><td class="mono">'+e.ts+'</td><td>'+e.admin+'</td><td>'+e.accion+'</td></tr>').join('')
+    : '<tr><td colspan="3" style="color:var(--tm);text-align:center;padding:22px">Sin accesos individuales registrados.</td></tr>';
+}
+function togglePermiso(){
+  if(!S.permisoIndividual){ document.getElementById('dk-modal').classList.add('visible'); }
+  else {
+    S.permisoIndividual=false;
+    document.getElementById('sw-perm').classList.remove('on');
+    S.bitacora.unshift({ts:fmtFecha(ahora()), admin:'admin@usco.edu.co', accion:'Desactivó el permiso de acceso individual al historial'});
+    showToast('Permiso de acceso individual desactivado. Identidades seudonimizadas de nuevo (RF-102).','info');
+    refrescar();
+  }
+}
+function confirmPermiso(){
+  S.permisoIndividual=true;
+  document.getElementById('sw-perm').classList.add('on');
+  document.getElementById('dk-modal').classList.remove('visible');
+  S.bitacora.unshift({ts:fmtFecha(ahora()), admin:'admin@usco.edu.co', accion:'Activó el permiso de acceso individual al historial de notificaciones'});
+  showToast('🔓 Acceso individual concedido y registrado en la bitácora (RF-102).','warning');
+  refrescar();
+}
+function cancelPermiso(){ document.getElementById('dk-modal').classList.remove('visible'); }
+
+/* ═══════ DESKTOP BANK ═══════ */
+function renderDkBank(){
+  const body = document.getElementById('dk-bank-body');
+  if(!body) return;
+  body.innerHTML = MSGS.map(m=>{
+    const t=TYPE[m.type]; const [scls,slbl]=stateBadgeMsg(m.state);
+    return '<tr class="clickable" onclick="setAdminLayout(\'mobile\');go(\'s-admin\');switchTab(\'bank\');openMsgForm(\''+m.id+'\')">'+
+      '<td style="max-width:300px"><b>'+esc(m.title)+'</b><br><span style="color:var(--tm);font-size:11.5px">'+esc(m.text)+'</span></td>'+
+      '<td><span class="badge '+t.badge+'">'+t.label+'</span></td>'+
+      '<td style="font-size:11.5px">'+(m.moms.map(x=>MOM_LABEL[x]).join(', ')||'—')+'</td>'+
+      '<td><span class="badge '+scls+'">'+slbl+'</span></td>'+
+      '<td class="mono" style="font-size:11px">'+m.creadoPor+'<br><span style="color:var(--tm)">'+m.creada+'</span></td>'+
+      '<td class="mono" style="font-size:11px">'+m.modPor+'<br><span style="color:var(--tm)">'+m.mod+'</span></td></tr>';
+  }).join('');
+}
+
+/* ═══════ TEMA / TOAST ═══════ */
+function toggleDark(){
+  S.dark=!S.dark;
+  const th = S.dark?'dark':'';
+  document.getElementById('phone').setAttribute('data-theme', th);
+  document.getElementById('desktop').setAttribute('data-theme', th);
+  document.documentElement.setAttribute('data-theme', th);
+  document.querySelectorAll('.modal-card').forEach(m=>m.setAttribute('data-theme', th));
+  const b=document.getElementById('btn-dark');
+  b.textContent = S.dark?'☽ Oscuro':'☀ Claro';
+  b.className = S.dark?'demo-btn active':'demo-btn';
+}
+function showToast(msg,type){
+  const wrap=document.getElementById('toast-container');
+  const t=document.createElement('div');
+  t.className='toast'+(type?' t-'+type:'');
+  t.textContent=msg;
+  wrap.appendChild(t);
+  setTimeout(()=>t.remove(),4200);
+}
+function closePhoneModal(){ document.getElementById('phone-modal').classList.remove('visible'); }
+
+/* ═══════ REFRESCO GLOBAL ═══════ */
+function refrescar(){
+  renderNotis(); renderPrefs(); renderBank(); renderDkBank();
+  renderFranjaEditor(); renderDkRules(); renderTerms(); renderTTL();
+  renderMetrics(); renderHistory();
+}
+function tickUI(){
+  const t = ahora();
+  const finde = esFinde(t);
+  const f = franjaActiva(t);
+  const cd = document.getElementById('clock-disp');
+  cd.textContent = fmtFecha(t)+' UTC-5';
+  cd.className = 'clock'+(finde?' finde':'');
+  document.getElementById('gauge-envio').innerHTML =
+    'envíos hoy <b>'+S.envio.notisDia+'/'+limiteHoy()+'</b> · franja <b>'+(f?f.name:'fuera')+'</b>'+
+    (S.cola.length?' · cola <b>'+S.cola.length+'</b>':'')+
+    (S.programadas.length?' · prog <b>'+S.programadas.length+'</b>':'');
+  if(document.getElementById('s-noti').classList.contains('active') && (S.cola.length||S.programadas.length)) renderNotis();
+}
+
+/* ═══════ LOOP ═══════ */
+setInterval(()=>{
+  if(!S.sim.paused){
+    S.sim.now += 250 * S.sim.factor;
+    rolloverDia();
+    procesarCola();
+  }
+  tickUI();
+}, 250);
+
+/* ═══════ INIT ═══════ */
+S.envio.diaClave = claveDia(S.sim.now);
+seedHistorial();
+refrescar();
+tickUI();
+</script>
+</body>
+</html>

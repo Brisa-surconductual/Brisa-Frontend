@@ -72,7 +72,7 @@ Reglas duras:
 
 ---
 
-## Design system (fuente de verdad: `docs/Design_System_prototipo_v1.2.html`)
+## Design system (fuente de verdad: `docs/prototipos/Design_System_prototipo_v1.2.html`)
 
 - Usar SIEMPRE variables de `tokens.css`. **Nunca** hardcodear colores ni
   espaciados. Espaciado: `--s1`..`--s10`. Radios: `--r-sm/md/lg/xl/full`.
@@ -108,9 +108,9 @@ Fuente: `docs/Especificacion_Requerimientos_0717.xlsx`.
 
 ## Referencias dentro del repo
 
-- Prototipo navegable M01: `docs/M01_prototipo_v1.2.1.html` (lógica ya escrita:
+- Prototipo navegable M01: `docs/prototipos/M01_prototipo_v1.2.1.html` (lógica ya escrita:
   `isValidEmail`, `pwStrength`, `doLogin`, `doRecover`, timeout de inactividad).
-- Design system: `docs/Design_System_prototipo_v1.2.html`.
+- Design system: `docs/prototipos/Design_System_prototipo_v1.2.html`.
 - Requerimientos: `docs/Especificacion_Requerimientos_0717.xlsx`.
 
 Al portar una pantalla del prototipo, tomar la LÓGICA de validación tal cual y
