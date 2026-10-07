@@ -110,12 +110,39 @@ Fuente: `docs/Especificacion_Requerimientos_0717.xlsx`.
 
 ---
 
+## Reglas de dominio (M03 — Chat)
+
+Fuente de verdad de datos, endpoints y errores:
+`docs/M03/M03_contrato_api_estudiante.md`. No se inventan campos. Si falta
+algo, se registra en aclaraciones y no se improvisa.
+
+- Toda comunicación con el backend vive en `features/chat/api/` y usa
+  `apiClient` de `shared/utils/apiClient.jsx`. **No hay datos simulados
+  dentro de `api/`.**
+- Los errores se manejan por `codigo` (contrato 1.3), nunca comparando el
+  texto de `message`. El `message` del backend se muestra al usuario **tal
+  cual**.
+- El frontend **nunca** envía `id_usuario` y **nunca** muestra el perfil
+  clínico (`tipo_dependencia`, `tipo_craving`).
+- **Nunca** `console.log` de respuestas del estudiante: son datos de salud.
+- El texto de los nodos se muestra sin modificar (RF-26).
+- Tipos de entrada: solo los 6 de RF-27 más `TEXTO_LIBRE`. El formulario se
+  construye como **registro de componentes por `tipo_entrada`**: agregar un
+  tipo es agregar un componente, no editar un `switch`.
+- Sin emojis en la interfaz: los íconos de opciones son nombres de lucide
+  (contrato 2.3.1).
+
+---
+
 ## Referencias dentro del repo
 
 - Prototipo navegable M01: `docs/prototipos/M01_prototipo_v1.2.1.html` (lógica ya escrita:
   `isValidEmail`, `pwStrength`, `doLogin`, `doRecover`, timeout de inactividad).
 - Design system: `docs/prototipos/Design_System_prototipo_v1.1.html`.
 - Requerimientos: `docs/Especificacion_Requerimientos_0717.xlsx`.
+- Prototipo M03 (solo referencia visual; si difiere del contrato, gana el
+  contrato): `docs/prototipos/M03_prototipo_v1.1.html`.
+- Contrato API M03 (estudiante): `docs/M03/M03_contrato_api_estudiante.md`.
 
 Al portar una pantalla del prototipo, tomar la LÓGICA de validación tal cual y
 traducirla a la arquitectura del repo (page delgada + hook + services + utils).
