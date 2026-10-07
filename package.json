@@ -57,6 +57,10 @@
     "src/app/**/*.{js,jsx}": [
       "prettier --write",
       "eslint --fix"
+    ],
+    "src/features/chat/**/*.{js,jsx}": [
+      "prettier --write",
+      "eslint --fix"
     ]
   }
 }
