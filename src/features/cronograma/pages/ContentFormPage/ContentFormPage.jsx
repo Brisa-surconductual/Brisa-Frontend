@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 import {
   useLocation,
   useNavigate,
@@ -17,6 +19,9 @@ import {
 
 import { usePsychoeducationalContentForm } from './hooks/usePsychoeducationalContentForm.js';
 
+import { crearContenido } from '@/features/cronograma/api/contenido/crearContenido.jsx';
+import { actualizarContenido } from '@/features/cronograma/api/contenido/actualizarContenido.jsx';
+
 const EMPTY_CONTENT = Object.freeze({
   name: '',
   type: '',
@@ -25,13 +30,14 @@ const EMPTY_CONTENT = Object.freeze({
 export function ContentFormPage({
   initialValues,
   mode = 'create',
-  loading = false,
-  onValidSubmit,
 }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { contentId } = useParams();
   const { role, logout } = useAuth();
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   const isEditMode = mode === 'edit';
 
@@ -47,19 +53,36 @@ export function ContentFormPage({
   const hasEditContent =
     !isEditMode || Boolean(selectedContent);
 
-  function handleValidSubmit(payload) {
-    if (isEditMode) {
-      onValidSubmit?.({
-        id:
+  async function handleValidSubmit(payload) {
+    setIsSubmitting(true);
+    setSubmitError('');
+
+    try {
+      if (isEditMode) {
+        const id =
           selectedContent?.id ??
-          contentId,
-        ...payload,
-      });
+          contentId;
 
-      return;
+        await actualizarContenido({
+          id,
+          ...payload,
+        });
+      } else {
+        await crearContenido(payload);
+      }
+
+      navigate(
+        '/app/administrativo/cronograma/contenidos',
+      );
+    } catch {
+      setSubmitError(
+        isEditMode
+          ? 'No pudimos actualizar el contenido. Verifica la información e intenta nuevamente.'
+          : 'No pudimos crear el contenido. Verifica la información e intenta nuevamente.',
+      );
+    } finally {
+      setIsSubmitting(false);
     }
-
-    onValidSubmit?.(payload);
   }
 
   const {
@@ -155,12 +178,21 @@ export function ContentFormPage({
               : 'Registra la información general de un nuevo contenido psicoeducativo.'}
           </p>
 
+          {submitError && (
+            <div
+              className="mt-[var(--space-5)] rounded-[var(--radius-md)] border border-[var(--danger-border)] bg-[var(--danger-bg)] p-[var(--space-4)] text-[13px] font-semibold text-[var(--danger-text)]"
+              role="alert"
+            >
+              {submitError}
+            </div>
+          )}
+
           {hasEditContent ? (
             <div className="mt-[var(--space-6)]">
               <PsychoeducationalContentForm
                 form={form}
                 errors={errors}
-                loading={loading}
+                loading={isSubmitting}
                 submitLabel={
                   isEditMode
                     ? 'Guardar cambios'

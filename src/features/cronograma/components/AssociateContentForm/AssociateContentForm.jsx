@@ -15,7 +15,6 @@ export function AssociateContentForm({
   contentOptions = [],
   contentHint = '',
   temporalUnitOptions = [],
-  orderHint = '',
   successMessage = '',
   onChange,
   onSubmit,
@@ -36,9 +35,8 @@ export function AssociateContentForm({
           </h2>
 
           <p className="mt-[var(--space-2)] mb-0 text-[13px] leading-[1.6] text-[var(--text-muted)]">
-            Indica en qué posición del cronograma de la unidad queda la
-            actividad. Estará disponible durante todo el rango de fechas de la
-            unidad.
+            Selecciona el contenido, la unidad temporal y el rango de
+            disponibilidad en el que estará habilitado.
           </p>
         </div>
 
@@ -69,16 +67,25 @@ export function AssociateContentForm({
         />
 
         <TextField
-          id="associate-content-order"
-          name="order"
-          type="number"
-          min="1"
-          step="1"
-          label="Orden dentro de la unidad"
-          placeholder="Ej. 1"
-          value={form.order}
-          error={errors.order}
-          hint={orderHint}
+          id="associate-content-available-from"
+          name="availableFrom"
+          type="datetime-local"
+          step="60"
+          label="Inicio de disponibilidad"
+          value={form.availableFrom}
+          error={errors.availableFrom}
+          required
+          onChange={onChange}
+        />
+
+        <TextField
+          id="associate-content-available-until"
+          name="availableUntil"
+          type="datetime-local"
+          step="60"
+          label="Fin de disponibilidad"
+          value={form.availableUntil}
+          error={errors.availableUntil}
           required
           onChange={onChange}
         />

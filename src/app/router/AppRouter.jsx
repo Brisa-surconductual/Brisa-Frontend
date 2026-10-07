@@ -212,12 +212,12 @@ export function AppRouter() {
               />
 
               <Route
-                path="administrativo/cronograma/:unitId/contenido"
+                path="administrativo/cronograma/:scheduleId/unidades/:unitId/contenido"
                 element={<AssociateContentPage />}
               />
 
               <Route
-                path="administrativo/cronograma/:unitId"
+                path="administrativo/cronograma/:scheduleId/unidades/:unitId"
                 element={<TemporalUnitDetailPage />}
               />
             </Route>

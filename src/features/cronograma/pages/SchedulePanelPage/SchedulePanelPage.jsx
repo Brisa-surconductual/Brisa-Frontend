@@ -71,9 +71,13 @@ export function SchedulePanelPage() {
 
   function handleViewUnitDetails(unit) {
     const unitId = unit.idUnidadTemporal || unit.id;
-    navigate(`/app/administrativo/cronograma/${encodeURIComponent(unitId)}`, {
-      state: { unit }
-    });
+
+    navigate(
+      `/app/administrativo/cronograma/${encodeURIComponent(idSchedule)}/unidades/${encodeURIComponent(unitId)}`,
+      {
+        state: { unit },
+      },
+    );
   }
 
   if (!schedule) {
