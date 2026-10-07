@@ -1,16 +1,19 @@
 import { describe, expect, it } from 'vitest';
 
 import { TIPO_ENTRADA } from '../../types/index.js';
+import { resolverRespuesta } from '../NodeInputForm/resolverRespuesta.js';
 import { REGISTRO_ENTRADAS } from './registroEntradas.js';
 import { alternarSeleccion, textoAyuda } from './seleccionMultiple.js';
 
-const { SELECCION_UNICA, SELECCION_MULTIPLE, BOOLEANO } = TIPO_ENTRADA;
+const { SELECCION_UNICA, SELECCION_MULTIPLE, BOOLEANO, ESCALA } = TIPO_ENTRADA;
 
 const opciones = [
   { valor: 'si', etiqueta: 'Sí, claro' },
   { valor: 'no', etiqueta: 'No' },
 ];
 const multiple = { opciones, min_selecciones: 1, max_selecciones: 1 };
+const escala = { min: 0, max: 10, paso: 1 };
+const medios = { min: 0, max: 5, paso: 0.5 };
 const booleano = { etiqueta_verdadero: 'Sí', etiqueta_falso: 'Todavía no' };
 
 describe('registro', () => {
@@ -36,6 +39,15 @@ describe('validar', () => {
       'FUERA_DE_RANGO',
     ],
     [SELECCION_MULTIPLE, multiple, ['si', 'no'], 'FUERA_DE_RANGO'],
+    [ESCALA, escala, 7, null],
+    [ESCALA, escala, 11, 'FUERA_DE_RANGO'],
+    [ESCALA, escala, -1, 'FUERA_DE_RANGO'],
+    [ESCALA, escala, 7.5, 'FORMATO_INVALIDO'],
+    [ESCALA, escala, '7', 'TIPO_DATO_INVALIDO'],
+    [ESCALA, escala, NaN, 'TIPO_DATO_INVALIDO'],
+    [ESCALA, medios, 2.5, null],
+    [ESCALA, medios, 2.25, 'FORMATO_INVALIDO'],
+    [ESCALA, { min: 0, max: 1, paso: 0.1 }, 0.1 + 0.2, null],
     [BOOLEANO, booleano, false, null],
     [BOOLEANO, booleano, 'false', 'TIPO_DATO_INVALIDO'],
   ])('%s con %j → %s', (tipo, entrada, respuesta, codigo) => {
@@ -71,4 +83,23 @@ it('textoAyuda se arma desde la configuración', () => {
   expect(textoAyuda(2, null)).toBe('Elige al menos 2');
   expect(textoAyuda(undefined, 4)).toBe('Elige hasta 4');
   expect(textoAyuda()).toBeNull();
+});
+
+it.each([
+  [ESCALA, escala, 7, '7/10'],
+  [ESCALA, medios, 2.5, '2,5/5'],
+])('textoRespuesta de %s', (tipo, entrada, respuesta, texto) => {
+  expect(REGISTRO_ENTRADAS[tipo].textoRespuesta(entrada, respuesta)).toBe(
+    texto,
+  );
+});
+
+it('una escala obligatoria sin tocar no tiene valor por defecto', () => {
+  expect(
+    resolverRespuesta(
+      { obligatorio: true, ...escala },
+      REGISTRO_ENTRADAS[ESCALA],
+      null,
+    ),
+  ).toMatchObject({ valido: false, codigo: 'RESPUESTA_OBLIGATORIA' });
 });
