@@ -13,8 +13,10 @@ grado. Este repositorio es SOLO el frontend.
   NO agregar `useMemo` / `useCallback` manuales salvo caso justificado; el
   compilador ya memoriza.
 - Ruteo: `react-router-dom` v7.
-- Estilos: **CSS Modules** (`*.module.css`) + variables de `src/styles/tokens.css`
-  **NO Tailwind. NO librerías de UI externas** (MUI, Chakra, etc.).
+- Estilos: **Tailwind CSS 4** vía `@tailwindcss/vite`. Los valores de diseño
+  **siempre** vienen de `src/styles/tokens.css`, con valores arbitrarios:
+  `bg-[var(--surface-card)]`, `p-[var(--space-4)]`, `rounded-[var(--radius-lg)]`.
+  **Prohibido hardcodear colores. NO librerías de UI externas** (MUI, Chakra, etc.).
 - Iconos: **`lucide-react`** únicamente. `strokeWidth` ~1.5–1.8, `size` 20 en UI.
   **Nunca emoji** en la interfaz.
 - Fuentes: Manrope (texto) e IBM Plex Mono (mono), ya importadas en `main.jsx`.
@@ -72,10 +74,12 @@ Reglas duras:
 
 ---
 
-## Design system (fuente de verdad: `docs/prototipos/Design_System_prototipo_v1.2.html`)
+## Design system (fuente de verdad: `docs/prototipos/Design_System_prototipo_v1.1.html`)
 
 - Usar SIEMPRE variables de `tokens.css`. **Nunca** hardcodear colores ni
-  espaciados. Espaciado: `--s1`..`--s10`. Radios: `--r-sm/md/lg/xl/full`.
+  espaciados. Espaciado: `--space-1`..`--space-10`. Radios:
+  `--radius-sm/md/lg/xl/2xl/full`. Superficies: `--surface-*`. Texto:
+  `--text-*`. Sombras: `--shadow-sm/md/lg`.
 - `--brand-*` es identidad. `--accent-*` está RESERVADO para gamificación (M06):
   no usarlo en M01.
 - Estados semánticos: `--success / --warning / --danger / --info` (cada uno con
@@ -106,16 +110,43 @@ Fuente: `docs/Especificacion_Requerimientos_0717.xlsx`.
 
 ---
 
+## Reglas de dominio (M03 — Chat)
+
+Fuente de verdad de datos, endpoints y errores:
+`docs/M03/M03_contrato_api_estudiante.md`. No se inventan campos. Si falta
+algo, se registra en aclaraciones y no se improvisa.
+
+- Toda comunicación con el backend vive en `features/chat/api/` y usa
+  `apiClient` de `shared/utils/apiClient.jsx`. **No hay datos simulados
+  dentro de `api/`.**
+- Los errores se manejan por `codigo` (contrato 1.3), nunca comparando el
+  texto de `message`. El `message` del backend se muestra al usuario **tal
+  cual**.
+- El frontend **nunca** envía `id_usuario` y **nunca** muestra el perfil
+  clínico (`tipo_dependencia`, `tipo_craving`).
+- **Nunca** `console.log` de respuestas del estudiante: son datos de salud.
+- El texto de los nodos se muestra sin modificar (RF-26).
+- Tipos de entrada: solo los 6 de RF-27 más `TEXTO_LIBRE`. El formulario se
+  construye como **registro de componentes por `tipo_entrada`**: agregar un
+  tipo es agregar un componente, no editar un `switch`.
+- Sin emojis en la interfaz: los íconos de opciones son nombres de lucide
+  (contrato 2.3.1).
+
+---
+
 ## Referencias dentro del repo
 
 - Prototipo navegable M01: `docs/prototipos/M01_prototipo_v1.2.1.html` (lógica ya escrita:
   `isValidEmail`, `pwStrength`, `doLogin`, `doRecover`, timeout de inactividad).
-- Design system: `docs/prototipos/Design_System_prototipo_v1.2.html`.
+- Design system: `docs/prototipos/Design_System_prototipo_v1.1.html`.
 - Requerimientos: `docs/Especificacion_Requerimientos_0717.xlsx`.
+- Prototipo M03 (solo referencia visual; si difiere del contrato, gana el
+  contrato): `docs/prototipos/M03_prototipo_v1.1.html`.
+- Contrato API M03 (estudiante): `docs/M03/M03_contrato_api_estudiante.md`.
 
 Al portar una pantalla del prototipo, tomar la LÓGICA de validación tal cual y
 traducirla a la arquitectura del repo (page delgada + hook + services + utils).
-NO copiar el CSS inline del prototipo: usar CSS Modules + tokens.
+NO copiar el CSS inline del prototipo: usar Tailwind + tokens.
 
 ---
 
@@ -124,7 +155,10 @@ NO copiar el CSS inline del prototipo: usar CSS Modules + tokens.
 ```
 npm run dev      # desarrollo
 npm run build    # producción
-npm run lint     # eslint (debe pasar antes de cada PR)
+npm run test     # pruebas (vitest)
+npm run lint     # eslint (hoy master tiene errores preexistentes; lo que debe
+                 # pasar sin errores antes de cada PR es el lint de la carpeta
+                 # de la feature tocada: npx eslint src/features/<feature>)
 npm run preview  # previsualizar build
 ```
 

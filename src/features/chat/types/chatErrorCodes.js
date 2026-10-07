@@ -1,0 +1,69 @@
+// Dónde se muestra cada error en la interfaz.
+export const CATEGORIA_ERROR_CHAT = Object.freeze({
+  INICIALIZACION: 'INICIALIZACION',
+  VALIDACION: 'VALIDACION',
+  FLUJO: 'FLUJO',
+  SINCRONIZACION: 'SINCRONIZACION',
+  PRECARGA: 'PRECARGA',
+});
+
+const { INICIALIZACION, VALIDACION, FLUJO, SINCRONIZACION, PRECARGA } =
+  CATEGORIA_ERROR_CHAT;
+
+// Regla del equipo: todo 5xx es reintentable y ningún 4xx lo es.
+const error = (httpStatus, categoria, extra) =>
+  Object.freeze({
+    httpStatus,
+    categoria,
+    reintentable: httpStatus >= 500,
+    ...extra,
+  });
+
+// Llave = `codigo` del cuerpo de error (contrato 1.3).
+export const CHAT_ERROR_CODE = Object.freeze({
+  // Contrato 3: iniciar o reanudar sesión
+  NO_AUTENTICADO: error(401, INICIALIZACION),
+  FLUJO_NO_DISPONIBLE: error(404, INICIALIZACION),
+  MODALIDAD_NO_CONFIGURADA: error(404, INICIALIZACION),
+  PERFIL_CLINICO_INCOMPLETO: error(409, INICIALIZACION),
+  ARBOL_PERSONALIZADO_NO_CONFIGURADO: error(404, INICIALIZACION),
+  ARBOL_PERSONALIZADO_NO_PUBLICADO: error(409, INICIALIZACION),
+  SIN_UNIDAD_TEMPORAL_VIGENTE: error(422, INICIALIZACION),
+  ESTADO_CONVERSACIONAL_INCONSISTENTE: error(500, INICIALIZACION),
+  PERFIL_CLINICO_NO_DISPONIBLE: error(500, INICIALIZACION),
+  ARBOL_NO_DISPONIBLE: error(500, INICIALIZACION),
+
+  // Contrato 4: obtener el nodo actual
+  SESION_NO_ENCONTRADA: error(404, FLUJO),
+  NODO_NO_ENCONTRADO: error(404, FLUJO),
+  CONTENIDO_NODO_NO_DISPONIBLE: error(500, FLUJO),
+  SESION_ERROR_CONFIGURACION: error(409, FLUJO),
+
+  // Contrato 5: errores de validación, bajo el campo
+  RESPUESTA_OBLIGATORIA: error(400, VALIDACION),
+  TIPO_DATO_INVALIDO: error(400, VALIDACION),
+  FORMATO_INVALIDO: error(400, VALIDACION),
+  FUERA_DE_RANGO: error(400, VALIDACION),
+  OPCION_NO_VALIDA: error(400, VALIDACION),
+  TIPO_ENTRADA_NO_CORRESPONDE: error(400, VALIDACION),
+  NODO_SIN_ENTRADA: error(403, VALIDACION),
+
+  // Contrato 5: errores del flujo
+  NODO_NO_ES_ACTUAL: error(409, FLUJO),
+  // Contrato 5 y D6: la interacción ya estaba registrada
+  INTERACCION_DUPLICADA: error(409, FLUJO, { tratarComoExito: true }),
+  INTERACCION_INCOMPLETA: error(422, FLUJO),
+  NODO_DESTINO_INVALIDO: error(404, FLUJO),
+  TRANSICION_NO_DETERMINADA: error(500, FLUJO),
+  INTERACCION_NO_ALMACENADA: error(500, FLUJO),
+  PERFIL_CLINICO_NO_ALMACENADO: error(500, FLUJO),
+
+  // Contrato 6.1: precarga
+  SESION_NO_INICIALIZADA: error(422, PRECARGA),
+  UNIDAD_TEMPORAL_NO_DETERMINADA: error(422, PRECARGA),
+  ARBOL_NO_DISPONIBLE_PRECARGA: error(503, PRECARGA),
+
+  // Contrato 7.2: sincronización del lote completo
+  SINCRONIZACION_INTERRUMPIDA: error(503, SINCRONIZACION),
+  SINCRONIZACION_FALLIDA: error(500, SINCRONIZACION),
+});

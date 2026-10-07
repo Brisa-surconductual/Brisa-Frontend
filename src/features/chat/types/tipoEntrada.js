@@ -1,0 +1,16 @@
+// Contrato 2.3: los 6 tipos de RF-27 más TEXTO_LIBRE (D4).
+export const TIPO_ENTRADA = Object.freeze({
+  SELECCION_UNICA: 'SELECCION_UNICA',
+  SELECCION_MULTIPLE: 'SELECCION_MULTIPLE',
+  ESCALA: 'ESCALA',
+  NUMERICO: 'NUMERICO',
+  FECHA_HORA: 'FECHA_HORA',
+  BOOLEANO: 'BOOLEANO',
+  TEXTO_LIBRE: 'TEXTO_LIBRE',
+});
+
+export const FORMATO_FECHA = Object.freeze({
+  FECHA: 'FECHA',
+  HORA: 'HORA',
+  FECHA_HORA: 'FECHA_HORA',
+});

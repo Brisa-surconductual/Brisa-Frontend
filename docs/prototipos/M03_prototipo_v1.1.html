@@ -1,0 +1,2112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brisa · Prototipo M03 · Chat Terapéutico</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ══ TOKENS (heredados del Design System v1.2) ══════════════════════ */
+:root {
+  --brand-50:#EAF6F5;--brand-100:#CFECE9;--brand-200:#9ED9D2;--brand-300:#69BFB5;
+  --brand-400:#3CA399;--brand-500:#1D8378;--brand-600:#156A61;--brand-700:#11534C;
+  --brand-800:#0C3C37;--brand-900:#082724;
+  --accent-50:#FFF0E9;--accent-100:#FFD9C7;--accent-200:#FFB494;--accent-300:#FB8E5F;
+  --accent-400:#E96F3B;--accent-500:#C8501F;--accent-600:#A03D15;--accent-700:#782D10;
+  --accent-800:#531F0A;--accent-900:#311206;
+  --n0:#FFFFFF;--n50:#FAF9F6;--n100:#F0EEE8;--n200:#E1DED5;--n300:#C7C3B6;
+  --n400:#A19C8C;--n500:#726C5A;--n600:#595549;--n700:#403D34;--n800:#282620;--n900:#161510;
+  --success:#2E7D4F;--success-bg:#E8F5ED;--success-text:#1F5C3A;--success-border:#8FCBA3;
+  --warning:#B07A12;--warning-bg:#FBF1DC;--warning-text:#7A5208;--warning-border:#E6C878;
+  --danger:#C13B30;--danger-bg:#FBEAE7;--danger-text:#8E2A21;--danger-border:#E8A99E;
+  --info:#1E6FA8;--info-bg:#E7F1FA;--info-text:#1E6FA8;--info-border:#A8CBE6;
+  --dir-aleja:var(--danger);--dir-aleja-bg:var(--danger-bg);--dir-aleja-text:var(--danger-text);--dir-aleja-border:var(--danger-border);
+  --dir-acerca:var(--info);--dir-acerca-bg:var(--info-bg);--dir-acerca-text:var(--info-text);--dir-acerca-border:var(--info-border);
+  --bg:var(--n50);--card:var(--n0);--border:var(--n200);--hover:var(--n100);
+  --tp:var(--n900);--ts:var(--n600);--tm:var(--n500);--ti:var(--n0);
+  --btn-pt:var(--n0);--btn-at:var(--n0);
+  --font:'Manrope',sans-serif;--mono:'IBM Plex Mono',monospace;
+  --r-sm:4px;--r-md:8px;--r-lg:12px;--r-xl:16px;--r-2xl:20px;--r-full:9999px;
+  --sh-sm:0 1px 2px rgba(22,21,16,.06);
+  --sh-md:0 2px 8px rgba(22,21,16,.09),0 1px 2px rgba(22,21,16,.06);
+  --sh-lg:0 8px 24px rgba(22,21,16,.10),0 2px 6px rgba(22,21,16,.06);
+}
+[data-theme="dark"] {
+  --brand-50:#082724;--brand-100:#0C3C37;--brand-200:#11534C;--brand-300:#156A61;
+  --brand-400:#1D8378;--brand-500:#3CA399;--brand-600:#69BFB5;--brand-700:#9ED9D2;
+  --brand-800:#CFECE9;--brand-900:#EAF6F5;
+  --accent-50:#311206;--accent-100:#531F0A;--accent-200:#782D10;--accent-300:#A03D15;
+  --accent-400:#C8501F;--accent-500:#E96F3B;--accent-600:#FB8E5F;
+  --success-bg:#13261B;--success-text:#9ED9AE;--success-border:#2F5C41;
+  --warning-bg:#2B2008;--warning-text:#F0C77A;--warning-border:#6B4D14;
+  --danger-bg:#2B1310;--danger-text:#F0A89E;--danger-border:#6B2A20;
+  --info-bg:#0E2233;--info-text:#9BC8E8;--info-border:#1F4566;
+  --bg:#100F0C;--card:#1E1C17;--border:#332F27;--hover:#262319;
+  --tp:#EDEAE2;--ts:#B8B3A4;--tm:#8C8676;
+  --btn-pt:var(--n900);--btn-at:var(--n900);
+  --sh-sm:0 1px 2px rgba(0,0,0,.35);--sh-md:0 2px 8px rgba(0,0,0,.45);--sh-lg:0 8px 24px rgba(0,0,0,.55);
+}
+/* ══ RESET ══ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-family:var(--font);background:#0e0e0e;color:var(--tp)}
+body{min-height:100vh;display:flex;flex-direction:column;align-items:center;background:#111}
+:focus-visible{outline:2.5px solid var(--brand-500);outline-offset:2px;border-radius:var(--r-sm)}
+button{font-family:var(--font)}
+
+/* ══ DEMO BAR ══ */
+.demo-bar{
+  width:100%;background:#0a0a0a;border-bottom:1px solid #222;
+  padding:8px 16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  font-family:var(--mono);font-size:10px;color:#888;position:sticky;top:0;z-index:1000;
+}
+.demo-bar strong{color:#aaa;margin-right:2px}
+.demo-btn{
+  background:#1a1a1a;border:1px solid #333;color:#bbb;border-radius:4px;
+  padding:3px 8px;font-size:9px;font-family:var(--mono);cursor:pointer;transition:all .1s;
+}
+.demo-btn:hover{background:#2a2a2a;color:#fff;border-color:#555}
+.demo-btn.active{background:#1D8378;border-color:#1D8378;color:#fff}
+.demo-btn.warn{border-color:#6B2A20;color:#F0A89E}
+.demo-btn.warn:hover{background:#2B1310}
+.demo-sep{color:#333;user-select:none}
+.demo-screen-pill{
+  background:#222;border:1px solid #333;border-radius:var(--r-full);
+  padding:2px 8px;color:#6BC4B8;font-size:9px;
+}
+.demo-select{background:#1a1a1a;border:1px solid #333;color:#bbb;border-radius:4px;padding:3px 6px;font-size:9px;font-family:var(--mono);cursor:pointer}
+.demo-spacer{flex:1}
+.role-badge{padding:2px 7px;border-radius:var(--r-full);font-size:9px;font-weight:600}
+.role-badge.student{background:rgba(29,131,120,.25);color:#6BC4B8;border:1px solid rgba(29,131,120,.4)}
+.role-badge.admin{background:rgba(200,80,31,.25);color:#FFC09E;border:1px solid rgba(200,80,31,.4)}
+.mode-badge{padding:2px 7px;border-radius:var(--r-full);font-size:9px;font-weight:600;background:#222;border:1px solid #333;color:#9BC8E8}
+
+/* ══ FRAME OUTER ══ */
+.frame-outer{display:flex;justify-content:center;align-items:flex-start;padding:24px 16px 40px;flex:1;width:100%;gap:16px;}
+.phone{
+  width:390px;background:var(--bg);border-radius:36px;
+  overflow:hidden;position:relative;
+  box-shadow:0 0 0 10px #1a1a1a,0 30px 80px rgba(0,0,0,.7);
+  min-height:760px;max-height:844px;
+  display:flex;flex-direction:column;
+  transition:background .2s;
+}
+.phone::before{
+  content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:100px;height:28px;background:#1a1a1a;border-radius:0 0 18px 18px;z-index:50;
+}
+
+/* ══ SCREENS SYSTEM ══ */
+.screens{flex:1;position:relative;overflow:hidden}
+.screen{position:absolute;inset:0;overflow-y:auto;background:var(--bg);opacity:0;pointer-events:none;transition:opacity .25s, transform .25s;transform:translateX(20px);}
+.screen.active{opacity:1;pointer-events:all;transform:translateX(0)}
+.screen.slide-back{transform:translateX(-20px)}
+.screen-inner{padding:16px 16px 24px;min-height:100%;display:flex;flex-direction:column}
+.screen-inner.pt-notch{padding-top:48px}
+
+/* ══ APP BAR ══ */
+.app-bar{padding:40px 16px 10px;display:flex;align-items:center;gap:10px;position:relative;z-index:10;flex-shrink:0;pointer-events:all;background:var(--bg);}
+.app-bar-back{width:34px;height:34px;border-radius:50%;background:var(--hover);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--tp);font-size:17px;transition:background .12s;flex-shrink:0}
+.app-bar-back:hover{background:var(--border)}
+.app-bar-titles{display:flex;flex-direction:column;line-height:1.25;min-width:0}
+.app-bar-title{font-size:13px;font-weight:800;color:var(--tp);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.app-bar-sub{font-size:10px;color:var(--tm);font-family:var(--mono)}
+.app-bar-spacer{flex:1}
+
+/* ══ BUTTONS ══ */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;font-family:var(--font);font-weight:700;font-size:14px;border-radius:var(--r-md);border:1.5px solid transparent;padding:11px 20px;cursor:pointer;transition:all .12s;line-height:1.2;text-decoration:none;}
+.btn-primary{background:var(--brand-500);color:var(--btn-pt)}
+.btn-primary:hover:not(:disabled){background:var(--brand-600)}
+[data-theme="dark"] .btn-primary:hover:not(:disabled){background:var(--brand-400)}
+.btn-secondary{background:var(--card);color:var(--tp);border-color:var(--border)}
+.btn-secondary:hover:not(:disabled){background:var(--hover)}
+.btn-ghost{background:transparent;color:var(--ts);border-color:transparent}
+.btn-ghost:hover:not(:disabled){background:var(--hover)}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-danger:hover:not(:disabled){background:var(--danger-text)}
+.btn-block{width:100%;margin-top:8px}
+.btn:disabled{opacity:.42;cursor:not-allowed}
+.btn-sm{padding:7px 14px;font-size:12.5px}
+.btn-xs{padding:5px 10px;font-size:11px;border-radius:var(--r-sm)}
+.btn-link{background:none;border:none;color:var(--brand-600);font-weight:600;font-size:12.5px;cursor:pointer;font-family:var(--font);padding:0;text-decoration:none;transition:color .12s}
+.btn-link:hover{color:var(--brand-500)}
+[data-theme="dark"] .btn-link{color:var(--brand-400)}
+
+/* ══ BADGES / ALERTS ══ */
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:var(--r-full);border:1px solid;white-space:nowrap}
+.bdot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.b-success{background:var(--success-bg);border-color:var(--success-border);color:var(--success-text)}
+.b-warning{background:var(--warning-bg);border-color:var(--warning-border);color:var(--warning-text)}
+.b-danger{background:var(--danger-bg);border-color:var(--danger-border);color:var(--danger-text)}
+.b-info{background:var(--info-bg);border-color:var(--info-border);color:var(--info-text)}
+.b-neutral{background:var(--hover);border-color:var(--border);color:var(--tm)}
+.alert{display:flex;gap:10px;padding:12px;border-radius:var(--r-md);border:1px solid;font-size:12.5px;line-height:1.5;margin-bottom:12px}
+.alert-icon{font-size:15px;flex-shrink:0;margin-top:1px}
+.alert-body{display:flex;flex-direction:column;gap:2px}
+.alert-title{font-weight:700;font-size:12.5px}
+.alert-desc{font-size:11.5px;opacity:.85}
+.alert-success{background:var(--success-bg);border-color:var(--success-border);color:var(--success-text)}
+.alert-warning{background:var(--warning-bg);border-color:var(--warning-border);color:var(--warning-text)}
+.alert-error{background:var(--danger-bg);border-color:var(--danger-border);color:var(--danger-text)}
+.alert-info{background:var(--info-bg);border-color:var(--info-border);color:var(--info-text)}
+.alert.hidden{display:none}
+
+/* ══ MODAL / TOAST (heredado M01) ══ */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:2000;display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.visible{display:flex}
+.modal-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-2xl);padding:26px 22px;max-width:320px;width:100%;text-align:center;box-shadow:var(--sh-lg)}
+.modal-icon{font-size:34px;margin-bottom:10px}
+.modal-title{font-size:15.5px;font-weight:800;color:var(--tp);margin-bottom:6px}
+.modal-desc{font-size:12.5px;color:var(--ts);line-height:1.5;margin-bottom:8px}
+.modal-actions{display:flex;gap:10px;margin-top:14px}
+.modal-actions .btn{flex:1;font-size:13px;padding:9px}
+.toast-wrap{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:3000;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;}
+.toast{background:var(--n900);color:var(--n0);border-radius:var(--r-full);padding:9px 18px;font-size:12.5px;font-weight:600;font-family:var(--font);box-shadow:var(--sh-lg);display:flex;align-items:center;gap:7px;animation:toastin .25s ease,toastout .25s ease .3s forwards;white-space:nowrap;max-width:340px;}
+[data-theme="dark"] .toast{background:var(--n100);color:var(--n900)}
+.toast.t-success{background:var(--success);color:#fff}
+.toast.t-error{background:var(--danger);color:#fff}
+.toast.t-warning{background:var(--warning);color:#fff}
+@keyframes toastin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes toastout{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(10px)}}
+
+/* ══ UTILS ══ */
+.mt4{margin-top:4px}.mt8{margin-top:8px}.mt12{margin-top:12px}.mt16{margin-top:16px}.mt20{margin-top:20px}
+.mb8{margin-bottom:8px}.mb12{margin-bottom:12px}.mb16{margin-bottom:16px}
+.text-center{text-align:center}
+.text-sm{font-size:11.5px;color:var(--ts)}
+.mono-sm{font-family:var(--mono);font-size:10px;color:var(--tm)}
+.bold{font-weight:700}
+.brand-text{color:var(--brand-600)}
+[data-theme="dark"] .brand-text{color:var(--brand-500)}
+.hidden{display:none!important}
+.flex1{flex:1}
+.row{display:flex;align-items:center}
+.row-between{display:flex;align-items:center;justify-content:space-between}
+
+/* ══════════════════════════════════════════════════════════════════
+   M03 · CHAT — COMPONENTES ESPECÍFICOS
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── SPLASH / INIT (RF-24) ── */
+.chat-init{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:40px;background:linear-gradient(160deg,var(--brand-700) 0%,var(--brand-500) 60%,var(--brand-400) 100%);}
+.chat-init-spinner{width:34px;height:34px;border-radius:50%;border:3px solid rgba(255,255,255,.3);border-top-color:#fff;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.chat-init-text{color:#fff;font-size:12.5px;font-weight:600;text-align:center;opacity:.9}
+
+/* ── OFFLINE BANNER (RF-34) ── */
+.offline-banner{display:none;align-items:center;gap:8px;background:var(--warning-bg);border-bottom:1px solid var(--warning-border);color:var(--warning-text);font-size:11px;font-weight:700;padding:7px 16px;flex-shrink:0;}
+.offline-banner.visible{display:flex}
+.offline-dot{width:6px;height:6px;border-radius:50%;background:var(--warning);flex-shrink:0;animation:pulse2 1.4s infinite;}
+@keyframes pulse2{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* ── PROGRESS CHIP (semana/día) ── */
+.chat-progress{display:flex;align-items:center;gap:6px;padding:8px 16px;flex-shrink:0;overflow-x:auto;}
+.chat-progress .pchip{font-family:var(--mono);font-size:9.5px;padding:3px 8px;border-radius:var(--r-full);background:var(--hover);color:var(--tm);border:1px solid var(--border);white-space:nowrap;flex-shrink:0;}
+.chat-progress .pchip.done{background:var(--brand-50);color:var(--brand-600);border-color:var(--brand-200)}
+.chat-progress .pchip.active{background:var(--brand-500);color:#fff;border-color:var(--brand-500);font-weight:700}
+[data-theme="dark"] .chat-progress .pchip.done{background:var(--brand-100);color:var(--brand-700)}
+
+/* ── THREAD ── */
+.chat-thread{flex:1;overflow-y:auto;padding:6px 16px 16px;display:flex;flex-direction:column;gap:10px;}
+.msg-row{display:flex;gap:8px;align-items:flex-end;max-width:100%;animation:msgin .25s ease;}
+@keyframes msgin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.msg-row.user{flex-direction:row-reverse;}
+.msg-avatar{width:26px;height:26px;border-radius:50%;background:var(--brand-50);border:1.5px solid var(--brand-200);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+[data-theme="dark"] .msg-avatar{background:var(--brand-100)}
+.msg-bubble{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg) var(--r-lg) var(--r-lg) 4px;padding:10px 13px;font-size:13px;line-height:1.55;color:var(--tp);max-width:78%;box-shadow:var(--sh-sm);}
+.msg-row.user .msg-bubble{background:var(--brand-500);color:#fff;border-color:var(--brand-500);border-radius:var(--r-lg) var(--r-lg) 4px var(--r-lg);}
+.msg-row.system .msg-bubble{background:var(--hover);border-style:dashed;font-style:italic;color:var(--ts);font-size:11.5px;}
+.msg-meta{font-size:9px;color:var(--tm);font-family:var(--mono);margin-top:3px;padding:0 4px;}
+
+/* ── DOCK (componente interactivo activo) ── */
+.chat-dock{flex-shrink:0;border-top:1px solid var(--border);background:var(--card);padding:14px 16px 16px;box-shadow:0 -2px 8px rgba(0,0,0,.04);}
+.dock-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--tm);margin-bottom:9px;display:flex;align-items:center;gap:6px;}
+.dock-label .rf-tag{font-family:var(--mono);font-size:8.5px;background:var(--hover);border:1px solid var(--border);padding:1px 5px;border-radius:3px;color:var(--tm);}
+
+/* ── CHOICE BUTTONS ── */
+.choice-list{display:flex;flex-direction:column;gap:8px;}
+.choice-btn{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-md);padding:11px 14px;font-size:13px;font-weight:600;color:var(--tp);text-align:left;cursor:pointer;transition:all .12s;font-family:var(--font);}
+.choice-btn:hover{border-color:var(--brand-400);background:var(--brand-50);}
+[data-theme="dark"] .choice-btn:hover{background:var(--brand-100)}
+.choice-btn.picked{background:var(--brand-500);border-color:var(--brand-500);color:#fff;}
+.choice-btn.wrong-tone{border-color:var(--danger-border)}
+.choice-grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.choice-check{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--border);display:inline-flex;align-items:center;justify-content:center;margin-right:8px;flex-shrink:0;font-size:11px;}
+.choice-btn.picked .choice-check{background:#fff;color:var(--brand-600);border-color:#fff;}
+
+/* ── SLIDER / CONTINUUM ── */
+.continuum-wrap{padding:6px 2px 2px;}
+.continuum-labels{display:flex;justify-content:space-between;font-size:10.5px;color:var(--tm);margin-bottom:8px;font-weight:600;}
+.continuum-track{position:relative;height:6px;background:var(--border);border-radius:var(--r-full);margin:0 4px 10px;}
+.continuum-fill{position:absolute;top:0;left:0;height:100%;background:var(--brand-500);border-radius:var(--r-full);transition:width .1s;}
+.continuum-thumb{position:absolute;top:50%;transform:translate(-50%,-50%);width:22px;height:22px;border-radius:50%;background:var(--brand-500);border:2.5px solid var(--card);box-shadow:var(--sh-md);cursor:grab;touch-action:none;}
+.continuum-ticks{display:flex;justify-content:space-between;padding:0 2px 10px;}
+.continuum-tick{font-family:var(--mono);font-size:9px;color:var(--tm);}
+.continuum-value{text-align:center;font-family:var(--mono);font-size:20px;font-weight:800;color:var(--brand-600);margin-bottom:4px;}
+[data-theme="dark"] .continuum-value{color:var(--brand-400)}
+
+/* ── DRAG A COLUMNAS ── */
+.dragq-text{font-size:12.5px;color:var(--ts);margin-bottom:10px;line-height:1.5;}
+.dragq-card{background:var(--card);border:1.5px solid var(--brand-300);border-radius:var(--r-lg);padding:14px 16px;font-size:13px;font-weight:700;color:var(--tp);text-align:center;margin-bottom:12px;box-shadow:var(--sh-sm);cursor:grab;position:relative;}
+.dragq-card.armed{box-shadow:0 0 0 3px rgba(29,131,120,.25);}
+.dragq-hint{font-size:9.5px;color:var(--tm);text-align:center;margin:-6px 0 12px;}
+.drag-cols{display:grid;gap:8px;}
+.drag-cols-2{grid-template-columns:1fr 1fr;}
+.drag-cols-4{grid-template-columns:1fr 1fr;}
+.drag-zone-box{background:var(--hover);border:1.5px dashed var(--border);border-radius:var(--r-lg);min-height:64px;padding:8px;display:flex;flex-direction:column;gap:5px;transition:all .12s;cursor:pointer;}
+.drag-zone-box.armable:hover,.drag-zone-box.dragover{border-color:var(--brand-400);background:var(--brand-50);}
+[data-theme="dark"] .drag-zone-box.armable:hover,[data-theme="dark"] .drag-zone-box.dragover{background:var(--brand-100)}
+.drag-zone-label{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--tm);}
+.drag-item{background:var(--card);border:1px solid var(--border);border-radius:var(--r-md);padding:5px 8px;font-size:10.5px;box-shadow:var(--sh-sm);}
+.dragq-progress{text-align:center;font-size:10.5px;color:var(--tm);margin-top:8px;font-family:var(--mono);}
+
+/* ── SWIPE VALORES ── */
+.swipe-arena{position:relative;height:150px;display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:10px;}
+.swipe-zone{position:absolute;top:0;bottom:0;width:32%;display:flex;align-items:center;justify-content:center;border-radius:var(--r-lg);font-size:10.5px;font-weight:700;opacity:.5;transition:opacity .15s;text-align:center;padding:4px;}
+.swipe-zone.left{left:0;background:var(--dir-aleja-bg);color:var(--dir-aleja-text);}
+.swipe-zone.right{right:0;background:var(--dir-acerca-bg);color:var(--dir-acerca-text);}
+.swipe-card{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-xl);padding:16px 18px;font-size:13.5px;font-weight:700;color:var(--tp);max-width:190px;text-align:center;box-shadow:var(--sh-md);position:relative;z-index:2;transition:transform .3s,opacity .3s,background .3s,border-color .3s;}
+.swipe-card.fly-left{transform:translateX(-140px) rotate(-10deg);opacity:0;border-color:var(--dir-aleja-border);background:var(--dir-aleja-bg);}
+.swipe-card.fly-right{transform:translateX(140px) rotate(10deg);opacity:0;border-color:var(--dir-acerca-border);background:var(--dir-acerca-bg);}
+.swipe-btnrow{display:flex;gap:10px;}
+.swipe-btn{flex:1;border-radius:var(--r-md);border:1.5px solid;padding:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);background:var(--card);transition:all .12s;}
+.swipe-btn.aleja{color:var(--dir-aleja-text);border-color:var(--dir-aleja-border);}
+.swipe-btn.aleja:hover{background:var(--dir-aleja-bg);}
+.swipe-btn.acerca{color:var(--dir-acerca-text);border-color:var(--dir-acerca-border);}
+.swipe-btn.acerca:hover{background:var(--dir-acerca-bg);}
+
+/* ── VALUE GRID ── */
+.value-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.value-card{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-lg);padding:12px 8px;cursor:pointer;transition:all .12s;text-align:center;}
+.value-card:hover{border-color:var(--brand-400);}
+.value-card.selected{border-color:var(--brand-500);background:var(--brand-50);color:var(--brand-600);}
+[data-theme="dark"] .value-card.selected{background:var(--brand-100);color:var(--brand-700)}
+.value-card-icon{font-size:18px;margin-bottom:3px;}
+.value-card-label{font-size:10.5px;font-weight:700;color:var(--text-primary,var(--tp));}
+.value-counter{font-size:10.5px;color:var(--tm);margin-top:8px;text-align:center;}
+.value-counter b{color:var(--brand-500);}
+
+/* ── TEXT BUILDER ── */
+.text-builder{background:var(--hover);border:1.5px solid var(--border);border-radius:var(--r-md);padding:12px;font-size:13px;color:var(--tp);line-height:1.8;min-height:44px;margin-bottom:10px;}
+.text-builder .tslot{border-bottom:1.5px solid var(--border);color:var(--tm);font-weight:700;padding:0 2px;}
+.text-builder .tslot.filled{border-bottom-color:var(--brand-400);color:var(--brand-600);}
+[data-theme="dark"] .text-builder .tslot.filled{color:var(--brand-400)}
+.builder-chips{display:flex;flex-wrap:wrap;gap:6px;}
+.builder-chip{padding:5px 12px;border-radius:var(--r-full);border:1.5px solid var(--brand-400);background:transparent;font-size:11.5px;font-weight:700;color:var(--brand-600);cursor:pointer;transition:all .12s;font-family:var(--font);}
+[data-theme="dark"] .builder-chip{color:var(--brand-400)}
+.builder-chip:hover,.builder-chip.used{background:var(--brand-500);color:#fff;border-color:var(--brand-500);}
+
+/* ── SILUETA CORPORAL ── */
+.bodymap-wrap{display:flex;gap:16px;align-items:flex-start;justify-content:center;padding:6px 0 4px;}
+.bodymap-tags{display:flex;flex-direction:column;gap:5px;flex:1;padding-top:4px;}
+.body-zone-tag{font-size:10.5px;font-weight:700;padding:5px 10px;border-radius:var(--r-full);background:var(--hover);color:var(--tm);border:1px solid var(--border);cursor:pointer;transition:all .15s;text-align:center;}
+.body-zone-tag:hover{border-color:var(--brand-400);color:var(--brand-600);}
+.body-zone-tag.active{background:var(--brand-500);color:#fff;border-color:var(--brand-500);}
+.bodymap-svg-zone{cursor:pointer;}
+
+/* ── COMIC ── */
+.comic-strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:4px;scroll-snap-type:x mandatory;}
+.comic-panel{min-width:74%;scroll-snap-align:center;background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-lg);padding:12px;flex-shrink:0;opacity:.35;transition:opacity .2s,border-color .2s;}
+.comic-panel.active{border-color:var(--brand-500);opacity:1;box-shadow:0 0 0 3px rgba(29,131,120,.1);}
+.comic-num{font-family:var(--mono);font-size:9px;font-weight:700;color:var(--tm);margin-bottom:6px;}
+.comic-illus{height:56px;background:var(--hover);border-radius:var(--r-md);margin-bottom:8px;display:flex;align-items:center;justify-content:center;font-size:26px;}
+.comic-text{font-size:11px;line-height:1.5;color:var(--ts);}
+.comic-dots{display:flex;justify-content:center;gap:5px;margin-bottom:10px;}
+.comic-dot{width:6px;height:6px;border-radius:50%;background:var(--border);}
+.comic-dot.done{background:var(--brand-500);}
+
+/* ── BAR CHART ── */
+.bar-chart{display:flex;align-items:flex-end;gap:10px;height:90px;padding:0 4px;margin-bottom:8px;}
+.bar-group{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;}
+.bar-pair{display:flex;gap:3px;align-items:flex-end;height:70px;}
+.bar{width:13px;border-radius:3px 3px 0 0;transition:height .5s ease;}
+.bar.b-a{background:var(--brand-500);}
+.bar.b-b{background:var(--brand-200);}
+[data-theme="dark"] .bar.b-b{background:var(--brand-300)}
+.bar-label{font-size:8.5px;color:var(--tm);text-align:center;line-height:1.2;}
+.bar-chart-legend{display:flex;gap:14px;justify-content:center;margin-bottom:6px;}
+.bar-legend-item{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--tm);}
+.bar-legend-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0;}
+
+/* ── TIMER EJERCICIO ── */
+.ex-timer-box{background:var(--card);border:1px solid var(--border);border-radius:var(--r-xl);padding:18px;text-align:center;box-shadow:var(--sh-sm);}
+.ex-timer-phase{font-size:10px;font-weight:700;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;}
+.ex-timer-display{font-family:var(--mono);font-size:38px;font-weight:800;color:var(--brand-500);margin:8px 0;}
+[data-theme="dark"] .ex-timer-display{color:var(--brand-400)}
+.ex-timer-bar{height:6px;background:var(--border);border-radius:var(--r-full);overflow:hidden;margin:6px 0 12px;}
+.ex-timer-fill{height:100%;background:var(--brand-500);border-radius:var(--r-full);transition:width .5s linear;}
+.ex-timer-msg{font-size:12.5px;color:var(--ts);font-style:italic;line-height:1.5;min-height:36px;}
+
+/* ── FREE TEXT ── */
+.freetext-area{width:100%;min-height:120px;background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-md);padding:12px;font-family:var(--font);font-size:13px;color:var(--tp);resize:vertical;line-height:1.5;}
+.freetext-area:focus{outline:none;border-color:var(--brand-400);box-shadow:0 0 0 3px rgba(29,131,120,.12);}
+.freetext-counter{font-size:10.5px;color:var(--tm);text-align:right;margin-top:5px;font-family:var(--mono);}
+.freetext-counter.ok{color:var(--success-text);}
+
+/* ── AVATAR ── */
+.avatar-inline{width:26px;height:26px;border-radius:50%;background:var(--brand-50);border:1.5px solid var(--brand-200);display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .3s;}
+[data-theme="dark"] .avatar-inline{background:var(--brand-100)}
+
+/* ── FAB SOS ── */
+.fab-sos{position:absolute;top:76px;right:10px;z-index:90;display:inline-flex;align-items:center;gap:5px;background:var(--danger);color:#fff;border-radius:var(--r-full);padding:7px 12px;font-size:10px;font-weight:800;box-shadow:var(--sh-lg);border:none;cursor:pointer;transition:all .15s;font-family:var(--font);animation:sosPulse 2.2s infinite;max-width:150px;}
+.fab-sos:hover{background:var(--danger-text);transform:scale(1.03);}
+@keyframes sosPulse{0%{box-shadow:0 0 0 0 rgba(193,59,48,.5),var(--sh-lg)}70%{box-shadow:0 0 0 10px rgba(193,59,48,0),var(--sh-lg)}100%{box-shadow:0 0 0 0 rgba(193,59,48,0),var(--sh-lg)}}
+.fab-sos.hide{display:none;}
+
+/* ── SOS OVERLAY ── */
+.sos-overlay{position:absolute;inset:0;background:linear-gradient(170deg,#0C3C37 0%,#11534C 55%,#156A61 100%);z-index:200;display:none;flex-direction:column;color:#fff;}
+.sos-overlay.visible{display:flex;}
+.sos-inner{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:36px 26px;text-align:center;gap:16px;overflow-y:auto;}
+.sos-close{position:absolute;top:44px;right:16px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.12);border:none;color:#fff;font-size:15px;cursor:pointer;z-index:5;}
+.sos-icon{font-size:34px;}
+.sos-title{font-size:17px;font-weight:800;line-height:1.4;}
+.sos-desc{font-size:13px;color:rgba(255,255,255,.78);line-height:1.6;max-width:280px;}
+.sos-timer{font-family:var(--mono);font-size:52px;font-weight:800;margin:6px 0;}
+.sos-bar{width:100%;max-width:260px;height:6px;background:rgba(255,255,255,.18);border-radius:var(--r-full);overflow:hidden;}
+.sos-bar-fill{height:100%;background:#fff;border-radius:var(--r-full);transition:width .5s linear;}
+.sos-msg-cycle{font-size:13.5px;font-style:italic;color:rgba(255,255,255,.92);min-height:40px;display:flex;align-items:center;justify-content:center;max-width:280px;}
+.sos-actions{display:flex;flex-direction:column;gap:10px;width:100%;max-width:280px;margin-top:6px;}
+.sos-btn-white{background:#fff;color:var(--brand-700);border:none;border-radius:var(--r-md);padding:11px;font-weight:700;font-size:13.5px;cursor:pointer;font-family:var(--font);}
+.sos-btn-ghost{background:transparent;color:rgba(255,255,255,.8);border:1.5px solid rgba(255,255,255,.35);border-radius:var(--r-md);padding:10px;font-weight:600;font-size:12.5px;cursor:pointer;font-family:var(--font);}
+.sos-resource-card{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:var(--r-lg);padding:12px 14px;width:100%;max-width:280px;text-align:left;display:flex;align-items:center;gap:10px;}
+.sos-resource-num{font-family:var(--mono);font-weight:800;font-size:15px;}
+.sos-resource-label{font-size:11px;color:rgba(255,255,255,.75);}
+
+/* ── ADMIN SHELL (heredado M01) ── */
+.admin-header{background:var(--n900);padding:42px 16px 10px;display:flex;align-items:center;gap:10px}
+[data-theme="dark"] .admin-header{background:#0A0907;border-bottom:1px solid #1e1c17}
+.admin-logo-chip{background:var(--brand-500);padding:3px 10px;border-radius:var(--r-full);font-size:10px;font-weight:800;color:#fff;letter-spacing:.04em}
+.admin-role-chip{background:rgba(200,80,31,.25);border:1px solid rgba(200,80,31,.4);color:#FFC09E;font-size:9px;font-family:var(--mono);padding:2px 7px;border-radius:var(--r-full)}
+.admin-tab-bar{display:flex;background:var(--card);border-bottom:1px solid var(--border)}
+.admin-tab{flex:1;padding:10px 4px;text-align:center;font-size:11px;font-weight:700;color:var(--tm);cursor:pointer;border-bottom:2px solid transparent;transition:all .12s}
+.admin-tab:hover{color:var(--tp);background:var(--hover)}
+.admin-tab.active{color:var(--brand-500);border-bottom-color:var(--brand-500)}
+.home-action-btn{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.18);border:none;color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .12s}
+.home-action-btn:hover{background:rgba(255,255,255,.28)}
+
+/* ── TARJETAS DE MODALIDAD / ÁRBOLES ── */
+.review-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px 16px;margin-bottom:12px;box-shadow:var(--sh-sm)}
+.review-card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.review-card-title{font-size:12.5px;font-weight:700;color:var(--tp)}
+.review-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--hover);font-size:12px}
+.review-row:last-child{border-bottom:none}
+.review-row-label{color:var(--tm)}
+.review-row-value{color:var(--tp);font-weight:600;text-align:right;max-width:60%}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px;box-shadow:var(--sh-sm)}
+.stat-value{font-size:24px;font-weight:800;color:var(--brand-500);line-height:1.1}
+.stat-label{font-size:10.5px;color:var(--tm);margin-top:2px}
+.progress-track{height:8px;background:var(--hover);border-radius:var(--r-full);overflow:hidden;margin:6px 0 4px;}
+.progress-fill{height:100%;background:var(--brand-500);border-radius:var(--r-full);transition:width .4s;}
+
+.tree-card{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-lg);padding:13px 14px;margin-bottom:10px;cursor:pointer;transition:box-shadow .12s,border-color .12s;}
+.tree-card:hover{border-color:var(--brand-400);box-shadow:var(--sh-sm);}
+.tree-card-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;gap:8px;}
+.tree-card-title{font-size:12.5px;font-weight:800;color:var(--tp);line-height:1.35;}
+.tree-card-meta{font-size:10.5px;color:var(--tm);display:flex;gap:10px;margin-top:4px;font-family:var(--mono);}
+
+/* ── EDITOR VISUAL DE NODOS (RF-25/RF-25C) ── */
+.editor-toolbar{display:flex;align-items:center;gap:6px;padding:8px 10px;background:var(--card);border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap;}
+.editor-canvas-wrap{flex:1;overflow:auto;position:relative;background:
+  linear-gradient(var(--border) 1px,transparent 1px) 0 0/20px 20px,
+  linear-gradient(90deg,var(--border) 1px,transparent 1px) 0 0/20px 20px,
+  var(--bg);
+}
+.editor-canvas{position:relative;min-width:900px;min-height:900px;}
+.editor-svg{position:absolute;inset:0;pointer-events:none;overflow:visible;}
+.node-box{position:absolute;width:132px;background:var(--card);border:2px solid var(--border);border-radius:var(--r-md);padding:8px 9px;cursor:grab;box-shadow:var(--sh-sm);user-select:none;touch-action:none;transition:border-color .12s,box-shadow .12s;}
+.node-box:hover{box-shadow:var(--sh-md);}
+.node-box.selected{border-color:var(--brand-500);box-shadow:0 0 0 3px rgba(29,131,120,.18);}
+.node-box.start{border-color:var(--success-border);}
+.node-box .node-type{font-family:var(--mono);font-size:8px;color:var(--tm);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;}
+.node-box .node-title{font-size:10.5px;font-weight:700;color:var(--tp);line-height:1.3;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+.node-panel{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:none;align-items:flex-end;justify-content:center;}
+.node-panel.visible{display:flex;}
+.node-panel-card{background:var(--card);width:100%;max-width:390px;border-radius:var(--r-2xl) var(--r-2xl) 0 0;padding:18px 18px 22px;max-height:78%;overflow-y:auto;box-shadow:var(--sh-lg);}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.field-label{font-size:11px;font-weight:700;color:var(--tp)}
+.input,.select,textarea.input{font-family:var(--font);font-size:13px;color:var(--tp);background:var(--bg);border:1.5px solid var(--border);border-radius:var(--r-md);padding:9px 11px;width:100%;transition:border-color .12s;}
+.input:focus,.select:focus{border-color:var(--brand-400);outline:none;}
+
+@media (max-width:820px){
+  .frame-outer{flex-direction:column;align-items:center;}
+}
+</style>
+</head>
+<body>
+
+<!-- DEMO BAR -->
+<div class="demo-bar">
+  <strong>Brisa · M03</strong>
+  <span class="demo-sep">|</span>
+  <span class="demo-screen-pill" id="dp-screen">chat</span>
+  <span id="dp-role" style="display:none"></span>
+  <span id="dp-mode" style="display:none"></span>
+  <span class="demo-sep">|</span>
+  <button class="demo-btn" onclick="enterAs('student')" title="Entra como estudiante en modalidad grupal">👤 Estudiante</button>
+  <button class="demo-btn" onclick="enterAs('admin')" title="Entra al panel administrativo">🔑 Admin</button>
+  <span class="demo-sep">|</span>
+  <label class="mono-sm" style="color:#888">Semana</label>
+  <select class="demo-select" id="sel-semana" onchange="onDemoJump()"></select>
+  <label class="mono-sm" style="color:#888">Día</label>
+  <select class="demo-select" id="sel-dia" onchange="onDemoJump()"></select>
+  <button class="demo-btn" onclick="jumpToNode()" title="Saltar al día seleccionado (QA)">⏩ Ir</button>
+  <span class="demo-sep">|</span>
+  <select class="demo-select" id="sel-modalidad" onchange="onModalidadDemoChange()" title="Modalidad terapéutica del programa (RF-24B)">
+    <option value="grupal">Modalidad: grupal</option>
+    <option value="personalizada">Modalidad: personalizada</option>
+  </select>
+  <select class="demo-select" id="sel-perfil" onchange="onPerfilDemoChange()" style="display:none" title="Perfil clínico del usuario (RF-26B)">
+    <option value="abstinencia_fisica|positivo">abstinencia física · craving +</option>
+    <option value="abstinencia_fisica|negativo">abstinencia física · craving −</option>
+    <option value="tolerancia|positivo">tolerancia · craving +</option>
+    <option value="tolerancia|negativo">tolerancia · craving −</option>
+  </select>
+  <span class="demo-sep">|</span>
+  <button class="demo-btn" id="btn-offline" onclick="toggleOffline()" title="Simula pérdida de conexión (RF-34)">📶 Online</button>
+  <button class="demo-btn warn" onclick="simulateError('perfil_incompleto')" title="RF-25B: cohorte con perfil clínico incompleto (bloquea transición admin)">⚠ Cohorte c/perfil incompleto</button>
+  <button class="demo-btn warn" id="btn-my-profile" onclick="simulateError('mi_perfil_incompleto')" title="RF-24B: MI perfil clínico propio incompleto (bloquea mi acceso a modalidad personalizada)">⚠ Mi perfil incompleto</button>
+  <button class="demo-btn warn" onclick="simulateError('arbol_no_publicado')" title="RF-26B: árbol personalizado no configurado/publicado">⚠ Árbol no publicado</button>
+  <button class="demo-btn warn" onclick="triggerSOSPattern()" title="RF-43 FA-3: patrón de crisis (>3 SOS en 1h)">⚠ Crisis SOS x4</button>
+  <button class="demo-btn warn" id="btn-sync-error" onclick="toggleSyncErrorDemo()" title="RF-35: fuerza que la próxima sincronización falle">⚠ Forzar error de sync</button>
+  <button class="demo-btn warn" onclick="simulateStorageFailure()" title="RF-30: simula que la próxima interacción no se pudo guardar localmente">⚠ Fallo guardado local</button>
+  <button class="demo-btn" id="btn-timeout" onclick="triggerTimeoutWarning()" style="display:none" title="Simula expiración de sesión">⏱ Timeout</button>
+  <span class="demo-spacer"></span>
+  <button class="demo-btn active" id="btn-dark" onclick="toggleDark()">☀ Claro</button>
+</div>
+
+<!-- PHONE FRAME -->
+<div class="frame-outer">
+<div class="phone" id="phone">
+
+  <div class="screens" id="screens">
+
+    <!-- ══ INIT / RF-24 ══ -->
+    <div class="screen active" id="s-init" data-name="inicializando sesión (RF-24)">
+      <div class="chat-init" id="chat-init-loading">
+        <div class="chat-init-spinner"></div>
+        <div class="chat-init-text" id="init-text">Preparando tu sesión de chat…</div>
+      </div>
+      <div class="chat-init hidden" id="chat-init-blocked" style="background:linear-gradient(160deg,var(--danger-text) 0%,var(--danger) 70%);">
+        <div style="font-size:34px">🚫</div>
+        <div class="chat-init-text" style="font-size:13.5px;font-weight:800;">No es posible inicializar la sesión</div>
+        <div class="chat-init-text" id="init-blocked-msg">No es posible inicializar la sesión en modalidad personalizada porque el perfil clínico del usuario está incompleto.</div>
+        <button class="sos-btn-white" style="margin-top:8px" onclick="exitToSchedule()">Volver al cronograma</button>
+      </div>
+    </div>
+
+    <!-- ══ CHAT PRINCIPAL (RF-24…RF-39B) ══ -->
+    <div class="screen" id="s-chat" data-name="chat">
+      <div class="screen-inner" style="padding:0;flex:1;position:relative;">
+        <div class="app-bar" style="padding-top:40px;">
+          <button class="app-bar-back" onclick="exitToSchedule()" title="Volver al cronograma (M04)">←</button>
+          <div class="app-bar-titles">
+            <div class="app-bar-title" id="chat-title">Semana 1 · Día 1</div>
+            <div class="app-bar-sub" id="chat-subtitle">Balance decisional</div>
+          </div>
+          <div class="app-bar-spacer"></div>
+          <span class="badge b-info" id="modalidad-pill" style="font-size:9px">grupal</span>
+        </div>
+        <div class="offline-banner" id="offline-banner"><span class="offline-dot"></span>Sin conexión · tus respuestas se guardan localmente y se sincronizarán al reconectar (RF-34/35)</div>
+        <div class="offline-banner" id="sync-banner" style="background:var(--info-bg);border-color:var(--info-border);color:var(--info-text)"><span class="offline-dot" style="background:var(--info)"></span><span id="sync-banner-text">Sincronizando…</span></div>
+        <div class="chat-progress" id="chat-progress"></div>
+        <div class="chat-thread" id="chat-thread"></div>
+        <div class="chat-dock" id="chat-dock"></div>
+      </div>
+    </div>
+
+    <!-- ══ ADMIN · MÓDULO CHAT ══ -->
+    <div class="screen" id="s-admin-home" data-name="panel admin · chat">
+      <div class="admin-header">
+        <span class="admin-logo-chip">Brisa</span>
+        <span class="admin-role-chip">EQUIPO DE PSICOLOGÍA</span>
+        <div style="flex:1"></div>
+        <button class="home-action-btn" style="background:rgba(255,255,255,.08)" onclick="exitAdmin()">⇠</button>
+      </div>
+      <div class="admin-tab-bar">
+        <div class="admin-tab active" id="atab-modalidad" onclick="switchAdminTab('modalidad')">Modalidad</div>
+        <div class="admin-tab" id="atab-arboles" onclick="switchAdminTab('arboles')">Árboles</div>
+        <div class="admin-tab" id="atab-traza" onclick="switchAdminTab('traza')">Trazabilidad</div>
+      </div>
+
+      <!-- TAB: MODALIDAD (RF-25B) -->
+      <div id="at-modalidad" style="padding:16px">
+        <div class="review-card">
+          <div class="review-card-head"><span class="review-card-title">Programa · Cohorte Psicología-2026-1</span><span class="badge b-info" id="modalidad-actual-badge">GRUPAL</span></div>
+          <div class="review-row"><span class="review-row-label">Usuarios activos</span><span class="review-row-value" id="mv-total">18</span></div>
+          <div class="review-row"><span class="review-row-label">Perfil clínico completo</span><span class="review-row-value" id="mv-completos">14 / 18</span></div>
+          <div class="progress-track"><div class="progress-fill" id="mv-progress" style="width:78%"></div></div>
+        </div>
+        <div class="alert alert-warning" id="mv-alert-incompleto">
+          <span class="alert-icon">⚠</span>
+          <div class="alert-body"><div class="alert-title">Perfil clínico incompleto</div><div class="alert-desc" id="mv-alert-desc">4 usuarios activos aún no completan tipo de dependencia y tipo de craving (RF-27B). No se exponen identificadores individuales.</div></div>
+        </div>
+        <button class="btn btn-primary btn-block" id="btn-transicion" onclick="attemptTransicion()">Habilitar modalidad personalizada</button>
+        <div class="text-sm text-center mt8" style="font-size:10px">RF-25B · La transición es unidireccional e irreversible dentro de este alcance</div>
+      </div>
+
+      <!-- TAB: ÁRBOLES (RF-25/RF-25C) -->
+      <div id="at-arboles" style="padding:16px;display:none">
+        <div class="section-label" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--tm);margin-bottom:10px;">Árbol grupal (RF-25)</div>
+        <div class="tree-card" onclick="openEditor('grupal', null)">
+          <div class="tree-card-head"><span class="tree-card-title">Programa psicoeducativo grupal · 5 semanas</span><span class="badge b-success">PUBLICADO</span></div>
+          <div class="tree-card-meta"><span>v1.0</span><span id="tree-grupal-nodecount">— nodos</span><span>Semanas 1–3, 5 completas</span></div>
+        </div>
+        <div class="section-label" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--tm);margin:16px 0 10px;">Árboles personalizados (RF-25C)</div>
+        <div id="personal-tree-cards"></div>
+      </div>
+
+      <!-- TAB: TRAZABILIDAD (RF-38) -->
+      <div id="at-traza" style="padding:16px;display:none">
+        <div class="text-sm mb12">Registro de solo lectura · últimas interacciones procesadas (RF-38)</div>
+        <div id="traza-list"></div>
+      </div>
+    </div>
+
+    <!-- ══ ADMIN · EDITOR VISUAL DE NODOS (RF-25/RF-25C) ══ -->
+    <div class="screen" id="s-editor" data-name="editor de árbol conversacional" style="display:flex;flex-direction:column;">
+      <div class="app-bar" style="padding-top:40px;flex-shrink:0;">
+        <button class="app-bar-back" onclick="go('s-admin-home',true)">←</button>
+        <div class="app-bar-titles">
+          <div class="app-bar-title" id="editor-title">Árbol grupal</div>
+          <div class="app-bar-sub" id="editor-subtitle">v1.0 · borrador</div>
+        </div>
+        <div class="app-bar-spacer"></div>
+        <span class="badge b-neutral" id="editor-status-badge" style="font-size:9px">BORRADOR</span>
+      </div>
+      <div class="editor-toolbar">
+        <button class="btn btn-xs btn-secondary" onclick="editorAddNode()">+ Nodo</button>
+        <button class="btn btn-xs btn-secondary" id="editor-link-btn" onclick="editorToggleLinkMode()">⤳ Conectar</button>
+        <button class="btn btn-xs btn-secondary" onclick="editorValidate()">✓ Validar</button>
+        <span class="demo-spacer"></span>
+        <button class="btn btn-xs btn-secondary" id="editor-archive-btn" onclick="editorArchive()">Archivar</button>
+        <button class="btn btn-xs btn-primary" id="editor-publish-btn" onclick="editorPublish()">Publicar</button>
+      </div>
+      <div class="editor-canvas-wrap" id="editor-canvas-wrap">
+        <div class="editor-canvas" id="editor-canvas">
+          <svg class="editor-svg" id="editor-svg"></svg>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /screens -->
+
+  <!-- FAB SOS (RF-43) · a nivel de #phone, visible sobre cualquier pantalla del estudiante -->
+  <button class="fab-sos hide" id="fab-sos" onclick="openSOS()">⚡ Tengo ganas de vapear</button>
+
+  <!-- SOS OVERLAY (RF-43) · a nivel de #phone, cubre cualquier pantalla activa -->
+  <div class="sos-overlay" id="sos-overlay">
+    <button class="sos-close" id="sos-close-btn" onclick="closeSOSAttempt()">✕</button>
+    <div class="sos-inner" id="sos-inner"></div>
+  </div>
+
+</div><!-- /phone -->
+
+<!-- SIDE PANEL: contexto RF (solo desktop, informativo) -->
+<div id="side-info" style="width:230px;color:#888;font-family:var(--mono);font-size:10.5px;line-height:1.7;padding-top:8px;"></div>
+
+</div><!-- /frame-outer -->
+
+<!-- NODE EDIT PANEL (editor admin) -->
+<div class="node-panel" id="node-panel">
+  <div class="node-panel-card" id="node-panel-card"></div>
+</div>
+
+<!-- CONFIRMACIÓN DE TRANSICIÓN DE MODALIDAD (RF-25B) -->
+<div class="modal-overlay" id="transicion-modal">
+  <div class="modal-card" data-theme="">
+    <div class="modal-icon">⚠</div>
+    <div class="modal-title">Confirmar transición de modalidad</div>
+    <div class="modal-desc" id="transicion-desc">Se verificaron los usuarios activos.</div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="cancelTransicion()">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmTransicion()">Confirmar transición</button>
+    </div>
+  </div>
+</div>
+
+<!-- SESSION RESUME MODAL (RF-32) -->
+<div class="modal-overlay" id="resume-modal">
+  <div class="modal-card" data-theme="">
+    <div class="modal-icon">↻</div>
+    <div class="modal-title">Tienes una sesión en curso</div>
+    <div class="modal-desc" id="resume-desc">Puedes continuar desde donde lo dejaste o empezar una nueva sesión.</div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="resumeChoice('new')">Empezar de nuevo</button>
+      <button class="btn btn-primary" onclick="resumeChoice('continue')">Continuar</button>
+    </div>
+  </div>
+</div>
+
+<!-- SESSION TIMEOUT MODAL -->
+<div class="modal-overlay" id="session-modal">
+  <div class="modal-card" data-theme="">
+    <div class="modal-icon">⏱</div>
+    <div class="modal-title">Tu sesión está por cerrarse</div>
+    <div class="modal-desc">Por inactividad, tu sesión se cerrará en:</div>
+    <div class="modal-countdown" style="font-family:var(--mono);font-size:28px;font-weight:700;color:var(--warning-text);margin:8px 0 20px" id="modal-count">5</div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="doLogout()">Cerrar sesión</button>
+      <button class="btn btn-primary" onclick="extendSession()">Seguir aquí</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const TREE_DATA = {"grupal":{"semana1":{"titulo":"Flexibilidad cognitiva y motivación para el cambio","marco":"MTT · Balance decisional · Metas SMART","dias":{"1":{"titulo":"Balance decisional","nodos":[{"type":"msg","text":"Hoy vamos a explorar qué te da el vapeo y qué te cuesta. Verás 8 frases, una por una: arrástrala a la columna que sientas correcta.","avatar":true,"wave":false,"rf":"RF-26","id":"semana1d1n1","next":"semana1d1n2","x":40,"y":30},{"type":"drag","text":"Clasifica cada frase.","zones":[{"key":"pros","label":"✓ Pros"},{"key":"contras","label":"✗ Contras"}],"cards":[{"id":"c1","text":"Me relaja cuando estoy ansioso."},{"id":"c2","text":"Me ayuda a escapar del estrés."},{"id":"c3","text":"Me da un respiro cuando me siento abrumado."},{"id":"c4","text":"Me distrae de mis emociones."},{"id":"c5","text":"Aumenta mi ansiedad con el tiempo."},{"id":"c6","text":"Me hace evitar enfrentar mis emociones."},{"id":"c7","text":"Me impide manejar mis emociones de forma real."},{"id":"c8","text":"Me dificulta encontrar calma duradera."}],"rf":"RF-27/28","indicador":"% de elecciones coherentes con evitación emocional","id":"semana1d1n2","next":"semana1d1n3","x":220,"y":50},{"type":"msg","text":"Reflexionar es un buen inicio. Sigamos paso a paso.","avatar":true,"wave":false,"rf":"RF-26","id":"semana1d1n3","next":null,"x":400,"y":70}]},"2":{"titulo":"Valores y coherencia con el consumo","nodos":[{"type":"msg","text":"¿Qué es importante para ti en tu vida? Selecciona lo que sientas importante para ti.","avatar":true,"wave":false,"rf":"RF-26","id":"semana1d2n1","next":"semana1d2n2","x":40,"y":30},{"type":"valuegrid","text":"Elige entre 3 y 5 valores.","options":[{"icon":"🕊","label":"Libertad / independencia"},{"icon":"⚡","label":"Vitalidad y energía"},{"icon":"💙","label":"Bienestar emocional"},{"icon":"🤝","label":"Relaciones personales"},{"icon":"🧭","label":"Autocontrol"},{"icon":"📚","label":"Rendimiento académico"},{"icon":"🌿","label":"Tranquilidad mental"},{"icon":"🌱","label":"Crecimiento personal"}],"min":3,"max":5,"rf":"RF-27/28","indicador":null,"id":"semana1d2n2","next":"semana1d2n3","x":220,"y":50},{"type":"msg","text":"Ahora miremos esto de cerca…","avatar":true,"wave":false,"rf":"RF-26","id":"semana1d2n3","next":"semana1d2n4","x":400,"y":70},{"type":"swipe","text":"Desliza cada valor según sientas si el vapeo te acerca o te aleja de lo que elegiste.","leftLabel":"← Me aleja","rightLabel":"Me acerca →","rf":"RF-27/28","indicador":null,"cardsFrom":"prev","id":"semana1d2n4","next":null,"x":40,"y":170}]},"3":{"titulo":"Reestructuración de metas (SMART flexible)","nodos":[{"type":"msg","text":"Meta inicial: “Voy a dejar de vapear completamente desde hoy”.","avatar":true,"wave":false,"rf":"RF-26","id":"semana1d3n1","next":"semana1d3n2","x":40,"y":30},{"type":"choice","text":"¿Esta meta es todo o nada?","options":[{"label":"Sí","value":"Sí"},{"label":"No","value":"No"},{"label":"No estoy seguro","value":"No estoy seguro"}],"rf":"RF-27/28","indicador":null,"id":"semana1d3n2","next":"semana1d3n3","x":220,"y":50},{"type":"slider","text":"¿Qué tan probable es que cumplas esta meta esta semana?","leftLabel":"Nada probable","rightLabel":"Muy probable","min":0,"max":10,"rf":"RF-27/28","indicador":null,"id":"semana1d3n3","next":"semana1d3n4","x":400,"y":70},{"type":"textbuilder","text":"Haz esta meta más flexible: toca una palabra de cada grupo para construir tu nueva meta.","template":"Esta semana {1} mi consumo {2}…","chipGroups":[["reduciré","observaré","limitaré"],["progresivamente","con calma","en momentos específicos"]],"blanks":2,"rf":"RF-27/28","indicador":null,"id":"semana1d3n4","next":"semana1d3n5","x":40,"y":170},{"type":"choice","text":"¿Cuánto quieres reducir?","options":[{"label":"Número de vapeos","value":"Número de vapeos"},{"label":"Tiempo","value":"Tiempo"},{"label":"Situaciones específicas","value":"Situaciones específicas"}],"rf":"RF-27/28","indicador":null,"id":"semana1d3n5","next":"semana1d3n6","x":220,"y":190},{"type":"choice","text":"¿Cuándo aplicarás este cambio?","options":[{"label":"Cuando esté estresado","value":"Cuando esté estresado"},{"label":"Después de estudiar","value":"Después de estudiar"},{"label":"Con amigos","value":"Con amigos"},{"label":"Otro","value":"Otro"}],"rf":"RF-27/28","indicador":null,"id":"semana1d3n6","next":"semana1d3n7","x":400,"y":210},{"type":"msg","text":"Una meta flexible aumenta tus probabilidades de cambio.","avatar":true,"wave":false,"rf":"RF-26","id":"semana1d3n7","next":null,"x":40,"y":310}]},"4":{"titulo":"Importancia y confianza (discrepancia cognitiva)","nodos":[{"type":"slider","text":"¿Qué tan importante es para ti dejar de vapear hoy?","leftLabel":"Nada importante","rightLabel":"Muy importante","min":0,"max":10,"rf":"RF-27/28","indicador":null,"id":"semana1d4n1","next":"semana1d4n2","x":40,"y":30},{"type":"slider","text":"¿Qué tan capaz te sientes de lograrlo hoy?","leftLabel":"Nada capaz","rightLabel":"Muy capaz","min":0,"max":10,"rf":"RF-27/28","indicador":null,"id":"semana1d4n2","next":"semana1d4n3","x":220,"y":50},{"type":"msg","text":"Imagina este escenario: “Acabas de terminar un examen difícil”.","avatar":true,"wave":false,"rf":"RF-26","id":"semana1d4n3","next":"semana1d4n4","x":400,"y":70},{"type":"slider","text":"En ese escenario, ¿qué tan importante es para ti no vapear?","leftLabel":"Nada importante","rightLabel":"Muy importante","min":0,"max":10,"rf":"RF-27/28","indicador":null,"id":"semana1d4n4","next":"semana1d4n5","x":40,"y":170},{"type":"slider","text":"En ese escenario, ¿qué tan capaz te sientes?","leftLabel":"Nada capaz","rightLabel":"Muy capaz","min":0,"max":10,"rf":"RF-27/28","indicador":null,"id":"semana1d4n5","next":"semana1d4n6","x":220,"y":190},{"type":"msg","text":"Otro escenario: “Estás con amigos que están vapeando”.","avatar":true,"wave":false,"rf":"RF-26","id":"semana1d4n6","next":"semana1d4n7","x":400,"y":210},{"type":"slider","text":"¿Qué tan importante es en este caso?","leftLabel":"Nada importante","rightLabel":"Muy importante","min":0,"max":10,"rf":"RF-27/28","indicador":null,"id":"semana1d4n7","next":"semana1d4n8","x":40,"y":310},{"type":"slider","text":"¿Qué tan capaz te sientes en este caso?","leftLabel":"Nada capaz","rightLabel":"Muy capaz","min":0,"max":10,"rf":"RF-27/28","indicador":null,"id":"semana1d4n8","next":"semana1d4n9","x":220,"y":330},{"type":"msg","text":"Cuando importancia y confianza están cerca, estás más listo/a para actuar.","avatar":true,"wave":false,"rf":"RF-26","id":"semana1d4n9","next":null,"x":400,"y":350}]},"5":{"titulo":"Identificación de automatismos","nodos":[{"type":"msg","text":"Cuando me siento estresado…","avatar":true,"wave":false,"rf":"RF-26","id":"semana1d5n1","next":"semana1d5n2","x":40,"y":30},{"type":"choice","text":"¿Qué sueles hacer?","options":[{"label":"Vapear","value":"Vapear"},{"label":"Distraerme","value":"Distraerme"},{"label":"Respirar","value":"Respirar"},{"label":"Otra","value":"Otra"}],"rf":"RF-27/28","indicador":null,"id":"semana1d5n2","next":"semana1d5n3","x":220,"y":50},{"type":"choice","text":"¿Podrías hacer algo diferente?","options":[{"label":"Sí","value":"Sí"},{"label":"No","value":"No"}],"rf":"RF-27/28","indicador":"skip_if_no","id":"semana1d5n3","next":"semana1d5n4","x":400,"y":70},{"type":"freetext","text":"Escribe una alternativa (ideas: salir a caminar, respirar profundo, hablar con alguien, tomar agua).","minWords":3,"placeholder":"Podría…","rf":"RF-27/28","indicador":null,"id":"semana1d5n4","next":"semana1d5n5","x":40,"y":170},{"type":"msg","text":"Después de tomar café…","avatar":true,"wave":false,"rf":"RF-26","id":"semana1d5n5","next":"semana1d5n6","x":220,"y":190},{"type":"choice","text":"¿Qué sueles hacer?","options":[{"label":"Vapear","value":"Vapear"},{"label":"Distraerme","value":"Distraerme"},{"label":"Respirar","value":"Respirar"},{"label":"Otra","value":"Otra"}],"rf":"RF-27/28","indicador":null,"id":"semana1d5n6","next":"semana1d5n7","x":400,"y":210},{"type":"choice","text":"¿Podrías hacer algo diferente?","options":[{"label":"Sí","value":"Sí"},{"label":"No","value":"No"}],"rf":"RF-27/28","indicador":"skip_if_no","id":"semana1d5n7","next":"semana1d5n8","x":40,"y":310},{"type":"freetext","text":"Escribe una alternativa.","minWords":3,"placeholder":"Podría…","rf":"RF-27/28","indicador":null,"id":"semana1d5n8","next":"semana1d5n9","x":220,"y":330},{"type":"msg","text":"Cuando estoy aburrido…","avatar":true,"wave":false,"rf":"RF-26","id":"semana1d5n9","next":"semana1d5n10","x":400,"y":350},{"type":"choice","text":"¿Qué sueles hacer?","options":[{"label":"Vapear","value":"Vapear"},{"label":"Distraerme","value":"Distraerme"},{"label":"Respirar","value":"Respirar"},{"label":"Otra","value":"Otra"}],"rf":"RF-27/28","indicador":null,"id":"semana1d5n10","next":"semana1d5n11","x":40,"y":450},{"type":"choice","text":"¿Podrías hacer algo diferente?","options":[{"label":"Sí","value":"Sí"},{"label":"No","value":"No"}],"rf":"RF-27/28","indicador":"skip_if_no","id":"semana1d5n11","next":"semana1d5n12","x":220,"y":470},{"type":"freetext","text":"Escribe una alternativa.","minWords":3,"placeholder":"Podría…","rf":"RF-27/28","indicador":null,"id":"semana1d5n12","next":"semana1d5n13","x":400,"y":490},{"type":"msg","text":"Tu mente crea respuestas automáticas. Hoy empezaste a cambiarlas.","avatar":true,"wave":false,"rf":"RF-26","id":"semana1d5n13","next":null,"x":40,"y":590}]},"6":{"titulo":"Yo actual vs. yo que quiero ser","nodos":[{"type":"choice_multi","text":"Yo actual: ¿con cuáles te identificas?","options":[{"label":"Dependo del vapeo para sentirme mejor","value":"Dependo del vapeo para sentirme mejor"},{"label":"Evito mis emociones vapeando","value":"Evito mis emociones vapeando"},{"label":"Me cuesta manejar el estrés sin vapear","value":"Me cuesta manejar el estrés sin vapear"}],"min":1,"rf":"RF-27/28","indicador":null,"id":"semana1d6n1","next":"semana1d6n2","x":40,"y":30},{"type":"choice_multi","text":"Yo que quiero ser: ¿con cuáles te identificas?","options":[{"label":"Manejo mis emociones sin depender del vapeo","value":"Manejo mis emociones sin depender del vapeo"},{"label":"Soy una persona libre","value":"Soy una persona libre"},{"label":"Cuido mi salud","value":"Cuido mi salud"}],"min":1,"rf":"RF-27/28","indicador":null,"id":"semana1d6n2","next":"semana1d6n3","x":220,"y":50},{"type":"freetext","text":"Si quieres, complementa con tus propias palabras (opcional).","minWords":0,"placeholder":"Yo actual / yo que quiero ser…","rf":"RF-27/28","indicador":null,"id":"semana1d6n3","next":"semana1d6n4","x":400,"y":70},{"type":"msg","text":"El cambio empieza cuando reconoces la diferencia entre quién eres y quién quieres ser.","avatar":true,"wave":false,"rf":"RF-26","id":"semana1d6n4","next":null,"x":40,"y":170}]},"7":{"titulo":"Compromiso flexible con el cambio","nodos":[{"type":"choice","text":"Elige la formulación que consideres más adecuada.","options":[{"label":"Nunca volveré a vapear","value":"Nunca volveré a vapear"},{"label":"Debo dejarlo completamente ya","value":"Debo dejarlo completamente ya"},{"label":"Esta semana intentaré reducir mi consumo","value":"Esta semana intentaré reducir mi consumo"},{"label":"Voy a practicar nuevas formas de manejar mi estrés","value":"Voy a practicar nuevas formas de manejar mi estrés"}],"rf":"RF-27/28","indicador":null,"id":"semana1d7n1","next":"semana1d7n2","x":40,"y":30},{"type":"textbuilder","text":"Construye tu compromiso de la semana: toca una palabra de cada grupo.","template":"Mi compromiso esta semana es {1} mi consumo {2}…","chipGroups":[["reducir","observar","limitar"],["progresivamente","con calma","paso a paso"]],"blanks":2,"rf":"RF-27/28","indicador":null,"id":"semana1d7n2","next":"semana1d7n3","x":220,"y":50},{"type":"msg","text":"El cambio no requiere perfección, requiere consistencia.","avatar":true,"wave":false,"rf":"RF-26","id":"semana1d7n3","next":"semana1d7n4","x":400,"y":70},{"type":"msg","text":"A partir de aquí, dos preguntas nos ayudan a preparar el contenido personalizado de las próximas semanas (RF-27B).","avatar":false,"rf":"—","id":"semana1d7n4","next":"semana1d7n5","x":40,"y":170},{"type":"choice","text":"Cuando llevas un tiempo sin vapear, ¿qué describe mejor lo que sientes?","options":[{"label":"Necesito la sensación física del vapeo (ansiedad, inquietud corporal)","value":"Necesito la sensación física del vapeo (ansiedad, inquietud corporal)"},{"label":"Cada vez necesito vapear más seguido para sentir el mismo alivio","value":"Cada vez necesito vapear más seguido para sentir el mismo alivio"}],"rf":"RF-27B","profileDim":"tipo_dependencia","id":"semana1d7n5","next":"semana1d7n6","x":220,"y":190},{"type":"choice","text":"Cuando sientes ganas de vapear, ¿de dónde vienen más frecuentemente?","options":[{"label":"De algo agradable que busco (relajarme, sentirme bien)","value":"De algo agradable que busco (relajarme, sentirme bien)"},{"label":"De algo incómodo que quiero que pare (ansiedad, estrés, malestar)","value":"De algo incómodo que quiero que pare (ansiedad, estrés, malestar)"}],"rf":"RF-27B","profileDim":"tipo_craving","id":"semana1d7n6","next":"semana1d7n7","x":400,"y":210},{"type":"summary","title":"Semana 1 completada","text":"Trabajaste balance decisional, valores, metas flexibles, discrepancia cognitiva, automatismos y tu compromiso. La próxima semana exploramos qué función cumple el vapeo en tu vida emocional.","rf":"RF-30/36/39","id":"semana1d7n7","next":null,"x":40,"y":310}]}}},"semana2":{"titulo":"Evaluación emocional y conductas de evitación","marco":"PEF · Evitación experiencial · Trampa conductual","dias":{"1":{"titulo":"¿Qué hago cuando me siento mal?","nodos":[{"type":"msg","text":"Cuando aparece una emoción desagradable… todos hacemos algo con ella. Vamos a ver qué haces tú.","avatar":true,"wave":false,"rf":"RF-26","id":"semana2d1n1","next":"semana2d1n2","x":40,"y":30},{"type":"choice","text":"Cuando me siento ansioso/a sin razón clara… ¿qué SUELES hacer?","options":[{"label":"Vapeo","value":"Vapeo"},{"label":"Me distraigo con el celular","value":"Me distraigo con el celular"},{"label":"Me quedo quieto/a y no hago nada","value":"Me quedo quieto/a y no hago nada"},{"label":"Hablo con alguien","value":"Hablo con alguien"},{"label":"Intento resolverlo","value":"Intento resolverlo"}],"rf":"RF-27/28","indicador":null,"id":"semana2d1n2","next":"semana2d1n3","x":220,"y":50},{"type":"choice","text":"Cuando estoy muy frustrado/a por algo que no puedo cambiar… ¿qué SUELES hacer?","options":[{"label":"Vapeo","value":"Vapeo"},{"label":"Me distraigo con el celular","value":"Me distraigo con el celular"},{"label":"Me quedo quieto/a y no hago nada","value":"Me quedo quieto/a y no hago nada"},{"label":"Hablo con alguien","value":"Hablo con alguien"},{"label":"Intento resolverlo","value":"Intento resolverlo"}],"rf":"RF-27/28","indicador":null,"id":"semana2d1n3","next":"semana2d1n4","x":400,"y":70},{"type":"choice","text":"Cuando me siento solo/a o desconectado/a de los demás… ¿qué SUELES hacer?","options":[{"label":"Vapeo","value":"Vapeo"},{"label":"Me distraigo con el celular","value":"Me distraigo con el celular"},{"label":"Me quedo quieto/a y no hago nada","value":"Me quedo quieto/a y no hago nada"},{"label":"Hablo con alguien","value":"Hablo con alguien"},{"label":"Intento resolverlo","value":"Intento resolverlo"}],"rf":"RF-27/28","indicador":null,"id":"semana2d1n4","next":"semana2d1n5","x":40,"y":170},{"type":"choice","text":"Cuando estoy aburrido/a y nada me parece interesante… ¿qué SUELES hacer?","options":[{"label":"Vapeo","value":"Vapeo"},{"label":"Me distraigo con el celular","value":"Me distraigo con el celular"},{"label":"Me quedo quieto/a y no hago nada","value":"Me quedo quieto/a y no hago nada"},{"label":"Hablo con alguien","value":"Hablo con alguien"},{"label":"Intento resolverlo","value":"Intento resolverlo"}],"rf":"RF-27/28","indicador":null,"id":"semana2d1n5","next":"semana2d1n6","x":220,"y":190},{"type":"choice","text":"Cuando me siento culpable por algo que hice o dejé de hacer… ¿qué SUELES hacer?","options":[{"label":"Vapeo","value":"Vapeo"},{"label":"Me distraigo con el celular","value":"Me distraigo con el celular"},{"label":"Me quedo quieto/a y no hago nada","value":"Me quedo quieto/a y no hago nada"},{"label":"Hablo con alguien","value":"Hablo con alguien"},{"label":"Intento resolverlo","value":"Intento resolverlo"}],"rf":"RF-27/28","indicador":null,"id":"semana2d1n6","next":"semana2d1n7","x":400,"y":210},{"type":"choice","text":"Cuando siento mucha presión y no sé por dónde empezar… ¿qué SUELES hacer?","options":[{"label":"Vapeo","value":"Vapeo"},{"label":"Me distraigo con el celular","value":"Me distraigo con el celular"},{"label":"Me quedo quieto/a y no hago nada","value":"Me quedo quieto/a y no hago nada"},{"label":"Hablo con alguien","value":"Hablo con alguien"},{"label":"Intento resolverlo","value":"Intento resolverlo"}],"rf":"RF-27/28","indicador":"IEI = (nº 'Vapeo' + nº 'Distracción') / total situaciones","id":"semana2d1n7","next":null,"x":40,"y":310}]},"2":{"titulo":"El alivio que dura poco","nodos":[{"type":"msg","text":"El vapeo puede calmar rápido… pero ¿qué pasa después?","avatar":true,"wave":false,"rf":"RF-26","id":"semana2d2n1","next":"semana2d2n2","x":40,"y":30},{"type":"msg","text":"Escenario: “Llegas a casa después de un día pesado. Te sientes estresado/a y decides vapear.”","avatar":true,"wave":false,"rf":"RF-26","id":"semana2d2n2","next":"semana2d2n3","x":220,"y":50},{"type":"slider","text":"¿Cuánto alivio sientes INMEDIATAMENTE después de vapear?","leftLabel":"Nada","rightLabel":"Muchísimo","min":0,"max":10,"rf":"RF-27/28","indicador":null,"id":"semana2d2n3","next":"semana2d2n4","x":400,"y":70},{"type":"slider","text":"¿Cuánto alivio sientes UNA HORA DESPUÉS?","leftLabel":"Nada","rightLabel":"Muchísimo","min":0,"max":10,"rf":"RF-27/28","indicador":null,"id":"semana2d2n4","next":"semana2d2n5","x":40,"y":170},{"type":"msg","text":"Escenario: “Estás aburrido/a en un descanso y vapeas para pasar el rato.”","avatar":true,"wave":false,"rf":"RF-26","id":"semana2d2n5","next":"semana2d2n6","x":220,"y":190},{"type":"slider","text":"¿Cuánto alivio sientes INMEDIATAMENTE?","leftLabel":"Nada","rightLabel":"Muchísimo","min":0,"max":10,"rf":"RF-27/28","indicador":null,"id":"semana2d2n6","next":"semana2d2n7","x":400,"y":210},{"type":"slider","text":"¿Cuánto alivio sientes UNA HORA DESPUÉS?","leftLabel":"Nada","rightLabel":"Muchísimo","min":0,"max":10,"rf":"RF-27/28","indicador":null,"id":"semana2d2n7","next":"semana2d2n8","x":40,"y":310},{"type":"msg","text":"Escenario: “Ves a otros vapeando y te unes para no sentirte excluido/a.”","avatar":true,"wave":false,"rf":"RF-26","id":"semana2d2n8","next":"semana2d2n9","x":220,"y":330},{"type":"slider","text":"¿Cuánto alivio sientes INMEDIATAMENTE?","leftLabel":"Nada","rightLabel":"Muchísimo","min":0,"max":10,"rf":"RF-27/28","indicador":null,"id":"semana2d2n9","next":"semana2d2n10","x":400,"y":350},{"type":"slider","text":"¿Cuánto alivio sientes UNA HORA DESPUÉS?","leftLabel":"Nada","rightLabel":"Muchísimo","min":0,"max":10,"rf":"RF-27/28","indicador":null,"id":"semana2d2n10","next":"semana2d2n11","x":40,"y":450},{"type":"barchart","title":"Alivio inmediato vs. una hora después","groups":[{"label":"Día pesado","aFrom":2,"bFrom":3},{"label":"Aburrimiento","aFrom":5,"bFrom":6},{"label":"Presión social","aFrom":8,"bFrom":9}],"legendA":"Alivio inmediato","legendB":"Alivio 1h después","rf":"RF-27/28","id":"semana2d2n11","next":"semana2d2n12","x":220,"y":470},{"type":"msg","text":"El alivio rápido no siempre es alivio duradero.","avatar":true,"wave":false,"rf":"RF-26","id":"semana2d2n12","next":null,"x":400,"y":490}]},"3":{"titulo":"¿Qué evito cuando vapeo?","nodos":[{"type":"msg","text":"El vapeo no aparece por casualidad… aparece cuando quieres evitar algo. ¿Qué es?","avatar":true,"wave":false,"rf":"RF-26","id":"semana2d3n1","next":"semana2d3n2","x":40,"y":30},{"type":"drag","text":"Arrastra cada tarjeta a lo que representa lo que EVITAS cuando vapeas.","zones":[{"key":"pensamientos","label":"Evito pensamientos"},{"key":"emociones","label":"Evito emociones"},{"key":"sensaciones","label":"Evito sensaciones físicas"},{"key":"situaciones","label":"Evito situaciones"}],"cards":[{"id":"c1","text":"Sentir ansiedad"},{"id":"c2","text":"Pensar en mis problemas"},{"id":"c3","text":"La presión de los demás"},{"id":"c4","text":"Sentirme aburrido/a"},{"id":"c5","text":"La incomodidad del silencio"},{"id":"c6","text":"Enfrentar una tarea difícil"},{"id":"c7","text":"Sentirme triste"},{"id":"c8","text":"El malestar físico del estrés"}],"rf":"RF-27/28","indicador":"Perfil de evitación (PE) = proporción por categoría","id":"semana2d3n2","next":"semana2d3n3","x":220,"y":50},{"type":"msg","text":"La evitación no elimina lo que temes… solo lo pospone.","avatar":true,"wave":false,"rf":"RF-26","id":"semana2d3n3","next":null,"x":400,"y":70}]},"4":{"titulo":"El costo de evitar","nodos":[{"type":"msg","text":"Evitar algo te da alivio ahora… pero tiene un costo. Vamos a verlo.","avatar":true,"wave":false,"rf":"RF-26","id":"semana2d4n1","next":"semana2d4n2","x":40,"y":30},{"type":"choice_multi","text":"¿Cuáles de estas cosas te han pasado? Puedes elegir varias.","options":[{"label":"He dejado de hacer cosas que me gustaban para no sentir ansiedad.","value":"He dejado de hacer cosas que me gustaban para no sentir ansiedad."},{"label":"He evitado situaciones sociales donde no se puede vapear.","value":"He evitado situaciones sociales donde no se puede vapear."},{"label":"Siento que cada vez necesito vapear más seguido para sentir el mismo alivio.","value":"Siento que cada vez necesito vapear más seguido para sentir el mismo alivio."},{"label":"He postergado tareas importantes porque prefiero vapear y distraerme.","value":"He postergado tareas importantes porque prefiero vapear y distraerme."},{"label":"Me siento frustrado/a conmigo mismo/a por no poder manejar mis emociones sin vapear.","value":"Me siento frustrado/a conmigo mismo/a por no poder manejar mis emociones sin vapear."}],"min":1,"rf":"RF-27/28","indicador":"ICC = nº de consecuencias seleccionadas (máx 5)","id":"semana2d4n2","next":"semana2d4n3","x":220,"y":50},{"type":"freetext","text":"De lo que elegiste… ¿cuál te preocupa más? ¿Por qué?","minWords":30,"placeholder":"Me preocupa más… porque…","rf":"RF-27/28","indicador":null,"id":"semana2d4n3","next":"semana2d4n4","x":400,"y":70},{"type":"msg","text":"La evitación no es un fracaso… es una estrategia que aprendiste. Ahora puedes aprender otra.","avatar":true,"wave":false,"rf":"RF-26","id":"semana2d4n4","next":null,"x":40,"y":170}]},"5":{"titulo":"¿Evito o afronto?","nodos":[{"type":"msg","text":"Entre evitar una emoción y enfrentarla… hay muchas opciones.","avatar":true,"wave":false,"rf":"RF-26","id":"semana2d5n1","next":"semana2d5n2","x":40,"y":30},{"type":"slider","text":"En general, cuando siento una emoción desagradable… ¿dónde te ubicarías?","leftLabel":"Evito completamente","rightLabel":"Afronto activamente","min":0,"max":10,"rf":"RF-27/28","indicador":null,"id":"semana2d5n2","next":"semana2d5n3","x":220,"y":50},{"type":"slider","text":"Cuando estoy ansioso/a…","leftLabel":"Evito completamente","rightLabel":"Afronto activamente","min":0,"max":10,"rf":"RF-27/28","indicador":null,"id":"semana2d5n3","next":"semana2d5n4","x":400,"y":70},{"type":"slider","text":"Cuando estoy frustrado/a…","leftLabel":"Evito completamente","rightLabel":"Afronto activamente","min":0,"max":10,"rf":"RF-27/28","indicador":null,"id":"semana2d5n4","next":"semana2d5n5","x":40,"y":170},{"type":"slider","text":"Cuando estoy triste…","leftLabel":"Evito completamente","rightLabel":"Afronto activamente","min":0,"max":10,"rf":"RF-27/28","indicador":"IES = desviación estándar entre las 3 emociones","id":"semana2d5n5","next":"semana2d5n6","x":220,"y":190},{"type":"msg","text":"No enfrentas todas las emociones de la misma forma… y eso está bien. Identificarlo te da ventaja.","avatar":true,"wave":false,"rf":"RF-26","id":"semana2d5n6","next":null,"x":400,"y":210}]},"6":{"titulo":"La trampa de la evitación emocional","nodos":[{"type":"msg","text":"Hay una trampa invisible que mantiene el vapeo… te la mostramos.","avatar":true,"wave":false,"rf":"RF-26","id":"semana2d6n1","next":"semana2d6n2","x":40,"y":30},{"type":"comic","panels":[{"icon":"😟","text":"Sientes algo desagradable: ansiedad, estrés, aburrimiento…"},{"icon":"😌","text":"Vapeas. El alivio es casi inmediato… ¡funcionó!"},{"icon":"😰","text":"Pero la emoción vuelve… a veces más fuerte. Y necesitas vapear más."},{"icon":"🕳","text":"La trampa: el vapeo no resolvió la emoción, solo la pospuso."}],"rf":"RF-33","id":"semana2d6n2","next":"semana2d6n3","x":220,"y":50},{"type":"choice","text":"¿Te identificas con esta trampa?","options":[{"label":"Sí, mucho","value":"Sí, mucho"},{"label":"Un poco","value":"Un poco"},{"label":"No, no es mi caso","value":"No, no es mi caso"}],"rf":"RF-27/28","indicador":"IRT = 1 si 'Sí, mucho' o 'Un poco'; 0 si 'No'","id":"semana2d6n3","next":"semana2d6n4","x":400,"y":70},{"type":"freetext","text":"¿Qué crees que pasaría si un día no pudieras vapear y sintieras esa misma emoción?","minWords":10,"placeholder":"Creo que…","rf":"RF-27/28","indicador":null,"id":"semana2d6n4","next":"semana2d6n5","x":40,"y":170},{"type":"msg","text":"Salir de la trampa no es fácil… pero el primer paso es verla.","avatar":true,"wave":false,"rf":"RF-26","id":"semana2d6n5","next":null,"x":220,"y":190}]},"7":{"titulo":"Otra forma de estar con el malestar","nodos":[{"type":"msg","text":"Has visto qué evitas, cómo lo evitas y qué te cuesta. Ahora… una idea diferente.","avatar":true,"wave":false,"rf":"RF-26","id":"semana2d7n1","next":"semana2d7n2","x":40,"y":30},{"type":"msg","text":"Las emociones desagradables no son enemigas. Son señales. La ansiedad te dice “prepárate”. La frustración te dice “esto no está funcionando”. La tristeza te dice “algo importa”. El problema no es sentirlas: es no saber qué hacer con ellas además de vapear.","avatar":false,"wave":false,"rf":"RF-26","id":"semana2d7n2","next":"semana2d7n3","x":220,"y":50},{"type":"choice","text":"¿Qué emoción desagradable se te hace más difícil tolerar?","options":[{"label":"Ansiedad","value":"Ansiedad"},{"label":"Frustración","value":"Frustración"},{"label":"Tristeza","value":"Tristeza"},{"label":"Aburrimiento","value":"Aburrimiento"},{"label":"Otra","value":"Otra"}],"rf":"RF-27/28","indicador":null,"id":"semana2d7n3","next":"semana2d7n4","x":400,"y":70},{"type":"freetext","text":"¿Qué has aprendido esta semana sobre cómo evitas las emociones?","minWords":10,"placeholder":"Aprendí que…","rf":"RF-27/28","indicador":null,"id":"semana2d7n4","next":"semana2d7n5","x":40,"y":170},{"type":"slider","text":"Del 0 al 10… ¿qué tan dispuesto/a estás a probar una forma diferente de manejar tus emociones la próxima semana?","leftLabel":"Nada dispuesto/a","rightLabel":"Totalmente dispuesto/a","min":0,"max":10,"rf":"RF-27/28","indicador":"IDA = puntuación 0–10","id":"semana2d7n5","next":"semana2d7n6","x":220,"y":190},{"type":"msg","text":"La meta no es dejar de sentir. La meta es dejar de huir de lo que sientes. La próxima semana seguimos.","avatar":true,"wave":false,"rf":"RF-26","id":"semana2d7n6","next":"semana2d7n7","x":400,"y":210},{"type":"summary","title":"Semana 2 completada","text":"Identificaste qué evitas cuando vapeas, el costo de evitar y la trampa de la evitación emocional. La próxima semana trabajamos conciencia emocional y observación del impulso.","rf":"RF-30/36/39","id":"semana2d7n7","next":null,"x":40,"y":310}]}}},"semana3":{"titulo":"Conciencia emocional","marco":"Mindfulness · Análisis funcional","dias":{"1":{"titulo":"Detente y observa","nodos":[{"type":"msg","text":"Muchas veces el vapeo no empieza con el dispositivo… empieza con lo que sientes. Vamos a observarlo.","avatar":true,"wave":false,"rf":"RF-26","id":"semana3d1n1","next":"semana3d1n2","x":40,"y":30},{"type":"choice","text":"¿Cómo te sientes en este momento?","options":[{"label":"Ansiedad","value":"Ansiedad"},{"label":"Estrés","value":"Estrés"},{"label":"Tristeza","value":"Tristeza"},{"label":"Aburrimiento","value":"Aburrimiento"},{"label":"Tranquilidad","value":"Tranquilidad"},{"label":"Otro","value":"Otro"}],"rf":"RF-27/28","indicador":null,"id":"semana3d1n2","next":"semana3d1n3","x":220,"y":50},{"type":"slider","text":"Cuando te sientes así… ¿qué tan fuerte es tu impulso de vapear?","leftLabel":"Ningún impulso","rightLabel":"Impulso muy fuerte","min":0,"max":10,"rf":"RF-27/28","indicador":null,"id":"semana3d1n3","next":"semana3d1n4","x":400,"y":70},{"type":"bodymap","text":"Ahora observa tu cuerpo… ¿Dónde sientes esto?","zones":[{"key":"pecho","label":"Presión en el pecho"},{"key":"cabeza","label":"Tensión en la cabeza"},{"key":"garganta","label":"Nudo en la garganta"},{"key":"abdomen","label":"Vacío en el abdomen"},{"key":"manos","label":"Inquietud en las manos"}],"rf":"RF-27/28","indicador":null,"id":"semana3d1n4","next":"semana3d1n5","x":40,"y":170},{"type":"msg","text":"Reconocer lo que sientes te ayuda a entender por qué aparece el impulso.","avatar":true,"wave":false,"rf":"RF-26","id":"semana3d1n5","next":null,"x":220,"y":190}]},"2":{"titulo":"Diferenciando emociones que activan el vapeo","nodos":[{"type":"msg","text":"No todas las emociones te llevan a vapear… identificar cuáles lo hacen te da ventaja.","avatar":true,"wave":false,"rf":"RF-26","id":"semana3d2n1","next":"semana3d2n2","x":40,"y":30},{"type":"msg","text":"“Tienes muchas tareas pendientes y poco tiempo para terminarlas.”","avatar":true,"wave":false,"rf":"RF-26","id":"semana3d2n2","next":"semana3d2n3","x":220,"y":50},{"type":"choice","text":"Lee la situación y selecciona la emoción que más se acerca a lo que sentirías.","options":[{"label":"Ansiedad","value":"Ansiedad"},{"label":"Estrés","value":"Estrés"},{"label":"Frustración","value":"Frustración"},{"label":"Cansancio","value":"Cansancio"}],"rf":"RF-27/28","indicador":null,"id":"semana3d2n3","next":"semana3d2n4","x":400,"y":70},{"type":"choice","text":"¿Esta emoción te acercaría a vapear?","options":[{"label":"Sí","value":"Sí"},{"label":"No","value":"No"}],"rf":"RF-27/28","indicador":null,"id":"semana3d2n4","next":"semana3d2n5","x":40,"y":170},{"type":"msg","text":"“Estás en la universidad y ves a varios compañeros vapeando durante un descanso.”","avatar":true,"wave":false,"rf":"RF-26","id":"semana3d2n5","next":"semana3d2n6","x":220,"y":190},{"type":"choice","text":"Selecciona la emoción que más se acerca a lo que sentirías.","options":[{"label":"Ansiedad","value":"Ansiedad"},{"label":"Estrés","value":"Estrés"},{"label":"Frustración","value":"Frustración"},{"label":"Cansancio","value":"Cansancio"}],"rf":"RF-27/28","indicador":null,"id":"semana3d2n6","next":"semana3d2n7","x":400,"y":210},{"type":"choice","text":"¿Esta emoción te acercaría a vapear?","options":[{"label":"Sí","value":"Sí"},{"label":"No","value":"No"}],"rf":"RF-27/28","indicador":null,"id":"semana3d2n7","next":"semana3d2n8","x":40,"y":310},{"type":"msg","text":"“Recibiste una mala nota en un trabajo en el que te esforzaste mucho.”","avatar":true,"wave":false,"rf":"RF-26","id":"semana3d2n8","next":"semana3d2n9","x":220,"y":330},{"type":"choice","text":"Selecciona la emoción que más se acerca a lo que sentirías.","options":[{"label":"Ansiedad","value":"Ansiedad"},{"label":"Estrés","value":"Estrés"},{"label":"Frustración","value":"Frustración"},{"label":"Cansancio","value":"Cansancio"}],"rf":"RF-27/28","indicador":null,"id":"semana3d2n9","next":"semana3d2n10","x":400,"y":350},{"type":"choice","text":"¿Esta emoción te acercaría a vapear?","options":[{"label":"Sí","value":"Sí"},{"label":"No","value":"No"}],"rf":"RF-27/28","indicador":null,"id":"semana3d2n10","next":"semana3d2n11","x":40,"y":450},{"type":"msg","text":"“Llevas varias horas sin hacer nada y te sientes aburrido/a en casa o en la residencia.”","avatar":true,"wave":false,"rf":"RF-26","id":"semana3d2n11","next":"semana3d2n12","x":220,"y":470},{"type":"choice","text":"Selecciona la emoción que más se acerca a lo que sentirías.","options":[{"label":"Ansiedad","value":"Ansiedad"},{"label":"Estrés","value":"Estrés"},{"label":"Frustración","value":"Frustración"},{"label":"Cansancio","value":"Cansancio"}],"rf":"RF-27/28","indicador":null,"id":"semana3d2n12","next":"semana3d2n13","x":400,"y":490},{"type":"choice","text":"¿Esta emoción te acercaría a vapear?","options":[{"label":"Sí","value":"Sí"},{"label":"No","value":"No"}],"rf":"RF-27/28","indicador":null,"id":"semana3d2n13","next":"semana3d2n14","x":40,"y":590},{"type":"msg","text":"“Tienes muchas entregas acumuladas y no sabes por dónde empezar.”","avatar":true,"wave":false,"rf":"RF-26","id":"semana3d2n14","next":"semana3d2n15","x":220,"y":610},{"type":"choice","text":"Selecciona la emoción que más se acerca a lo que sentirías.","options":[{"label":"Ansiedad","value":"Ansiedad"},{"label":"Estrés","value":"Estrés"},{"label":"Frustración","value":"Frustración"},{"label":"Cansancio","value":"Cansancio"}],"rf":"RF-27/28","indicador":null,"id":"semana3d2n15","next":"semana3d2n16","x":400,"y":630},{"type":"choice","text":"¿Esta emoción te acercaría a vapear?","options":[{"label":"Sí","value":"Sí"},{"label":"No","value":"No"}],"rf":"RF-27/28","indicador":"IAEC · Índice de activación emocional del consumo","id":"semana3d2n16","next":"semana3d2n17","x":40,"y":730},{"type":"msg","text":"Cuanto más claro identifiques lo que sientes, más control tendrás sobre lo que haces.","avatar":true,"wave":false,"rf":"RF-26","id":"semana3d2n17","next":null,"x":220,"y":750}]},"3":{"titulo":"Identificando lo que ocurre antes de vapear","nodos":[{"type":"msg","text":"Antes de vapear, ocurren varias cosas dentro de ti. Vamos a identificarlas.","avatar":true,"wave":false,"rf":"RF-26","id":"semana3d3n1","next":"semana3d3n2","x":40,"y":30},{"type":"drag","text":"Clasifica cada tarjeta según lo que representa.","zones":[{"key":"pensamiento","label":"Pensamiento"},{"key":"emocion","label":"Emoción"},{"key":"sensacion","label":"Sensación física"},{"key":"conducta","label":"Conducta"}],"cards":[{"id":"c1","text":"Necesito vapear para sentirme más tranquilo."},{"id":"c2","text":"Siento una presión en el pecho cuando estoy estresado."},{"id":"c3","text":"Evito pensar en lo que me preocupa y busco distraerme."},{"id":"c4","text":"Siento ansiedad cuando tengo muchas responsabilidades."},{"id":"c5","text":"Si no vapeo, no voy a poder concentrarme."},{"id":"c6","text":"Mi cuerpo se siente tenso y me cuesta relajarme."},{"id":"c7","text":"Salgo a un lugar donde sé que puedo vapear."},{"id":"c8","text":"Me siento abrumado cuando todo se acumula."}],"rf":"RF-27/28","indicador":"IAFC · Índice de análisis funcional del consumo","id":"semana3d3n2","next":"semana3d3n3","x":220,"y":50},{"type":"msg","text":"Entender lo que pasa antes del vapeo te da la oportunidad de intervenir.","avatar":true,"wave":false,"rf":"RF-26","id":"semana3d3n3","next":null,"x":400,"y":70}]},"4":{"titulo":"Pausa consciente frente al impulso de vapear","nodos":[{"type":"msg","text":"El impulso de vapear dura unos minutos… no tienes que actuar de inmediato.","avatar":true,"wave":false,"rf":"RF-26","id":"semana3d4n1","next":"semana3d4n2","x":40,"y":30},{"type":"msg","text":"Por un momento, no intentes cambiar lo que sientes… solo obsérvalo.","avatar":true,"wave":false,"rf":"RF-26","id":"semana3d4n2","next":"semana3d4n3","x":220,"y":50},{"type":"timer","text":"Ejercicio guiado de observación.","phases":[{"title":"Observación consciente","seconds":60,"msgs":["Lleva tu atención a tu respiración…","Nota cualquier emoción presente…","Observa si aparece el impulso de vapear…","Permite que esté ahí, sin hacer nada al respecto…"]}],"rf":"RF-33","id":"semana3d4n3","next":"semana3d4n4","x":400,"y":70},{"type":"choice","text":"¿Intentaste vapear mientras realizabas el ejercicio?","options":[{"label":"Sí","value":"Sí"},{"label":"No","value":"No"}],"rf":"RF-27/28","indicador":null,"id":"semana3d4n4","next":"semana3d4n5","x":40,"y":170},{"type":"choice","text":"¿El impulso de vapear aumentó, disminuyó o se mantuvo igual?","options":[{"label":"Aumentó","value":"Aumentó"},{"label":"Disminuyó","value":"Disminuyó"},{"label":"Se mantuvo igual","value":"Se mantuvo igual"}],"rf":"RF-27/28","indicador":null,"id":"semana3d4n5","next":"semana3d4n6","x":220,"y":190},{"type":"choice","text":"¿Qué hiciste principalmente durante el ejercicio?","options":[{"label":"Observar el impulso","value":"Observar el impulso"},{"label":"Distraerme","value":"Distraerme"},{"label":"Intentar controlarlo","value":"Intentar controlarlo"},{"label":"Pensar en vapear","value":"Pensar en vapear"}],"rf":"RF-27/28","indicador":"ITI · Índice de tolerancia al impulso","id":"semana3d4n6","next":"semana3d4n7","x":400,"y":210},{"type":"msg","text":"No reaccionar automáticamente es una habilidad que puedes desarrollar.","avatar":true,"wave":false,"rf":"RF-26","id":"semana3d4n7","next":null,"x":40,"y":310}]},"5":{"titulo":"Identificando el vapeo como evitación emocional","nodos":[{"type":"msg","text":"A veces el vapeo no resuelve lo que sientes… solo lo evita por un momento.","avatar":true,"wave":false,"rf":"RF-26","id":"semana3d5n1","next":"semana3d5n2","x":40,"y":30},{"type":"choice","text":"Cuando estoy a punto de presentar un examen importante y me siento muy ansioso… ¿qué sueles hacer?","options":[{"label":"Vapeo","value":"Vapeo"},{"label":"Uso el celular","value":"Uso el celular"},{"label":"Evito pensar en eso","value":"Evito pensar en eso"},{"label":"Hablo con alguien","value":"Hablo con alguien"},{"label":"Respiro profundamente","value":"Respiro profundamente"}],"rf":"RF-27/28","indicador":null,"id":"semana3d5n2","next":"semana3d5n3","x":220,"y":50},{"type":"choice","text":"Cuando recibo una mala nota en algo en lo que me esforcé… ¿qué sueles hacer?","options":[{"label":"Vapeo","value":"Vapeo"},{"label":"Uso el celular","value":"Uso el celular"},{"label":"Evito pensar en eso","value":"Evito pensar en eso"},{"label":"Hablo con alguien","value":"Hablo con alguien"},{"label":"Respiro profundamente","value":"Respiro profundamente"}],"rf":"RF-27/28","indicador":null,"id":"semana3d5n3","next":"semana3d5n4","x":400,"y":70},{"type":"choice","text":"Cuando tengo muchas tareas acumuladas y no sé por dónde empezar… ¿qué sueles hacer?","options":[{"label":"Vapeo","value":"Vapeo"},{"label":"Uso el celular","value":"Uso el celular"},{"label":"Evito pensar en eso","value":"Evito pensar en eso"},{"label":"Hablo con alguien","value":"Hablo con alguien"},{"label":"Respiro profundamente","value":"Respiro profundamente"}],"rf":"RF-27/28","indicador":null,"id":"semana3d5n4","next":"semana3d5n5","x":40,"y":170},{"type":"choice","text":"Cuando estoy con amigos o compañeros y otros están vapeando… ¿qué sueles hacer?","options":[{"label":"Vapeo","value":"Vapeo"},{"label":"Uso el celular","value":"Uso el celular"},{"label":"Evito pensar en eso","value":"Evito pensar en eso"},{"label":"Hablo con alguien","value":"Hablo con alguien"},{"label":"Respiro profundamente","value":"Respiro profundamente"}],"rf":"RF-27/28","indicador":null,"id":"semana3d5n5","next":"semana3d5n6","x":220,"y":190},{"type":"choice","text":"Cuando me siento aburrido y no tengo nada que hacer… ¿qué sueles hacer?","options":[{"label":"Vapeo","value":"Vapeo"},{"label":"Uso el celular","value":"Uso el celular"},{"label":"Evito pensar en eso","value":"Evito pensar en eso"},{"label":"Hablo con alguien","value":"Hablo con alguien"},{"label":"Respiro profundamente","value":"Respiro profundamente"}],"rf":"RF-27/28","indicador":null,"id":"semana3d5n6","next":"semana3d5n7","x":400,"y":210},{"type":"choice","text":"Cuando me siento estresado después de un día largo en la universidad… ¿qué sueles hacer?","options":[{"label":"Vapeo","value":"Vapeo"},{"label":"Uso el celular","value":"Uso el celular"},{"label":"Evito pensar en eso","value":"Evito pensar en eso"},{"label":"Hablo con alguien","value":"Hablo con alguien"},{"label":"Respiro profundamente","value":"Respiro profundamente"}],"rf":"RF-27/28","indicador":"IEV · Índice de evitación mediante vapeo","id":"semana3d5n7","next":"semana3d5n8","x":40,"y":310},{"type":"msg","text":"Ver tu patrón de respuesta es el primer paso para poder elegir distinto.","avatar":true,"wave":false,"rf":"RF-26","id":"semana3d5n8","next":null,"x":220,"y":330}]},"6":{"titulo":"Elección de alternativas al vapeo","nodos":[{"type":"msg","text":"El impulso no desaparece de inmediato… pero puedes elegir qué hacer con él.","avatar":true,"wave":false,"rf":"RF-26","id":"semana3d6n1","next":"semana3d6n2","x":40,"y":30},{"type":"msg","text":"Si en este momento sintieras ganas de vapear…","avatar":true,"wave":false,"rf":"RF-26","id":"semana3d6n2","next":"semana3d6n3","x":220,"y":50},{"type":"choice","text":"Elige la opción que percibes más probable o automática en ti.","options":[{"label":"Respirar conscientemente","value":"Respirar conscientemente"},{"label":"Salir a caminar","value":"Salir a caminar"},{"label":"Hablar con alguien","value":"Hablar con alguien"},{"label":"Escribir lo que siento","value":"Escribir lo que siento"},{"label":"Vapear","value":"Vapear"}],"rf":"RF-27/28","indicador":null,"id":"semana3d6n3","next":"semana3d6n4","x":400,"y":70},{"type":"choice","text":"Ahora elige una opción diferente… ¿cuál estarías dispuesto/a a intentar hoy?","options":[{"label":"Respirar conscientemente","value":"Respirar conscientemente"},{"label":"Salir a caminar","value":"Salir a caminar"},{"label":"Hablar con alguien","value":"Hablar con alguien"},{"label":"Escribir lo que siento","value":"Escribir lo que siento"}],"rf":"RF-27/28","indicador":null,"id":"semana3d6n4","next":"semana3d6n5","x":40,"y":170},{"type":"msg","text":"Cuando termino una clase larga y me siento mentalmente agotado…","avatar":true,"wave":false,"rf":"RF-26","id":"semana3d6n5","next":"semana3d6n6","x":220,"y":190},{"type":"choice","text":"Elige la opción más probable o automática en ti.","options":[{"label":"Respirar conscientemente","value":"Respirar conscientemente"},{"label":"Salir a caminar","value":"Salir a caminar"},{"label":"Hablar con alguien","value":"Hablar con alguien"},{"label":"Escribir lo que siento","value":"Escribir lo que siento"},{"label":"Vapear","value":"Vapear"}],"rf":"RF-27/28","indicador":null,"id":"semana3d6n6","next":"semana3d6n7","x":400,"y":210},{"type":"choice","text":"Ahora elige una opción diferente que estarías dispuesto/a a intentar.","options":[{"label":"Respirar conscientemente","value":"Respirar conscientemente"},{"label":"Salir a caminar","value":"Salir a caminar"},{"label":"Hablar con alguien","value":"Hablar con alguien"},{"label":"Escribir lo que siento","value":"Escribir lo que siento"}],"rf":"RF-27/28","indicador":null,"id":"semana3d6n7","next":"semana3d6n8","x":40,"y":310},{"type":"msg","text":"Cuando estoy solo/a y empiezo a pensar demasiado en cosas que me preocupan…","avatar":true,"wave":false,"rf":"RF-26","id":"semana3d6n8","next":"semana3d6n9","x":220,"y":330},{"type":"choice","text":"Elige la opción más probable o automática en ti.","options":[{"label":"Respirar conscientemente","value":"Respirar conscientemente"},{"label":"Salir a caminar","value":"Salir a caminar"},{"label":"Hablar con alguien","value":"Hablar con alguien"},{"label":"Escribir lo que siento","value":"Escribir lo que siento"},{"label":"Vapear","value":"Vapear"}],"rf":"RF-27/28","indicador":null,"id":"semana3d6n9","next":"semana3d6n10","x":400,"y":350},{"type":"choice","text":"Ahora elige una opción diferente que estarías dispuesto/a a intentar.","options":[{"label":"Respirar conscientemente","value":"Respirar conscientemente"},{"label":"Salir a caminar","value":"Salir a caminar"},{"label":"Hablar con alguien","value":"Hablar con alguien"},{"label":"Escribir lo que siento","value":"Escribir lo que siento"}],"rf":"RF-27/28","indicador":null,"id":"semana3d6n10","next":"semana3d6n11","x":40,"y":450},{"type":"msg","text":"Cuando estoy esperando algo (una clase, un resultado, un mensaje) y me siento inquieto/a…","avatar":true,"wave":false,"rf":"RF-26","id":"semana3d6n11","next":"semana3d6n12","x":220,"y":470},{"type":"choice","text":"Elige la opción más probable o automática en ti.","options":[{"label":"Respirar conscientemente","value":"Respirar conscientemente"},{"label":"Salir a caminar","value":"Salir a caminar"},{"label":"Hablar con alguien","value":"Hablar con alguien"},{"label":"Escribir lo que siento","value":"Escribir lo que siento"},{"label":"Vapear","value":"Vapear"}],"rf":"RF-27/28","indicador":null,"id":"semana3d6n12","next":"semana3d6n13","x":400,"y":490},{"type":"choice","text":"Ahora elige una opción diferente que estarías dispuesto/a a intentar.","options":[{"label":"Respirar conscientemente","value":"Respirar conscientemente"},{"label":"Salir a caminar","value":"Salir a caminar"},{"label":"Hablar con alguien","value":"Hablar con alguien"},{"label":"Escribir lo que siento","value":"Escribir lo que siento"}],"rf":"RF-27/28","indicador":"ICA · Índice de conductas alternativas","id":"semana3d6n13","next":"semana3d6n14","x":40,"y":590},{"type":"msg","text":"Cada vez que eliges diferente, estás cambiando el patrón.","avatar":true,"wave":false,"rf":"RF-26","id":"semana3d6n14","next":null,"x":220,"y":610}]},"7":{"titulo":"Diario emocional y consumo de vapeo","nodos":[{"type":"msg","text":"Este espacio es solo para ti. Tómate un momento para escribir con honestidad.","avatar":true,"wave":false,"rf":"RF-26","id":"semana3d7n1","next":"semana3d7n2","x":40,"y":30},{"type":"freetext","text":"Describe un momento de esta semana en el que sentiste ganas de vapear. Puede ayudarte pensar en: ¿qué sentías?, ¿qué pensamientos pasaron por tu mente?, ¿vapeaste o no?, ¿qué hiciste?, ¿qué podrías hacer diferente la próxima vez?","minWords":50,"placeholder":"Puedes empezar por lo que recuerdes… no tiene que ser perfecto.","rf":"RF-27/28","indicador":"ICC · Índice de conciencia del consumo","id":"semana3d7n2","next":"semana3d7n3","x":220,"y":50},{"type":"msg","text":"Entender tu patrón es el primer paso para cambiarlo.","avatar":true,"wave":false,"rf":"RF-26","id":"semana3d7n3","next":"semana3d7n4","x":400,"y":70},{"type":"summary","title":"Semana 3 completada","text":"Trabajaste conciencia emocional, análisis funcional del consumo, pausa consciente y alternativas al vapeo. La próxima semana continúa con exposición a desencadenantes.","rf":"RF-30/36/39","id":"semana3d7n4","next":null,"x":40,"y":170}]}}},"semana4":{"titulo":"(Pendiente de definición por el equipo de psicología)","marco":"—","locked":true,"dias":{"1":{"titulo":"Contenido no configurado","nodos":[]},"2":{"titulo":"Contenido no configurado","nodos":[]},"3":{"titulo":"Contenido no configurado","nodos":[]},"4":{"titulo":"Contenido no configurado","nodos":[]},"5":{"titulo":"Contenido no configurado","nodos":[]},"6":{"titulo":"Contenido no configurado","nodos":[]},"7":{"titulo":"Contenido no configurado","nodos":[]}}},"semana5":{"titulo":"Exposición a desencadenantes","marco":"Exposición interoceptiva y proceptiva · Defusión cognitiva","dias":{"1":{"titulo":"Psicoeducación experimental de craving","nodos":[{"type":"msg","text":"El deseo de vapear no es constante. Sube, alcanza un pico y luego baja si no lo alimentas.","avatar":true,"wave":true,"rf":"RF-26","id":"semana5d1n1","next":"semana5d1n2","x":40,"y":30},{"type":"choice","text":"¿Cómo describirías normalmente la forma en que aparecen tus ganas de vapear?","options":[{"label":"Aumentan y no paran hasta que vapeo","value":"Aumentan y no paran hasta que vapeo"},{"label":"Van y vienen como olas","value":"Van y vienen como olas"},{"label":"Son incontrolables desde que empiezan","value":"Son incontrolables desde que empiezan"},{"label":"Aparecen de repente muy fuertes","value":"Aparecen de repente muy fuertes"},{"label":"No estoy seguro","value":"No estoy seguro"}],"rf":"RF-27/28","indicador":null,"id":"semana5d1n2","next":"semana5d1n3","x":220,"y":50},{"type":"choice","text":"Cuando sientes ganas de vapear, ¿qué haces con más frecuencia?","options":[{"label":"Vapeo inmediatamente","value":"Vapeo inmediatamente"},{"label":"Intento distraerme","value":"Intento distraerme"},{"label":"Espero a que pase","value":"Espero a que pase"},{"label":"Me resigno y vapeo tarde o temprano","value":"Me resigno y vapeo tarde o temprano"},{"label":"No sé qué hacer","value":"No sé qué hacer"}],"rf":"RF-27/28","indicador":"ICCC · Índice de control cognitivo del craving","id":"semana5d1n3","next":"semana5d1n4","x":400,"y":70},{"type":"msg","text":"Vamos poco a poco.","avatar":true,"wave":false,"rf":"RF-26","id":"semana5d1n4","next":null,"x":40,"y":170}]},"2":{"titulo":"Interoceptivo","nodos":[{"type":"bodymap","text":"Antes de vapear, tu cuerpo te envía señales. Toca dónde lo sientes.","zones":[{"key":"pecho","label":"Presión en el pecho"},{"key":"garganta","label":"Nudo en la garganta"},{"key":"manos","label":"Inquietud"},{"key":"abdomen","label":"Vacío"}],"rf":"RF-27/28","indicador":null,"id":"semana5d2n1","next":"semana5d2n2","x":40,"y":30},{"type":"slider","text":"¿Qué tan intensa es esa sensación?","leftLabel":"Nada intensa","rightLabel":"Muy intensa","min":0,"max":10,"rf":"RF-27/28","indicador":null,"id":"semana5d2n2","next":"semana5d2n3","x":220,"y":50},{"type":"choice","text":"Cuando aparece esta sensación, ¿qué haces?","options":[{"label":"Vapeo para que desaparezca","value":"Vapeo para que desaparezca"},{"label":"Ignoro la sensación","value":"Ignoro la sensación"},{"label":"Intento relajarme","value":"Intento relajarme"},{"label":"Me preocupo","value":"Me preocupo"},{"label":"Hago otra cosa","value":"Hago otra cosa"}],"rf":"RF-27/28","indicador":"IRIR = (intensidad × peso conductual) + amplitud corporal","id":"semana5d2n3","next":"semana5d2n4","x":400,"y":70},{"type":"msg","text":"Las sensaciones no son peligrosas. Son información que puedes aprender a observar.","avatar":true,"wave":false,"rf":"RF-26","id":"semana5d2n4","next":null,"x":40,"y":170}]},"3":{"titulo":"Identificación preceptiva","nodos":[{"type":"msg","text":"Vamos a observar lo que pasa en tu mente cuando aparecen las ganas de vapear.","avatar":true,"wave":false,"rf":"RF-26","id":"semana5d3n1","next":"semana5d3n2","x":40,"y":30},{"type":"choice","text":"¿Cuál de estos pensamientos aparece con más frecuencia antes de vapear?","options":[{"label":"Lo necesito ahora","value":"Lo necesito ahora"},{"label":"Solo una vez no pasa nada","value":"Solo una vez no pasa nada"},{"label":"Esto me va a calmar","value":"Esto me va a calmar"},{"label":"No puedo aguantar más","value":"No puedo aguantar más"},{"label":"Ya fue, total","value":"Ya fue, total"},{"label":"Si no vapeo, me voy a sentir peor","value":"Si no vapeo, me voy a sentir peor"}],"rf":"RF-27/28","indicador":null,"id":"semana5d3n2","next":"semana5d3n3","x":220,"y":50},{"type":"msg","text":"Este tipo de pensamientos suelen aparecer antes del impulso.","avatar":true,"wave":false,"rf":"RF-26","id":"semana5d3n3","next":"semana5d3n4","x":400,"y":70},{"type":"slider","text":"¿Qué tan fuerte es el impulso de vapear cuando aparece ese pensamiento?","leftLabel":"Nada fuerte","rightLabel":"Muy fuerte","min":0,"max":10,"rf":"RF-27/28","indicador":null,"id":"semana5d3n4","next":"semana5d3n5","x":40,"y":170},{"type":"choice","text":"Cuando aparece ese pensamiento y ese impulso, ¿sientes que tienes que actuar inmediatamente?","options":[{"label":"Sí, siempre","value":"Sí, siempre"},{"label":"Sí, casi siempre","value":"Sí, casi siempre"},{"label":"A veces","value":"A veces"},{"label":"Casi nunca","value":"Casi nunca"},{"label":"No, nunca","value":"No, nunca"}],"rf":"RF-27/28","indicador":null,"id":"semana5d3n5","next":"semana5d3n6","x":220,"y":190},{"type":"msg","text":"Sentir urgencia no significa que tengas que actuar.","avatar":true,"wave":false,"rf":"RF-26","id":"semana5d3n6","next":"semana5d3n7","x":400,"y":210},{"type":"choice","text":"Observa el pensamiento como si fuera una frase que aparece en tu mente. Elige una respuesta alternativa.","options":[{"label":"Puedo esperar","value":"Puedo esperar"},{"label":"No necesito actuar ahora","value":"No necesito actuar ahora"},{"label":"Esto va a pasar","value":"Esto va a pasar"},{"label":"Es solo un pensamiento","value":"Es solo un pensamiento"},{"label":"Otra","value":"Otra"}],"rf":"RF-27/28","indicador":"IRDP · Índice de reactividad y defusión proceptiva","id":"semana5d3n7","next":"semana5d3n8","x":40,"y":310},{"type":"msg","text":"Un impulso no es una orden. Puedes observarlo sin actuar.","avatar":true,"wave":false,"rf":"RF-26","id":"semana5d3n8","next":null,"x":220,"y":330}]},"4":{"titulo":"Exposición interoceptiva guiada","nodos":[{"type":"msg","text":"Hoy vamos a generar algunas sensaciones físicas similares a las que aparecen cuando tienes ganas de vapear. No son peligrosas, y van a pasar aunque no hagas nada.","avatar":true,"wave":false,"rf":"RF-26","id":"semana5d4n1","next":"semana5d4n2","x":40,"y":30},{"type":"msg","text":"Durante el ejercicio, tu tarea no es controlar la sensación, sino observarla sin detenerla.","avatar":true,"wave":false,"rf":"RF-26","id":"semana5d4n2","next":"semana5d4n3","x":220,"y":50},{"type":"timer","text":"Exposición interoceptiva guiada.","phases":[{"title":"Respiración rápida","seconds":30,"msgs":["Respira rápido, como si acabaras de correr.","Observa lo que sientes en tu cuerpo."]},{"title":"Tensión muscular","seconds":15,"msgs":["Tensa todos los músculos de tu cuerpo: brazos, piernas y mandíbula.","Permanece con la sensación."]},{"title":"Recuperación","seconds":10,"msgs":["Relaja tu cuerpo y vuelve a respirar de forma normal."]}],"rf":"RF-33","id":"semana5d4n3","next":"semana5d4n4","x":400,"y":70},{"type":"choice","text":"¿Qué sensación notaste principalmente durante el ejercicio?","options":[{"label":"Ansiedad o nerviosismo","value":"Ansiedad o nerviosismo"},{"label":"Mareo o aturdimiento","value":"Mareo o aturdimiento"},{"label":"Calor o sudoración","value":"Calor o sudoración"},{"label":"Incomodidad general","value":"Incomodidad general"},{"label":"Nada especial","value":"Nada especial"},{"label":"Otra sensación","value":"Otra sensación"}],"rf":"RF-27/28","indicador":null,"id":"semana5d4n4","next":"semana5d4n5","x":40,"y":170},{"type":"slider","text":"¿Qué tan intensa fue la molestia que sentiste?","leftLabel":"Nada intensa","rightLabel":"Muy intensa","min":0,"max":10,"rf":"RF-27/28","indicador":null,"id":"semana5d4n5","next":"semana5d4n6","x":220,"y":190},{"type":"choice","text":"¿Pudiste quedarte con la sensación sin hacer nada para detenerla?","options":[{"label":"Sí, completamente","value":"Sí, completamente"},{"label":"Sí, pero me costó","value":"Sí, pero me costó"},{"label":"Un poco","value":"Un poco"},{"label":"No, quise que terminara rápido","value":"No, quise que terminara rápido"},{"label":"No pude, detuve el ejercicio antes","value":"No pude, detuve el ejercicio antes"}],"rf":"RF-27/28","indicador":"Finalización + intensidad + tolerancia conductual","id":"semana5d4n6","next":"semana5d4n7","x":400,"y":210},{"type":"msg","text":"Las sensaciones pasan, aunque no hagas nada para detenerlas.","avatar":true,"wave":false,"rf":"RF-26","id":"semana5d4n7","next":null,"x":40,"y":310}]},"5":{"titulo":"Exposición preceptiva en tiempo real","nodos":[{"type":"msg","text":"Este ejercicio del día (distinto del botón SOS permanente) dura 3 minutos y está disponible cuando sientas el impulso: “Vamos a observar este impulso sin actuar de inmediato. Solo quédate con él unos minutos”.","avatar":true,"wave":false,"rf":"RF-26","id":"semana5d5n1","next":"semana5d5n2","x":40,"y":30},{"type":"timer","text":"Observación del impulso en tiempo real.","phases":[{"title":"Observación","seconds":180,"msgs":["Observa dónde sientes el impulso en tu cuerpo.","Respira de forma lenta y natural.","El impulso puede subir y bajar, no necesitas hacer nada.","Sigue aquí, ya está cambiando."]}],"rf":"RF-33","interrupt":true,"id":"semana5d5n2","next":"semana5d5n3","x":220,"y":50},{"type":"choice","text":"¿Cuánto duró el impulso antes de empezar a bajar?","options":[{"label":"Menos de 1 minuto","value":"Menos de 1 minuto"},{"label":"1 a 3 minutos","value":"1 a 3 minutos"},{"label":"3 a 5 minutos","value":"3 a 5 minutos"},{"label":"Más de 5 minutos","value":"Más de 5 minutos"},{"label":"No bajó, tuve que vapear","value":"No bajó, tuve que vapear"}],"rf":"RF-27/28","indicador":null,"id":"semana5d5n3","next":"semana5d5n4","x":400,"y":70},{"type":"choice","text":"¿Qué hiciste durante este tiempo?","options":[{"label":"Esperé sin hacer nada","value":"Esperé sin hacer nada"},{"label":"Observé el impulso","value":"Observé el impulso"},{"label":"Respiré conscientemente","value":"Respiré conscientemente"},{"label":"Me distraje","value":"Me distraje"},{"label":"Vapeé antes de terminar","value":"Vapeé antes de terminar"}],"rf":"RF-27/28","indicador":null,"id":"semana5d5n4","next":"semana5d5n5","x":40,"y":170},{"type":"choice","text":"¿Cómo cambió el impulso al final del ejercicio?","options":[{"label":"Disminuyó mucho","value":"Disminuyó mucho"},{"label":"Disminuyó un poco","value":"Disminuyó un poco"},{"label":"Se mantuvo igual","value":"Se mantuvo igual"},{"label":"Aumentó","value":"Aumentó"},{"label":"Vapeé antes de poder notarlo","value":"Vapeé antes de poder notarlo"}],"rf":"RF-27/28","indicador":"IIC-TR · Índice de inhibición conductual del craving en tiempo real","id":"semana5d5n5","next":"semana5d5n6","x":220,"y":190},{"type":"msg","text":"El impulso disminuye si no lo alimentas. Lo que hiciste hoy debilita el hábito automático.","avatar":true,"wave":false,"rf":"RF-26","id":"semana5d5n6","next":null,"x":400,"y":210}]},"6":{"titulo":"Exposición combinada","nodos":[{"type":"msg","text":"Esta semana entrenaste tu capacidad de no reaccionar automáticamente. Ahora veamos qué aprendiste.","avatar":true,"wave":false,"rf":"RF-26","id":"semana5d6n1","next":"semana5d6n2","x":40,"y":30},{"type":"choice","text":"¿Qué es lo más importante que aprendiste sobre tus ganas de vapear?","options":[{"label":"El impulso baja solo si no actúo","value":"El impulso baja solo si no actúo"},{"label":"No necesito obedecer a mis ganas","value":"No necesito obedecer a mis ganas"},{"label":"Puedo tolerar las sensaciones físicas","value":"Puedo tolerar las sensaciones físicas"},{"label":"Mis pensamientos no son órdenes","value":"Mis pensamientos no son órdenes"},{"label":"Sigue siendo difícil, pero sé qué hacer","value":"Sigue siendo difícil, pero sé qué hacer"},{"label":"Otra","value":"Otra"}],"rf":"RF-27/28","indicador":null,"id":"semana5d6n2","next":"semana5d6n3","x":220,"y":50},{"type":"slider","text":"Comparado con el inicio de la semana, ¿qué tan capaz te sientes ahora de no vapear cuando tengas ganas?","leftLabel":"Nada capaz","rightLabel":"Muy capaz","min":0,"max":10,"rf":"RF-27/28","indicador":null,"id":"semana5d6n3","next":"semana5d6n4","x":400,"y":70},{"type":"choice","text":"La próxima vez que sienta ganas de vapear, voy a…","options":[{"label":"Esperar sin hacer nada","value":"Esperar sin hacer nada"},{"label":"Observar la sensación","value":"Observar la sensación"},{"label":"Respirar y dejar que pase","value":"Respirar y dejar que pase"},{"label":"Intentar distraerme","value":"Intentar distraerme"},{"label":"No sé si podré, pero voy a intentarlo","value":"No sé si podré, pero voy a intentarlo"}],"rf":"RF-27/28","indicador":null,"id":"semana5d6n4","next":"semana5d6n5","x":40,"y":170},{"type":"choice","text":"Elige tu compromiso.","options":[{"label":"Voy a observar antes de actuar","value":"Voy a observar antes de actuar"},{"label":"Voy a darme unos minutos antes de decidir","value":"Voy a darme unos minutos antes de decidir"}],"rf":"RF-27/28","indicador":"IAGR · Índice de autoeficacia y generalización de la regulación","id":"semana5d6n5","next":"semana5d6n6","x":220,"y":190},{"type":"msg","text":"No necesitas eliminar el impulso para tener control sobre él. El control no es no sentir, es elegir cómo responder.","avatar":true,"wave":false,"rf":"RF-26","id":"semana5d6n6","next":null,"x":400,"y":210}]},"7":{"titulo":"Consolidación, generalización y autoeficacia","nodos":[{"type":"msg","text":"Esta semana entrenaste tu capacidad de no reaccionar automáticamente. Ahora veamos qué aprendiste.","avatar":true,"wave":false,"rf":"RF-26","id":"semana5d7n1","next":"semana5d7n2","x":40,"y":30},{"type":"choice","text":"¿Qué es lo más importante que aprendiste sobre tus ganas de vapear?","options":[{"label":"El impulso baja solo si no actúo","value":"El impulso baja solo si no actúo"},{"label":"No necesito obedecer a mis ganas","value":"No necesito obedecer a mis ganas"},{"label":"Puedo tolerar las sensaciones físicas","value":"Puedo tolerar las sensaciones físicas"},{"label":"Mis pensamientos no son órdenes","value":"Mis pensamientos no son órdenes"},{"label":"Sigue siendo difícil, pero sé qué hacer","value":"Sigue siendo difícil, pero sé qué hacer"},{"label":"Otra","value":"Otra"}],"rf":"RF-27/28","indicador":null,"id":"semana5d7n2","next":"semana5d7n3","x":220,"y":50},{"type":"slider","text":"Comparado con el inicio de la semana, ¿qué tan capaz te sientes ahora de no vapear cuando tengas ganas?","leftLabel":"Nada capaz","rightLabel":"Muy capaz","min":0,"max":10,"rf":"RF-27/28","indicador":null,"id":"semana5d7n3","next":"semana5d7n4","x":400,"y":70},{"type":"choice","text":"La próxima vez que sienta ganas de vapear, voy a…","options":[{"label":"Esperar sin hacer nada","value":"Esperar sin hacer nada"},{"label":"Observar la sensación","value":"Observar la sensación"},{"label":"Respirar y dejar que pase","value":"Respirar y dejar que pase"},{"label":"Intentar distraerme","value":"Intentar distraerme"},{"label":"No sé si podré, pero voy a intentarlo","value":"No sé si podré, pero voy a intentarlo"}],"rf":"RF-27/28","indicador":null,"id":"semana5d7n4","next":"semana5d7n5","x":40,"y":170},{"type":"choice","text":"Elige tu compromiso.","options":[{"label":"Voy a observar antes de actuar","value":"Voy a observar antes de actuar"},{"label":"Voy a darme unos minutos antes de decidir","value":"Voy a darme unos minutos antes de decidir"}],"rf":"RF-27/28","indicador":"IAGR · contenido de cierre; el documento fuente repite Día 6 aquí — pendiente de validación por psicología","id":"semana5d7n5","next":"semana5d7n6","x":220,"y":190},{"type":"msg","text":"No necesitas eliminar el impulso para tener control sobre él. El control no es no sentir, es elegir cómo responder.","avatar":true,"wave":false,"rf":"RF-26","id":"semana5d7n6","next":"semana5d7n7","x":400,"y":210},{"type":"summary","title":"Programa completado","text":"Recorriste flexibilidad cognitiva, evaluación emocional, conciencia emocional y exposición a desencadenantes. Tu equipo de psicología revisará tu progreso en el módulo de seguimiento.","rf":"RF-30/36/39","id":"semana5d7n7","next":null,"x":40,"y":310}]}}}},"personalizada":{"abstinencia_fisica|positivo":{"nombre":"Abstinencia física · Craving positivo","estado":"publicado","version":2,"nodos":[{"type":"msg","text":"Tu perfil: sientes molestias físicas cuando pasa el tiempo sin vapear, y el impulso suele venir de buscar una sensación agradable.","avatar":true,"wave":false,"rf":"RF-26","id":"pAFPn1","next":"pAFPn2","x":40,"y":30},{"type":"choice","text":"¿Qué notas primero cuando llevas tiempo sin vapear?","options":[{"label":"Inquietud física","value":"Inquietud física"},{"label":"Ansiedad","value":"Ansiedad"},{"label":"Nada especial","value":"Nada especial"},{"label":"Otra","value":"Otra"}],"rf":"RF-27/28","indicador":null,"id":"pAFPn2","next":"pAFPn3","x":220,"y":50},{"type":"slider","text":"¿Qué tan fuerte es esa sensación física ahora mismo?","leftLabel":"Nada","rightLabel":"Muy fuerte","min":0,"max":10,"rf":"RF-27/28","indicador":null,"id":"pAFPn3","next":"pAFPn4","x":400,"y":70},{"type":"bodymap","text":"¿Dónde la sientes?","zones":[{"key":"pecho","label":"Pecho"},{"key":"manos","label":"Manos"},{"key":"garganta","label":"Garganta"}],"rf":"RF-27/28","indicador":null,"id":"pAFPn4","next":"pAFPn5","x":40,"y":170},{"type":"choice","text":"Cuando vapeas, ¿qué buscas principalmente?","options":[{"label":"La sensación agradable","value":"La sensación agradable"},{"label":"Que pare la molestia","value":"Que pare la molestia"},{"label":"Ambas","value":"Ambas"},{"label":"No estoy seguro/a","value":"No estoy seguro/a"}],"rf":"RF-27/28","indicador":null,"id":"pAFPn5","next":"pAFPn6","x":220,"y":190},{"type":"timer","text":"Practiquemos observar la sensación sin actuar.","phases":[{"title":"Observación","seconds":60,"msgs":["Nota la sensación física.","No necesitas cambiarla, solo observarla."]}],"rf":"RF-33","id":"pAFPn6","next":"pAFPn7","x":400,"y":210},{"type":"choice","text":"¿Pudiste quedarte con la sensación un momento antes de decidir?","options":[{"label":"Sí","value":"Sí"},{"label":"En parte","value":"En parte"},{"label":"No","value":"No"}],"rf":"RF-27/28","indicador":null,"id":"pAFPn7","next":"pAFPn8","x":40,"y":310},{"type":"msg","text":"La sensación física y las ganas de sentirte bien pueden observarse por separado. Vamos a seguir practicando esta semana.","avatar":true,"wave":false,"rf":"RF-26","id":"pAFPn8","next":null,"x":220,"y":330}]},"abstinencia_fisica|negativo":{"nombre":"Abstinencia física · Craving negativo","estado":"publicado","version":1,"nodos":[{"type":"msg","text":"Tu perfil: sientes molestias físicas cuando pasa el tiempo sin vapear, y el impulso suele venir de querer que el malestar pare.","avatar":true,"wave":false,"rf":"RF-26","id":"pAFNn1","next":"pAFNn2","x":40,"y":30},{"type":"choice","text":"¿Qué notas primero cuando llevas tiempo sin vapear?","options":[{"label":"Inquietud física","value":"Inquietud física"},{"label":"Ansiedad","value":"Ansiedad"},{"label":"Nada especial","value":"Nada especial"},{"label":"Otra","value":"Otra"}],"rf":"RF-27/28","indicador":null,"id":"pAFNn2","next":"pAFNn3","x":220,"y":50},{"type":"slider","text":"¿Qué tan fuerte es esa sensación física ahora mismo?","leftLabel":"Nada","rightLabel":"Muy fuerte","min":0,"max":10,"rf":"RF-27/28","indicador":null,"id":"pAFNn3","next":"pAFNn4","x":400,"y":70},{"type":"choice","text":"Cuando aparece el malestar, ¿qué haces con más frecuencia?","options":[{"label":"Vapeo para que pare","value":"Vapeo para que pare"},{"label":"Intento distraerme","value":"Intento distraerme"},{"label":"Espero a que pase","value":"Espero a que pase"},{"label":"Respiro","value":"Respiro"}],"rf":"RF-27/28","indicador":null,"id":"pAFNn4","next":"pAFNn5","x":40,"y":170},{"type":"timer","text":"Practiquemos tolerar el malestar sin actuar de inmediato.","phases":[{"title":"Tolerancia","seconds":45,"msgs":["El malestar sube y baja aunque no hagas nada.","Quédate un momento más."]}],"rf":"RF-33","id":"pAFNn5","next":"pAFNn6","x":220,"y":190},{"type":"msg","text":"Cada vez que toleras el malestar un poco más, debilitas el hábito automático.","avatar":true,"wave":false,"rf":"RF-26","id":"pAFNn6","next":null,"x":400,"y":210}]},"tolerancia|positivo":{"nombre":"Tolerancia · Craving positivo","estado":"borrador","version":1,"nodos":[{"type":"msg","text":"Tu perfil: necesitas cada vez más vapeo para sentir el mismo efecto, y el impulso suele venir de buscar ese efecto agradable.","avatar":true,"wave":false,"rf":"RF-26","id":"pTPn1","next":"pTPn2","x":40,"y":30},{"type":"choice","text":"¿Sientes que necesitas vapear más seguido que antes para sentir lo mismo?","options":[{"label":"Sí, claramente","value":"Sí, claramente"},{"label":"Un poco","value":"Un poco"},{"label":"No lo he notado","value":"No lo he notado"}],"rf":"RF-27/28","indicador":null,"id":"pTPn2","next":"pTPn3","x":220,"y":50},{"type":"slider","text":"¿Qué tan fuerte es hoy tu impulso por buscar esa sensación?","leftLabel":"Nada","rightLabel":"Muy fuerte","min":0,"max":10,"rf":"RF-27/28","indicador":null,"id":"pTPn3","next":"pTPn4","x":400,"y":70},{"type":"msg","text":"[Contenido en revisión por el equipo de psicología antes de publicar.]","avatar":true,"wave":false,"rf":"RF-26","id":"pTPn4","next":null,"x":40,"y":170}]},"tolerancia|negativo":{"nombre":"Tolerancia · Craving negativo","estado":"sin_crear","version":0,"nodos":[]}}};
+</script>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   M03 · CHAT — MOTOR DE CONVERSACIÓN + PANEL ADMIN + EDITOR DE NODOS
+   ══════════════════════════════════════════════════════════════════ */
+
+const WEEK_KEYS = ['semana1','semana2','semana3','semana4','semana5'];
+
+const S = {
+  dark:false, role:null,
+  modalidad:'grupal', perfilCombo:'abstinencia_fisica|positivo',
+  offline:false, pendingSync:0,
+  currentSemana:'semana1', currentDia:1, nodeIndex:0,
+  answers:{}, completedDias:{semana1:[],semana2:[],semana3:[],semana4:[],semana5:[]},
+  savedProgress:null, // {modalidad,semana,dia,nodeIndex} para RF-32
+  sosTimestamps:[], pausedSession:null, sosInterrupted:false,
+  sessionActive:false, inactivityTimer:null, warningTimer:null, countdownInterval:null,
+  inactivitySecs:0, inactivityTick:null, TIMEOUT_WARN:20, TIMEOUT_KILL:26,
+  modalidadPrograma:'grupal', perfilCompleto:18, perfilTotal:18, studentProfileComplete:true,
+  sessionId:null, historialNodos:[], pendingQueue:[], syncForceError:false,
+  freetextFailStreak:{}, storageFailOnce:false,
+  traza:[],
+  editor:{ kind:null, comboKey:null, semana:null, dia:null, nodes:[], selectedId:null, linkMode:false,
+           drag:null, personalTreeRef:null },
+};
+
+/* ══ NAVEGACIÓN (patrón M01) ══ */
+let _history = ['s-init'];
+function go(id, back=false) {
+  const prev = document.querySelector('.screen.active');
+  const next = document.getElementById(id);
+  if (!next || prev === next) return;
+  if (prev) { prev.classList.remove('active'); if (back) prev.classList.add('slide-back'); }
+  next.classList.remove('slide-back');
+  next.classList.add('active');
+  if (!back) _history.push(id);
+  document.getElementById('dp-screen').textContent = next.dataset.name || id;
+  resetActivity();
+  updateFabVisibility();
+}
+function updateFabVisibility() {
+  const fab = document.getElementById('fab-sos');
+  if (!fab) return;
+  const overlayVisible = document.getElementById('sos-overlay').classList.contains('visible');
+  const chatActive = document.getElementById('s-chat').classList.contains('active');
+  const show = S.role === 'student' && chatActive && !overlayVisible;
+  fab.classList.toggle('hide', !show);
+}
+function backNav(defaultTarget) {
+  if (_history.length > 1) _history.pop();
+  const target = _history[_history.length - 1] || defaultTarget;
+  go(target, true);
+}
+
+/* ══ DARK MODE ══ */
+function toggleDark() {
+  S.dark = !S.dark;
+  document.getElementById('phone').setAttribute('data-theme', S.dark ? 'dark' : '');
+  document.querySelectorAll('.modal-card').forEach(m => m.setAttribute('data-theme', S.dark ? 'dark' : ''));
+  const btn = document.getElementById('btn-dark');
+  btn.textContent = S.dark ? '☽ Oscuro' : '☀ Claro';
+  btn.className = S.dark ? 'demo-btn active' : 'demo-btn';
+}
+
+/* ══ TOAST ══ */
+function showToast(msg, type='') {
+  const wrap = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast${type ? ' t-'+type : ''}`;
+  const icon = {success:'✓', error:'✗', warning:'⚠', info:'ℹ'}[type] || '';
+  t.textContent = (icon ? icon+' ' : '') + msg;
+  wrap.appendChild(t);
+  setTimeout(() => t.remove(), 3200);
+}
+
+/* ══ DEMO BAR: poblar selects semana/día ══ */
+function populateDemoSelects() {
+  const selS = document.getElementById('sel-semana');
+  selS.innerHTML = '';
+  WEEK_KEYS.forEach((k,i) => {
+    const o = document.createElement('option');
+    o.value = k; o.textContent = `Semana ${i+1}`;
+    selS.appendChild(o);
+  });
+  const selD = document.getElementById('sel-dia');
+  selD.innerHTML = '';
+  for (let d=1; d<=7; d++) {
+    const o = document.createElement('option'); o.value=d; o.textContent=`Día ${d}`;
+    selD.appendChild(o);
+  }
+}
+function onDemoJump(){ /* solo actualiza selección, el salto real ocurre con el botón Ir */ }
+function jumpToNode() {
+  const semana = document.getElementById('sel-semana').value;
+  const dia = parseInt(document.getElementById('sel-dia').value,10);
+  S.currentSemana = semana; S.currentDia = dia; S.nodeIndex = 0;
+  if (S.role !== 'student') enterAs('student');
+  go('s-chat');
+  renderChatHeader();
+  clearThread();
+  renderCurrentNode();
+  showToast(`Saltaste a ${semana} · día ${dia} (QA)`, 'info');
+}
+
+/* ══ MODALIDAD / PERFIL (demo bar) ══ */
+function onModalidadDemoChange() {
+  const v = document.getElementById('sel-modalidad').value;
+  S.modalidad = v;
+  document.getElementById('sel-perfil').style.display = v === 'personalizada' ? 'inline-block' : 'none';
+  updateDemoBarBadges();
+}
+function onPerfilDemoChange() {
+  S.perfilCombo = document.getElementById('sel-perfil').value;
+  updateDemoBarBadges();
+  if (document.getElementById('s-chat').classList.contains('active')) {
+    S.nodeIndex = 0; clearThread(); renderChatHeader(); renderCurrentNode();
+  }
+}
+function updateDemoBarBadges() {
+  const modeEl = document.getElementById('dp-mode');
+  if (!S.role) { modeEl.style.display='none'; return; }
+  modeEl.style.display = 'inline-block';
+  modeEl.className = 'mode-badge';
+  modeEl.textContent = S.modalidad === 'grupal' ? 'grupal' : `personalizada · ${S.perfilCombo.replace('|',' · ')}`;
+  const rolePill = document.getElementById('dp-role');
+  rolePill.style.display = 'inline-block';
+  rolePill.className = `role-badge ${S.role === 'admin' ? 'admin' : 'student'}`;
+  rolePill.textContent = S.role === 'admin' ? '🔑 admin' : '👤 estudiante';
+}
+
+/* ══ OFFLINE (RF-34/RF-35) ══ */
+function toggleOffline() {
+  S.offline = !S.offline;
+  const btn = document.getElementById('btn-offline');
+  const banner = document.getElementById('offline-banner');
+  if (S.offline) {
+    btn.textContent = '📴 Offline'; btn.classList.add('active');
+    banner.classList.add('visible');
+    showToast('Sin conexión simulada (RF-34)', 'warning');
+  } else {
+    btn.textContent = '📶 Online'; btn.classList.remove('active');
+    banner.classList.remove('visible');
+    if (S.pendingQueue.length > 0) runSyncQueue();
+    else showToast('Conexión restablecida', 'success');
+  }
+}
+function toggleSyncErrorDemo() {
+  S.syncForceError = !S.syncForceError;
+  document.getElementById('btn-sync-error').classList.toggle('active', S.syncForceError);
+  showToast(S.syncForceError ? 'La próxima sincronización simulará un error a mitad de camino (RF-35)' : 'Sincronización forzada a error: desactivada', 'warning');
+}
+function runSyncQueue() {
+  const banner = document.getElementById('sync-banner');
+  const textEl = document.getElementById('sync-banner-text');
+  banner.classList.add('visible');
+  const total = S.pendingQueue.length;
+  let synced = 0;
+  const failAt = S.syncForceError ? Math.max(1, Math.floor(total/2)) : -1;
+  function step() {
+    if (synced === failAt) {
+      const remaining = total - synced;
+      banner.style.background = 'var(--danger-bg)'; banner.style.color = 'var(--danger-text)'; banner.style.borderColor = 'var(--danger-border)';
+      textEl.textContent = `Error de sincronización · ${remaining} interacción(es) seguirán pendientes (RF-35)`;
+      S.pendingQueue = S.pendingQueue.slice(synced);
+      S.pendingSync = S.pendingQueue.length;
+      S.syncForceError = false;
+      document.getElementById('btn-sync-error').classList.remove('active');
+      setTimeout(() => { banner.classList.remove('visible'); banner.style.background=''; banner.style.color=''; banner.style.borderColor=''; }, 2600);
+      return;
+    }
+    if (synced >= total) {
+      textEl.textContent = 'Sincronización completa';
+      showToast(`Sincronización completa (${total} interacciones)`, 'success');
+      S.pendingQueue = []; S.pendingSync = 0;
+      setTimeout(() => banner.classList.remove('visible'), 1200);
+      return;
+    }
+    synced++;
+    textEl.textContent = `Sincronizando ${synced}/${total} · ${S.pendingQueue[synced-1]}`;
+    setTimeout(step, 500);
+  }
+  step();
+}
+
+/* ══ ENTRAR COMO ESTUDIANTE / ADMIN ══ */
+function enterAs(role) {
+  S.role = role;
+  updateDemoBarBadges();
+  if (role === 'admin') {
+    renderAdminModalidad(); renderAdminArboles(); renderAdminTrazabilidad();
+    go('s-admin-home');
+    return;
+  }
+  // estudiante
+  S.modalidad = document.getElementById('sel-modalidad').value;
+  S.perfilCombo = document.getElementById('sel-perfil').value;
+  document.getElementById('chat-init-loading').classList.remove('hidden');
+  document.getElementById('chat-init-blocked').classList.add('hidden');
+  go('s-init');
+  document.getElementById('init-text').textContent = 'Preparando tu sesión de chat…';
+  setTimeout(() => {
+    document.getElementById('init-text').textContent =
+      S.modalidad === 'grupal' ? 'Cargando árbol grupal (RF-25)…' : 'Determinando tu árbol personalizado (RF-26B)…';
+  }, 350);
+  setTimeout(() => {
+    // RF-24B: flujo alterno — perfil clínico propio incompleto en modalidad personalizada
+    if (S.modalidad === 'personalizada' && !S.studentProfileComplete) {
+      document.getElementById('chat-init-loading').classList.add('hidden');
+      document.getElementById('chat-init-blocked').classList.remove('hidden');
+      document.getElementById('init-blocked-msg').textContent =
+        'No es posible inicializar la sesión en modalidad personalizada porque el perfil clínico del usuario está incompleto.';
+      return;
+    }
+    S.sessionId = S.sessionId || ('sess-' + Math.random().toString(36).slice(2,10));
+    go('s-chat');
+    renderChatHeader();
+    clearThread();
+    maybeShowResumeModal();
+  }, 900);
+}
+
+function maybeShowResumeModal() {
+  if (S.savedProgress && S.savedProgress.modalidad === S.modalidad) {
+    document.getElementById('resume-desc').textContent =
+      S.modalidad === 'grupal'
+        ? `Tu última sesión fue en Semana ${S.savedProgress.semana.replace('semana','')} · Día ${S.savedProgress.dia}.`
+        : 'Tu última sesión personalizada quedó a mitad de camino.';
+    document.getElementById('resume-modal').classList.add('visible');
+  } else {
+    S.nodeIndex = 0;
+    renderCurrentNode();
+  }
+}
+function resumeChoice(choice) {
+  document.getElementById('resume-modal').classList.remove('visible');
+  if (choice === 'continue' && S.savedProgress) {
+    S.currentSemana = S.savedProgress.semana; S.currentDia = S.savedProgress.dia;
+    S.nodeIndex = S.savedProgress.nodeIndex;
+    renderChatHeader();
+    showToast('Continuando donde lo dejaste (RF-32)', 'success');
+  } else {
+    S.nodeIndex = 0;
+    showToast('Iniciando desde el nodo inicial (RF-24)', 'info');
+  }
+  renderCurrentNode();
+}
+
+function exitToSchedule() {
+  saveProgressSnapshot();
+  showToast('Volviendo al cronograma (M04)…', 'info');
+  go('s-init', true);
+  setTimeout(() => { document.getElementById('init-text').textContent='Sesión guardada.'; }, 10);
+}
+function exitAdmin(){ go('s-init', true); }
+
+function saveProgressSnapshot() {
+  S.savedProgress = { modalidad:S.modalidad, semana:S.currentSemana, dia:S.currentDia, nodeIndex:S.nodeIndex };
+}
+
+/* ══ ÁRBOL ACTIVO SEGÚN MODALIDAD (RF-24B/RF-26B) ══ */
+function getActiveNodeList() {
+  S.lastErrorReason = null;
+  if (S.modalidad === 'grupal') {
+    const sem = TREE_DATA.grupal[S.currentSemana];
+    if (!sem || sem.locked) {
+      S.lastErrorReason = 'Esta semana aún no ha sido configurada por el equipo de psicología. Vuelve más tarde.';
+      return null; // RF-26 flujo alterno: contenido no disponible
+    }
+    const dia = sem.dias[String(S.currentDia)];
+    return dia ? dia.nodos : null;
+  } else {
+    const tree = TREE_DATA.personalizada[S.perfilCombo];
+    if (!tree || tree.estado === 'sin_crear' || !tree.nodos.length) {
+      S.lastErrorReason = 'No existe un árbol conversacional configurado para tu perfil clínico. Contacta al equipo de psicología. (RF-26B · árbol no configurado)';
+      return null;
+    }
+    if (tree.estado !== 'publicado') {
+      S.lastErrorReason = 'El árbol conversacional personalizado para este perfil aún no se encuentra disponible para uso. (RF-26B · árbol no publicado)';
+      return null;
+    }
+    return tree.nodos;
+  }
+}
+function getActiveTreeMeta() {
+  if (S.modalidad === 'grupal') {
+    const sem = TREE_DATA.grupal[S.currentSemana];
+    return { titulo: sem ? sem.titulo : '', dia: S.currentDia,
+              diaTitulo: (sem && !sem.locked) ? sem.dias[String(S.currentDia)].titulo : '' };
+  }
+  const tree = TREE_DATA.personalizada[S.perfilCombo];
+  return { titulo: tree ? tree.nombre : 'Sin árbol', dia:null, diaTitulo:'' };
+}
+
+/* ══ HEADER DEL CHAT ══ */
+function renderChatHeader() {
+  const meta = getActiveTreeMeta();
+  const pill = document.getElementById('modalidad-pill');
+  pill.textContent = S.modalidad === 'grupal' ? 'grupal' : 'personalizada';
+  pill.className = 'badge ' + (S.modalidad === 'grupal' ? 'b-info' : 'b-warning');
+  if (S.modalidad === 'grupal') {
+    document.getElementById('chat-title').textContent = `Semana ${S.currentSemana.replace('semana','')} · Día ${S.currentDia}`;
+    document.getElementById('chat-subtitle').textContent = meta.diaTitulo || meta.titulo;
+  } else {
+    document.getElementById('chat-title').textContent = 'Sesión personalizada';
+    document.getElementById('chat-subtitle').textContent = meta.titulo;
+  }
+  renderProgressChips();
+}
+function renderProgressChips() {
+  const wrap = document.getElementById('chat-progress');
+  wrap.innerHTML = '';
+  if (S.modalidad !== 'grupal') { wrap.style.display='none'; return; }
+  wrap.style.display='flex';
+  const done = S.completedDias[S.currentSemana] || [];
+  for (let d=1; d<=7; d++) {
+    const chip = document.createElement('span');
+    chip.className = 'pchip' + (done.includes(d) ? ' done' : '') + (d===S.currentDia ? ' active' : '');
+    chip.textContent = 'D'+d;
+    wrap.appendChild(chip);
+  }
+}
+
+/* ══ THREAD ══ */
+function clearThread(){ document.getElementById('chat-thread').innerHTML=''; }
+function scrollThreadBottom(){ const t=document.getElementById('chat-thread'); t.scrollTop = t.scrollHeight; }
+function appendBubble(text, who='avatar') {
+  const thread = document.getElementById('chat-thread');
+  const row = document.createElement('div');
+  row.className = 'msg-row ' + (who==='user'?'user':who==='system'?'system':'');
+  if (who !== 'user') {
+    const av = document.createElement('div'); av.className='msg-avatar'; av.textContent = who==='system'?'⚙':'😊';
+    row.appendChild(av);
+  }
+  const b = document.createElement('div'); b.className='msg-bubble'; b.textContent = text;
+  row.appendChild(b);
+  thread.appendChild(row);
+  scrollThreadBottom();
+}
+function appendCard(html) {
+  const thread = document.getElementById('chat-thread');
+  const div = document.createElement('div');
+  div.className = 'review-card'; div.innerHTML = html;
+  thread.appendChild(div);
+  scrollThreadBottom();
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   RENDERIZADO DE NODOS (RF-26 presentación · RF-27 captura ·
+   RF-28 validación · RF-29 transición · RF-30 persistencia)
+   ══════════════════════════════════════════════════════════════════ */
+function currentNodeList() { return getActiveNodeList(); }
+
+function renderCurrentNode() {
+  const list = currentNodeList();
+  const dock = document.getElementById('chat-dock');
+  if (!list) {
+    // RF-26 / RF-26B flujo alterno: contenido no disponible / árbol no publicado / árbol no configurado
+    dock.innerHTML = '';
+    const msg = S.lastErrorReason || 'Contenido no disponible.';
+    appendCard(`<div class="alert alert-error" style="margin:0">
+        <span class="alert-icon">⚠</span>
+        <div class="alert-body">
+          <div class="alert-title">Contenido no disponible</div>
+          <div class="alert-desc">${msg}</div>
+        </div></div>`);
+    if (!S._errorToastShown) { showToast(msg, 'error'); S._errorToastShown = true; }
+    return;
+  }
+  S._errorToastShown = false;
+  if (S.nodeIndex >= list.length) {
+    dock.innerHTML = `<button class="btn btn-primary btn-block" onclick="exitToSchedule()">Volver al cronograma</button>`;
+    return;
+  }
+  const node = list[S.nodeIndex];
+  if (node.type !== 'summary') {
+    appendBubble(node.text, node.avatar === false ? 'system' : 'avatar', node);
+  }
+  renderDock(node);
+}
+
+// sobreescribe appendBubble para soportar la animación de "ola" (S5D1) sin romper la firma anterior
+function appendBubble(text, who='avatar', node=null) {
+  const thread = document.getElementById('chat-thread');
+  const row = document.createElement('div');
+  row.className = 'msg-row ' + (who==='user'?'user':who==='system'?'system':'');
+  if (who !== 'user') {
+    const av = document.createElement('div'); av.className='msg-avatar'; av.textContent = who==='system'?'⚙':'😊';
+    row.appendChild(av);
+  }
+  const b = document.createElement('div'); b.className='msg-bubble'; b.textContent = text;
+  row.appendChild(b);
+  thread.appendChild(row);
+  if (node && node.wave) {
+    const wave = document.createElement('div');
+    wave.style.cssText = 'height:40px;margin:6px 0 0 34px;max-width:78%;border-radius:8px;overflow:hidden;background:var(--hover);position:relative;';
+    wave.innerHTML = `<svg viewBox="0 0 200 40" width="100%" height="40" preserveAspectRatio="none">
+      <path d="M0,20 Q15,4 30,20 T60,20 T90,20 T120,20 T150,20 T180,20 T210,20" fill="none" stroke="var(--brand-500)" stroke-width="3">
+        <animate attributeName="d" dur="2.2s" repeatCount="indefinite"
+          values="M0,20 Q15,4 30,20 T60,20 T90,20 T120,20 T150,20 T180,20 T210,20;
+                  M0,20 Q15,36 30,20 T60,20 T90,20 T120,20 T150,20 T180,20 T210,20;
+                  M0,20 Q15,4 30,20 T60,20 T90,20 T120,20 T150,20 T180,20 T210,20" />
+      </path></svg>`;
+    thread.appendChild(wave);
+  }
+  scrollThreadBottom();
+}
+
+function dockLabel(node) {
+  return `<div class="dock-label">Tu respuesta <span class="rf-tag">${node.rf||''}</span></div>`;
+}
+
+function persistAnswer(node, value, summaryText, resultadoTransicion) {
+  S.answers[node.id] = value;
+  const registro = {
+    id_sesion: S.sessionId || 'sess-demo',
+    id_nodo: node.id,
+    tipo_nodo: node.type,
+    timestamp_interaccion: new Date().toISOString(),
+    resultado_transicion: resultadoTransicion || 'fin_de_flujo',
+    resumen: summaryText || '',
+  };
+  if (S.storageFailOnce) {
+    S.storageFailOnce = false;
+    showToast('No fue posible guardar la interacción localmente. (RF-30 · flujo alterno)', 'error');
+    // el intento no se persiste, pero la conversación continúa (RF-30: no debe interrumpir el flujo)
+  } else {
+    S.traza.unshift({ id: registro.id_nodo, tipo: registro.tipo_nodo, ts: registro.timestamp_interaccion,
+      resumen: registro.resumen, resultado_transicion: registro.resultado_transicion, id_sesion: registro.id_sesion });
+    if (S.traza.length > 60) S.traza.pop();
+  }
+  if (S.offline) { S.pendingSync++; S.pendingQueue.push(`${registro.id_nodo} (${registro.tipo_nodo})`); }
+  if (node.profileDim) {
+    showToast(`Perfil clínico actualizado: ${node.profileDim} (RF-27B)`, 'info');
+  }
+}
+function simulateStorageFailure() {
+  S.storageFailOnce = true;
+  showToast('La próxima interacción simulará un fallo de guardado local (RF-30)', 'warning');
+}
+
+function advance(node, value, summaryText) {
+  // RF-29: transición — soporta salto condicional simple (skip_if_no)
+  let skip = false;
+  if (node.indicador === 'skip_if_no' && String(value) === 'No') skip = true;
+  const list = currentNodeList();
+  let resultadoTransicion = node.next || 'fin_de_flujo';
+  if (skip && list) {
+    const nextIdx = list.findIndex(n => n.id === node.next);
+    if (nextIdx >= 0 && list[nextIdx+1]) resultadoTransicion = list[nextIdx+1].id;
+  }
+  persistAnswer(node, value, summaryText, resultadoTransicion);
+  if (summaryText) appendBubble(summaryText, 'user');
+  // RF-31: historial de los últimos 3 nodos visitados
+  S.historialNodos.push(node.id);
+  if (S.historialNodos.length > 3) S.historialNodos.shift();
+  S.nodeIndex += (skip ? 2 : 1);
+  markDiaProgressIfNeeded();
+  setTimeout(renderCurrentNode, 160);
+}
+function markDiaProgressIfNeeded() {
+  const list = currentNodeList();
+  if (S.modalidad === 'grupal' && list && S.nodeIndex >= list.length) {
+    const arr = S.completedDias[S.currentSemana];
+    if (!arr.includes(S.currentDia)) arr.push(S.currentDia);
+    renderProgressChips();
+  }
+}
+
+/* ── DOCK: switch por tipo de nodo ── */
+function renderDock(node) {
+  const dock = document.getElementById('chat-dock');
+  switch (node.type) {
+    case 'msg': return dockMsg(node, dock);
+    case 'choice': return dockChoice(node, dock, false);
+    case 'choice_multi': return dockChoice(node, dock, true);
+    case 'slider': return dockSlider(node, dock);
+    case 'drag': return dockDrag(node, dock);
+    case 'swipe': return dockSwipe(node, dock);
+    case 'valuegrid': return dockValueGrid(node, dock);
+    case 'textbuilder': return dockTextBuilder(node, dock);
+    case 'bodymap': return dockBodyMap(node, dock);
+    case 'comic': return dockComic(node, dock);
+    case 'barchart': return dockBarChart(node, dock);
+    case 'freetext': return dockFreeText(node, dock);
+    case 'timer': return dockTimer(node, dock);
+    case 'summary': return dockSummary(node, dock);
+    default: dock.innerHTML = `<button class="btn btn-primary btn-block" onclick="advance(currentNodeList()[${S.nodeIndex}],null,null)">Continuar</button>`;
+  }
+}
+
+function dockMsg(node, dock) {
+  dock.innerHTML = `${dockLabel(node)}<button class="btn btn-primary btn-block" id="dock-continue">Continuar</button>`;
+  document.getElementById('dock-continue').onclick = () => advance(node, null, null);
+}
+
+function dockChoice(node, dock, multi) {
+  const picked = new Set();
+  let html = dockLabel(node) + '<div class="choice-list">';
+  node.options.forEach((o,i) => {
+    html += `<button class="choice-btn" data-i="${i}">${multi?'<span class="choice-check">'+ '' +'</span>':''}${o.label}</button>`;
+  });
+  html += '</div>';
+  if (multi) html += `<button class="btn btn-primary btn-block" id="dock-continue" disabled style="margin-top:10px">Continuar</button>`;
+  dock.innerHTML = html;
+  const btns = dock.querySelectorAll('.choice-btn');
+  if (!multi) {
+    btns.forEach(btn => btn.onclick = () => {
+      btns.forEach(b=>b.classList.remove('picked'));
+      btn.classList.add('picked');
+      const i = parseInt(btn.dataset.i,10);
+      setTimeout(() => advance(node, node.options[i].value, node.options[i].label), 220);
+    });
+  } else {
+    const contBtn = document.getElementById('dock-continue');
+    btns.forEach(btn => btn.onclick = () => {
+      const i = parseInt(btn.dataset.i,10);
+      if (picked.has(i)) { picked.delete(i); btn.classList.remove('picked'); }
+      else { picked.add(i); btn.classList.add('picked'); }
+      const chk = btn.querySelector('.choice-check');
+      if (chk) chk.textContent = picked.has(i) ? '✓' : '';
+      contBtn.disabled = picked.size < (node.min||1);
+    });
+    contBtn.onclick = () => {
+      const vals = [...picked].sort((a,b)=>a-b).map(i=>node.options[i].label);
+      advance(node, vals, vals.join(', '));
+    };
+  }
+}
+
+function dockSlider(node, dock) {
+  let val = node.startAt != null ? node.startAt : Math.round(((node.min||0)+(node.max||10))/2);
+  dock.innerHTML = `${dockLabel(node)}
+    <div class="continuum-value" id="sl-val">${val}</div>
+    <div class="continuum-wrap">
+      <div class="continuum-labels"><span>${node.leftLabel||node.min}</span><span>${node.rightLabel||node.max}</span></div>
+      <div class="continuum-track" id="sl-track">
+        <div class="continuum-fill" id="sl-fill"></div>
+        <div class="continuum-thumb" id="sl-thumb"></div>
+      </div>
+      <div class="continuum-ticks">${Array.from({length:(node.max-node.min)+1},(_,i)=>`<span class="continuum-tick">${node.min+i}</span>`).join('')}</div>
+    </div>
+    <button class="btn btn-primary btn-block" id="dock-continue">Continuar</button>`;
+  const track = document.getElementById('sl-track');
+  const thumb = document.getElementById('sl-thumb');
+  const fill = document.getElementById('sl-fill');
+  const valEl = document.getElementById('sl-val');
+  function setVal(v) {
+    val = Math.max(node.min, Math.min(node.max, v));
+    const pct = (val-node.min)/(node.max-node.min)*100;
+    thumb.style.left = pct+'%'; fill.style.width = pct+'%'; valEl.textContent = val;
+  }
+  setVal(val);
+  function posToVal(clientX) {
+    const r = track.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (clientX - r.left)/r.width));
+    return Math.round(node.min + pct*(node.max-node.min));
+  }
+  let dragging=false;
+  const start=(e)=>{dragging=true; move(e);};
+  const move=(e)=>{ if(!dragging) return; const x = e.touches ? e.touches[0].clientX : e.clientX; setVal(posToVal(x)); };
+  const end=()=>dragging=false;
+  thumb.addEventListener('pointerdown', start);
+  track.addEventListener('pointerdown', (e)=>{setVal(posToVal(e.clientX));});
+  window.addEventListener('pointermove', move);
+  window.addEventListener('pointerup', end);
+  document.getElementById('dock-continue').onclick = () => advance(node, val, `${val}/${node.max}`);
+}
+
+function dockDrag(node, dock) {
+  const placed = {}; // cardId -> zoneKey
+  const remaining = node.cards.map(c=>c.id);
+  const zonesHtml = node.zones.map(z => `
+    <div class="drag-zone-box armable" data-zone="${z.key}">
+      <div class="drag-zone-label">${z.label}</div>
+      <div class="drag-zone-items" data-zone-items="${z.key}"></div>
+    </div>`).join('');
+  dock.innerHTML = `${dockLabel(node)}
+    <div class="dragq-text">${node.text_hint||'Toca una tarjeta y luego la columna donde la clasificas.'}</div>
+    <div class="dragq-card" id="dragq-card"></div>
+    <div class="drag-cols drag-cols-${node.zones.length}">${zonesHtml}</div>
+    <div class="dragq-progress" id="dragq-progress"></div>
+    <button class="btn btn-primary btn-block hidden" id="dock-continue" style="margin-top:10px">Continuar</button>`;
+  const cardEl = document.getElementById('dragq-card');
+  const contBtn = document.getElementById('dock-continue');
+  function showNextCard() {
+    if (!remaining.length) {
+      cardEl.style.display='none';
+      contBtn.classList.remove('hidden');
+      document.getElementById('dragq-progress').textContent = `${node.cards.length}/${node.cards.length} clasificadas`;
+      return;
+    }
+    const c = node.cards.find(c=>c.id===remaining[0]);
+    cardEl.textContent = c.text;
+    cardEl.dataset.cardId = c.id;
+    document.getElementById('dragq-progress').textContent = `${node.cards.length-remaining.length}/${node.cards.length} clasificadas`;
+  }
+  dock.querySelectorAll('.drag-zone-box').forEach(zoneEl => {
+    zoneEl.addEventListener('click', () => {
+      if (!remaining.length) return;
+      const cardId = remaining.shift();
+      const c = node.cards.find(c=>c.id===cardId);
+      placed[cardId] = zoneEl.dataset.zone;
+      const itemsWrap = zoneEl.querySelector('.drag-zone-items');
+      const chip = document.createElement('div'); chip.className='drag-item'; chip.textContent = c.text;
+      itemsWrap.appendChild(chip);
+      zoneEl.style.borderColor = 'var(--brand-400)';
+      setTimeout(()=>{ zoneEl.style.borderColor=''; }, 250);
+      showNextCard();
+    });
+  });
+  showNextCard();
+  contBtn.onclick = () => {
+    const summary = node.zones.map(z => `${z.label}: ${Object.entries(placed).filter(([,zk])=>zk===z.key).length}`).join(' · ');
+    advance(node, placed, summary);
+  };
+}
+
+function dockSwipe(node, dock) {
+  let cards = node.cardsFrom === 'prev' ? (S._lastValueGridSelection || []).map((label,i)=>({id:'v'+i,text:label})) : node.cards;
+  if (!cards || !cards.length) cards = [{id:'x1',text:'(sin valores previos seleccionados)'}];
+  let idx = 0; const results = [];
+  dock.innerHTML = `${dockLabel(node)}
+    <div class="swipe-arena">
+      <div class="swipe-zone left">${node.leftLabel}</div>
+      <div class="swipe-zone right">${node.rightLabel}</div>
+      <div class="swipe-card" id="swipe-card"></div>
+    </div>
+    <div class="swipe-btnrow">
+      <button class="swipe-btn aleja" id="swipe-left">${node.leftLabel}</button>
+      <button class="swipe-btn acerca" id="swipe-right">${node.rightLabel}</button>
+    </div>
+    <div class="dragq-progress" id="swipe-progress"></div>`;
+  const cardEl = document.getElementById('swipe-card');
+  function showCard() {
+    if (idx >= cards.length) {
+      const nAleja = results.filter(r=>r.dir==='aleja').length;
+      const nAcerca = results.filter(r=>r.dir==='acerca').length;
+      advance(node, results, `${nAcerca} te acercan · ${nAleja} te alejan`);
+      return;
+    }
+    cardEl.className='swipe-card'; cardEl.textContent = cards[idx].text;
+    document.getElementById('swipe-progress').textContent = `${idx+1}/${cards.length}`;
+  }
+  function doSwipe(dir) {
+    cardEl.className = 'swipe-card ' + (dir==='aleja' ? 'fly-left' : 'fly-right');
+    results.push({ id:cards[idx].id, text:cards[idx].text, dir });
+    idx++;
+    setTimeout(showCard, 260);
+  }
+  document.getElementById('swipe-left').onclick = () => doSwipe('aleja');
+  document.getElementById('swipe-right').onclick = () => doSwipe('acerca');
+  showCard();
+}
+
+function dockValueGrid(node, dock) {
+  const selected = new Set();
+  dock.innerHTML = `${dockLabel(node)}
+    <div class="value-grid" id="vg-grid">
+      ${node.options.map((o,i)=>`<div class="value-card" data-i="${i}"><div class="value-card-icon">${o.icon}</div><div class="value-card-label">${o.label}</div></div>`).join('')}
+    </div>
+    <div class="value-counter" id="vg-counter">Seleccionados: <b>0</b> de ${node.max} máximo · mínimo requerido: ${node.min}</div>
+    <button class="btn btn-primary btn-block" id="dock-continue" disabled style="margin-top:10px">Continuar</button>`;
+  const cards = dock.querySelectorAll('.value-card');
+  const contBtn = document.getElementById('dock-continue');
+  const counter = document.getElementById('vg-counter');
+  cards.forEach(card => card.addEventListener('click', () => {
+    const i = parseInt(card.dataset.i,10);
+    if (selected.has(i)) { selected.delete(i); card.classList.remove('selected'); }
+    else { if (selected.size >= node.max) { showToast(`Máximo ${node.max} valores`,'warning'); return; } selected.add(i); card.classList.add('selected'); }
+    counter.innerHTML = `Seleccionados: <b>${selected.size}</b> de ${node.max} máximo · mínimo requerido: ${node.min}`;
+    contBtn.disabled = selected.size < node.min;
+  }));
+  contBtn.onclick = () => {
+    const vals = [...selected].sort((a,b)=>a-b).map(i=>node.options[i].label);
+    S._lastValueGridSelection = vals;
+    advance(node, vals, vals.join(', '));
+  };
+}
+
+function dockTextBuilder(node, dock) {
+  const slots = new Array(node.blanks).fill(null);
+  let templateHtml = node.template;
+  for (let i=1;i<=node.blanks;i++) templateHtml = templateHtml.replace(`{${i}}`, `<span class="tslot" id="tslot-${i}">___</span>`);
+  const groupsHtml = node.chipGroups.map((group, gi) => `
+    <div class="builder-chip-group" style="margin-bottom:8px">
+      <div class="mono-sm" style="margin-bottom:4px">Hueco ${gi+1}</div>
+      <div class="builder-chips" data-group="${gi}">
+        ${group.map((c,i)=>`<div class="builder-chip" data-slot="${gi+1}" data-i="${i}">${c}</div>`).join('')}
+      </div>
+    </div>`).join('');
+  dock.innerHTML = `${dockLabel(node)}
+    <div class="text-builder" id="tb-preview">${templateHtml}</div>
+    ${groupsHtml}
+    <button class="btn btn-primary btn-block" id="dock-continue" disabled style="margin-top:10px">Continuar</button>`;
+  const contBtn = document.getElementById('dock-continue');
+  function checkComplete(){ contBtn.disabled = slots.some(s => s === null); }
+  dock.querySelectorAll('.builder-chip').forEach(chip => chip.addEventListener('click', () => {
+    const slotNum = parseInt(chip.dataset.slot, 10);
+    // solo un chip activo por grupo/hueco; tocar otro del mismo grupo reemplaza la elección
+    dock.querySelectorAll(`.builder-chip[data-slot="${slotNum}"]`).forEach(c => c.classList.remove('used'));
+    chip.classList.add('used');
+    const slotEl = document.getElementById(`tslot-${slotNum}`);
+    slotEl.textContent = chip.textContent; slotEl.classList.add('filled');
+    slots[slotNum-1] = chip.textContent;
+    checkComplete();
+  }));
+  contBtn.onclick = () => {
+    const text = document.getElementById('tb-preview').textContent;
+    advance(node, slots, text);
+  };
+}
+
+const BODY_COORDS = {
+  pecho:{cx:40,cy:52,rx:14,ry:10}, cabeza:{cx:40,cy:16,r:14},
+  garganta:{cx:40,cy:34,rx:8,ry:6}, abdomen:{cx:40,cy:78,rx:12,ry:12},
+  manos:{cx:12,cy:56,rx:8,ry:8},
+};
+function dockBodyMap(node, dock) {
+  const active = new Set();
+  const svgZones = node.zones.map(z => {
+    const c = BODY_COORDS[z.key] || {cx:40,cy:52,rx:10,ry:10};
+    const shape = c.r
+      ? `<circle class="bodymap-svg-zone" data-key="${z.key}" cx="${c.cx}" cy="${c.cy}" r="${c.r}" fill="var(--hover)" stroke="var(--border)" stroke-width="1.5"/>`
+      : `<ellipse class="bodymap-svg-zone" data-key="${z.key}" cx="${c.cx}" cy="${c.cy}" rx="${c.rx}" ry="${c.ry}" fill="var(--hover)" stroke="var(--border)" stroke-width="1.5"/>`;
+    return shape;
+  }).join('');
+  dock.innerHTML = `${dockLabel(node)}
+    <div class="bodymap-wrap">
+      <svg width="80" height="160" viewBox="0 0 80 160" style="overflow:visible;flex-shrink:0;">
+        <circle cx="40" cy="16" r="14" fill="var(--hover)" stroke="var(--border)" stroke-width="1.5"/>
+        <rect x="20" y="34" width="40" height="55" rx="10" fill="var(--hover)" stroke="var(--border)" stroke-width="1.5"/>
+        <rect x="5" y="36" width="14" height="40" rx="7" fill="var(--hover)" stroke="var(--border)" stroke-width="1.5"/>
+        <rect x="61" y="36" width="14" height="40" rx="7" fill="var(--hover)" stroke="var(--border)" stroke-width="1.5"/>
+        <rect x="22" y="92" width="15" height="52" rx="7" fill="var(--hover)" stroke="var(--border)" stroke-width="1.5"/>
+        <rect x="43" y="92" width="15" height="52" rx="7" fill="var(--hover)" stroke="var(--border)" stroke-width="1.5"/>
+        ${svgZones}
+      </svg>
+      <div class="bodymap-tags" id="bodymap-tags">
+        ${node.zones.map(z=>`<div class="body-zone-tag" data-key="${z.key}">${z.label}</div>`).join('')}
+      </div>
+    </div>
+    <button class="btn btn-primary btn-block" id="dock-continue" disabled style="margin-top:10px">Continuar</button>`;
+  const contBtn = document.getElementById('dock-continue');
+  function toggle(key) {
+    if (active.has(key)) active.delete(key); else active.add(key);
+    dock.querySelectorAll(`[data-key="${key}"]`).forEach(el => el.classList.toggle('active'));
+    dock.querySelectorAll(`.bodymap-svg-zone[data-key="${key}"]`).forEach(el => {
+      el.setAttribute('fill', active.has(key) ? 'rgba(29,131,120,.35)' : 'var(--hover)');
+      el.setAttribute('stroke', active.has(key) ? 'var(--brand-500)' : 'var(--border)');
+    });
+    contBtn.disabled = active.size === 0;
+  }
+  dock.querySelectorAll('.body-zone-tag, .bodymap-svg-zone').forEach(el => el.addEventListener('click', () => toggle(el.dataset.key)));
+  contBtn.onclick = () => {
+    const labels = node.zones.filter(z=>active.has(z.key)).map(z=>z.label);
+    advance(node, labels, labels.join(', '));
+  };
+}
+
+function dockComic(node, dock) {
+  let idx = 0;
+  dock.innerHTML = `${dockLabel(node)}
+    <div class="comic-strip" id="comic-strip">
+      ${node.panels.map((p,i)=>`<div class="comic-panel${i===0?' active':''}" data-i="${i}"><div class="comic-num">Viñeta ${i+1}</div><div class="comic-illus">${p.icon}</div><div class="comic-text">${p.text}</div></div>`).join('')}
+    </div>
+    <div class="comic-dots" id="comic-dots">${node.panels.map((_,i)=>`<span class="comic-dot${i===0?' done':''}"></span>`).join('')}</div>
+    <button class="btn btn-primary btn-block" id="dock-continue">Siguiente</button>`;
+  const strip = document.getElementById('comic-strip');
+  const contBtn = document.getElementById('dock-continue');
+  function update() {
+    strip.querySelectorAll('.comic-panel').forEach((p,i)=>p.classList.toggle('active', i===idx));
+    document.querySelectorAll('#comic-dots .comic-dot').forEach((d,i)=>d.classList.toggle('done', i<=idx));
+    strip.children[idx].scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'});
+    contBtn.textContent = idx === node.panels.length-1 ? 'Continuar' : 'Siguiente';
+  }
+  contBtn.onclick = () => {
+    if (idx < node.panels.length-1) { idx++; update(); }
+    else advance(node, null, null);
+  };
+}
+
+function resolveBarValue(ref) {
+  if (ref == null) return 0;
+  if (typeof ref === 'number') return ref;
+  const list = currentNodeList();
+  const n = list ? list.find(n => n.id.endsWith('n'+ref) || n.id === ref) : null;
+  return n && S.answers[n.id] != null ? S.answers[n.id] : 0;
+}
+function dockBarChart(node, dock) {
+  const list = currentNodeList();
+  const groups = node.groups.map(g => {
+    const a = g.a != null ? g.a : resolveBarValueByOffset(list, g.aFrom);
+    const b = g.b != null ? g.b : resolveBarValueByOffset(list, g.bFrom);
+    return { label:g.label, a, b };
+  });
+  const max = Math.max(1, ...groups.map(g=>Math.max(g.a,g.b)));
+  dock.innerHTML = `${dockLabel(node)}
+    <div class="text-sm mb8" style="font-size:11px">${node.title}</div>
+    <div class="bar-chart">
+      ${groups.map(g=>`<div class="bar-group"><div class="bar-pair"><div class="bar b-a" style="height:${(g.a/max*70)}px"></div><div class="bar b-b" style="height:${(g.b/max*70)}px"></div></div><div class="bar-label">${g.label}</div></div>`).join('')}
+    </div>
+    <div class="bar-chart-legend">
+      <div class="bar-legend-item"><div class="bar-legend-dot" style="background:var(--brand-500)"></div>${node.legendA}</div>
+      <div class="bar-legend-item"><div class="bar-legend-dot" style="background:var(--brand-200)"></div>${node.legendB}</div>
+    </div>
+    <button class="btn btn-primary btn-block" id="dock-continue">Continuar</button>`;
+  document.getElementById('dock-continue').onclick = () => advance(node, groups, null);
+}
+function resolveBarValueByOffset(list, idxOffset) {
+  if (idxOffset == null || !list) return 0;
+  const n = list[idxOffset]; // los índices se guardaron 0-based (posición en el array del día)
+  return n && S.answers[n.id] != null ? S.answers[n.id] : 0;
+}
+
+function dockFreeText(node, dock) {
+  dock.innerHTML = `${dockLabel(node)}
+    <textarea class="freetext-area" id="ft-area" placeholder="${node.placeholder||''}"></textarea>
+    <div class="freetext-counter" id="ft-counter">0 palabras${node.minWords?` · mínimo sugerido ${node.minWords}`:''}</div>
+    <div class="hidden" id="ft-help-row" style="display:flex;gap:8px;margin-top:8px">
+      <button class="btn btn-secondary flex1 btn-sm" id="ft-skip">Omitir este paso</button>
+      <button class="btn btn-secondary flex1 btn-sm" id="ft-help">Pedir ayuda</button>
+    </div>
+    <button class="btn btn-primary btn-block" id="dock-continue" style="margin-top:8px">Continuar</button>`;
+  const area = document.getElementById('ft-area');
+  const counter = document.getElementById('ft-counter');
+  area.addEventListener('input', () => {
+    const words = area.value.trim().split(/\s+/).filter(Boolean).length;
+    counter.textContent = `${words} palabra${words===1?'':'s'}${node.minWords?` · mínimo sugerido ${node.minWords}`:''}`;
+    counter.classList.toggle('ok', words >= (node.minWords||0));
+  });
+  document.getElementById('dock-continue').onclick = () => {
+    const words = area.value.trim().split(/\s+/).filter(Boolean).length;
+    if (node.minWords > 0 && words < node.minWords) {
+      S.freetextFailStreak[node.id] = (S.freetextFailStreak[node.id]||0) + 1;
+      if (S.freetextFailStreak[node.id] >= 3) {
+        document.getElementById('ft-help-row').classList.remove('hidden');
+        showToast('Notamos que te está costando completar este paso (RF-37)', 'info');
+      }
+    }
+    const text = area.value.trim() || '(sin respuesta)';
+    advance(node, text, text.length>60 ? text.slice(0,60)+'…' : text);
+  };
+  document.getElementById('ft-skip').onclick = () => { S.freetextFailStreak[node.id]=0; advance(node, '(omitido por el usuario)', 'Paso omitido'); };
+  document.getElementById('ft-help').onclick = () => { S.freetextFailStreak[node.id]=0; showToast('Un miembro del equipo de psicología revisará tu progreso. Puedes continuar cuando quieras.', 'info'); };
+}
+
+function dockTimer(node, dock) {
+  let phaseIdx = 0; let remaining = node.phases[0].seconds; let totalElapsed = 0;
+  const totalSeconds = node.phases.reduce((a,p)=>a+p.seconds,0);
+  let msgIdx = 0; let interrupted = false;
+  dock.innerHTML = `${dockLabel(node)}
+    <div class="ex-timer-box">
+      <div class="ex-timer-phase" id="tm-phase">${node.phases[0].title}</div>
+      <div class="ex-timer-display" id="tm-display">${fmtTime(remaining)}</div>
+      <div class="ex-timer-bar"><div class="ex-timer-fill" id="tm-fill" style="width:0%"></div></div>
+      <div class="ex-timer-msg" id="tm-msg">"${node.phases[0].msgs[0]}"</div>
+    </div>
+    ${node.interrupt ? '<button class="btn btn-secondary btn-block" id="tm-stop" style="margin-top:10px">No puedo continuar</button>' : ''}
+    <button class="btn btn-primary btn-block hidden" id="dock-continue" style="margin-top:10px">Continuar</button>`;
+  function fmtTime(s){ const m=Math.floor(s/60), sec=s%60; return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`; }
+  const display = document.getElementById('tm-display');
+  const fill = document.getElementById('tm-fill');
+  const msgEl = document.getElementById('tm-msg');
+  const phaseEl = document.getElementById('tm-phase');
+  const timer = setInterval(() => {
+    remaining--; totalElapsed++;
+    if (remaining % 4 === 0 && remaining > 0) {
+      const msgs = node.phases[phaseIdx].msgs;
+      msgIdx = (msgIdx+1) % msgs.length;
+      msgEl.textContent = '"'+msgs[msgIdx]+'"';
+    }
+    display.textContent = fmtTime(Math.max(0,remaining));
+    fill.style.width = (totalElapsed/totalSeconds*100)+'%';
+    if (remaining <= 0) {
+      phaseIdx++;
+      if (phaseIdx < node.phases.length) {
+        remaining = node.phases[phaseIdx].seconds; msgIdx = 0;
+        phaseEl.textContent = node.phases[phaseIdx].title;
+        msgEl.textContent = '"'+node.phases[phaseIdx].msgs[0]+'"';
+      } else {
+        clearInterval(timer);
+        finish(false);
+      }
+    }
+  }, 1000);
+  function finish(wasInterrupted) {
+    clearInterval(timer);
+    const stopBtn = document.getElementById('tm-stop');
+    if (stopBtn) stopBtn.remove();
+    document.getElementById('dock-continue').classList.remove('hidden');
+    document.getElementById('dock-continue').onclick = () => advance(node, {segundos:totalElapsed, interrumpido:wasInterrupted}, wasInterrupted?`Interrumpido a los ${totalElapsed}s`:'Ejercicio completado');
+    if (wasInterrupted) { fill.style.background='var(--warning)'; msgEl.textContent='Ejercicio interrumpido. Está bien, puedes intentarlo de nuevo cuando quieras.'; }
+  }
+  const stopBtn = document.getElementById('tm-stop');
+  if (stopBtn) stopBtn.onclick = () => finish(true);
+}
+
+function dockSummary(node, dock) {
+  appendCard(`<div class="review-card-head"><span class="review-card-title">🏁 ${node.title}</span></div>
+    <div style="font-size:12.5px;color:var(--ts);line-height:1.6">${node.text}</div>`);
+  dock.innerHTML = `<button class="btn btn-primary btn-block" onclick="advance(currentNodeList()[${S.nodeIndex}],null,null)">Finalizar y volver al cronograma</button>`;
+  const btn = dock.querySelector('button');
+  btn.onclick = () => { markDiaProgressIfNeeded(); exitToSchedule(); };
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   BOTÓN SOS · CRAVING (RF-43)
+   ══════════════════════════════════════════════════════════════════ */
+const SOS_PHASE_MSGS = ["Observa dónde sientes el impulso en tu cuerpo.","Respira de forma lenta y natural.",
+  "El impulso puede subir y bajar, no necesitas hacer nada.","Sigue aquí, ya está cambiando."];
+let sosTimerRef = null;
+
+function isCrisisPattern() {
+  const now = Date.now();
+  const recent = S.sosTimestamps.filter(t => now - t < 3600*1000);
+  return recent.length > 3;
+}
+
+function openSOS() {
+  S.sosTimestamps.push(Date.now());
+  S.pausedSession = { modalidad:S.modalidad, semana:S.currentSemana, dia:S.currentDia, nodeIndex:S.nodeIndex };
+  S.sosInterrupted = false;
+  document.getElementById('sos-overlay').classList.add('visible');
+  updateFabVisibility();
+  if (isCrisisPattern()) { renderSOSCrisis(); return; }
+  renderSOSIntro();
+}
+
+function renderSOSIntro() {
+  const inner = document.getElementById('sos-inner');
+  inner.innerHTML = `
+    <div class="sos-icon">🫶</div>
+    <div class="sos-title">Vamos a observar este impulso sin actuar de inmediato</div>
+    <div class="sos-desc">Solo quédate con él unos minutos. Esto es un espacio seguro y no interrumpe tu progreso: tu sesión queda en pausa (RF-31).</div>
+    <div class="sos-actions">
+      <button class="sos-btn-white" onclick="renderSOSTimer()">Empezar (60s)</button>
+      <button class="sos-btn-ghost" onclick="closeSOSAttempt()">Ahora no</button>
+    </div>`;
+}
+
+function renderSOSTimer() {
+  const inner = document.getElementById('sos-inner');
+  const total = 60;
+  let remaining = total, msgIdx = 0;
+  inner.innerHTML = `
+    <div class="sos-title">Obsérvalo, sin actuar</div>
+    <div class="sos-timer" id="sos-tm">${remaining}</div>
+    <div class="sos-bar"><div class="sos-bar-fill" id="sos-bar-fill" style="width:0%"></div></div>
+    <div class="sos-msg-cycle" id="sos-msg">"${SOS_PHASE_MSGS[0]}"</div>
+    <div class="sos-actions">
+      <button class="sos-btn-ghost" id="sos-interrupt-btn">No puedo continuar</button>
+    </div>`;
+  const tmEl = document.getElementById('sos-tm');
+  const barFill = document.getElementById('sos-bar-fill');
+  const msgEl = document.getElementById('sos-msg');
+  sosTimerRef = setInterval(() => {
+    remaining--;
+    tmEl.textContent = remaining;
+    barFill.style.width = ((total-remaining)/total*100)+'%';
+    if (remaining % 4 === 0 && remaining > 0) { msgIdx=(msgIdx+1)%SOS_PHASE_MSGS.length; msgEl.textContent='"'+SOS_PHASE_MSGS[msgIdx]+'"'; }
+    if (remaining <= 0) { clearInterval(sosTimerRef); renderSOSReflect(total); }
+  }, 1000);
+  document.getElementById('sos-interrupt-btn').onclick = () => {
+    clearInterval(sosTimerRef);
+    S.sosInterrupted = true;
+    renderSOSReflect(total-remaining);
+  };
+}
+
+function renderSOSReflect(duracionSegundos) {
+  const inner = document.getElementById('sos-inner');
+  inner.innerHTML = `
+    <div class="sos-icon">${S.sosInterrupted?'⏸':'✓'}</div>
+    <div class="sos-title">${S.sosInterrupted?'Está bien detenerte':'Terminaste el tiempo de observación'}</div>
+    <div class="sos-desc">${S.sosInterrupted?'Registramos tu intento. Cada práctica cuenta, aunque no la termines.':'Ahora registra lo que pasó.'}</div>
+    <div class="sos-actions" id="sos-reflect-q"></div>`;
+  // pregunta breve de cierre (payload M05: id_usuario, timestamp_craving, tipo_craving, duracion_intervencion)
+  const q = document.getElementById('sos-reflect-q');
+  const opts = ["Disminuyó mucho","Disminuyó un poco","Se mantuvo igual","Aumentó"];
+  q.innerHTML = `<div style="font-size:12.5px;color:rgba(255,255,255,.85);margin-bottom:8px;">¿Cómo cambió el impulso?</div>` +
+    opts.map(o=>`<button class="sos-btn-ghost" style="margin-bottom:8px;width:100%" data-o="${o}">${o}</button>`).join('');
+  q.querySelectorAll('button').forEach(b => b.onclick = () => {
+    S.traza.unshift({ id:'SOS-'+Date.now(), tipo:'sos_craving', ts:new Date().toLocaleTimeString('es-CO'),
+      resumen:`duración=${duracionSegundos}s · estado=${S.sosInterrupted?'intervención_incompleta':'completa'} · cambio=${b.dataset.o}` });
+    renderSOSResources();
+  });
+}
+
+function renderSOSCrisis() {
+  const inner = document.getElementById('sos-inner');
+  inner.innerHTML = `
+    <div class="sos-icon">☎</div>
+    <div class="sos-title">Notamos varias activaciones seguidas. No estás solo/a.</div>
+    <div class="sos-desc">RF-43 FA-3 · Patrón de crisis detectado (más de 3 activaciones en 1 hora). Te compartimos contacto directo.</div>
+    <div class="sos-resource-card"><span class="sos-resource-num">106</span><span class="sos-resource-label">Línea de salud mental</span></div>
+    <div class="sos-resource-card"><span class="sos-resource-num">123</span><span class="sos-resource-label">Línea de emergencias</span></div>
+    <div class="sos-actions"><button class="sos-btn-white" onclick="closeSOSAttempt()">Entendido</button></div>`;
+}
+
+function renderSOSResources() {
+  const inner = document.getElementById('sos-inner');
+  inner.innerHTML = `
+    <div class="sos-icon">🤝</div>
+    <div class="sos-title">Recursos de apoyo</div>
+    <div class="sos-resource-card"><span class="sos-resource-num">106</span><span class="sos-resource-label">Línea de salud mental</span></div>
+    <div class="sos-resource-card"><span class="sos-resource-num">155</span><span class="sos-resource-label">Línea de orientación a mujeres</span></div>
+    <div class="sos-resource-card"><span class="sos-resource-num">123</span><span class="sos-resource-label">Línea de emergencias</span></div>
+    <div class="sos-actions">
+      <button class="sos-btn-white" onclick="closeSOS(true)">Retomar mi sesión</button>
+      <button class="sos-btn-ghost" onclick="closeSOS(false)">Cerrar por ahora</button>
+    </div>`;
+}
+
+function closeSOSAttempt() {
+  if (sosTimerRef) { clearInterval(sosTimerRef); S.sosInterrupted = true; }
+  closeSOS(true);
+}
+function closeSOS(resume) {
+  document.getElementById('sos-overlay').classList.remove('visible');
+  updateFabVisibility();
+  if (resume && S.pausedSession) {
+    S.currentSemana = S.pausedSession.semana; S.currentDia = S.pausedSession.dia; S.nodeIndex = S.pausedSession.nodeIndex;
+    showToast('Retomando tu sesión pausada', 'success');
+  }
+  S.pausedSession = null;
+}
+function triggerSOSPattern() {
+  const now = Date.now();
+  S.sosTimestamps.push(now-3000, now-2000, now-1000, now);
+  showToast('Simulados 4 SOS en la última hora — abre el botón SOS para ver FA-3', 'warning');
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   PANEL ADMIN / EQUIPO DE PSICOLOGÍA (RF-25B · RF-25C · RF-38)
+   ══════════════════════════════════════════════════════════════════ */
+function switchAdminTab(tab) {
+  ['modalidad','arboles','traza'].forEach(t => {
+    document.getElementById(`at-${t}`).style.display = t===tab ? 'block' : 'none';
+    document.getElementById(`atab-${t}`).classList.toggle('active', t===tab);
+  });
+}
+
+function renderAdminModalidad() {
+  document.getElementById('mv-total').textContent = S.perfilTotal;
+  document.getElementById('mv-completos').textContent = `${S.perfilCompleto} / ${S.perfilTotal}`;
+  document.getElementById('mv-progress').style.width = (S.perfilCompleto/S.perfilTotal*100)+'%';
+  document.getElementById('mv-alert-incompleto').style.display = S.perfilCompleto < S.perfilTotal ? 'flex' : 'none';
+  document.getElementById('mv-alert-desc').textContent = `${S.perfilTotal-S.perfilCompleto} usuario(s) activo(s) aún no completan tipo de dependencia y tipo de craving (RF-27B). No se exponen identificadores individuales.`;
+  const badge = document.getElementById('modalidad-actual-badge');
+  const btn = document.getElementById('btn-transicion');
+  if (S.modalidadPrograma === 'personalizada') {
+    badge.textContent = 'PERSONALIZADA'; badge.className='badge b-warning';
+    btn.textContent = 'El programa ya está en modalidad personalizada'; btn.disabled = true;
+  } else {
+    badge.textContent = 'GRUPAL'; badge.className='badge b-info';
+    btn.textContent = 'Habilitar modalidad personalizada'; btn.disabled = false;
+  }
+}
+function attemptTransicion() {
+  if (S.modalidadPrograma === 'personalizada') {
+    showToast('El programa ya se encuentra en modalidad personalizada.', 'info');
+    return;
+  }
+  if (S.perfilCompleto < S.perfilTotal) {
+    showToast(`No es posible habilitar la modalidad personalizada: ${S.perfilTotal-S.perfilCompleto} usuarios activos sin perfil clínico completo (HTTP 409)`, 'error');
+    return;
+  }
+  document.getElementById('transicion-desc').textContent =
+    `Se verificaron ${S.perfilCompleto} de ${S.perfilTotal} usuarios activos con perfil clínico completo (RF-27B). Esta acción habilita el árbol conversacional personalizado para todas las nuevas sesiones y es unidireccional e irreversible dentro de este alcance.`;
+  document.getElementById('transicion-modal').classList.add('visible');
+}
+function confirmTransicion() {
+  document.getElementById('transicion-modal').classList.remove('visible');
+  S.modalidadPrograma = 'personalizada';
+  S.traza.unshift({ id:'TRANS-'+Date.now(), tipo:'transicion_modalidad', ts:new Date().toLocaleTimeString('es-CO'),
+    resumen:`grupal → personalizada · ${S.perfilTotal} usuarios verificados · admin=psicologia@usco.edu.co` });
+  renderAdminModalidad();
+  showToast('Transición aplicada. Las nuevas sesiones se inicializarán en modalidad personalizada (RF-25B).', 'success');
+}
+function cancelTransicion() {
+  document.getElementById('transicion-modal').classList.remove('visible');
+}
+function simulateError(kind) {
+  if (kind === 'perfil_incompleto') {
+    S.perfilCompleto = S.perfilTotal - 4;
+    S.modalidadPrograma = 'grupal';
+    if (S.role==='admin') renderAdminModalidad();
+    showToast('Simulado: 4 usuarios activos con perfil clínico incompleto', 'warning');
+  } else if (kind === 'mi_perfil_incompleto') {
+    S.studentProfileComplete = !S.studentProfileComplete;
+    const btn = document.getElementById('btn-my-profile');
+    btn.classList.toggle('active', !S.studentProfileComplete);
+    showToast(S.studentProfileComplete ? 'Tu perfil clínico vuelve a estar completo' : 'Simulado: tu perfil clínico (RF-27B) quedó incompleto', 'warning');
+    document.getElementById('sel-modalidad').value = 'personalizada';
+    onModalidadDemoChange();
+    if (S.role === 'student') { enterAs('student'); } // re-evalúa el bloqueo con el estado actual
+  } else if (kind === 'arbol_no_publicado') {
+    TREE_DATA.personalizada['tolerancia|positivo'].estado = 'borrador';
+    document.getElementById('sel-modalidad').value = 'personalizada';
+    document.getElementById('sel-perfil').value = 'tolerancia|positivo';
+    document.getElementById('sel-perfil').style.display = 'inline-block';
+    S.modalidad = 'personalizada'; S.perfilCombo = 'tolerancia|positivo';
+    updateDemoBarBadges();
+    if (S.role !== 'student') enterAs('student'); else { S.nodeIndex=0; clearThread(); renderChatHeader(); renderCurrentNode(); go('s-chat'); }
+    showToast('Simulado: perfil tolerancia·positivo sin árbol publicado (RF-26B → HTTP 404/409)', 'warning');
+  }
+}
+
+function renderAdminArboles() {
+  document.getElementById('tree-grupal-nodecount').textContent =
+    Object.values(TREE_DATA.grupal).filter(s=>!s.locked).reduce((a,s)=>a+Object.values(s.dias).reduce((b,d)=>b+d.nodos.length,0),0) + ' nodos';
+  const wrap = document.getElementById('personal-tree-cards');
+  wrap.innerHTML = '';
+  const badgeFor = { publicado:'b-success', borrador:'b-neutral', archivado:'b-danger', sin_crear:'b-warning' };
+  const labelFor = { publicado:'PUBLICADO', borrador:'BORRADOR', archivado:'ARCHIVADO', sin_crear:'SIN CREAR' };
+  Object.entries(TREE_DATA.personalizada).forEach(([key,tree]) => {
+    const card = document.createElement('div');
+    card.className = 'tree-card';
+    card.innerHTML = `<div class="tree-card-head"><span class="tree-card-title">${tree.nombre}</span><span class="badge ${badgeFor[tree.estado]}">${labelFor[tree.estado]}</span></div>
+      <div class="tree-card-meta"><span>v${tree.version}</span><span>${tree.nodos.length} nodos</span></div>`;
+    card.onclick = () => openEditor('personalizada', key);
+    wrap.appendChild(card);
+  });
+}
+
+function renderAdminTrazabilidad() {
+  const wrap = document.getElementById('traza-list');
+  const histHtml = `<div class="review-card" style="padding:9px 12px;margin-bottom:12px;background:var(--hover);">
+    <div class="review-card-title" style="font-size:11px;margin-bottom:4px;">Estado conversacional actual (RF-31 · historial_nodos)</div>
+    <div class="mono-sm">${S.historialNodos.length ? S.historialNodos.join(' → ') : '(sin interacciones aún en esta sesión)'}</div>
+  </div>`;
+  if (!S.traza.length) { wrap.innerHTML = histHtml + `<div class="text-sm text-center" style="padding:20px 0">Aún no hay interacciones registradas en esta sesión de demo.</div>`; return; }
+  wrap.innerHTML = histHtml + S.traza.slice(0,40).map(t => {
+    const ts = t.ts && t.ts.includes('T') ? new Date(t.ts).toLocaleTimeString('es-CO') : (t.ts || '');
+    return `
+    <div class="review-card" style="padding:9px 12px;margin-bottom:7px;">
+      <div class="row-between"><span class="mono-sm">${t.id}</span><span class="mono-sm">${ts}</span></div>
+      <div style="font-size:11.5px;color:var(--ts);margin-top:3px;">${t.tipo} ${t.resumen ? '· '+t.resumen : ''}</div>
+      ${t.resultado_transicion ? `<div class="mono-sm" style="margin-top:3px">→ destino: ${t.resultado_transicion}${t.id_sesion?' · sesión '+t.id_sesion:''}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   EDITOR VISUAL DE NODOS (RF-25 árbol grupal · RF-25C árboles
+   personalizados) — nodos arrastrables + conexiones + validación +
+   publicar/archivar. Opera directamente sobre TREE_DATA (persiste
+   en memoria durante la sesión de demo).
+   ══════════════════════════════════════════════════════════════════ */
+function openEditor(kind, ctx) {
+  S.editor.kind = kind;
+  S.editor.linkMode = false;
+  S.editor.selectedId = null;
+  if (kind === 'grupal') {
+    const semana = document.getElementById('sel-semana').value;
+    const dia = parseInt(document.getElementById('sel-dia').value,10);
+    const sem = TREE_DATA.grupal[semana];
+    S.editor.semana = semana; S.editor.dia = dia; S.editor.comboKey = null;
+    S.editor.nodes = (!sem.locked) ? sem.dias[String(dia)].nodos : [];
+    document.getElementById('editor-title').textContent = `Árbol grupal · Semana ${semana.replace('semana','')} · Día ${dia}`;
+    document.getElementById('editor-subtitle').textContent = sem.locked ? 'sin contenido configurado' : `${sem.dias[String(dia)].titulo}`;
+    document.getElementById('editor-status-badge').textContent = 'GRUPAL';
+    document.getElementById('editor-status-badge').className = 'badge b-info';
+    document.querySelector('.editor-toolbar').querySelectorAll('button').forEach(b=>b.style.display='inline-flex');
+    // ocultar publicar/archivar para árbol grupal (RF-25 no define ciclo borrador/publicado)
+    document.getElementById('editor-publish-btn').style.display = 'none';
+    document.getElementById('editor-archive-btn').style.display = 'none';
+    showToast('Editando el día seleccionado en la demo-bar. Cambia Semana/Día y reabre el árbol para editar otro.', 'info');
+  } else {
+    const tree = TREE_DATA.personalizada[ctx];
+    S.editor.comboKey = ctx; S.editor.semana = null; S.editor.dia = null;
+    S.editor.nodes = tree.nodos;
+    document.getElementById('editor-title').textContent = `Árbol personalizado · ${tree.nombre}`;
+    document.getElementById('editor-subtitle').textContent = `v${tree.version}`;
+    const badgeFor = { publicado:'b-success', borrador:'b-neutral', archivado:'b-danger', sin_crear:'b-warning' };
+    const labelFor = { publicado:'PUBLICADO', borrador:'BORRADOR', archivado:'ARCHIVADO', sin_crear:'SIN CREAR' };
+    document.getElementById('editor-status-badge').textContent = labelFor[tree.estado];
+    document.getElementById('editor-status-badge').className = 'badge ' + badgeFor[tree.estado];
+    document.querySelector('.editor-toolbar').querySelectorAll('button').forEach(b=>b.style.display='inline-flex');
+  }
+  go('s-editor');
+  editorRenderCanvas();
+}
+
+function editorRenderCanvas() {
+  const canvas = document.getElementById('editor-canvas');
+  canvas.querySelectorAll('.node-box').forEach(n=>n.remove());
+  const nodes = S.editor.nodes;
+  let maxX=900, maxY=900;
+  nodes.forEach(n => {
+    const box = document.createElement('div');
+    box.className = 'node-box' + (n.id === (nodes[0] && nodes[0].id) ? ' start' : '') + (n.id===S.editor.selectedId ? ' selected' : '');
+    box.style.left = n.x+'px'; box.style.top = n.y+'px';
+    box.dataset.id = n.id;
+    box.innerHTML = `<div class="node-type">${n.type}${n.profileDim?' · RF-27B':''}</div><div class="node-title">${(n.text||n.title||'(nodo)').slice(0,70)}</div>`;
+    canvas.appendChild(box);
+    maxX = Math.max(maxX, n.x+200); maxY = Math.max(maxY, n.y+200);
+    wireNodeBoxEvents(box, n);
+  });
+  canvas.style.minWidth = maxX+'px'; canvas.style.minHeight = maxY+'px';
+  editorDrawLinks();
+}
+
+function wireNodeBoxEvents(box, n) {
+  let dragStart = null, moved = false;
+  box.addEventListener('pointerdown', (e) => {
+    box.setPointerCapture(e.pointerId);
+    dragStart = { x:e.clientX, y:e.clientY, ox:n.x, oy:n.y };
+    moved = false;
+  });
+  box.addEventListener('pointermove', (e) => {
+    if (!dragStart) return;
+    const dx = e.clientX-dragStart.x, dy = e.clientY-dragStart.y;
+    if (Math.abs(dx)+Math.abs(dy) > 3) moved = true;
+    if (!moved) return;
+    n.x = Math.max(0, dragStart.ox+dx); n.y = Math.max(0, dragStart.oy+dy);
+    box.style.left = n.x+'px'; box.style.top = n.y+'px';
+    editorDrawLinks();
+  });
+  box.addEventListener('pointerup', () => {
+    dragStart = null;
+    if (!moved) onNodeClick(n);
+  });
+}
+
+function onNodeClick(n) {
+  if (S.editor.linkMode) {
+    if (!S.editor._linkFrom) { S.editor._linkFrom = n.id; showToast('Elige el nodo destino…', 'info'); }
+    else {
+      const from = S.editor.nodes.find(x=>x.id===S.editor._linkFrom);
+      from.next = n.id;
+      S.editor._linkFrom = null;
+      editorDrawLinks();
+      showToast('Transición actualizada (RF-29)', 'success');
+    }
+    return;
+  }
+  S.editor.selectedId = n.id;
+  editorRenderCanvas();
+  openNodePanel(n);
+}
+
+function editorDrawLinks() {
+  const svg = document.getElementById('editor-svg');
+  svg.innerHTML = `<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="var(--brand-500)"/></marker></defs>`;
+  const nodes = S.editor.nodes;
+  const byId = Object.fromEntries(nodes.map(n=>[n.id,n]));
+  nodes.forEach(n => {
+    if (!n.next || !byId[n.next]) return;
+    const to = byId[n.next];
+    const x1 = n.x+66, y1 = n.y+58, x2 = to.x+66, y2 = to.y+2;
+    svg.innerHTML += `<path d="M${x1},${y1} C${x1},${y1+40} ${x2},${y2-40} ${x2},${y2}" fill="none" stroke="var(--brand-400)" stroke-width="2" marker-end="url(#arrow)" opacity="0.8"/>`;
+  });
+}
+
+function editorAddNode() {
+  const id = 'new'+Date.now();
+  const n = { id, type:'msg', text:'Nuevo nodo', avatar:true, rf:'RF-25', next:null, x:60+Math.random()*200, y:60+Math.random()*200 };
+  S.editor.nodes.push(n);
+  editorRenderCanvas();
+  showToast('Nodo creado. Tócalo para editar contenido.', 'success');
+}
+
+function editorToggleLinkMode() {
+  S.editor.linkMode = !S.editor.linkMode;
+  S.editor._linkFrom = null;
+  document.getElementById('editor-link-btn').classList.toggle('active', S.editor.linkMode);
+  showToast(S.editor.linkMode ? 'Modo conexión: toca nodo origen y luego destino' : 'Modo conexión desactivado', 'info');
+}
+
+function editorValidate() {
+  const nodes = S.editor.nodes;
+  if (!nodes.length) { showToast('Árbol vacío: no hay nodos que validar', 'warning'); return; }
+  const ids = new Set(nodes.map(n=>n.id));
+  const referenced = new Set(nodes.map(n=>n.next).filter(Boolean));
+  const problems = [];
+  nodes.forEach(n => { if (n.next && !ids.has(n.next)) problems.push(`"${(n.text||'').slice(0,20)}…" apunta a un nodo destino inexistente`); });
+  const orphans = nodes.filter((n,i) => i>0 && !referenced.has(n.id));
+  if (orphans.length) problems.push(`${orphans.length} nodo(s) huérfano(s) sin conexión entrante`);
+  if (problems.length) showToast('Estructura inválida: ' + problems[0] + (problems.length>1?` (+${problems.length-1} más)`:''), 'error');
+  else showToast('Estructura válida: sin nodos huérfanos ni transiciones rotas (RF-25)', 'success');
+  return problems.length === 0;
+}
+
+function editorPublish() {
+  if (S.editor.kind !== 'personalizada') { showToast('El árbol grupal no maneja ciclo borrador/publicado', 'info'); return; }
+  if (!editorValidate()) return;
+  const combo = S.editor.comboKey;
+  const tree = TREE_DATA.personalizada[combo];
+  if (!tree.nodos.length) { showToast('No se puede publicar un árbol sin nodos', 'error'); return; }
+  tree.estado = 'publicado'; tree.version += 1;
+  document.getElementById('editor-status-badge').textContent = 'PUBLICADO';
+  document.getElementById('editor-status-badge').className = 'badge b-success';
+  document.getElementById('editor-subtitle').textContent = `v${tree.version}`;
+  S.traza.unshift({ id:'PUB-'+Date.now(), tipo:'publicacion_arbol', ts:new Date().toLocaleTimeString('es-CO'), resumen:`${tree.nombre} → publicado v${tree.version}` });
+  showToast(`Árbol publicado (v${tree.version}). Cualquier versión anterior publicada para esta combinación queda archivada.`, 'success');
+}
+function editorArchive() {
+  if (S.editor.kind !== 'personalizada') { showToast('El árbol grupal no maneja ciclo borrador/publicado', 'info'); return; }
+  const tree = TREE_DATA.personalizada[S.editor.comboKey];
+  tree.estado = 'archivado';
+  document.getElementById('editor-status-badge').textContent = 'ARCHIVADO';
+  document.getElementById('editor-status-badge').className = 'badge b-danger';
+  showToast('Árbol archivado. Ya no será seleccionable por RF-26B, pero se conserva para trazabilidad.', 'warning');
+}
+
+/* ── Panel de edición de nodo (bottom sheet) ── */
+function openNodePanel(n) {
+  const card = document.getElementById('node-panel-card');
+  const optionsText = (n.options||[]).map(o=>o.label).join('\n');
+  card.innerHTML = `
+    <div class="field-label" style="font-size:13px;font-weight:800;margin-bottom:12px;">Editar nodo <span class="mono-sm">${n.id}</span></div>
+    <div class="field"><div class="field-label">Tipo</div>
+      <select class="select" id="np-type">
+        ${['msg','choice','choice_multi','slider','drag','swipe','valuegrid','textbuilder','bodymap','comic','barchart','freetext','timer','summary'].map(t=>`<option value="${t}" ${t===n.type?'selected':''}>${t}</option>`).join('')}
+      </select>
+    </div>
+    <div class="field"><div class="field-label">Texto / pregunta</div><textarea class="input" id="np-text" rows="3">${n.text||''}</textarea></div>
+    ${!['choice','choice_multi','msg','slider','freetext','summary'].includes(n.type) ? '<div class="text-sm mb12" style="font-size:10.5px">Este tipo tiene campos estructurales (tarjetas, zonas, opciones…) que este panel rápido no edita — solo texto y etiqueta RF.</div>' : ''}
+    <div class="field" id="np-options-wrap" style="${(n.type==='choice'||n.type==='choice_multi')?'':'display:none'}">
+      <div class="field-label">Opciones (una por línea)</div><textarea class="input" id="np-options" rows="4">${optionsText}</textarea>
+    </div>
+    <div class="field"><div class="field-label">Etiqueta RF (trazabilidad)</div><input class="input" id="np-rf" value="${n.rf||''}"></div>
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button class="btn btn-secondary flex1" onclick="closeNodePanel()">Cancelar</button>
+      <button class="btn btn-danger" onclick="deleteNode('${n.id}')">Eliminar</button>
+      <button class="btn btn-primary flex1" onclick="saveNodePanel('${n.id}')">Guardar</button>
+    </div>`;
+  document.getElementById('np-type').onchange = (e) => {
+    document.getElementById('np-options-wrap').style.display = (e.target.value==='choice'||e.target.value==='choice_multi') ? 'block' : 'none';
+  };
+  document.getElementById('node-panel').classList.add('visible');
+}
+function closeNodePanel(){ document.getElementById('node-panel').classList.remove('visible'); }
+function saveNodePanel(id) {
+  const n = S.editor.nodes.find(x=>x.id===id);
+  if (!n) return;
+  n.type = document.getElementById('np-type').value;
+  n.text = document.getElementById('np-text').value;
+  n.rf = document.getElementById('np-rf').value;
+  if (n.type==='choice' || n.type==='choice_multi') {
+    n.options = document.getElementById('np-options').value.split('\n').map(s=>s.trim()).filter(Boolean).map(l=>({label:l,value:l}));
+  }
+  closeNodePanel();
+  editorRenderCanvas();
+  showToast('Nodo actualizado', 'success');
+}
+function deleteNode(id) {
+  if (S.editor.nodes.length <= 1) { showToast('El árbol debe tener al menos un nodo', 'warning'); return; }
+  S.editor.nodes.forEach(n => { if (n.next===id) n.next=null; });
+  S.editor.nodes = S.editor.nodes.filter(n=>n.id!==id);
+  if (S.editor.comboKey) {
+    TREE_DATA.personalizada[S.editor.comboKey].nodos = S.editor.nodes;
+  } else if (S.editor.kind === 'grupal') {
+    TREE_DATA.grupal[S.editor.semana].dias[String(S.editor.dia)].nodos = S.editor.nodes;
+  }
+  closeNodePanel();
+  editorRenderCanvas();
+  showToast('Nodo eliminado', 'info');
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   SESIÓN / INACTIVIDAD (patrón M01, adaptado)
+   ══════════════════════════════════════════════════════════════════ */
+function startSession() {
+  S.sessionActive = true;
+  S.inactivitySecs = 0;
+  document.getElementById('btn-timeout').style.display = 'inline-block';
+  stopSession(true);
+  scheduleInactivityCheck();
+}
+function stopSession(timersOnly=false) {
+  clearTimeout(S.inactivityTimer); clearTimeout(S.warningTimer); clearInterval(S.countdownInterval);
+  if (!timersOnly) { S.sessionActive = false; document.getElementById('btn-timeout').style.display = 'none'; }
+}
+function scheduleInactivityCheck() {
+  clearTimeout(S.inactivityTimer); clearTimeout(S.warningTimer);
+  S.warningTimer = setTimeout(showSessionWarning, S.TIMEOUT_WARN * 1000);
+  S.inactivityTimer = setTimeout(() => {
+    document.getElementById('session-modal').classList.remove('visible');
+    clearInterval(S.countdownInterval);
+    doLogout();
+    showToast('Sesión cerrada por inactividad', 'warning');
+  }, S.TIMEOUT_KILL * 1000);
+}
+function showSessionWarning() {
+  const modal = document.getElementById('session-modal');
+  modal.classList.add('visible');
+  let count = S.TIMEOUT_KILL - S.TIMEOUT_WARN;
+  document.getElementById('modal-count').textContent = count;
+  clearInterval(S.countdownInterval);
+  S.countdownInterval = setInterval(() => { count--; document.getElementById('modal-count').textContent = Math.max(0,count); }, 1000);
+}
+function extendSession() {
+  document.getElementById('session-modal').classList.remove('visible');
+  clearInterval(S.countdownInterval);
+  resetActivity();
+  showToast('Sesión extendida', 'success');
+}
+function resetActivity() {
+  if (!S.sessionActive) return;
+  document.getElementById('session-modal').classList.remove('visible');
+  clearInterval(S.countdownInterval);
+  scheduleInactivityCheck();
+}
+function triggerTimeoutWarning() {
+  if (!S.sessionActive) return;
+  clearTimeout(S.warningTimer); clearTimeout(S.inactivityTimer);
+  showSessionWarning();
+  S.inactivityTimer = setTimeout(() => {
+    document.getElementById('session-modal').classList.remove('visible');
+    clearInterval(S.countdownInterval);
+    doLogout();
+    showToast('Sesión cerrada por inactividad', 'warning');
+  }, 5000);
+}
+function doLogout() {
+  stopSession();
+  saveProgressSnapshot();
+  S.role = null;
+  document.getElementById('dp-role').style.display='none';
+  document.getElementById('dp-mode').style.display='none';
+  document.getElementById('session-modal').classList.remove('visible');
+  _history = ['s-init'];
+  go('s-init');
+  document.getElementById('init-text').textContent = 'Sesión cerrada.';
+  showToast('Sesión cerrada', 'info');
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   BOOTSTRAP
+   ══════════════════════════════════════════════════════════════════ */
+window.addEventListener('DOMContentLoaded', () => {
+  populateDemoSelects();
+  document.getElementById('sel-semana').value = 'semana1';
+  document.getElementById('sel-dia').value = '3';
+  // progreso guardado de demo para mostrar RF-32 (recuperación de sesión)
+  S.savedProgress = { modalidad:'grupal', semana:'semana1', dia:3, nodeIndex:1 };
+  S.completedDias.semana1 = [1,2];
+  document.getElementById('phone').addEventListener('pointerdown', resetActivity);
+  document.getElementById('phone').addEventListener('keydown', resetActivity);
+});
+// inicia el temporizador de sesión en cuanto el estudiante entra al chat
+const _origEnterAs = enterAs;
+enterAs = function(role) {
+  _origEnterAs(role);
+  if (role === 'student') setTimeout(startSession, 950); else stopSession();
+};
+
+</script>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-wrap" id="toast-container"></div>
+
+</body>
+</html>
