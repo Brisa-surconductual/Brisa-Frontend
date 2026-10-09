@@ -16,6 +16,7 @@ export function PsychoeducationalResourceForm({
   errors = {},
   destinationModules = [],
   loading = false,
+  editing = false,
   submitLabel = 'Guardar recurso',
   onChange,
   onFileChange,
@@ -54,7 +55,7 @@ export function PsychoeducationalResourceForm({
           error={errors.type}
           placeholder="Selecciona un tipo"
           required
-          disabled={loading}
+          disabled={loading || editing}
           onChange={onChange}
         />
 
@@ -69,7 +70,7 @@ export function PsychoeducationalResourceForm({
           error={errors.order}
           placeholder="Ej. 1"
           required
-          disabled={loading}
+          disabled={loading || editing}
           onChange={onChange}
         />
 
