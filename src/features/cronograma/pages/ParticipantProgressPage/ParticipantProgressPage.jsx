@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useAuth } from '@/app/providers/index.js';
@@ -16,18 +17,128 @@ import { ParticipantProgressList } from '@/features/cronograma/components/Partic
 
 import { CompletedParticipantProgress } from '@/features/cronograma/components/CompletedParticipantProgress/index.js';
 
+import { listarUbicacionesTemporalesParticipantes } from '@/features/cronograma/api/contenidoVigente/listarUbicacionesTemporalesParticipantes.jsx';
+
+import { PARTICIPANT_PROGRESS_STATUS } from '@/features/cronograma/types/participantProgressTypes.js';
+
 const EMPTY_PROGRESS_SUMMARY = null;
 const EMPTY_PARTICIPANTS = Object.freeze([]);
 const EMPTY_COMPLETED_PARTICIPANT = null;
+
+function getParticipantStatus(participant) {
+  if (participant.cronograma_finalizado === true) {
+    return PARTICIPANT_PROGRESS_STATUS.COMPLETADO;
+  }
+
+  if (participant.en_pausa_administrativa === true) {
+    return PARTICIPANT_PROGRESS_STATUS.EN_PAUSA;
+  }
+
+  if (participant.id_cronograma_usuario) {
+    return PARTICIPANT_PROGRESS_STATUS.ACTIVO;
+  }
+
+  return null;
+}
+
+function mapParticipant(participant) {
+  return {
+    id: participant.id_usuario,
+    participantName: participant.correo_electronico,
+    temporalUnitName: participant.nombre_unidad,
+    currentWeek: participant.orden_unidad,
+    currentDay: null,
+    status: getParticipantStatus(participant),
+  };
+}
+
+function createProgressSummary(participants, total) {
+  const allParticipantsLoaded =
+    total === participants.length;
+
+  return {
+    totalParticipants: total,
+    activeParticipants: allParticipantsLoaded
+      ? participants.filter(
+          (participant) =>
+            participant.status ===
+            PARTICIPANT_PROGRESS_STATUS.ACTIVO,
+        ).length
+      : null,
+    pausedParticipants: allParticipantsLoaded
+      ? participants.filter(
+          (participant) =>
+            participant.status ===
+            PARTICIPANT_PROGRESS_STATUS.EN_PAUSA,
+        ).length
+      : null,
+  };
+}
+
 export function ParticipantProgressPage() {
   const navigate = useNavigate();
   const { logout } = useAuth();
 
-  const progressSummary = EMPTY_PROGRESS_SUMMARY;
+  const [progressSummary, setProgressSummary] = useState(
+    EMPTY_PROGRESS_SUMMARY,
+  );
 
-  const participants = EMPTY_PARTICIPANTS;
+  const [participants, setParticipants] = useState(
+    EMPTY_PARTICIPANTS,
+  );
+
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
 
   const completedParticipant = EMPTY_COMPLETED_PARTICIPANT;
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadParticipants() {
+      try {
+        const data =
+          await listarUbicacionesTemporalesParticipantes();
+
+        if (!isMounted) {
+          return;
+        }
+
+        const mappedParticipants = Array.isArray(
+          data?.participantes,
+        )
+          ? data.participantes.map(mapParticipant)
+          : [];
+
+        setParticipants(mappedParticipants);
+
+        setProgressSummary(
+          createProgressSummary(
+            mappedParticipants,
+            data?.total ?? mappedParticipants.length,
+          ),
+        );
+      } catch {
+        if (!isMounted) {
+          return;
+        }
+
+        setLoadError(
+          'No pudimos consultar el progreso de los participantes.',
+        );
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadParticipants();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   function handleLogout() {
     logout();
@@ -104,7 +215,21 @@ export function ParticipantProgressPage() {
           </header>
           <ParticipantProgressSummary summary={progressSummary} />
 
-          {participants.length > 0 ? (
+          {loading ? (
+            <p
+              className="m-0 py-[var(--space-7)] text-center text-[13px] text-[var(--text-muted)]"
+              role="status"
+            >
+              Cargando participantes...
+            </p>
+          ) : loadError ? (
+            <div
+              className="rounded-[var(--radius-md)] border border-[var(--danger-border)] bg-[var(--danger-bg)] p-[var(--space-4)] text-[13px] font-semibold text-[var(--danger-text)]"
+              role="alert"
+            >
+              {loadError}
+            </div>
+          ) : participants.length > 0 ? (
             <ParticipantProgressList
               participants={participants}
               onViewTemporalInformation={handleViewTemporalInformation}

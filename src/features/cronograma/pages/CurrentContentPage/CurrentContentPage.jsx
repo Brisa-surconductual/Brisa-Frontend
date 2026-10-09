@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+
 import { useNavigate } from 'react-router-dom';
 
 import { useAuth } from '@/app/providers/index.js';
@@ -8,14 +10,90 @@ import { EmptyScheduleState } from '@/features/cronograma/components/EmptySchedu
 import { StudentBottomNav } from '@/features/users/components/StudentBottomNav/index.js';
 import { StudentHeader } from '@/features/users/components/StudentHeader/index.js';
 
+import { obtenerMiContenidoVigente } from '@/features/cronograma/api/contenidoVigente/obtenerMiContenidoVigente.jsx';
+
 const EMPTY_CURRENT_CONTENT = Object.freeze([]);
 
+function formatAvailability(start, end) {
+  if (!start || !end) {
+    return '';
+  }
+
+  return `${new Date(start).toLocaleString()} → ${new Date(end).toLocaleString()}`;
+}
+
+function mapCurrentContent(content) {
+  return {
+    id: content.id_contenido,
+    associationId: content.id_contenido_cronograma,
+    name: content.nombre_contenido,
+    type: content.tipo_contenido,
+    temporalUnitId: content.id_unidad_temporal,
+    temporalUnitName: content.nombre_unidad,
+    temporalUnitOrder: content.orden_unidad,
+    order: content.orden_contenido,
+    status: content.estado_disponibilidad,
+    availabilityText: formatAvailability(
+      content.fecha_inicio_disponibilidad,
+      content.fecha_fin_disponibilidad,
+    ),
+  };
+}
+
 export function CurrentContentPage({
-  currentContent = EMPTY_CURRENT_CONTENT,
   onSelectContent,
 }) {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+
+  const [currentContent, setCurrentContent] = useState(
+    EMPTY_CURRENT_CONTENT,
+  );
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadCurrentContent() {
+      try {
+        const data = await obtenerMiContenidoVigente();
+
+        if (!isMounted) {
+          return;
+        }
+
+        setCurrentContent(
+          Array.isArray(data)
+            ? data.map(mapCurrentContent)
+            : [],
+        );
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        if (error.response?.status === 404) {
+          setCurrentContent([]);
+          return;
+        }
+
+        setLoadError(
+          'No pudimos consultar tu contenido vigente. Intenta nuevamente.',
+        );
+      }finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadCurrentContent();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   function handleLogout() {
     logout();
@@ -67,14 +145,28 @@ export function CurrentContentPage({
             </p>
           </header>
 
-          {currentContent.length > 0 ? (
+          {loading ? (
+            <p
+              className="m-0 py-[var(--space-7)] text-center text-[13px] text-[var(--text-muted)]"
+              role="status"
+            >
+              Cargando contenido vigente...
+            </p>
+          ) : loadError ? (
+            <div
+              className="rounded-[var(--radius-md)] border border-[var(--danger-border)] bg-[var(--danger-bg)] p-[var(--space-4)] text-[13px] font-semibold text-[var(--danger-text)]"
+              role="alert"
+            >
+              {loadError}
+            </div>
+          ) : currentContent.length > 0 ? (
             <section
               className="grid gap-[var(--space-4)]"
               aria-label="Contenido vigente"
             >
               {currentContent.map((content) => (
                 <CurrentContentCard
-                  key={content.id}
+                  key={content.associationId ?? content.id}
                   content={content}
                   onSelect={onSelectContent}
                 />
