@@ -40,7 +40,7 @@ export function CurrentContentPage({
 
         setCurrentContent(
           Array.isArray(data)
-            ? data.map(mapCurrentContent)
+            ? data.map((content) => mapCurrentContent(content))
             : [],
         );
       } catch (error) {

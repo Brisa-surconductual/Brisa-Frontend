@@ -114,7 +114,7 @@ export function TemporalInformationPage({
 
         setCurrentContent(
           Array.isArray(contents)
-            ? contents.map(mapCurrentContent)
+            ? contents.map((content) => mapCurrentContent(content))
             : [],
         );
       } catch (error) {
