@@ -133,7 +133,7 @@ export function ParticipantProgressPage() {
       }
     }
 
-    loadParticipants();
+    void loadParticipants();
 
     return () => {
       isMounted = false;

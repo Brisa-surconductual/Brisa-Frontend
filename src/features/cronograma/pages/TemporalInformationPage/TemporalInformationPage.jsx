@@ -18,6 +18,8 @@ import {
 import { obtenerContenidoVigenteUsuario } from '@/features/cronograma/api/contenidoVigente/obtenerContenidoVigenteUsuario.jsx';
 import { obtenerUbicacionTemporalParticipante } from '@/features/cronograma/api/contenidoVigente/obtenerUbicacionTemporalParticipante.jsx';
 
+import { mapCurrentContent } from '@/features/cronograma/utils/currentContent.js';
+
 const EMPTY_TEMPORAL_INFORMATION = null;
 const EMPTY_CURRENT_CONTENT = Object.freeze([]);
 
@@ -42,32 +44,6 @@ function formatElapsedTime(seconds) {
   }
 
   return `${hours} h`;
-}
-
-function formatAvailability(start, end) {
-  if (!start || !end) {
-    return '';
-  }
-
-  return `${new Date(start).toLocaleString()} → ${new Date(end).toLocaleString()}`;
-}
-
-function mapCurrentContent(content) {
-  return {
-    id: content.id_contenido,
-    associationId: content.id_contenido_cronograma,
-    name: content.nombre_contenido,
-    type: content.tipo_contenido,
-    temporalUnitId: content.id_unidad_temporal,
-    temporalUnitName: content.nombre_unidad,
-    temporalUnitOrder: content.orden_unidad,
-    order: content.orden_contenido,
-    status: content.estado_disponibilidad,
-    availabilityText: formatAvailability(
-      content.fecha_inicio_disponibilidad,
-      content.fecha_fin_disponibilidad,
-    ),
-  };
 }
 
 function mapTemporalInformation(participant) {
@@ -162,7 +138,7 @@ export function TemporalInformationPage({
       }
     }
 
-    loadParticipantInformation();
+    void loadParticipantInformation();
 
     return () => {
       isMounted = false;
