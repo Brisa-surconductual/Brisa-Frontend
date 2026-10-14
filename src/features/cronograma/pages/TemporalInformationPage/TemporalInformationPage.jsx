@@ -1,70 +1,156 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+
 import { useAuth } from '@/app/providers/index.js';
+
 import { CurrentContentCard } from '@/features/cronograma/components/CurrentContentCard/index.js';
 import { EmptyScheduleState } from '@/features/cronograma/components/EmptyScheduleState/index.js';
 import { TemporalInformationSummary } from '@/features/cronograma/components/TemporalInformationSummary/index.js';
+
 import { AdministrativeHeader } from '@/shared/components/navigation/AdministrativeHeader/index.js';
 import { AdministrativeTabBar } from '@/shared/components/navigation/AdministrativeTabBar/index.js';
-import { ADMINISTRATIVE_TAB, ADMINISTRATIVE_TABS } from '@/shared/data/administrativeTabs.js';
-import { getTemporalInformationByUser } from '../../api/InfoTemporal/getTemporalLocationByUser';
 
-export function TemporalInformationPage({ onSelectContent }) {
+import {
+  ADMINISTRATIVE_TAB,
+  ADMINISTRATIVE_TABS,
+} from '@/shared/data/administrativeTabs.js';
+
+import { obtenerContenidoVigenteUsuario } from '@/features/cronograma/api/contenidoVigente/obtenerContenidoVigenteUsuario.jsx';
+import { obtenerUbicacionTemporalParticipante } from '@/features/cronograma/api/contenidoVigente/obtenerUbicacionTemporalParticipante.jsx';
+
+import { mapCurrentContent } from '@/features/cronograma/utils/currentContent.js';
+
+const EMPTY_TEMPORAL_INFORMATION = null;
+const EMPTY_CURRENT_CONTENT = Object.freeze([]);
+
+function formatDate(value) {
+  if (!value) {
+    return '—';
+  }
+
+  return new Date(value).toLocaleString();
+}
+
+function formatElapsedTime(seconds) {
+  if (!Number.isFinite(seconds)) {
+    return '—';
+  }
+
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+
+  if (days > 0) {
+    return `${days} d ${hours} h`;
+  }
+
+  return `${hours} h`;
+}
+
+function mapTemporalInformation(participant) {
+  if (!participant) {
+    return null;
+  }
+
+  return {
+    participantName: participant.correo_electronico,
+    temporalUnitName: participant.nombre_unidad,
+    temporalUnitOrder: participant.orden_unidad,
+    calculationDateText: formatDate(
+      participant.fecha_calculo,
+    ),
+    elapsedTimeText: formatElapsedTime(
+      participant.tiempo_efectivo_transcurrido_segundos,
+    ),
+    completed:
+      participant.cronograma_finalizado === true,
+    message: participant.mensaje,
+  };
+}
+
+export function TemporalInformationPage({
+  onSelectContent,
+}) {
   const navigate = useNavigate();
   const { logout } = useAuth();
-  
-  const params = useParams();
-  const idUsuario = params.participantId || params.id_usuario || params.id || params.idUsuario;
-  const [temporalInformation, setTemporalInformation] = useState(null);
-  const [currentContent, setCurrentContent] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
+
+  const { participantId } = useParams();
+
+  const [temporalInformation, setTemporalInformation] =
+    useState(EMPTY_TEMPORAL_INFORMATION);
+
+  const [currentContent, setCurrentContent] =
+    useState(EMPTY_CURRENT_CONTENT);
+
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
 
   useEffect(() => {
-    const fetchInformation = async () => {
-      if (!idUsuario) {
-        setError('No se proporcionó un ID de usuario válido en la URL.');
-        setIsLoading(false);
+    let isMounted = true;
+
+    async function loadParticipantInformation() {
+      if (!participantId) {
+        setLoading(false);
         return;
       }
 
-      setIsLoading(true);
-      setError('');
-
       try {
-        const response = await getTemporalInformationByUser(idUsuario);
-        const { ubicacion_temporal, contenidos_vigentes } = response;
+        const [participant, contents] =
+          await Promise.all([
+            obtenerUbicacionTemporalParticipante(
+              participantId,
+            ),
+            obtenerContenidoVigenteUsuario(
+              participantId,
+            ),
+          ]);
 
-        // Mapeamos los datos del backend a las props que espera tu componente Summary
-        setTemporalInformation({
-          // Si el back no devuelve el nombre aquí, usamos un genérico o el ID temporalmente
-          participantName: 'Participante', 
-          temporalUnitName: ubicacion_temporal.nombre_unidad || 'Unidad no asignada',
-          temporalUnitOrder: ubicacion_temporal.orden_unidad || '-',
-          calculationDateText: ubicacion_temporal.fecha_calculo 
-            ? new Date(ubicacion_temporal.fecha_calculo).toLocaleString() 
-            : 'N/A',
-          elapsedTimeText: `${ubicacion_temporal.tiempo_efectivo_transcurrido_segundos || 0} segundos`,
-          completed: ubicacion_temporal.cronograma_finalizado || false,
-          message: ubicacion_temporal.mensaje || 'Información calculada correctamente.',
-        });
+        if (!isMounted) {
+          return;
+        }
 
-        setCurrentContent(contenidos_vigentes || []);
+        setTemporalInformation(
+          mapTemporalInformation(participant),
+        );
 
-      } catch (err) {
-        console.error('Error cargando la información temporal:', err);
-        setError('No fue posible cargar la información temporal del servidor.');
-      } finally {
-        setIsLoading(false);
+        setCurrentContent(
+          Array.isArray(contents)
+            ? contents.map((content) => mapCurrentContent(content))
+            : [],
+        );
+      } catch (error) {
+          if (!isMounted) {
+            return;
+          }
+
+          if (error.response?.status === 404) {
+            setTemporalInformation(null);
+            setCurrentContent([]);
+            return;
+          }
+
+          setLoadError(
+            'No pudimos consultar la información temporal del participante.',
+          );
+        } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
       }
-    };
+    }
 
-    fetchInformation();
-  }, [idUsuario]);
+    void loadParticipantInformation();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [participantId]);
 
   function handleLogout() {
     logout();
-    navigate('/login', { replace: true });
+
+    navigate('/login', {
+      replace: true,
+    });
   }
 
   function handleTabChange(tabId) {
@@ -72,10 +158,12 @@ export function TemporalInformationPage({ onSelectContent }) {
       navigate('/app/administrativo/cronograma');
       return;
     }
+
     if (tabId === ADMINISTRATIVE_TAB.DASHBOARD) {
       navigate('/app/administrativo');
       return;
     }
+
     navigate(`/app/administrativo?tab=${encodeURIComponent(tabId)}`);
   }
 
@@ -121,18 +209,20 @@ export function TemporalInformationPage({ onSelectContent }) {
             </p>
           </header>
 
-          {/* Manejo de estado de Error */}
-          {error && (
-            <div className="rounded-[var(--radius-md)] border border-[var(--danger)] bg-[var(--danger-bg)] p-4">
-              <p className="m-0 text-[13px] font-semibold text-[var(--danger-text)]">
-                {error}
-              </p>
+          {loading ? (
+            <p
+              className="m-0 py-[var(--space-7)] text-center text-[13px] text-[var(--text-muted)]"
+              role="status"
+            >
+              Cargando información del participante...
+            </p>
+          ) : loadError ? (
+            <div
+              className="rounded-[var(--radius-md)] border border-[var(--danger-border)] bg-[var(--danger-bg)] p-[var(--space-4)] text-[13px] font-semibold text-[var(--danger-text)]"
+              role="alert"
+            >
+              {loadError}
             </div>
-          )}
-
-          {/* Manejo de estado de Carga */}
-          {isLoading ? (
-            <p className="text-[14px] text-[var(--text-muted)] mt-4">Calculando información temporal...</p>
           ) : temporalInformation ? (
             <>
               <TemporalInformationSummary
@@ -155,9 +245,9 @@ export function TemporalInformationPage({ onSelectContent }) {
 
                 {currentContent.length > 0 ? (
                   <div className="mt-[var(--space-3)] grid gap-[var(--space-4)]">
-                    {currentContent.map((content, index) => (
+                    {currentContent.map((content) => (
                       <CurrentContentCard
-                        key={content.id_contenido || index}
+                        key={content.associationId ?? content.id}
                         content={content}
                         onSelect={onSelectContent}
                       />
@@ -173,12 +263,12 @@ export function TemporalInformationPage({ onSelectContent }) {
                 )}
               </section>
             </>
-          ) : !error ? (
+          ) : (
             <EmptyScheduleState
               title="No hay información temporal disponible"
               description="Cuando exista información temporal del participante, aparecerá en esta vista."
             />
-          ) : null}
+          )}
         </div>
       </main>
     </div>

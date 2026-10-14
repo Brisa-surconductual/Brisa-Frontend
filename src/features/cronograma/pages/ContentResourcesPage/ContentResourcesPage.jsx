@@ -34,27 +34,30 @@ import { PSYCHOEDUCATIONAL_RESOURCE_TYPE } from '@/features/cronograma/types/res
 
 import { reordenarRecursosContenido } from '@/features/cronograma/api/recursoContenido/reordenarRecursosContenido.jsx';
 
+import { actualizarRecursoContenido } from '@/features/cronograma/api/recursoContenido/actualizarRecursoContenido.jsx';
+import { eliminarRecursoContenido } from '@/features/cronograma/api/recursoContenido/eliminarRecursoContenido.jsx';
+
 const EMPTY_RESOURCES = Object.freeze([]);
 const EMPTY_DESTINATION_MODULES = Object.freeze([]);
 
 function mapResource(resource) {
   return {
-    id: resource.idRecurso,
-    type: resource.tipoRecurso,
-    order: resource.ordenBloque,
-    textContent: resource.textoContenido,
-    storageKey: resource.claveAlmacenamiento,
-    mimeType: resource.mimeType,
-    sizeBytes: resource.tamanoBytes,
-    durationSeconds: resource.duracionSegundos,
-    alternativeText: resource.textoAlternativo,
-    moduleIds: resource.idModulos,
+    id: resource.id_recurso,
+    contentId: resource.id_contenido,
+    type: resource.tipo_recurso,
+    order: resource.orden_bloque,
+    textContent: resource.texto_contenido,
+    storageKey: resource.clave_almacenamiento,
+    mimeType: resource.mime_type,
+    sizeBytes: resource.tamano_bytes,
+    durationSeconds: resource.duracion_segundos,
+    alternativeText: resource.texto_alternativo,
+    moduleIds: resource.id_modulos,
+    createdAt: resource.fecha_creacion,
   };
 }
-
 export function ContentResourcesPage({
   content: contentProp,
-  onDeleteResource,
 }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -161,7 +164,53 @@ export function ContentResourcesPage({
     setSubmitError('');
 
     try {
-      if (
+      if (editingResource) {
+        if (
+          editingResource.type ===
+          PSYCHOEDUCATIONAL_RESOURCE_TYPE.TEXTO
+        ) {
+          await actualizarRecursoContenido({
+            resourceId: editingResource.id,
+            textContent: payload.textContent,
+            moduleIds: payload.moduleIds,
+          });
+        } else if (payload.file) {
+          if (!payload.file.type) {
+            throw new Error(
+              'El archivo no tiene un tipo MIME válido.',
+            );
+          }
+
+          const uploadData =
+            await solicitarUrlSubidaRecurso({
+              contentId: currentContentId,
+              type: editingResource.type,
+              mimeType: payload.file.type,
+              sizeBytes: payload.file.size,
+            });
+
+          await subirRecursoFirmado({
+            uploadUrl: uploadData.url_subida,
+            method: uploadData.metodo,
+            headers: uploadData.encabezados,
+            file: payload.file,
+          });
+
+          await actualizarRecursoContenido({
+            resourceId: editingResource.id,
+            moduleIds: payload.moduleIds,
+            storageKey:
+              uploadData.clave_almacenamiento,
+            mimeType: payload.file.type,
+            sizeBytes: payload.file.size,
+          });
+        } else {
+          await actualizarRecursoContenido({
+            resourceId: editingResource.id,
+            moduleIds: payload.moduleIds,
+          });
+        }
+      } else if (
         payload.type ===
         PSYCHOEDUCATIONAL_RESOURCE_TYPE.TEXTO
       ) {
@@ -174,7 +223,9 @@ export function ContentResourcesPage({
         });
       } else {
         if (!payload.file?.type) {
-          throw new Error('El archivo no tiene un tipo MIME válido.');
+          throw new Error(
+            'El archivo no tiene un tipo MIME válido.',
+          );
         }
 
         const uploadData =
@@ -196,7 +247,8 @@ export function ContentResourcesPage({
           contentId: currentContentId,
           type: payload.type,
           order: payload.order,
-          storageKey: uploadData.clave_almacenamiento,
+          storageKey:
+            uploadData.clave_almacenamiento,
           mimeType: payload.file.type,
           sizeBytes: payload.file.size,
           moduleIds: payload.moduleIds,
@@ -206,12 +258,29 @@ export function ContentResourcesPage({
       const updatedResources =
         await listarRecursosContenido(currentContentId);
 
-      setResources(updatedResources.map(mapResource));
+      setResources(
+        updatedResources.map(mapResource),
+      );
 
       resetEditor();
-    } catch {
+    } catch (error) {
+      if (
+        editingResource &&
+        error.response?.status === 403
+      ) {
+        setSubmitError(
+          error.response?.data?.message ??
+            'No se puede modificar este recurso.',
+        );
+
+        resetEditor();
+        return;
+      }
+
       setSubmitError(
-        'No pudimos guardar el recurso. Verifica la información e intenta nuevamente.',
+        editingResource
+          ? 'No pudimos actualizar el recurso. Verifica la información e intenta nuevamente.'
+          : 'No pudimos guardar el recurso. Verifica la información e intenta nuevamente.',
       );
     } finally {
       setIsSubmitting(false);
@@ -340,13 +409,40 @@ export function ContentResourcesPage({
     setPendingDeleteResource(null);
   }
 
-  function handleConfirmDelete() {
-    if (!pendingDeleteResource) {
+  async function handleConfirmDelete() {
+    if (!pendingDeleteResource || isSubmitting) {
       return;
     }
 
-    onDeleteResource?.(pendingDeleteResource);
-    setPendingDeleteResource(null);
+    const currentContentId = content?.id ?? contentId;
+
+    if (!currentContentId) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError('');
+
+    try {
+      await eliminarRecursoContenido(
+        pendingDeleteResource.id,
+      );
+
+      const updatedResources =
+        await listarRecursosContenido(currentContentId);
+
+      setResources(
+        updatedResources.map(mapResource),
+      );
+
+      setPendingDeleteResource(null);
+    } catch {
+      setSubmitError(
+        'No pudimos eliminar el recurso. Intenta nuevamente.',
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   function handleLogout() {
@@ -518,6 +614,7 @@ export function ContentResourcesPage({
                     errors={errors}
                     destinationModules={destinationModules}
                     loading={loading || isSubmitting}
+                    editing={Boolean(editingResource)}
                     submitLabel={
                       editingResource
                         ? 'Guardar cambios'

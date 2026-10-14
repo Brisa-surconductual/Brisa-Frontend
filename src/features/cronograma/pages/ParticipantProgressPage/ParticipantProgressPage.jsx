@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useAuth } from '@/app/providers/index.js';
@@ -12,82 +12,140 @@ import {
 } from '@/shared/data/administrativeTabs.js';
 
 import { ParticipantProgressSummary } from '@/features/cronograma/components/ParticipantProgressSummary/index.js';
+
 import { ParticipantProgressList } from '@/features/cronograma/components/ParticipantProgressList/index.js';
+
 import { CompletedParticipantProgress } from '@/features/cronograma/components/CompletedParticipantProgress/index.js';
 
-import { getTemporalLocations } from '../../api/InfoTemporal/getTemporalLocations'; 
+import { listarUbicacionesTemporalesParticipantes } from '@/features/cronograma/api/contenidoVigente/listarUbicacionesTemporalesParticipantes.jsx';
+
+import { PARTICIPANT_PROGRESS_STATUS } from '@/features/cronograma/types/participantProgressTypes.js';
+
+const EMPTY_PROGRESS_SUMMARY = null;
+const EMPTY_PARTICIPANTS = Object.freeze([]);
+const EMPTY_COMPLETED_PARTICIPANT = null;
+
+function getParticipantStatus(participant) {
+  if (participant.cronograma_finalizado === true) {
+    return PARTICIPANT_PROGRESS_STATUS.COMPLETADO;
+  }
+
+  if (participant.en_pausa_administrativa === true) {
+    return PARTICIPANT_PROGRESS_STATUS.EN_PAUSA;
+  }
+
+  if (participant.id_cronograma_usuario) {
+    return PARTICIPANT_PROGRESS_STATUS.ACTIVO;
+  }
+
+  return null;
+}
+
+function mapParticipant(participant) {
+  return {
+    id: participant.id_usuario,
+    participantName: participant.correo_electronico,
+    temporalUnitName: participant.nombre_unidad,
+    currentWeek: participant.orden_unidad,
+    currentDay: null,
+    status: getParticipantStatus(participant),
+  };
+}
+
+function createProgressSummary(participants, total) {
+  const allParticipantsLoaded =
+    total === participants.length;
+
+  return {
+    totalParticipants: total,
+    activeParticipants: allParticipantsLoaded
+      ? participants.filter(
+          (participant) =>
+            participant.status ===
+            PARTICIPANT_PROGRESS_STATUS.ACTIVO,
+        ).length
+      : null,
+    pausedParticipants: allParticipantsLoaded
+      ? participants.filter(
+          (participant) =>
+            participant.status ===
+            PARTICIPANT_PROGRESS_STATUS.EN_PAUSA,
+        ).length
+      : null,
+  };
+}
 
 export function ParticipantProgressPage() {
   const navigate = useNavigate();
   const { logout } = useAuth();
 
-  // Estados dinámicos para los datos de la API
-  const [participants, setParticipants] = useState([]);
-  const [progressSummary, setProgressSummary] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [progressSummary, setProgressSummary] = useState(
+    EMPTY_PROGRESS_SUMMARY,
+  );
 
-  // Este estado puede usarse si decides seleccionar a un usuario completado en particular
-  const [completedParticipant, setCompletedParticipant] = useState(null); 
+  const [participants, setParticipants] = useState(
+    EMPTY_PARTICIPANTS,
+  );
 
- useEffect(() => {
-    const fetchProgress = async () => {
-      setIsLoading(true);
-      setError('');
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+
+  const completedParticipant = EMPTY_COMPLETED_PARTICIPANT;
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadParticipants() {
       try {
-        const response = await getTemporalLocations({ page: 1, pageSize: 50 });
-        const participantesCrudos = response?.participantes || [];
+        const data =
+          await listarUbicacionesTemporalesParticipantes();
 
-        // 1. Mapeamos usando los NOMBRES EXACTOS que esperan las props de la Card
-        const participantesMapeados = participantesCrudos.map((p) => {
-          
-          // Determinamos el estado para que coincida con tus constantes (ACTIVO, EN_PAUSA, COMPLETADO)
-          let estadoUI = p.estado_cronograma || 'INACTIVO';
-          if (p.en_pausa_administrativa) estadoUI = 'EN_PAUSA';
-          if (p.cronograma_finalizado) estadoUI = 'COMPLETADO';
+        if (!isMounted) {
+          return;
+        }
 
-          return {
-            id: p.id_usuario,
-            // La tarjeta pide participantName, le mandamos el correo (o nombre si viniera)
-            participantName: p.correo_electronico, 
-            
-            // La tarjeta pide temporalUnitName
-            temporalUnitName: p.nombre_unidad || p.mensaje || 'Sin unidad', 
-            
-            // El backend por ahora nos da el orden de la unidad, lo mapeamos aquí
-            currentWeek: p.orden_unidad ? `Semana/Unidad ${p.orden_unidad}` : null, 
-            currentDay: null, // Si luego tu back calcula el día exacto, lo pones acá
-            
-            // Estado visual
-            status: estadoUI,
-            
-            raw: p 
-          };
-        });
+        const mappedParticipants = Array.isArray(
+          data?.participantes,
+        )
+          ? data.participantes.map(mapParticipant)
+          : [];
 
-        setParticipants(participantesMapeados);
+        setParticipants(mappedParticipants);
 
-        // 2. Mapeamos usando los NOMBRES EXACTOS que espera el Summary (totalParticipants, etc.)
-        setProgressSummary({
-          totalParticipants: response.total || 0,
-          activeParticipants: participantesCrudos.filter(p => p.estado_cronograma === 'ACTIVO' && !p.en_pausa_administrativa).length,
-          pausedParticipants: participantesCrudos.filter(p => p.en_pausa_administrativa).length,
-        });
+        setProgressSummary(
+          createProgressSummary(
+            mappedParticipants,
+            data?.total ?? mappedParticipants.length,
+          ),
+        );
+      } catch {
+        if (!isMounted) {
+          return;
+        }
 
-      } catch (err) {
-        console.error("Error cargando el progreso de los participantes:", err);
-        setError('No se pudo cargar la información de progreso. Inténtalo de nuevo.');
+        setLoadError(
+          'No pudimos consultar el progreso de los participantes.',
+        );
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
-    };
+    }
 
-    fetchProgress();
+    void loadParticipants();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   function handleLogout() {
     logout();
-    navigate('/login', { replace: true });
+
+    navigate('/login', {
+      replace: true,
+    });
   }
 
   function handleTabChange(tabId) {
@@ -95,10 +153,12 @@ export function ParticipantProgressPage() {
       navigate('/app/administrativo/cronograma');
       return;
     }
+
     if (tabId === ADMINISTRATIVE_TAB.DASHBOARD) {
       navigate('/app/administrativo');
       return;
     }
+
     navigate(`/app/administrativo?tab=${encodeURIComponent(tabId)}`);
   }
 
@@ -108,12 +168,11 @@ export function ParticipantProgressPage() {
 
   function handleViewTemporalInformation(participant) {
     if (!participant?.id) {
-      console.warn("El participante no tiene un ID válido");
       return;
     }
-    // Navegamos usando el ID mapeado del usuario
+
     navigate(
-      `/app/administrativo/cronograma/progreso/${encodeURIComponent(participant.id)}/informacion-temporal`
+      `/app/administrativo/cronograma/progreso/${encodeURIComponent(participant.id)}/informacion-temporal`,
     );
   }
 
@@ -144,38 +203,38 @@ export function ParticipantProgressPage() {
             <p className="m-0 text-[12px] font-bold tracking-[0.04em] text-[var(--brand-600)] uppercase">
               Cronograma
             </p>
+
             <h1 className="mt-[var(--space-1)] mb-0 text-[26px] font-extrabold text-[var(--text-primary)] md:text-[30px]">
               Progreso por usuario
             </h1>
+
             <p className="mt-[var(--space-2)] mb-0 max-w-[720px] text-[13px] leading-[1.6] text-[var(--text-muted)]">
               Consulta la ubicación y el progreso temporal de los participantes
               dentro del cronograma.
             </p>
           </header>
+          <ParticipantProgressSummary summary={progressSummary} />
 
-          {/* Manejo de errores de carga */}
-          {error && (
-            <div className="rounded-[var(--radius-md)] border border-[var(--danger)] bg-[var(--danger-bg)] p-4">
-              <p className="m-0 text-[13px] font-semibold text-[var(--danger-text)]">
-                {error}
-              </p>
+          {loading ? (
+            <p
+              className="m-0 py-[var(--space-7)] text-center text-[13px] text-[var(--text-muted)]"
+              role="status"
+            >
+              Cargando participantes...
+            </p>
+          ) : loadError ? (
+            <div
+              className="rounded-[var(--radius-md)] border border-[var(--danger-border)] bg-[var(--danger-bg)] p-[var(--space-4)] text-[13px] font-semibold text-[var(--danger-text)]"
+              role="alert"
+            >
+              {loadError}
             </div>
-          )}
-
-          {/* Renderizamos el resumen solo si ya hay data */}
-          {progressSummary && (
-            <ParticipantProgressSummary summary={progressSummary} />
-          )}
-
-          {/* Manejo de estados de Carga, Vacío o Lista llena */}
-          {isLoading ? (
-            <p className="text-[14px] text-[var(--text-muted)] mt-4">Cargando progreso de participantes...</p>
           ) : participants.length > 0 ? (
             <ParticipantProgressList
               participants={participants}
               onViewTemporalInformation={handleViewTemporalInformation}
             />
-          ) : !error ? (
+          ) : (
             <section
               className="rounded-[var(--radius-lg)] border border-dashed border-[var(--surface-border)] bg-[var(--surface-card)] px-[var(--space-5)] py-[var(--space-8)] text-center"
               aria-label="Progreso de participantes"
@@ -183,14 +242,14 @@ export function ParticipantProgressPage() {
               <h2 className="m-0 text-[16px] font-bold text-[var(--text-primary)]">
                 No hay información de progreso para mostrar
               </h2>
+
               <p className="mx-auto mt-[var(--space-2)] mb-0 max-w-[560px] text-[12px] leading-[1.6] text-[var(--text-muted)]">
                 Cuando exista información de progreso de los participantes,
                 aparecerá en esta vista.
               </p>
             </section>
-          ) : null}
-
-          {completedParticipant && (
+          )}
+          {completedParticipant ? (
             <CompletedParticipantProgress
               participantName={completedParticipant.participantName}
               email={completedParticipant.email}
@@ -199,7 +258,7 @@ export function ParticipantProgressPage() {
               completedDays={completedParticipant.completedDays}
               totalDays={completedParticipant.totalDays}
             />
-          )}
+          ) : null}
         </div>
       </main>
     </div>
