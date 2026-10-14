@@ -1,0 +1,41 @@
+name: Frontend CI and Cloudflare Pages
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master, feat/despliegue-cloudflare]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frontend-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      HUSKY: '0'
+      VITE_API_URL: /api
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx eslint src/shared/utils/constans.jsx functions/api/
+      - run: npm test
+      - run: node --test scripts/deployment/proxy.check.mjs
+      - run: npm run build
+      - name: Deploy validated master to Cloudflare Pages
+        if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && vars.CLOUDFLARE_DEPLOY_ENABLED == 'true'
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=${{ vars.CLOUDFLARE_PROJECT_NAME }} --branch=master
