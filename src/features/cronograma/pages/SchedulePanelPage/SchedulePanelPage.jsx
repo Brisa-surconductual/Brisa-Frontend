@@ -7,8 +7,8 @@ import { Button } from '@/shared/components/ui/Button/index.js';
 
 import { TemporalUnitList } from '@/features/cronograma/components/TemporalUnitList/index.js';
 import { EmptyScheduleState } from '@/features/cronograma/components/EmptyScheduleState/index.js';
+import { ScheduleFilters } from '@/features/cronograma/components/ScheduleFilters/index.js';
 
-// Asegúrate de que esta ruta esté bien en tu proyecto local
 import { getUnitTemporalByShulde } from '../../api/unidadTemporal/getUnitTemporalByShulde';
 
 export function SchedulePanelPage() {
@@ -22,14 +22,16 @@ export function SchedulePanelPage() {
   const [units, setUnits] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const [statusFilter, setStatusFilter] = useState('');
+  const [dateFilter, setDateFilter] = useState('');
+
   useEffect(() => {
     const fetchUnits = async () => {
       setIsLoading(true);
       try {
         const response = await getUnitTemporalByShulde(idSchedule);
-
-        
         const dataArray = Array.isArray(response) ? response : (response?.data || []);
+        
         const formattedUnits = dataArray.map(unit => {
           const now = new Date();
           const start = new Date(unit.fechaInicio);
@@ -58,6 +60,25 @@ export function SchedulePanelPage() {
     
     if (schedule) fetchUnits();
   }, [idSchedule, schedule]);
+
+  const filteredUnits = units.filter((unit) => {
+    if (statusFilter && unit.status !== statusFilter) {
+      return false;
+    }
+
+    if (dateFilter) {
+      if (!unit.fechaInicio || !unit.fechaFin) return false;
+      
+      const startString = unit.fechaInicio.split('T')[0];
+      const endString = unit.fechaFin.split('T')[0];
+      
+      if (dateFilter < startString || dateFilter > endString) {
+        return false;
+      }
+    }
+
+    return true;
+  });
 
   function handleBack() {
     navigate('/app/administrativo/cronograma');
@@ -146,6 +167,17 @@ export function SchedulePanelPage() {
             </div>
           </header>
 
+          <section className="mt-[var(--space-6)]">
+            <ScheduleFilters
+              status={statusFilter}
+              date={dateFilter}
+              resultCount={filteredUnits.length}
+              totalCount={units.length}
+              onStatusChange={setStatusFilter}
+              onDateChange={setDateFilter}
+            />
+          </section>
+
           <section className="mt-[var(--space-8)]">
             <div className="mb-[var(--space-5)] flex items-end justify-between">
               <div>
@@ -157,16 +189,19 @@ export function SchedulePanelPage() {
                 </p>
               </div>
               <div className="text-[13px] font-bold text-[var(--brand-600)] bg-[var(--brand-50)] px-3 py-1 rounded-full">
-                Total: {units.length}
+                Mostrando: {filteredUnits.length}
               </div>
             </div>
 
             {isLoading ? (
               <p className="text-[14px] text-[var(--text-muted)]">Cargando unidades temporales...</p>
-            ) : units.length > 0 ? (
-              <TemporalUnitList units={units} onViewDetails={handleViewUnitDetails} />
+            ) : filteredUnits.length > 0 ? (
+              <TemporalUnitList units={filteredUnits} onViewDetails={handleViewUnitDetails} />
             ) : (
-              <EmptyScheduleState />
+              <EmptyScheduleState 
+                title="No hay resultados"
+                description={units.length > 0 ? "Ninguna unidad temporal coincide con los filtros aplicados." : "Aún no hay unidades temporales creadas."}
+              />
             )}
           </section>
 
