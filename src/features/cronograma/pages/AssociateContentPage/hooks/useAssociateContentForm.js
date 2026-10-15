@@ -7,12 +7,10 @@ import {
 
 
 export function useAssociateContentForm({
-  initialTemporalUnitId = '',
   onValidSubmit,
 } = {}) {
   const [form, setForm] = useState({
     contentId: '',
-    temporalUnitId: initialTemporalUnitId,
     availableFrom: '',
     availableUntil: '',
   });
@@ -60,17 +58,15 @@ export function useAssociateContentForm({
 
     onValidSubmit?.({
       contentId: form.contentId,
-      temporalUnitId: form.temporalUnitId,
       availableFrom: form.availableFrom,
       availableUntil: form.availableUntil,
     });
   }
 
   /**
-   * Tras asociar, la actividad ya no está disponible y el orden que se acaba de
-   * usar queda ocupado: se limpian ambos para poder encadenar asociaciones
-   * sobre la misma unidad sin arrastrar un valor que ya daría error. La unidad
-   * destino se conserva a propósito.
+   * Tras asociar, el contenido deja de estar disponible.
+   * Se limpian el contenido y las fechas para permitir una nueva asociación
+   * sobre la misma unidad temporal seleccionada en la URL.
    */
   function clearAssociationForm() {
     setForm((currentForm) => ({

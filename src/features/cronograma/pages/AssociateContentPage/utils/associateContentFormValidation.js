@@ -42,11 +42,6 @@ export function validateAssociateContentForm(form) {
     errors.contentId = 'Selecciona un contenido.';
   }
 
-  if (!form.temporalUnitId) {
-    errors.temporalUnitId =
-      'Selecciona una unidad temporal.';
-  }
-
   const availableFrom =
     form.availableFrom?.trim() ?? '';
   const availableUntil =
