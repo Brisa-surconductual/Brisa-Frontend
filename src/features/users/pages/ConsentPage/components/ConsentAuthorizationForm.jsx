@@ -9,6 +9,7 @@ export function ConsentAuthorizationForm({
   onAuthorizationChange,
   onSubmit,
   onCancelRegistration,
+  isFromLogin,
 }) {
   return (
     <form className="flex flex-col gap-[var(--space-5)]" onSubmit={onSubmit} noValidate>
@@ -85,7 +86,10 @@ export function ConsentAuthorizationForm({
           onClick={onCancelRegistration}
           disabled={isSubmitting}
         >
-          Cancelar registro
+          { isFromLogin
+            ? 'Cancelar actualización'
+            : 'Cancelar registro'
+          }
         </Button>
       </div>
     </form>
