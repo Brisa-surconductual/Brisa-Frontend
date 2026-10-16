@@ -61,7 +61,7 @@ export function useConsentPage() {
       }
     }
 
-    fetchConsentimiento();
+    void fetchConsentimiento();
 
     return () => { isMounted = false; };
   }, []);
