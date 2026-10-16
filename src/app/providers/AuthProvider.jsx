@@ -8,10 +8,10 @@ export function AuthProvider({ children }) {
 
   const [isLoading, setIsLoading] = useState(true);
 
-  function login({ email, role }) {
+  function login({ email, role, estadoRegistro, idUsuario }) {
     dispatch({
       type: AUTH_ACTION.LOGIN,
-      payload: { email, role },
+      payload: { email, role, estadoRegistro, idUsuario },
     });
   }
 
@@ -38,6 +38,8 @@ export function AuthProvider({ children }) {
         login({
           email: data.correoElectronico,
           role: data.rol,
+          estadoRegistro: data.estadoRegistro,
+          idUsuario: data.idUsuario,
         });
       } catch (error) {
         console.error('Error rehidratando la sesión:', error);
@@ -58,6 +60,8 @@ export function AuthProvider({ children }) {
   const value = {
     user: state.user,
     role: state.role,
+    idUsuario: state.idUsuario,
+    estadoRegistro: state.estadoRegistro,
     isAuthenticated: state.isAuthenticated,
     sessionEndReason: state.endReason,
     isLoading,

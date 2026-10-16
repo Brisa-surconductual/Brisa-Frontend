@@ -53,11 +53,22 @@ export function useLoginPage() {
         email: form.email,
         password: form.password,
       });
+      
+      console.log('Respuesta completa de iniciarSesion:', JSON.stringify(data, null, 2));
+
+      const infoUsuario = data.respuesta ? data.respuesta : data;
 
       login({
         email: form.email,
         role: data.rol,
+        estadoRegistro: data.estadoRegistro,
+        idUsuario: infoUsuario.idUsuario,
       });
+
+      if (data.estadoRegistro === 'PENDIENTE_CONSENTIMIENTO'){
+        navigate('/registro/consentimiento', { replace: true });
+        return;
+      }
 
       navigate('/app', { replace: true });
     } catch (error) {
