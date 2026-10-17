@@ -25,12 +25,23 @@ export function detectPlatform(nav = {}) {
   return INSTALL_PLATFORM.DESKTOP;
 }
 
-// 'instalada' si la app se abrió desde la pantalla de inicio. Tolera que
-// falten `window` o `matchMedia` (pruebas, navegadores antiguos).
-export function getInstallMode(win) {
-  const standalone =
-    win?.matchMedia?.('(display-mode: standalone)')?.matches === true ||
-    win?.navigator?.standalone === true;
+// Cualquier modo distinto de `browser` es una ventana propia. Sin manifest,
+// Chromium y Firefox abren la app instalada en minimal-ui (D19).
+const INSTALLED_DISPLAY_MODES = Object.freeze([
+  'standalone',
+  'minimal-ui',
+  'fullscreen',
+  'window-controls-overlay',
+]);
 
-  return standalone ? INSTALL_MODE.INSTALADA : INSTALL_MODE.INSTRUCCIONES;
+// 'instalada' si la app se abrió desde la pantalla de inicio o en su propia
+// ventana. Tolera que falten `window` o `matchMedia` (pruebas, navegadores
+// antiguos).
+export function getInstallMode(win) {
+  const installed =
+    INSTALLED_DISPLAY_MODES.some(
+      (mode) => win?.matchMedia?.(`(display-mode: ${mode})`)?.matches === true,
+    ) || win?.navigator?.standalone === true;
+
+  return installed ? INSTALL_MODE.INSTALADA : INSTALL_MODE.INSTRUCCIONES;
 }

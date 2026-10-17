@@ -49,8 +49,13 @@ const key = (name) => ({ tecla: name });
 
 // Cada paso es una lista de fragmentos: texto, { negrita } o { tecla }.
 // Así los pasos se pintan como JSX, sin HTML.
-// Menús de Chrome, Edge y Firefox revisados el 2026-10-16.
+// Menús de Chrome, Edge, Firefox y Android revisados a mano por el
+// responsable (2026-10-17).
 export const INSTALL_INSTRUCTIONS = deepFreeze({
+  // FASE PWA: cuando haya manifest y la app esté en HTTPS, "Instalar" quedará
+  // habilitada. Cambiar estos pasos para recomendar "Instalar" (abre Brisa
+  // como app y oculta el botón) en lugar de "Crear acceso directo". Ver A8 y
+  // A9 en M01_aclaraciones.md.
   [INSTALL_PLATFORM.ANDROID]: {
     steps: [
       [
@@ -58,8 +63,14 @@ export const INSTALL_INSTRUCTIONS = deepFreeze({
         key(INSTALL_KEY.MENU_VERTICAL),
         ' arriba a la derecha.',
       ],
-      ['Elige ', bold('«Agregar a la pantalla principal»'), '.'],
-      ['Confirma con ', bold('«Agregar»'), '.'],
+      ['Desliza y elige ', bold('«Instalar y crear acceso directo»'), '.'],
+      [
+        'Elige ',
+        bold('«Crear acceso directo»'),
+        ' y confirma con ',
+        bold('«Agregar»'),
+        '.',
+      ],
     ],
     note: 'Si usas otro navegador, busca la misma opción en su menú.',
   },
@@ -90,9 +101,9 @@ export const INSTALL_INSTRUCTIONS = deepFreeze({
           ],
           [
             'Entra a ',
-            bold('«Transmitir, guardar y compartir»'),
+            bold('«Enviar, guardar y compartir»'),
             ' y elige ',
-            bold('«Instalar página como app»'),
+            bold('«Instalar página como aplicación»'),
             '.',
           ],
           ['Confirma con ', bold('«Instalar»'), '.'],
@@ -108,6 +119,8 @@ export const INSTALL_INSTRUCTIONS = deepFreeze({
           ],
           [
             'Entra a ',
+            bold('«Más herramientas»'),
+            ', luego a ',
             bold('«Aplicaciones»'),
             ' y elige ',
             bold('«Instalar este sitio como una aplicación»'),
@@ -121,8 +134,8 @@ export const INSTALL_INSTRUCTIONS = deepFreeze({
         title: 'En Firefox (Windows)',
         steps: [
           [
-            'En la barra de direcciones, toca el botón ',
-            bold('«Agregar pestaña a la barra de tareas»'),
+            'En la barra de direcciones, toca el ícono ',
+            bold('«Añadir pestaña a la barra de tareas»'),
             '.',
           ],
           ['Brisa queda en la barra de tareas y en el menú Inicio.'],

@@ -55,23 +55,27 @@ describe('detectPlatform', () => {
 });
 
 describe('getInstallMode', () => {
-  const withMedia = (matches, navigator = {}) => ({
-    matchMedia: () => ({ matches }),
+  // Simula un navegador en el que solo coincide un display-mode.
+  const withMode = (mode, navigator = {}) => ({
+    matchMedia: (query) => ({ matches: query === `(display-mode: ${mode})` }),
     navigator,
   });
 
-  it('display-mode standalone → instalada', () => {
-    expect(getInstallMode(withMedia(true))).toBe('instalada');
+  it.each(['standalone', 'minimal-ui', 'fullscreen', 'window-controls-overlay'])(
+    'display-mode %s → instalada',
+    (mode) => {
+      expect(getInstallMode(withMode(mode))).toBe('instalada');
+    },
+  );
+
+  it('display-mode browser → instrucciones', () => {
+    expect(getInstallMode(withMode('browser'))).toBe('instrucciones');
   });
 
   it('navigator.standalone en iOS → instalada', () => {
-    expect(getInstallMode(withMedia(false, { standalone: true }))).toBe(
+    expect(getInstallMode(withMode('browser', { standalone: true }))).toBe(
       'instalada',
     );
-  });
-
-  it('en el navegador → instrucciones', () => {
-    expect(getInstallMode(withMedia(false))).toBe('instrucciones');
   });
 
   it('sin matchMedia ni window → instrucciones', () => {
