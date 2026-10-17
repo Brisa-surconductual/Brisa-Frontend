@@ -71,20 +71,20 @@ export function SplashPage() {
             </svg>
           </div>
 
-          <h1 className="mt-0 mb-[6px] text-[30px] font-extrabold tracking-[-0.02em]">
+          <h1 className="mt-0 mb-[var(--space-2)] text-[30px] font-extrabold tracking-[-0.02em]">
             Brisa
           </h1>
 
-          <p className="mt-0 mb-[22px] max-w-[290px] text-[13.5px] leading-[1.5]">
+          <p className="mt-0 mb-[var(--space-5)] max-w-[290px] text-[13.5px] leading-[1.5]">
             Un acompañamiento psicoeducativo para estudiantes universitarios, a
             tu ritmo.
           </p>
 
-          <ul className="mt-0 mb-[var(--space-7)] flex w-full list-none flex-col gap-[10px] rounded-[var(--radius-lg)] border border-[var(--neutral-0)]/15 bg-[var(--splash-1)]/40 px-[var(--space-4)] py-[14px]">
+          <ul className="mt-0 mb-[var(--space-7)] flex w-full list-none flex-col gap-[var(--space-3)] rounded-[var(--radius-lg)] border border-[var(--neutral-0)]/15 bg-[var(--splash-1)]/40 px-[var(--space-4)] py-[var(--space-3)]">
             {POINTS.map(({ Icon, text }) => (
               <li
                 key={text}
-                className="flex items-center gap-[10px] text-left text-[12.5px] font-semibold"
+                className="flex items-center gap-[var(--space-3)] text-left text-[12.5px] font-semibold"
               >
                 <span
                   aria-hidden="true"

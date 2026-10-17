@@ -39,7 +39,7 @@ function StepText({ fragments }) {
     return (
       <span
         key={index}
-        className="inline-flex items-center rounded-[var(--radius-md)] border border-[var(--surface-border)] bg-[var(--surface-hover)] px-[6px] align-middle"
+        className="inline-flex items-center rounded-[var(--radius-md)] border border-[var(--surface-border)] bg-[var(--surface-hover)] px-[var(--space-1)] align-middle"
       >
         <Icon size={14} strokeWidth={1.8} aria-hidden="true" />
       </span>
