@@ -1,18 +1,25 @@
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+
+import { useInstallPrompt } from '../../../hooks/useInstallPrompt.js';
+import { formatAppFooter } from '../utils/appVersion.js';
 
 export function useSplashPage() {
-  const navigate = useNavigate();
+  const install = useInstallPrompt();
+  const [isInstallOpen, setIsInstallOpen] = useState(false);
 
-  function goToCreateAccount() {
-    navigate('/registro/cuenta');
+  function openInstall() {
+    setIsInstallOpen(true);
   }
 
-  function goToLogin() {
-    navigate('/login');
+  function closeInstall() {
+    setIsInstallOpen(false);
   }
 
   return {
-    goToCreateAccount,
-    goToLogin,
+    install,
+    isInstallOpen,
+    openInstall,
+    closeInstall,
+    footer: formatAppFooter(),
   };
 }

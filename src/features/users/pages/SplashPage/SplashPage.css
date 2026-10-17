@@ -1,0 +1,110 @@
+/*
+ * Tonos propios del splash: valores fijos que no se invierten con el tema.
+ * tokens.css no tiene primitivos de marca estables en modo oscuro
+ * (--brand-* se invierte y dejaba texto blanco sobre verde claro), así que
+ * viven aquí. Pendiente en M01_aclaraciones.md: llevarlos a tokens.css.
+ * El tono más claro (#1d8378) da 4.6:1 con texto blanco.
+ */
+.splash-page {
+  --splash-1: #11534c;
+  --splash-2: #156a61;
+  --splash-3: #1d8378;
+  --splash-ink: #11534c;
+}
+
+[data-theme='dark'] .splash-page {
+  --splash-1: #082724;
+  --splash-2: #0c3c37;
+  --splash-3: #11534c;
+}
+
+/* Capa 1: degradado que se desplaza lento, ida y vuelta. */
+.splash-bg {
+  background: linear-gradient(
+    160deg,
+    var(--splash-1) 0%,
+    var(--splash-2) 50%,
+    var(--splash-3) 100%
+  );
+  background-size: 300% 300%;
+  animation: splash-shift 14s ease-in-out infinite alternate;
+}
+
+@keyframes splash-shift {
+  from {
+    background-position: 0% 0%;
+  }
+
+  to {
+    background-position: 100% 100%;
+  }
+}
+
+/* Capa 2: tres ondas de respiración que se deslizan en horizontal. */
+.splash-wave {
+  position: absolute;
+  left: 0;
+  width: 200%;
+  height: 120px;
+  animation: splash-wave-drift linear infinite;
+}
+
+.splash-wave path {
+  fill: none;
+  stroke: var(--neutral-0);
+  stroke-linecap: round;
+}
+
+.splash-wave--1 {
+  top: 14%;
+  opacity: 0.26;
+  animation-duration: 18s;
+}
+
+.splash-wave--1 path {
+  stroke-width: 1.8;
+}
+
+.splash-wave--2 {
+  top: 52%;
+  opacity: 0.18;
+  animation-duration: 26s;
+  animation-direction: reverse;
+}
+
+.splash-wave--2 path {
+  stroke-width: 2.6;
+}
+
+.splash-wave--3 {
+  top: 78%;
+  opacity: 0.22;
+  animation-duration: 34s;
+}
+
+.splash-wave--3 path {
+  stroke-width: 1.4;
+}
+
+@keyframes splash-wave-drift {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* WCAG 2.3.3: quieto si el sistema pide reducir movimiento. */
+@media (prefers-reduced-motion: reduce) {
+  .splash-bg,
+  .splash-wave {
+    animation: none;
+  }
+}
+
+/* El anillo de marca no se ve sobre verde; la hoja queda fuera de .splash-bg. */
+.splash-bg :focus-visible {
+  outline-color: var(--neutral-0);
+}
