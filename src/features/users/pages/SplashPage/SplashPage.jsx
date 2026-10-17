@@ -1,6 +1,7 @@
 import { Button } from '@/shared/components/ui/Button/index.js';
 
 import { useSplashPage } from './hooks/useSplashPage.js';
+import { formatAppFooter } from './utils/appVersion.js';
 
 export function SplashPage() {
   const { goToCreateAccount, goToLogin } = useSplashPage();
@@ -58,7 +59,7 @@ export function SplashPage() {
         </div>
 
         <p className="mt-[var(--space-4)] text-center text-[10.5px] text-[rgba(255,255,255,0.45)]">
-          v1.0.0 · Universidad Surcolombiana
+          {formatAppFooter()}
         </p>
       </div>
     </div>
