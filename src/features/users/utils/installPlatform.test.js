@@ -41,6 +41,11 @@ describe('detectPlatform', () => {
     ['Android', { userAgent: UA.android }, 'android'],
     ['Chrome de Windows', { userAgent: UA.chromeWindows }, 'desktop'],
     ['Firefox de Windows', { userAgent: UA.firefoxWindows }, 'desktop'],
+    [
+      'Firefox de Windows anterior a la 143',
+      { userAgent: UA.firefoxWindows.replaceAll('143.0', '120.0') },
+      'unsupported',
+    ],
     ['Firefox de Linux', { userAgent: UA.firefoxLinux }, 'unsupported'],
     ['Firefox de Mac', { userAgent: UA.firefoxMac }, 'unsupported'],
     ['sin navigator', undefined, 'desktop'],
@@ -71,6 +76,7 @@ describe('getInstallMode', () => {
 
   it('sin matchMedia ni window → instrucciones', () => {
     expect(getInstallMode({ navigator: {} })).toBe('instrucciones');
+    expect(getInstallMode({ matchMedia: () => null })).toBe('instrucciones');
     expect(getInstallMode(undefined)).toBe('instrucciones');
   });
 });

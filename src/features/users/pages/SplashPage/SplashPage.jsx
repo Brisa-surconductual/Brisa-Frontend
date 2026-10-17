@@ -27,7 +27,7 @@ export function SplashPage() {
     <div className="splash-page">
       <div
         inert={isInstallOpen}
-        className="splash-bg relative isolate flex min-h-screen flex-col items-center justify-center overflow-hidden px-[var(--space-7)] pt-[var(--space-9)] pb-[var(--space-7)] text-[var(--neutral-0)]"
+        className="splash-bg relative isolate flex min-h-dvh flex-col items-center justify-center overflow-hidden px-[var(--space-7)] pt-[var(--space-9)] pb-[var(--space-7)] text-[var(--neutral-0)]"
       >
         <div
           aria-hidden="true"
@@ -49,7 +49,7 @@ export function SplashPage() {
         <div className="flex w-full max-w-[390px] flex-col items-center text-center">
           <div
             aria-hidden="true"
-            className="mb-[var(--space-4)] flex h-[64px] w-[64px] items-center justify-center rounded-[18px] bg-[var(--neutral-0)]/15 backdrop-blur-[4px]"
+            className="mb-[var(--space-4)] flex h-[64px] w-[64px] items-center justify-center rounded-[var(--radius-xl)] bg-[var(--neutral-0)]/15 backdrop-blur-[4px]"
           >
             <svg width="34" height="34" viewBox="0 0 32 32" fill="none">
               <path
@@ -80,7 +80,7 @@ export function SplashPage() {
             tu ritmo.
           </p>
 
-          <ul className="mt-0 mb-[var(--space-7)] flex w-full list-none flex-col gap-[10px] rounded-[var(--radius-lg)] border border-[var(--neutral-0)]/15 bg-[var(--neutral-0)]/10 px-[var(--space-4)] py-[14px]">
+          <ul className="mt-0 mb-[var(--space-7)] flex w-full list-none flex-col gap-[10px] rounded-[var(--radius-lg)] border border-[var(--neutral-0)]/15 bg-[var(--splash-1)]/40 px-[var(--space-4)] py-[14px]">
             {POINTS.map(({ Icon, text }) => (
               <li
                 key={text}
@@ -117,7 +117,7 @@ export function SplashPage() {
             ¿Ya tienes cuenta?{' '}
             <Link
               to="/login"
-              className="inline-flex min-h-[44px] items-center px-[var(--space-1)] font-extrabold text-[var(--neutral-0)] underline underline-offset-[3px] hover:opacity-85"
+              className="inline-flex min-h-[44px] items-center px-[var(--space-1)] font-extrabold text-[var(--neutral-0)] underline underline-offset-[3px] hover:no-underline"
             >
               Iniciar sesión
             </Link>

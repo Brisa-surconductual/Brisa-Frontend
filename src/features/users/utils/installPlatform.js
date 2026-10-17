@@ -15,8 +15,10 @@ export function detectPlatform(nav = {}) {
 
   if (/Android/.test(ua)) return INSTALL_PLATFORM.ANDROID;
 
-  // Firefox de escritorio solo instala sitios en Windows (versión 143+).
-  if (/Firefox\//.test(ua) && !/Windows/.test(ua)) {
+  // Firefox de escritorio solo instala sitios en Windows desde la 143.
+  const firefox = ua.match(/Firefox\/(\d+)/);
+
+  if (firefox && !(/Windows/.test(ua) && Number(firefox[1]) >= 143)) {
     return INSTALL_PLATFORM.UNSUPPORTED;
   }
 
@@ -27,7 +29,7 @@ export function detectPlatform(nav = {}) {
 // falten `window` o `matchMedia` (pruebas, navegadores antiguos).
 export function getInstallMode(win) {
   const standalone =
-    win?.matchMedia?.('(display-mode: standalone)').matches === true ||
+    win?.matchMedia?.('(display-mode: standalone)')?.matches === true ||
     win?.navigator?.standalone === true;
 
   return standalone ? INSTALL_MODE.INSTALADA : INSTALL_MODE.INSTRUCCIONES;

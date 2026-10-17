@@ -39,7 +39,7 @@ function StepText({ fragments }) {
     return (
       <span
         key={index}
-        className="inline-flex items-center rounded-[var(--radius-sm)] border border-[var(--surface-border)] bg-[var(--surface-hover)] px-[var(--space-1)] align-middle"
+        className="inline-flex items-center rounded-[var(--radius-md)] border border-[var(--surface-border)] bg-[var(--surface-hover)] px-[6px] align-middle"
       >
         <Icon size={14} strokeWidth={1.8} aria-hidden="true" />
       </span>
@@ -72,7 +72,7 @@ function StepList({ steps }) {
 }
 
 // Se monta al abrir y se desmonta al cerrar: así cada apertura empieza en la
-// plataforma detectada. El foco vuelve a donde estaba al desmontarse.
+// plataforma detectada. El retorno del foco al botón lo maneja la página.
 export function InstallSheet({ platform, onClose }) {
   const [tab, setTab] = useState(() => getInitialTab(platform));
   const titleRef = useRef(null);
@@ -83,11 +83,7 @@ export function InstallSheet({ platform, onClose }) {
   const content = INSTALL_INSTRUCTIONS[view];
 
   useEffect(() => {
-    const previous = document.activeElement;
-
     titleRef.current?.focus();
-
-    return () => previous?.focus?.();
   }, []);
 
   function handleKeyDown(event) {
@@ -110,6 +106,17 @@ export function InstallSheet({ platform, onClose }) {
       target.focus();
     }
   }
+
+  // La intro general va bajo el título; la propia de la plataforma, bajo las
+  // pestañas, como en el prototipo.
+  const intro = (
+    <p
+      id={introId}
+      className="mt-0 mb-[var(--space-4)] text-[12.5px] leading-[1.5] text-[var(--text-secondary)]"
+    >
+      {getIntro(view)}
+    </p>
+  );
 
   function handleBackdropClick(event) {
     if (event.target === event.currentTarget) onClose();
@@ -143,12 +150,7 @@ export function InstallSheet({ platform, onClose }) {
           {INSTALL_SHEET_TEXT.title}
         </h2>
 
-        <p
-          id={introId}
-          className="mt-0 mb-[var(--space-4)] text-[12.5px] leading-[1.5] text-[var(--text-secondary)]"
-        >
-          {getIntro(view)}
-        </p>
+        {!content.intro && intro}
 
         <div
           role="group"
@@ -174,6 +176,8 @@ export function InstallSheet({ platform, onClose }) {
           </p>
         )}
 
+        {content.intro && intro}
+
         {content.steps && <StepList steps={content.steps} />}
 
         {content.groups?.map((group) => (
@@ -192,7 +196,7 @@ export function InstallSheet({ platform, onClose }) {
           </p>
         )}
 
-        <Button fullWidth onClick={onClose}>
+        <Button fullWidth size="large" onClick={onClose}>
           {INSTALL_SHEET_TEXT.close}
         </Button>
       </div>
