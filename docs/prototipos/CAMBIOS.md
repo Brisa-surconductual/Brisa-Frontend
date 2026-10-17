@@ -2,6 +2,18 @@
 
 Cada entrada indica el módulo, las versiones del prototipo, la fecha, la tarea, la pantalla afectada y la justificación de cada cambio. La entrada más reciente va arriba.
 
+## M01 · v1.3 → v1.3.1 · 2026-10-17 · FE-M01-HOME
+
+Pantalla afectada: `s-splash` y la hoja «Instalar Brisa». Alinea el prototipo con lo implementado tras las revisiones y la prueba manual.
+
+| Cambio | Justificación |
+|---|---|
+| Texto sobre el verde en blanco pleno; panel de la lista oscuro | El blanco con opacidad baja de 4.5:1 sobre `#1D8378`, y el panel translúcido bajaba el contraste a 3.9:1 (revisión de accesibilidad) |
+| Animación de una sola pasada de 5 s que queda quieta | WCAG 2.2.2 (nivel A) exige pausa para movimiento de más de 5 s; limitarlo evita agregar un control que rompería la calma (D18) |
+| Menús reales de Android, Chrome, Edge y Firefox (Windows) | Comprobados a mano el 2026-10-17; los del v1.3 estaban desactualizados (D20, D21) |
+| La app cuenta como instalada con cualquier `display-mode` distinto de `browser` | Sin manifest, los navegadores abren la app instalada en `minimal-ui` (D19) |
+| Pestañas de la hoja de 44 px | Zona táctil mínima |
+
 ## M01 · v1.2.1 → v1.3 · 2026-10-16 · FE-M01-HOME
 
 Pantalla afectada: `s-splash` (Home pública, ruta `/`). El resto de pantallas no cambia.
