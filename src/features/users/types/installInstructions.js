@@ -42,6 +42,7 @@ export const INSTALL_SHEET_TEXT = Object.freeze({
   tabsLabel: 'Elige tu dispositivo',
   detected: 'Detectamos tu dispositivo; cámbialo si no es correcto.',
   close: 'Entendido',
+  backdropLabel: 'Cerrar instrucciones',
 });
 
 const bold = (text) => ({ negrita: text });

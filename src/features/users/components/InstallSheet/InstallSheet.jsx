@@ -118,15 +118,18 @@ export function InstallSheet({ platform, onClose }) {
     </p>
   );
 
-  function handleBackdropClick(event) {
-    if (event.target === event.currentTarget) onClose();
-  }
-
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-[var(--neutral-900)]/55"
-      onClick={handleBackdropClick}
-    >
+    <div className="fixed inset-0 z-50 flex items-end justify-center">
+      {/* Fondo como botón nativo: el clic fuera de la hoja la cierra. Fuera
+          del orden de Tab porque Escape y «Entendido» ya cierran con teclado. */}
+      <button
+        type="button"
+        tabIndex={-1}
+        aria-label={INSTALL_SHEET_TEXT.backdropLabel}
+        onClick={onClose}
+        className="absolute inset-0 cursor-default bg-[var(--neutral-900)]/55"
+      />
+
       <div
         role="dialog"
         aria-modal="true"
@@ -134,7 +137,7 @@ export function InstallSheet({ platform, onClose }) {
         aria-describedby={introId}
         tabIndex={-1}
         onKeyDown={handleKeyDown}
-        className="max-h-[88vh] w-full max-w-[420px] overflow-y-auto rounded-t-[var(--radius-2xl)] bg-[var(--surface-card)] px-[var(--space-5)] pt-[var(--space-3)] pb-[var(--space-6)] text-[var(--text-primary)] shadow-[var(--shadow-lg)] transition-[translate,opacity] duration-[250ms] ease-out outline-none starting:translate-y-[24px] starting:opacity-0 motion-reduce:transition-none"
+        className="relative max-h-[88vh] w-full max-w-[420px] overflow-y-auto rounded-t-[var(--radius-2xl)] bg-[var(--surface-card)] px-[var(--space-5)] pt-[var(--space-3)] pb-[var(--space-6)] text-[var(--text-primary)] shadow-[var(--shadow-lg)] transition-[translate,opacity] duration-[250ms] ease-out outline-none starting:translate-y-[24px] starting:opacity-0 motion-reduce:transition-none"
       >
         <div
           aria-hidden="true"

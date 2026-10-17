@@ -50,6 +50,18 @@ it('con navegador no compatible no marca ninguna pestaña', () => {
   expect(html).not.toContain('Detectamos tu dispositivo');
 });
 
+it('el fondo que cierra la hoja es un botón nativo fuera del orden de Tab', () => {
+  const html = render('desktop');
+
+  expect(html).toMatch(
+    /<button type="button" tabindex="-1" aria-label="Cerrar instrucciones"/,
+  );
+  // El fondo va antes del diálogo, no dentro.
+  expect(html.indexOf('Cerrar instrucciones')).toBeLessThan(
+    html.indexOf('role="dialog"'),
+  );
+});
+
 it('pinta los íconos de menú ocultos y termina en «Entendido»', () => {
   const html = render('android');
 
