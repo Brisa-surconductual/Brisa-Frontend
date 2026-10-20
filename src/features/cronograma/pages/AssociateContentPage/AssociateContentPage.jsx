@@ -200,7 +200,7 @@ export function AssociateContentPage() {
     }
 
     if (scheduleId && unitId) {
-      loadPageData();
+      void loadPageData();
     }
   }, [scheduleId, unitId]);
 
@@ -265,17 +265,16 @@ export function AssociateContentPage() {
   }
 
   async function handleValidSubmit({
-    contentId,
-    temporalUnitId,
-    availableFrom,
-    availableUntil,
+  contentId,
+  availableFrom,
+  availableUntil,
   }) {
     setLoadError('');
 
     try {
       await asociarContenidoUnidadTemporal({
         contentId,
-        temporalUnitId,
+        temporalUnitId: unitId,
         availableFrom: new Date(availableFrom).toISOString(),
         availableUntil: new Date(
           availableUntil,
@@ -297,7 +296,6 @@ export function AssociateContentPage() {
     handleSubmit,
     clearAssociationForm,
   } = useAssociateContentForm({
-    initialTemporalUnitId: unitId,
     onValidSubmit: handleValidSubmit,
   });
 
@@ -365,20 +363,16 @@ export function AssociateContentPage() {
     }
   }
 
-  const selectedUnit = temporalUnits.find(
-    (temporalUnit) => temporalUnit.id === form.temporalUnitId,
-  );
-
   // filter() ya devuelve un array nuevo, así que sort() no muta el estado.
   const unitContent = scheduledContent
-    .filter((item) => item.temporalUnitId === form.temporalUnitId)
+    .filter((item) => item.temporalUnitId === unitId)
     .sort((first, second) => first.order - second.order);
 
   const takenContentIds = new Set(
     scheduledContent.map((item) => item.contentId),
   );
 
-  // Solo las actividades libres. Mostrar también las ya asociadas para
+  // Solo los contenidos libres. Mostrar también las ya asociadas para
   // provocar el HTTP 409 es otra tarea de HU-CR-02 / RF-10, y le bastará con
   // cambiar este filtro.
   const availableContent = contentCatalog.filter(
@@ -390,11 +384,6 @@ export function AssociateContentPage() {
   const contentOptions = availableContent.map((item) => ({
     value: item.id,
     label: item.title,
-  }));
-
-  const temporalUnitOptions = temporalUnits.map((temporalUnit) => ({
-    value: temporalUnit.id,
-    label: `${temporalUnit.name} · ${temporalUnit.theme}`,
   }));
 
   const selectedContent = contentCatalog.find(
@@ -442,7 +431,7 @@ export function AssociateContentPage() {
   }
 
   function handleFormChange(event) {
-    // El mensaje de éxito nombra una actividad y una unidad concretas: deja de
+    // El mensaje de éxito nombra un contenido y una unidad concretos: deja de
     // describir el formulario en cuanto se toca cualquiera de los campos.
 
     handleChange(event);
@@ -498,8 +487,8 @@ export function AssociateContentPage() {
           ) : unit ? (
             <>
               <p className="mt-[var(--space-2)] mb-0 max-w-[680px] text-[13px] leading-[1.6] text-[var(--text-muted)]">
-                Selecciona una actividad del catálogo y la unidad temporal en la
-                que quedará programada.
+                Selecciona un contenido del catálogo y define su rango de
+                disponibilidad para esta unidad temporal.
               </p>
 
               <div className="mt-[var(--space-6)]">
@@ -508,7 +497,6 @@ export function AssociateContentPage() {
                   errors={errors}
                   contentOptions={contentOptions}
                   contentHint={contentHint}
-                  temporalUnitOptions={temporalUnitOptions}
                   onChange={handleFormChange}
                   onSubmit={handleSubmit}
                   onCancel={handleCancel}
@@ -537,13 +525,11 @@ export function AssociateContentPage() {
                   className="m-0 text-[16px] font-bold text-[var(--text-primary)]"
                   id={CONTENT_LIST_HEADING_ID}
                 >
-                  Actividades por día
+                  Contenidos asociados
                 </h2>
 
                 <p className="mt-[var(--space-1)] mb-0 text-[13px] text-[var(--text-muted)]">
-                  {selectedUnit
-                    ? `Contenido programado en ${selectedUnit.name}.`
-                    : 'Selecciona una unidad temporal para ver su contenido.'}
+                  {`Contenido programado en ${unit.name}.`}
                 </p>
 
                 <div className="mt-[var(--space-4)]">
@@ -571,7 +557,7 @@ export function AssociateContentPage() {
                                         handleEditAvailability({
                                           ...item,
                                           contentTitle: content?.title ?? item.contentId,
-                                          temporalUnitName: selectedUnit?.name ?? '',
+                                          temporalUnitName: unit.name,
                                         })
                                       }
                                     >
@@ -585,7 +571,7 @@ export function AssociateContentPage() {
                                         handleRequestDeleteAssociation({
                                           ...item,
                                           contentTitle: content?.title ?? item.contentId,
-                                          temporalUnitName: selectedUnit?.name ?? '',
+                                          temporalUnitName: unit.name,
                                         })
                                       }
                                     >
@@ -601,7 +587,7 @@ export function AssociateContentPage() {
                     </ul>
                   ) : (
                     <EmptyScheduleState
-                      title="Sin actividades asociadas"
+                      title="Sin contenidos asociados"
                       description="Esta unidad temporal todavía no tiene contenido programado."
                     />
                   )}

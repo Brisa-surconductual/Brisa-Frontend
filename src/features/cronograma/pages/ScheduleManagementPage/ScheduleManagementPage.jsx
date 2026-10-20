@@ -1,27 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-
 import { useAuth } from '@/app/providers/index.js';
-
-import { EmptyScheduleState } from '@/features/cronograma/components/EmptyScheduleState/index.js';
-import { ScheduleFilters } from '@/features/cronograma/components/ScheduleFilters/index.js';
-import { TemporalUnitList } from '@/features/cronograma/components/TemporalUnitList/index.js';
-
 import { ScheduleCard } from '../../components/ScheduleCard/ScheduleCard'; 
 import { listSchedule } from '../../api/cronograma/listSchedule'; 
-
 import { AdministrativeHeader } from '@/shared/components/navigation/AdministrativeHeader/index.js';
 import { AdministrativeTabBar } from '@/shared/components/navigation/AdministrativeTabBar/index.js';
-import {
-  ADMINISTRATIVE_TAB,
-  ADMINISTRATIVE_TABS,
-} from '@/shared/data/administrativeTabs.js';
-
+import { ADMINISTRATIVE_TAB, ADMINISTRATIVE_TABS} from '@/shared/data/administrativeTabs.js';
 import { Button } from '@/shared/components/ui/Button/index.js';
-
 import { ScheduleActivationDialog } from '@/features/cronograma/components/ScheduleActivationDialog/index.js';
-import { ScheduleActivationStatus } from '@/features/cronograma/components/ScheduleActivationStatus/index.js';
-import { SCHEDULE_ACTIVATION_STATUS } from '@/features/cronograma/types/scheduleTypes.js';
+
 
 const EMPTY_UNITS = Object.freeze([]);
 
@@ -29,19 +16,15 @@ export function ScheduleManagementPage() {
   const navigate = useNavigate();
   const { logout } = useAuth();
 
-  const [status, setStatus] = useState('');
-  const [date, setDate] = useState('');
   const [isActivationDialogOpen, setIsActivationDialogOpen] = useState(false);
 
   const [schedules, setSchedules] = useState([]);
   const [selectedScheduleId, setSelectedScheduleId] = useState(null);
 
   const activationValidations = [];
-  const scheduleActivationStatus = SCHEDULE_ACTIVATION_STATUS.UNKNOWN;
 
   const units = EMPTY_UNITS; 
-  const resultCount = units.length;
-  const totalCount = units.length;
+
 
   useEffect(() => {
     const fetchSchedules = async () => {
@@ -143,26 +126,39 @@ export function ScheduleManagementPage() {
             </div>
 
             <div className="flex flex-col gap-[var(--space-3)] sm:flex-row sm:flex-wrap">
-              <Button variant="secondary" onClick={handleViewProgress}>
+              <Button 
+                variant="secondary" 
+                className="hover:!bg-[var(--brand-600)] hover:!text-white hover:!border-[var(--brand-600)] focus:!bg-[var(--brand-600)] focus:!text-white transition-colors"
+                onClick={handleViewProgress}
+              >
                 Progreso por usuario
               </Button>
-              <Button variant="secondary" onClick={handleViewPauses}>
+              
+              <Button 
+                variant="secondary" 
+                className="hover:!bg-[var(--brand-600)] hover:!text-white hover:!border-[var(--brand-600)] focus:!bg-[var(--brand-600)] focus:!text-white transition-colors"
+                onClick={handleViewPauses}
+              >
                 Pausas administrativas
               </Button>
-              <Button variant="secondary" onClick={handleViewContents}>
+              
+              <Button 
+                variant="secondary" 
+                className="hover:!bg-[var(--brand-600)] hover:!text-white hover:!border-[var(--brand-600)] focus:!bg-[var(--brand-600)] focus:!text-white transition-colors"
+                onClick={handleViewContents}
+              >
                 Gestionar contenidos
               </Button>
-              <Button onClick={handleCreateSchedule}>
+              
+              <Button 
+                variant="secondary" 
+                className="hover:!bg-[var(--brand-600)] hover:!text-white hover:!border-[var(--brand-600)] focus:!bg-[var(--brand-600)] focus:!text-white transition-colors"
+                onClick={handleCreateSchedule}
+              >
                 Crear cronograma
               </Button>
-              {/* Quitamos el botón viejo de crear unidad, ahora depende de la selección */}
             </div>
           </header>
-
-          <ScheduleActivationStatus
-            status={scheduleActivationStatus}
-            onActivate={handleActivateSchedule}
-          />
 
           <section className="flex flex-col gap-5 mt-4">
             <h2 className="text-[18px] font-extrabold text-[var(--text-primary)] m-0">
@@ -195,23 +191,6 @@ export function ScheduleManagementPage() {
               </div>
             )}
           </section>
-
-          <hr className="my-4 border-[var(--border-color)]" />
-
-          <ScheduleFilters
-            status={status}
-            date={date}
-            resultCount={resultCount}
-            totalCount={totalCount}
-            onStatusChange={setStatus}
-            onDateChange={setDate}
-          />
-
-          {units.length > 0 ? (
-            <TemporalUnitList units={units} onViewDetails={handleViewDetails} />
-          ) : (
-            <EmptyScheduleState />
-          )}
         </div>
       </main>
 

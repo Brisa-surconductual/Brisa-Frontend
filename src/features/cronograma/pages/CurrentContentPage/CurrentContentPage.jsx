@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+
 import { useNavigate } from 'react-router-dom';
 
 import { useAuth } from '@/app/providers/index.js';
@@ -8,14 +10,65 @@ import { EmptyScheduleState } from '@/features/cronograma/components/EmptySchedu
 import { StudentBottomNav } from '@/features/users/components/StudentBottomNav/index.js';
 import { StudentHeader } from '@/features/users/components/StudentHeader/index.js';
 
-const EMPTY_CURRENT_CONTENT = Object.freeze([]);
+import { obtenerMiContenidoVigente } from '@/features/cronograma/api/contenidoVigente/obtenerMiContenidoVigente.jsx';
 
+import { mapCurrentContent } from '@/features/cronograma/utils/currentContent.js';
+
+const EMPTY_CURRENT_CONTENT = Object.freeze([]);
 export function CurrentContentPage({
-  currentContent = EMPTY_CURRENT_CONTENT,
   onSelectContent,
 }) {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+
+  const [currentContent, setCurrentContent] = useState(
+    EMPTY_CURRENT_CONTENT,
+  );
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadCurrentContent() {
+      try {
+        const data = await obtenerMiContenidoVigente();
+
+        if (!isMounted) {
+          return;
+        }
+
+        setCurrentContent(
+          Array.isArray(data)
+            ? data.map((content) => mapCurrentContent(content))
+            : [],
+        );
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        if (error.response?.status === 404) {
+          setCurrentContent([]);
+          return;
+        }
+
+        setLoadError(
+          'No pudimos consultar tu contenido vigente. Intenta nuevamente.',
+        );
+      }finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void loadCurrentContent();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   function handleLogout() {
     logout();
@@ -67,14 +120,28 @@ export function CurrentContentPage({
             </p>
           </header>
 
-          {currentContent.length > 0 ? (
+          {loading ? (
+            <p
+              className="m-0 py-[var(--space-7)] text-center text-[13px] text-[var(--text-muted)]"
+              role="status"
+            >
+              Cargando contenido vigente...
+            </p>
+          ) : loadError ? (
+            <div
+              className="rounded-[var(--radius-md)] border border-[var(--danger-border)] bg-[var(--danger-bg)] p-[var(--space-4)] text-[13px] font-semibold text-[var(--danger-text)]"
+              role="alert"
+            >
+              {loadError}
+            </div>
+          ) : currentContent.length > 0 ? (
             <section
               className="grid gap-[var(--space-4)]"
               aria-label="Contenido vigente"
             >
               {currentContent.map((content) => (
                 <CurrentContentCard
-                  key={content.id}
+                  key={content.associationId ?? content.id}
                   content={content}
                   onSelect={onSelectContent}
                 />

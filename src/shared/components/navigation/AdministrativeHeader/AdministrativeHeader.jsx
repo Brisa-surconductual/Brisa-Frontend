@@ -1,9 +1,12 @@
 import { LogOut } from 'lucide-react';
+import { useLogoutHandler } from '../../../../shared/hooks/useLogoutHandler.jsx';
 
 export function AdministrativeHeader({
   roleLabel,
-  onLogout,
 }) {
+
+  const handleLogout = useLogoutHandler();
+
   return (
     <header className="w-full bg-[var(--neutral-900)] text-[var(--neutral-0)]">
       <div className="mx-auto flex w-full max-w-[1200px] items-center justify-between gap-[var(--space-4)] p-[var(--space-4)] md:px-[var(--space-7)] md:py-[var(--space-5)]">
@@ -20,7 +23,7 @@ export function AdministrativeHeader({
         <button
           type="button"
           className="inline-flex min-h-[32px] shrink-0 items-center gap-[var(--space-2)] rounded-[var(--radius-full)] border-0 bg-[rgb(255_255_255/10%)] px-[var(--space-3)] py-[var(--space-1)] text-[12px] font-bold text-[var(--neutral-0)] transition-[background-color] duration-120 hover:bg-[rgb(255_255_255/20%)] motion-reduce:transition-none"
-          onClick={onLogout}
+          onClick={handleLogout}
         >
           <LogOut
             size={18}
@@ -28,7 +31,9 @@ export function AdministrativeHeader({
             aria-hidden="true"
           />
 
-          <span>Salir</span>
+             <span className="leading-none">
+              Salir
+              </span>
         </button>
       </div>
     </header>

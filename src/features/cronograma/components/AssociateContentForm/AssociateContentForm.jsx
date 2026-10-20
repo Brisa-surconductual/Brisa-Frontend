@@ -3,18 +3,16 @@ import { SelectField } from '@/shared/components/ui/SelectField/index.js';
 import { TextField } from '@/shared/components/ui/TextField/index.js';
 
 /**
- * HU-CR-02 / RF-10: asociar una actividad del catálogo a una unidad temporal.
+ * HU-CR-02 / RF-10: asociar un contenido del catálogo a una unidad temporal.
  *
- * Presentacional: no conoce los mocks ni deriva opciones. El tipo de la
- * actividad seleccionada llega ya resuelto en `contentHint`, que SelectField
- * enlaza por aria-describedby.
+ * La unidad temporal ya fue seleccionada antes de ingresar a esta pantalla.
+ * El formulario solo solicita el contenido y su rango de disponibilidad.
  */
 export function AssociateContentForm({
   form,
   errors = {},
   contentOptions = [],
   contentHint = '',
-  temporalUnitOptions = [],
   successMessage = '',
   onChange,
   onSubmit,
@@ -35,33 +33,20 @@ export function AssociateContentForm({
           </h2>
 
           <p className="mt-[var(--space-2)] mb-0 text-[13px] leading-[1.6] text-[var(--text-muted)]">
-            Selecciona el contenido, la unidad temporal y el rango de
-            disponibilidad en el que estará habilitado.
+            Selecciona el contenido y el rango de disponibilidad en el que estará habilitado.
           </p>
         </div>
 
         <SelectField
           id="associate-content-id"
           name="contentId"
-          label="Actividad disponible"
-          placeholder="Selecciona una actividad..."
+          label="Contenido disponible"
+          placeholder="Selecciona un contenido..."
           options={contentOptions}
           value={form.contentId}
           error={errors.contentId}
           hint={contentHint}
           disabled={!hasContentOptions}
-          required
-          onChange={onChange}
-        />
-
-        <SelectField
-          id="associate-content-temporal-unit-id"
-          name="temporalUnitId"
-          label="Unidad temporal destino"
-          placeholder="Selecciona una unidad temporal"
-          options={temporalUnitOptions}
-          value={form.temporalUnitId}
-          error={errors.temporalUnitId}
           required
           onChange={onChange}
         />
@@ -109,7 +94,7 @@ export function AssociateContentForm({
             Cancelar
           </Button>
 
-          <Button type="submit">Asociar actividad</Button>
+          <Button type="submit">Asociar contenido</Button>
         </div>
       </div>
     </form>

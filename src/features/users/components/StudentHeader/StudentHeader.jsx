@@ -1,10 +1,14 @@
 import { LogOut } from 'lucide-react';
+import { useLogoutHandler } from '../.../../../../../shared/hooks/useLogoutHandler.jsx';
+
 
 export function StudentHeader({
   displayName,
   roleLabel,
-  onLogout,
 }) {
+
+  const handleLogout = useLogoutHandler();
+
   return (
     <header className="w-full bg-[var(--brand-500)] text-[var(--button-primary-text)]">
       <div className="mx-auto flex w-full max-w-[1200px] items-center justify-between gap-[var(--space-3)] p-[var(--space-4)] md:px-[var(--space-7)] md:py-[var(--space-5)]">
@@ -48,17 +52,18 @@ export function StudentHeader({
         <button
           type="button"
           className="inline-flex min-h-[34px] shrink-0 items-center gap-[var(--space-2)] rounded-[var(--radius-full)] border-0 bg-[rgb(255_255_255/18%)] px-[var(--space-3)] py-[var(--space-2)] text-[12px] font-bold text-[var(--button-primary-text)] transition-[background-color] duration-120 hover:bg-[rgb(255_255_255/28%)] motion-reduce:transition-none [html[data-theme='dark']_&]:bg-[rgb(0_0_0/20%)] [html[data-theme='dark']_&]:hover:bg-[rgb(0_0_0/32%)]"
-          onClick={onLogout}
+          onClick={handleLogout}
         >
           <LogOut
             size={18}
             strokeWidth={1.8}
             aria-hidden="true"
           />
-
-          <span className="leading-none">
-            Salir
-          </span>
+          
+          <span 
+            className="leading-none">
+              Salir
+            </span>
         </button>
       </div>
     </header>
