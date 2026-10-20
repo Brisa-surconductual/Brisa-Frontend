@@ -137,7 +137,7 @@ export function ContentResourcesPage({
       }
     }
 
-    loadResourceData();
+    void loadResourceData();
   }, [contentId]);
 
   const [
@@ -375,11 +375,11 @@ export function ContentResourcesPage({
   }
 
   function handleMoveUp(resource) {
-    handleMoveResource(resource, 'up');
+    void handleMoveResource(resource, 'up');
   }
 
   function handleMoveDown(resource) {
-    handleMoveResource(resource, 'down');
+    void handleMoveResource(resource, 'down');
   }
 
   function handleEdit(resource) {
