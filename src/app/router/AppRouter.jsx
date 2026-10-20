@@ -1,7 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { ProtectedLayout } from '@/app/layouts/ProtectedLayout/index.js';
 import { RegistrationLayout } from '@/app/layouts/RegistrationLayout/index.js';
-
+import { ProgramModalityPage } from '@/features/chat/index.js';
 import {
   BaselinePage,
   ConsentPage,
@@ -220,6 +220,12 @@ export function AppRouter() {
                 path="administrativo/cronograma/:scheduleId/unidades/:unitId"
                 element={<TemporalUnitDetailPage />}
               />
+
+              <Route
+                path="administrativo/chat/modalidad"
+                element={<ProgramModalityPage />}
+              />
+
             </Route>
           </Route>
 
