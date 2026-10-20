@@ -27,7 +27,7 @@ import {
 export function RegistrationCompletedPage() {
   const navigate = useNavigate();
 
-  const { account } = useRegistration();f
+  const { account } = useRegistration();
 
   const registrationIsComplete =
     account?.registrationStatus ===
