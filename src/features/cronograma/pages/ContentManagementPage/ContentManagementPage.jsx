@@ -58,7 +58,7 @@ export function ContentManagementPage() {
       }
     }
 
-    loadContents();
+    void loadContents();
   }, []);
 
   const [
