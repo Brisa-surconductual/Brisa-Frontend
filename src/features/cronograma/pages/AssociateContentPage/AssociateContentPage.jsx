@@ -200,7 +200,7 @@ export function AssociateContentPage() {
     }
 
     if (scheduleId && unitId) {
-      loadPageData();
+      void loadPageData();
     }
   }, [scheduleId, unitId]);
 

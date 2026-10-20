@@ -87,7 +87,7 @@ export function TemporalUnitDetailPage() {
     }
 
     if (scheduleId && unitId) {
-      loadAssociatedContents();
+      void  loadAssociatedContents();
     }
   }, [scheduleId, unitId]);
 
