@@ -7,6 +7,10 @@ import { Button } from '@/shared/components/ui/Button/index.js';
 export function ScheduleActivationDialog({
   open,
   validations = [],
+  scheduleName,
+  isBase = false,
+  isSubmitting = false,
+  error = '',
   onConfirm,
   onCancel,
 }) {
@@ -14,9 +18,7 @@ export function ScheduleActivationDialog({
   const titleId = useId();
   const descriptionId = useId();
 
-  const canActivate =
-    validations.length > 0 &&
-    validations.every((validation) => validation.valid);
+  const canActivate = validations.every((validation) => validation.valid);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -36,12 +38,13 @@ export function ScheduleActivationDialog({
 
   function handleCancel(event) {
     event.preventDefault();
-    onCancel?.();
+    if (!isSubmitting) onCancel?.();
   }
 
   return (
     <dialog
       ref={dialogRef}
+      aria-busy={isSubmitting}
       className="m-auto w-[min(calc(100%-32px),520px)] max-w-[520px] overflow-visible border-0 bg-transparent p-0 text-[var(--text-primary)] backdrop:bg-[rgb(22_21_16/68%)] backdrop:backdrop-blur-[2px]"
       aria-labelledby={titleId}
       aria-describedby={descriptionId}
@@ -53,14 +56,17 @@ export function ScheduleActivationDialog({
             id={titleId}
             className="m-0 text-[20px] font-extrabold text-[var(--text-primary)]"
           >
-            Validar y activar cronograma
+            Validar y activar {scheduleName || 'cronograma'}
           </h2>
 
           <p
             id={descriptionId}
             className="mt-[var(--space-2)] mb-0 text-[13px] leading-[1.6] text-[var(--text-secondary)]"
           >
-            Revisa las condiciones requeridas antes de activar el cronograma.
+            Se validarán las unidades temporales y el contenido antes de activar
+            el cronograma.
+            {isBase &&
+              ' Al activarlo, será el base para nuevos estudiantes. Los participantes actuales conservarán su cronograma y progreso.'}
           </p>
         </div>
 
@@ -100,17 +106,35 @@ export function ScheduleActivationDialog({
             ))
           ) : (
             <p className="m-0 rounded-[var(--radius-md)] border border-[var(--surface-border)] bg-[var(--surface-hover)] p-[var(--space-3)] text-[12px] leading-[1.5] text-[var(--text-secondary)]">
-              No hay resultados de validación disponibles.
+              Si la planificación tiene errores, el cronograma seguirá inactivo
+              y podrás corregirla.
             </p>
           )}
         </div>
 
+        {error && (
+          <p
+            role="alert"
+            className="mt-[var(--space-4)] text-[var(--danger-text)]"
+          >
+            {error}
+          </p>
+        )}
         <div className="mt-[var(--space-6)] flex flex-col-reverse gap-[var(--space-3)] sm:flex-row sm:justify-end">
-          <Button variant="secondary" onClick={onCancel}>
+          <Button
+            variant="secondary"
+            disabled={isSubmitting}
+            onClick={onCancel}
+            autoFocus
+          >
             Cancelar
           </Button>
 
-          <Button disabled={!canActivate} onClick={onConfirm}>
+          <Button
+            disabled={!canActivate || isSubmitting}
+            aria-busy={isSubmitting}
+            onClick={onConfirm}
+          >
             Confirmar activación
           </Button>
         </div>

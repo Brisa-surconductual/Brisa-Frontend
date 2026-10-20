@@ -1,3 +1,4 @@
+import { AssignedScheduleSummary } from '../../components/AssignedScheduleSummary/AssignedScheduleSummary.jsx';
 import { useEffect, useState } from 'react';
 
 import { useNavigate } from 'react-router-dom';
@@ -15,15 +16,11 @@ import { obtenerMiContenidoVigente } from '@/features/cronograma/api/contenidoVi
 import { mapCurrentContent } from '@/features/cronograma/utils/currentContent.js';
 
 const EMPTY_CURRENT_CONTENT = Object.freeze([]);
-export function CurrentContentPage({
-  onSelectContent,
-}) {
+export function CurrentContentPage({ onSelectContent }) {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
-  const [currentContent, setCurrentContent] = useState(
-    EMPTY_CURRENT_CONTENT,
-  );
+  const [currentContent, setCurrentContent] = useState(EMPTY_CURRENT_CONTENT);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
 
@@ -56,7 +53,7 @@ export function CurrentContentPage({
         setLoadError(
           'No pudimos consultar tu contenido vigente. Intenta nuevamente.',
         );
-      }finally {
+      } finally {
         if (isMounted) {
           setLoading(false);
         }
@@ -82,10 +79,7 @@ export function CurrentContentPage({
     navigate('/app/estudiante');
   }
 
-  const displayName =
-    user?.name ??
-    user?.email ??
-    'Estudiante';
+  const displayName = user?.name ?? user?.email ?? 'Estudiante';
 
   return (
     <div className="min-h-screen w-full bg-[var(--surface-bg)]">
@@ -119,6 +113,8 @@ export function CurrentContentPage({
               dentro de tu cronograma.
             </p>
           </header>
+
+          <AssignedScheduleSummary />
 
           {loading ? (
             <p

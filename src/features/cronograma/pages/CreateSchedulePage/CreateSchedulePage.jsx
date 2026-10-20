@@ -1,11 +1,14 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/app/providers/index.js';
 import { ScheduleForm } from '@/features/cronograma/components/ScheduleForm/index.js';
 import { crearCronograma } from '../../api/cronograma/crearCronograma';
 import { AdministrativeHeader } from '@/shared/components/navigation/AdministrativeHeader/index.js';
 import { AdministrativeTabBar } from '@/shared/components/navigation/AdministrativeTabBar/index.js';
-import { ADMINISTRATIVE_TAB, ADMINISTRATIVE_TABS} from '@/shared/data/administrativeTabs.js';
+import {
+  ADMINISTRATIVE_TAB,
+  ADMINISTRATIVE_TABS,
+} from '@/shared/data/administrativeTabs.js';
 import { useCreateScheduleForm } from './hooks/useCreateScheduleForm.js';
 
 function toIsoMidnight(dateOnlyString) {
@@ -24,10 +27,13 @@ export function CreateSchedulePage() {
   const navigate = useNavigate();
   const { role, logout } = useAuth();
 
+  const pending = useRef(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
   async function handleValidSubmit(formValues) {
+    if (pending.current) return;
+    pending.current = true;
     setIsSubmitting(true);
     setSubmitError('');
 
@@ -35,8 +41,14 @@ export function CreateSchedulePage() {
       await crearCronograma(normalizeScheduleForm(formValues));
       navigate('/app/administrativo/cronograma');
     } catch (error) {
-      setSubmitError('No pudimos crear el cronograma. Intenta nuevamente.');
+      const message = error.response?.data?.message;
+      setSubmitError(
+        typeof message === 'string'
+          ? message
+          : 'No pudimos crear el cronograma. Intenta nuevamente.',
+      );
     } finally {
+      pending.current = false;
       setIsSubmitting(false);
     }
   }

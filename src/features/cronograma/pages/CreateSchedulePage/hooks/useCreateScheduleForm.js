@@ -54,6 +54,8 @@ export function useCreateScheduleForm({ onValidSubmit } = {}) {
 
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
+      const firstInvalid = validationErrors.name ? 'name' : 'activationDate';
+      event.currentTarget.elements.namedItem(firstInvalid)?.focus();
       return;
     }
 
