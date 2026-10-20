@@ -1,5 +1,5 @@
+import { useCurrentContents } from '../../hooks/useCurrentContents.js';
 import { AssignedScheduleSummary } from '../../components/AssignedScheduleSummary/AssignedScheduleSummary.jsx';
-import { useEffect, useState } from 'react';
 
 import { useNavigate } from 'react-router-dom';
 
@@ -11,61 +11,13 @@ import { EmptyScheduleState } from '@/features/cronograma/components/EmptySchedu
 import { StudentBottomNav } from '@/features/users/components/StudentBottomNav/index.js';
 import { StudentHeader } from '@/features/users/components/StudentHeader/index.js';
 
-import { obtenerMiContenidoVigente } from '@/features/cronograma/api/contenidoVigente/obtenerMiContenidoVigente.jsx';
+import { Button } from '@/shared/components/ui/Button/index.js';
 
-import { mapCurrentContent } from '@/features/cronograma/utils/currentContent.js';
-
-const EMPTY_CURRENT_CONTENT = Object.freeze([]);
 export function CurrentContentPage({ onSelectContent }) {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
-  const [currentContent, setCurrentContent] = useState(EMPTY_CURRENT_CONTENT);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState('');
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadCurrentContent() {
-      try {
-        const data = await obtenerMiContenidoVigente();
-
-        if (!isMounted) {
-          return;
-        }
-
-        setCurrentContent(
-          Array.isArray(data)
-            ? data.map((content) => mapCurrentContent(content))
-            : [],
-        );
-      } catch (error) {
-        if (!isMounted) {
-          return;
-        }
-
-        if (error.response?.status === 404) {
-          setCurrentContent([]);
-          return;
-        }
-
-        setLoadError(
-          'No pudimos consultar tu contenido vigente. Intenta nuevamente.',
-        );
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    }
-
-    void loadCurrentContent();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  const { currentContent, loading, loadError, retry } = useCurrentContents();
 
   function handleLogout() {
     logout();
@@ -129,6 +81,11 @@ export function CurrentContentPage({ onSelectContent }) {
               role="alert"
             >
               {loadError}
+              <div className="mt-[var(--space-3)]">
+                <Button variant="secondary" onClick={retry}>
+                  Reintentar consulta
+                </Button>
+              </div>
             </div>
           ) : currentContent.length > 0 ? (
             <section
@@ -146,7 +103,7 @@ export function CurrentContentPage({ onSelectContent }) {
           ) : (
             <EmptyScheduleState
               title="No hay contenido vigente"
-              description="Cuando exista contenido disponible para tu momento actual dentro del cronograma, aparecerá en esta sección."
+              description="El contenido aparecerá cuando su ventana coincida con tu avance individual. Se consulta el cronograma que tienes asignado, que puede ser distinto del base vigente para nuevos estudiantes."
             />
           )}
         </main>

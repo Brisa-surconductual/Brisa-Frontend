@@ -5,15 +5,12 @@ export const listarUbicacionesTemporalesParticipantes = async ({
   page = 1,
   pageSize = 50,
 } = {}) => {
-  const { data } = await apiClient.get(
-    `${CRONOGRAMA}/participantes/ubicaciones-temporales`,
-    {
-      params: {
-        page,
-        page_size: pageSize,
-      },
+  const { data } = await apiClient.get(`${CRONOGRAMA}/ubicaciones-temporales`, {
+    params: {
+      page,
+      page_size: pageSize,
     },
-  );
+  });
 
   return data;
 };

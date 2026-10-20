@@ -11,6 +11,7 @@ import { EmptyScheduleState } from '@/features/cronograma/components/EmptySchedu
 import { ScheduleFilters } from '@/features/cronograma/components/ScheduleFilters/index.js';
 
 import { getUnitTemporalByShulde } from '../../api/unidadTemporal/getUnitTemporalByShulde';
+import { listSchedule } from '../../api/cronograma/listSchedule.jsx';
 
 export function SchedulePanelPage() {
   const navigate = useNavigate();
@@ -23,14 +24,24 @@ export function SchedulePanelPage() {
 
   const [units, setUnits] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
 
   const [statusFilter, setStatusFilter] = useState('');
   const [dateFilter, setDateFilter] = useState('');
 
   useEffect(() => {
+    let mounted = true;
     const fetchUnits = async () => {
       setIsLoading(true);
+      setLoadError('');
       try {
+        const schedules = await listSchedule();
+        const current = schedules.find(
+          (item) => item.idCronograma === idSchedule,
+        );
+        if (!current) throw new Error('No se encontró el cronograma.');
+        if (!mounted) return;
+        setSchedule(current);
         const response = await getUnitTemporalByShulde(idSchedule);
         const dataArray = Array.isArray(response)
           ? response
@@ -53,16 +64,24 @@ export function SchedulePanelPage() {
         });
 
         formattedUnits.sort((a, b) => (a.orden || 0) - (b.orden || 0));
-        setUnits(formattedUnits);
+        if (mounted) setUnits(formattedUnits);
       } catch (error) {
-        console.error('Error al cargar las unidades temporales:', error);
+        if (mounted)
+          setLoadError(
+            error.response?.status === 401
+              ? 'Tu sesión terminó. Inicia sesión nuevamente.'
+              : 'No pudimos actualizar el cronograma. Recarga la página para reintentar.',
+          );
       } finally {
-        setIsLoading(false);
+        if (mounted) setIsLoading(false);
       }
     };
 
-    if (schedule) fetchUnits();
-  }, [idSchedule, schedule]);
+    void fetchUnits();
+    return () => {
+      mounted = false;
+    };
+  }, [idSchedule]);
 
   const filteredUnits = units.filter((unit) => {
     if (statusFilter && unit.status !== statusFilter) {
@@ -88,6 +107,7 @@ export function SchedulePanelPage() {
   }
 
   function handleCreateTemporalUnit() {
+    if (isLoading || loadError || schedule?.estado !== 'INACTIVO') return;
     navigate(
       `/app/administrativo/cronograma/${encodeURIComponent(idSchedule)}/crear-unidad`,
       {
@@ -111,7 +131,9 @@ export function SchedulePanelPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-[var(--surface-bg)]">
         <p className="text-[var(--text-muted)] font-medium mb-4">
-          No se encontró la información del cronograma.
+          {isLoading
+            ? 'Consultando cronograma...'
+            : loadError || 'No se encontró la información del cronograma.'}
         </p>
         <Button onClick={handleBack}>Volver a inicio</Button>
       </div>
@@ -182,6 +204,9 @@ export function SchedulePanelPage() {
               <div className="mt-[var(--space-2)] md:mt-0 flex flex-col sm:flex-row gap-3">
                 <ScheduleActivationAction
                   schedule={schedule}
+                  disabled={
+                    isLoading || Boolean(loadError) || units.length === 0
+                  }
                   onActivated={(activeSchedule) => {
                     setSchedule(activeSchedule);
                     setActivationMessage(
@@ -194,7 +219,11 @@ export function SchedulePanelPage() {
                   }}
                 />
                 <Button
-                  disabled={schedule.estado === 'ACTIVO'}
+                  disabled={
+                    isLoading ||
+                    Boolean(loadError) ||
+                    schedule.estado !== 'INACTIVO'
+                  }
                   onClick={handleCreateTemporalUnit}
                   className="shadow-sm"
                 >
@@ -203,6 +232,16 @@ export function SchedulePanelPage() {
               </div>
             </div>
           </header>
+
+          <p
+            role={loadError ? 'alert' : 'status'}
+            className="mt-[var(--space-4)] text-[13px] text-[var(--text-secondary)]"
+          >
+            {loadError ||
+              (schedule.estado === 'ACTIVO'
+                ? 'Este cronograma está activo y su estructura es de solo lectura. Para cambiar la planificación, configura un nuevo cronograma inactivo antes de activarlo.'
+                : 'Añade las unidades temporales y asocia sus contenidos antes de activar el cronograma. Sin unidades no se puede activar.')}
+          </p>
 
           {activationMessage && (
             <p

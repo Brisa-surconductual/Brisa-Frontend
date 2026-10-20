@@ -1,9 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import {
-  useLocation,
-  useNavigate,
-  useParams,
-} from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { useAuth } from '@/app/providers/index.js';
 
@@ -36,6 +32,11 @@ import { reordenarRecursosContenido } from '@/features/cronograma/api/recursoCon
 
 import { actualizarRecursoContenido } from '@/features/cronograma/api/recursoContenido/actualizarRecursoContenido.jsx';
 import { eliminarRecursoContenido } from '@/features/cronograma/api/recursoContenido/eliminarRecursoContenido.jsx';
+import { contentFormReturnPath } from '../../utils/contentFormReturnPath.js';
+import {
+  mapCatalogContent,
+  resourcesAreReady,
+} from '../../utils/contentPreparation.js';
 
 const EMPTY_RESOURCES = Object.freeze([]);
 const EMPTY_DESTINATION_MODULES = Object.freeze([]);
@@ -56,9 +57,7 @@ function mapResource(resource) {
     createdAt: resource.fecha_creacion,
   };
 }
-export function ContentResourcesPage({
-  content: contentProp,
-}) {
+export function ContentResourcesPage({ content: contentProp }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { contentId } = useParams();
@@ -76,13 +75,18 @@ export function ContentResourcesPage({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
-  const navigationContent =
-    location.state?.content ?? null;
+  const navigationContent = location.state?.content ?? null;
 
   const content =
-    contentProp ?? navigationContent ?? loadedContent;
-
-  const canManage = content?.canEdit === true;
+    loadedContent?.id === contentId
+      ? loadedContent
+      : (contentProp ?? navigationContent);
+  const canManage =
+    !loading &&
+    !loadError &&
+    loadedContent?.id === contentId &&
+    loadedContent.canEdit === true;
+  const resourcesReady = resourcesAreReady(resources, destinationModules);
 
   useEffect(() => {
     async function loadResourceData() {
@@ -95,28 +99,18 @@ export function ContentResourcesPage({
       setLoadError('');
 
       try {
-        const [catalog, modules, resourceData] =
-          await Promise.all([
-            obtenerCatalogoContenidos(),
-            listarModulosDestino(),
-            listarRecursosContenido(contentId),
-          ]);
+        const [catalog, modules, resourceData] = await Promise.all([
+          obtenerCatalogoContenidos(),
+          listarModulosDestino(),
+          listarRecursosContenido(contentId),
+        ]);
 
         const catalogContent = catalog.find(
           (item) => item.idContenido === contentId,
         );
 
         if (catalogContent) {
-          setLoadedContent({
-            id: catalogContent.idContenido,
-            name: catalogContent.nombre,
-            type: catalogContent.tipoContenido,
-            associated: catalogContent.asociado,
-            associationId:
-              catalogContent.idAsociasionUnidadTemporalContenido,
-            canEdit: true,
-            canDelete: true,
-          });
+          setLoadedContent(mapCatalogContent(catalogContent));
         }
 
         setDestinationModules(
@@ -140,20 +134,14 @@ export function ContentResourcesPage({
     void loadResourceData();
   }, [contentId]);
 
-  const [
-    editingResource,
-    setEditingResource,
-  ] = useState(null);
+  const [editingResource, setEditingResource] = useState(null);
 
-  const [
-    pendingDeleteResource,
-    setPendingDeleteResource,
-  ] = useState(null);
+  const [pendingDeleteResource, setPendingDeleteResource] = useState(null);
 
-  const [formSession, setFormSession] =
-    useState(0);
+  const [formSession, setFormSession] = useState(0);
 
   async function handleValidSubmit(payload) {
+    if (!canManage || isSubmitting) return;
     const currentContentId = content?.id ?? contentId;
 
     if (!currentContentId) {
@@ -165,10 +153,7 @@ export function ContentResourcesPage({
 
     try {
       if (editingResource) {
-        if (
-          editingResource.type ===
-          PSYCHOEDUCATIONAL_RESOURCE_TYPE.TEXTO
-        ) {
+        if (editingResource.type === PSYCHOEDUCATIONAL_RESOURCE_TYPE.TEXTO) {
           await actualizarRecursoContenido({
             resourceId: editingResource.id,
             textContent: payload.textContent,
@@ -176,18 +161,15 @@ export function ContentResourcesPage({
           });
         } else if (payload.file) {
           if (!payload.file.type) {
-            throw new Error(
-              'El archivo no tiene un tipo MIME válido.',
-            );
+            throw new Error('El archivo no tiene un tipo MIME válido.');
           }
 
-          const uploadData =
-            await solicitarUrlSubidaRecurso({
-              contentId: currentContentId,
-              type: editingResource.type,
-              mimeType: payload.file.type,
-              sizeBytes: payload.file.size,
-            });
+          const uploadData = await solicitarUrlSubidaRecurso({
+            contentId: currentContentId,
+            type: editingResource.type,
+            mimeType: payload.file.type,
+            sizeBytes: payload.file.size,
+          });
 
           await subirRecursoFirmado({
             uploadUrl: uploadData.url_subida,
@@ -199,8 +181,7 @@ export function ContentResourcesPage({
           await actualizarRecursoContenido({
             resourceId: editingResource.id,
             moduleIds: payload.moduleIds,
-            storageKey:
-              uploadData.clave_almacenamiento,
+            storageKey: uploadData.clave_almacenamiento,
             mimeType: payload.file.type,
             sizeBytes: payload.file.size,
           });
@@ -210,10 +191,7 @@ export function ContentResourcesPage({
             moduleIds: payload.moduleIds,
           });
         }
-      } else if (
-        payload.type ===
-        PSYCHOEDUCATIONAL_RESOURCE_TYPE.TEXTO
-      ) {
+      } else if (payload.type === PSYCHOEDUCATIONAL_RESOURCE_TYPE.TEXTO) {
         await crearRecursoContenido({
           contentId: currentContentId,
           type: payload.type,
@@ -223,18 +201,15 @@ export function ContentResourcesPage({
         });
       } else {
         if (!payload.file?.type) {
-          throw new Error(
-            'El archivo no tiene un tipo MIME válido.',
-          );
+          throw new Error('El archivo no tiene un tipo MIME válido.');
         }
 
-        const uploadData =
-          await solicitarUrlSubidaRecurso({
-            contentId: currentContentId,
-            type: payload.type,
-            mimeType: payload.file.type,
-            sizeBytes: payload.file.size,
-          });
+        const uploadData = await solicitarUrlSubidaRecurso({
+          contentId: currentContentId,
+          type: payload.type,
+          mimeType: payload.file.type,
+          sizeBytes: payload.file.size,
+        });
 
         await subirRecursoFirmado({
           uploadUrl: uploadData.url_subida,
@@ -247,27 +222,20 @@ export function ContentResourcesPage({
           contentId: currentContentId,
           type: payload.type,
           order: payload.order,
-          storageKey:
-            uploadData.clave_almacenamiento,
+          storageKey: uploadData.clave_almacenamiento,
           mimeType: payload.file.type,
           sizeBytes: payload.file.size,
           moduleIds: payload.moduleIds,
         });
       }
 
-      const updatedResources =
-        await listarRecursosContenido(currentContentId);
+      const updatedResources = await listarRecursosContenido(currentContentId);
 
-      setResources(
-        updatedResources.map(mapResource),
-      );
+      setResources(updatedResources.map(mapResource));
 
       resetEditor();
     } catch (error) {
-      if (
-        editingResource &&
-        error.response?.status === 403
-      ) {
+      if (editingResource && error.response?.status === 403) {
         setSubmitError(
           error.response?.data?.message ??
             'No se puede modificar este recurso.',
@@ -318,8 +286,7 @@ export function ContentResourcesPage({
     );
 
     const currentIndex = orderedResources.findIndex(
-      (currentResource) =>
-        currentResource.id === resource.id,
+      (currentResource) => currentResource.id === resource.id,
     );
 
     if (currentIndex === -1) {
@@ -327,21 +294,13 @@ export function ContentResourcesPage({
     }
 
     const targetIndex =
-      direction === 'up'
-        ? currentIndex - 1
-        : currentIndex + 1;
+      direction === 'up' ? currentIndex - 1 : currentIndex + 1;
 
-    if (
-      targetIndex < 0 ||
-      targetIndex >= orderedResources.length
-    ) {
+    if (targetIndex < 0 || targetIndex >= orderedResources.length) {
       return;
     }
 
-    [
-      orderedResources[currentIndex],
-      orderedResources[targetIndex],
-    ] = [
+    [orderedResources[currentIndex], orderedResources[targetIndex]] = [
       orderedResources[targetIndex],
       orderedResources[currentIndex],
     ];
@@ -424,22 +383,15 @@ export function ContentResourcesPage({
     setSubmitError('');
 
     try {
-      await eliminarRecursoContenido(
-        pendingDeleteResource.id,
-      );
+      await eliminarRecursoContenido(pendingDeleteResource.id);
 
-      const updatedResources =
-        await listarRecursosContenido(currentContentId);
+      const updatedResources = await listarRecursosContenido(currentContentId);
 
-      setResources(
-        updatedResources.map(mapResource),
-      );
+      setResources(updatedResources.map(mapResource));
 
       setPendingDeleteResource(null);
     } catch {
-      setSubmitError(
-        'No pudimos eliminar el recurso. Intenta nuevamente.',
-      );
+      setSubmitError('No pudimos eliminar el recurso. Intenta nuevamente.');
     } finally {
       setIsSubmitting(false);
     }
@@ -454,35 +406,21 @@ export function ContentResourcesPage({
   }
 
   function handleTabChange(tabId) {
-    if (
-      tabId ===
-      ADMINISTRATIVE_TAB.CRONOGRAMA
-    ) {
-      navigate(
-        '/app/administrativo/cronograma',
-      );
+    if (tabId === ADMINISTRATIVE_TAB.CRONOGRAMA) {
+      navigate('/app/administrativo/cronograma');
       return;
     }
 
-    if (
-      tabId ===
-      ADMINISTRATIVE_TAB.DASHBOARD
-    ) {
+    if (tabId === ADMINISTRATIVE_TAB.DASHBOARD) {
       navigate('/app/administrativo');
       return;
     }
 
-    navigate(
-      `/app/administrativo?tab=${encodeURIComponent(
-        tabId,
-      )}`,
-    );
+    navigate(`/app/administrativo?tab=${encodeURIComponent(tabId)}`);
   }
 
   function handleBack() {
-    navigate(
-      '/app/administrativo/cronograma/contenidos',
-    );
+    navigate(contentFormReturnPath(location.state?.returnToAssociation));
   }
 
   return (
@@ -494,9 +432,7 @@ export function ContentResourcesPage({
 
       <AdministrativeTabBar
         tabs={ADMINISTRATIVE_TABS}
-        activeTabId={
-          ADMINISTRATIVE_TAB.CRONOGRAMA
-        }
+        activeTabId={ADMINISTRATIVE_TAB.CRONOGRAMA}
         onTabChange={handleTabChange}
       />
 
@@ -507,7 +443,9 @@ export function ContentResourcesPage({
             className="w-fit text-[13px] font-bold text-[var(--brand-600)]"
             onClick={handleBack}
           >
-            ← Volver a contenidos
+            {location.state?.returnToAssociation
+              ? '← Volver a la unidad temporal'
+              : '← Volver a contenidos'}
           </button>
 
           <header>
@@ -520,9 +458,8 @@ export function ContentResourcesPage({
             </h1>
 
             <p className="mt-[var(--space-2)] mb-0 max-w-[720px] text-[13px] leading-[1.6] text-[var(--text-muted)]">
-              Administra los bloques de texto y los
-              recursos multimedia que componen el
-              contenido psicoeducativo.
+              Administra los bloques de texto y los recursos multimedia que
+              componen el contenido psicoeducativo.
             </p>
           </header>
 
@@ -535,18 +472,41 @@ export function ContentResourcesPage({
             </div>
           )}
 
-          {!content ? (
+          {location.state?.creationFlow && (
+            <section className="rounded-[var(--radius-lg)] border border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-4)]">
+              <h2 className="m-0 text-[16px] font-bold">
+                Paso 2 de 2: recursos y módulos destino
+              </h2>
+              <p
+                role="status"
+                className="text-[13px] text-[var(--text-secondary)]"
+              >
+                {resourcesReady
+                  ? 'El contenido tiene recursos y módulos destino activos. Ya puedes continuar.'
+                  : 'El contenido está pendiente: guarda al menos un recurso y asigna un módulo destino activo a cada bloque.'}
+              </p>
+              <Button
+                disabled={!resourcesReady || !canManage || isSubmitting}
+                onClick={handleBack}
+              >
+                {location.state?.returnToAssociation
+                  ? 'Continuar y asociar a la unidad'
+                  : 'Finalizar contenido'}
+              </Button>
+            </section>
+          )}
+
+          {loading ? (
+            <p role="status">Cargando contenido y recursos...</p>
+          ) : !content ? (
             <section className="rounded-[var(--radius-xl)] border border-dashed border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-6)]">
               <h2 className="m-0 text-[17px] font-extrabold text-[var(--text-primary)]">
                 Contenido no disponible
               </h2>
 
               <p className="mt-[var(--space-2)] mb-0 text-[13px] leading-[1.6] text-[var(--text-muted)]">
-                No se recibió la información del
-                contenido seleccionado.
-                {contentId
-                  ? ` Identificador: ${contentId}.`
-                  : ''}
+                No se recibió la información del contenido seleccionado.
+                {contentId ? ` Identificador: ${contentId}.` : ''}
               </p>
             </section>
           ) : (
@@ -562,23 +522,18 @@ export function ContentResourcesPage({
 
                 {!canManage && (
                   <p className="mt-[var(--space-2)] mb-0 text-[12px] leading-[1.5] text-[var(--text-muted)]">
-                    Los recursos de este contenido
-                    están disponibles únicamente para
-                    consulta.
+                    Los recursos de este contenido están disponibles únicamente
+                    para consulta.
                   </p>
                 )}
               </section>
 
               {canManage && (
-                <section ref={editorSectionRef}
-                  className="scroll-mt-[160px]"
-                  >
+                <section ref={editorSectionRef} className="scroll-mt-[160px]">
                   <div className="mb-[var(--space-4)] flex flex-wrap items-center justify-between gap-[var(--space-3)]">
                     <div>
                       <h2 className="m-0 text-[18px] font-extrabold text-[var(--text-primary)]">
-                        {editingResource
-                          ? 'Editar recurso'
-                          : 'Agregar recurso'}
+                        {editingResource ? 'Editar recurso' : 'Agregar recurso'}
                       </h2>
 
                       <p className="mt-[var(--space-1)] mb-0 text-[12px] text-[var(--text-muted)]">
@@ -616,14 +571,10 @@ export function ContentResourcesPage({
                     loading={loading || isSubmitting}
                     editing={Boolean(editingResource)}
                     submitLabel={
-                      editingResource
-                        ? 'Guardar cambios'
-                        : 'Agregar recurso'
+                      editingResource ? 'Guardar cambios' : 'Agregar recurso'
                     }
                     onChange={handleChange}
-                    onFileChange={
-                      handleFileChange
-                    }
+                    onFileChange={handleFileChange}
                     onModuleToggle={handleModuleToggle}
                     onSubmit={handleSubmit}
                     onCancel={resetEditor}
@@ -638,8 +589,7 @@ export function ContentResourcesPage({
                   </h2>
 
                   <p className="mt-[var(--space-1)] mb-0 text-[12px] text-[var(--text-muted)]">
-                    Los recursos se presentan según
-                    su orden de bloque.
+                    Los recursos se presentan según su orden de bloque.
                   </p>
                 </div>
 
@@ -659,9 +609,7 @@ export function ContentResourcesPage({
                     onMoveUp={handleMoveUp}
                     onMoveDown={handleMoveDown}
                     onEdit={handleEdit}
-                    onDelete={
-                      handleRequestDelete
-                    }
+                    onDelete={handleRequestDelete}
                   />
                 )}
               </section>

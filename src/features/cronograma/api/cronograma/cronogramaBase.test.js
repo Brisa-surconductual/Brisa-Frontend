@@ -4,11 +4,30 @@ import { CRONOGRAMA } from '@/shared/utils/constans.jsx';
 import { activarCronograma } from './activarCronograma.js';
 import { obtenerMiCronograma } from './obtenerMiCronograma.js';
 import { obtenerMiContenidoVigente } from '../contenidoVigente/obtenerMiContenidoVigente.jsx';
+import { listarUbicacionesTemporalesParticipantes } from '../contenidoVigente/listarUbicacionesTemporalesParticipantes.jsx';
+import { obtenerUbicacionTemporalParticipante } from '../contenidoVigente/obtenerUbicacionTemporalParticipante.jsx';
 vi.mock('@/shared/utils/apiClient.jsx', () => ({
   apiClient: { get: vi.fn(), post: vi.fn() },
 }));
 beforeEach(() => vi.resetAllMocks());
 describe('Contratos del cronograma base', () => {
+  it('consulta participantes y detalle por la ruta administrativa real', async () => {
+    apiClient.get.mockResolvedValue({
+      data: { participantes: [{ id_usuario: 'usuario' }] },
+    });
+    await listarUbicacionesTemporalesParticipantes();
+    expect(apiClient.get).toHaveBeenLastCalledWith(
+      `${CRONOGRAMA}/ubicaciones-temporales`,
+      { params: { page: 1, page_size: 50 } },
+    );
+    await expect(
+      obtenerUbicacionTemporalParticipante('usuario'),
+    ).resolves.toEqual({ id_usuario: 'usuario' });
+    expect(apiClient.get).toHaveBeenLastCalledWith(
+      `${CRONOGRAMA}/ubicaciones-temporales`,
+      { params: { id_usuario: 'usuario', page: 1, page_size: 1 } },
+    );
+  });
   it('activa solo el cronograma solicitado con confirmación explícita', async () => {
     apiClient.post.mockResolvedValue({ data: { estado: 'ACTIVO' } });
     await expect(activarCronograma('cronograma')).resolves.toEqual({

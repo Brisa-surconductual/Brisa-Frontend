@@ -2,12 +2,16 @@ import { Button } from '@/shared/components/ui/Button/index.js';
 import { ScheduleActivationDialog } from '../ScheduleActivationDialog/index.js';
 import { useScheduleActivation } from '../../hooks/useScheduleActivation.js';
 
-export function ScheduleActivationAction({ schedule, onActivated }) {
+export function ScheduleActivationAction({
+  schedule,
+  onActivated,
+  disabled = false,
+}) {
   const activation = useScheduleActivation({ schedule, onActivated });
   if (schedule.estado !== 'INACTIVO') return null;
   return (
     <>
-      <Button onClick={activation.requestActivation}>
+      <Button disabled={disabled} onClick={activation.requestActivation}>
         Validar y activar cronograma
       </Button>
       <ScheduleActivationDialog

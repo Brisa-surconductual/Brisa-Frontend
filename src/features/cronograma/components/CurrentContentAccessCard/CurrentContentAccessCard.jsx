@@ -1,8 +1,11 @@
 import { AssignedScheduleSummary } from '../AssignedScheduleSummary/AssignedScheduleSummary.jsx';
 import { ArrowRight, CalendarDays } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useCurrentContents } from '../../hooks/useCurrentContents.js';
+import { Button } from '@/shared/components/ui/Button/index.js';
 
 export function CurrentContentAccessCard() {
+  const { currentContent, loading, loadError, retry } = useCurrentContents();
   return (
     <section className="rounded-[var(--radius-xl)] border border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-4)] shadow-[var(--shadow-sm)] md:p-[var(--space-5)]">
       <div className="flex items-start gap-[var(--space-3)]">
@@ -24,6 +27,35 @@ export function CurrentContentAccessCard() {
           </p>
 
           <AssignedScheduleSummary />
+
+          {loading ? (
+            <p role="status">Consultando contenido vigente...</p>
+          ) : loadError ? (
+            <p role="alert">{loadError}</p>
+          ) : currentContent.length ? (
+            <ul
+              aria-label="Contenido vigente"
+              className="mt-[var(--space-3)] grid gap-[var(--space-2)] pl-[var(--space-4)]"
+            >
+              {currentContent.map((item) => (
+                <li key={item.associationId}>
+                  <strong>{item.name}</strong>
+                  <span className="block text-[12px] text-[var(--text-muted)]">
+                    {item.temporalUnitName}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-[13px] text-[var(--text-secondary)]">
+              No hay contenido vigente para tu avance actual. La disponibilidad
+              se calcula desde tu fecha individual de inicio, dentro del
+              cronograma que tienes asignado.
+            </p>
+          )}
+          <Button variant="secondary" disabled={loading} onClick={retry}>
+            Actualizar contenido
+          </Button>
 
           <Link
             to="/app/estudiante/cronograma/contenido-vigente"

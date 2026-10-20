@@ -24,6 +24,13 @@ export function AssignedScheduleSummary() {
           <p className="m-0 font-bold text-[var(--text-primary)]">
             Cronograma asignado: {schedule.nombre}
           </p>
+          {schedule.estado === 'INACTIVO' && (
+            <p role="status" className="m-0">
+              El equipo administrador está preparando tu cronograma. Tu
+              asignación se conserva mientras termina la configuración y lo
+              activa.
+            </p>
+          )}
           <p className="m-0">
             Inicio de tu programa:{' '}
             <time dateTime={schedule.fecha_inicio_usuario}>

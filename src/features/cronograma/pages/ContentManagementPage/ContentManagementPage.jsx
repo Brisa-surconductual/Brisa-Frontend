@@ -12,6 +12,7 @@ import { ConfirmationDialog } from '@/shared/components/ui/ConfirmationDialog/in
 
 import { eliminarContenido } from '@/features/cronograma/api/contenido/eliminarContenido.jsx';
 import { obtenerCatalogoContenidos } from '@/features/cronograma/api/contenido/obtenerCatalogoContenidos.jsx';
+import { mapCatalogContent } from '../../utils/contentPreparation.js';
 
 import {
   ADMINISTRATIVE_TAB,
@@ -36,23 +37,9 @@ export function ContentManagementPage() {
       try {
         const data = await obtenerCatalogoContenidos();
 
-        setContents(
-          data.map((content) => ({
-            id: content.idContenido,
-            name: content.nombre,
-            type: content.tipoContenido,
-            associationId:
-              content.idAsociasionUnidadTemporalContenido,
-            associated: content.asociado,
-            createdAt: content.fechaCreacionContenido,
-            canEdit: true,
-            canDelete: true,
-          })),
-        );
+        setContents(data.map(mapCatalogContent));
       } catch {
-        setLoadError(
-          'No pudimos cargar los contenidos. Intenta nuevamente.',
-        );
+        setLoadError('No pudimos cargar los contenidos. Intenta nuevamente.');
       } finally {
         setLoading(false);
       }
@@ -61,10 +48,7 @@ export function ContentManagementPage() {
     void loadContents();
   }, []);
 
-  const [
-    pendingDeleteContent,
-    setPendingDeleteContent,
-  ] = useState(null);
+  const [pendingDeleteContent, setPendingDeleteContent] = useState(null);
 
   function handleLogout() {
     logout();
@@ -85,9 +69,7 @@ export function ContentManagementPage() {
       return;
     }
 
-    navigate(
-      `/app/administrativo?tab=${encodeURIComponent(tabId)}`,
-    );
+    navigate(`/app/administrativo?tab=${encodeURIComponent(tabId)}`);
   }
 
   function handleBack() {
@@ -95,9 +77,7 @@ export function ContentManagementPage() {
   }
 
   function handleCreate() {
-    navigate(
-      '/app/administrativo/cronograma/contenidos/nuevo',
-    );
+    navigate('/app/administrativo/cronograma/contenidos/nuevo');
   }
 
   function handleManageResources(content) {
@@ -115,16 +95,16 @@ export function ContentManagementPage() {
 
   function handleEdit(content) {
     navigate(
-        `/app/administrativo/cronograma/contenidos/${encodeURIComponent(
+      `/app/administrativo/cronograma/contenidos/${encodeURIComponent(
         content.id,
-        )}/editar`,
-        {
+      )}/editar`,
+      {
         state: {
-            content,
+          content,
         },
-        },
+      },
     );
-    }
+  }
 
   function handleRequestDelete(content) {
     setPendingDeleteContent(content);
@@ -145,9 +125,7 @@ export function ContentManagementPage() {
       await eliminarContenido(contentId);
 
       setContents((currentContents) =>
-        currentContents.filter(
-          (content) => content.id !== contentId,
-        ),
+        currentContents.filter((content) => content.id !== contentId),
       );
     } catch {
       setLoadError(
@@ -192,13 +170,12 @@ export function ContentManagementPage() {
               </h1>
 
               <p className="mt-[var(--space-2)] mb-0 max-w-[680px] text-[13px] leading-[1.6] text-[var(--text-muted)]">
-                Consulta y administra los contenidos disponibles para el cronograma.
+                Consulta y administra los contenidos disponibles para el
+                cronograma.
               </p>
             </div>
 
-            <Button onClick={handleCreate}>
-              Crear contenido
-            </Button>
+            <Button onClick={handleCreate}>Crear contenido</Button>
           </header>
 
           {loadError && (
@@ -220,9 +197,7 @@ export function ContentManagementPage() {
           ) : (
             <PsychoeducationalContentList
               contents={contents}
-              onManageResources={
-                handleManageResources
-              }
+              onManageResources={handleManageResources}
               onEdit={handleEdit}
               onDelete={handleRequestDelete}
             />

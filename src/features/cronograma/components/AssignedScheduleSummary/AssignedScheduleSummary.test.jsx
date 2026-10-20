@@ -15,6 +15,16 @@ beforeEach(() =>
   }),
 );
 describe('Cronograma asignado visible al estudiante', () => {
+  it('explica la preparación de un cronograma sin perder la asignación', () => {
+    useAssignedSchedule.mockReturnValue({
+      schedule: {
+        nombre: 'Base',
+        estado: 'INACTIVO',
+        fecha_inicio_usuario: '2026-10-20T00:00:00Z',
+      },
+    });
+    expect(render()).toContain('Tu asignación se conserva');
+  });
   it('muestra carga accesible', () => {
     useAssignedSchedule.mockReturnValue({ loading: true });
     expect(render()).toContain('Consultando tu cronograma...');
