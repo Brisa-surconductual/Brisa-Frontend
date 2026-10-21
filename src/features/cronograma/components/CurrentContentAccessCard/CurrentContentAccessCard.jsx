@@ -1,7 +1,11 @@
+import { AssignedScheduleSummary } from '../AssignedScheduleSummary/AssignedScheduleSummary.jsx';
 import { ArrowRight, CalendarDays } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useCurrentContents } from '../../hooks/useCurrentContents.js';
+import { Button } from '@/shared/components/ui/Button/index.js';
 
 export function CurrentContentAccessCard() {
+  const { currentContent, loading, loadError, retry } = useCurrentContents();
   return (
     <section className="rounded-[var(--radius-xl)] border border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-4)] shadow-[var(--shadow-sm)] md:p-[var(--space-5)]">
       <div className="flex items-start gap-[var(--space-3)]">
@@ -9,10 +13,7 @@ export function CurrentContentAccessCard() {
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-lg)] bg-[var(--brand-100)] text-[var(--brand-700)]"
           aria-hidden="true"
         >
-          <CalendarDays
-            size={20}
-            strokeWidth={1.8}
-          />
+          <CalendarDays size={20} strokeWidth={1.8} />
         </span>
 
         <div className="min-w-0 flex-1">
@@ -21,19 +22,47 @@ export function CurrentContentAccessCard() {
           </h2>
 
           <p className="mt-[var(--space-1)] mb-0 text-[12px] leading-[1.6] text-[var(--text-muted)] md:text-[13px]">
-            Consulta el contenido disponible actualmente dentro de tu cronograma.
+            Consulta el contenido disponible actualmente dentro de tu
+            cronograma.
           </p>
+
+          <AssignedScheduleSummary />
+
+          {loading ? (
+            <p role="status">Consultando contenido vigente...</p>
+          ) : loadError ? (
+            <p role="alert">{loadError}</p>
+          ) : currentContent.length ? (
+            <ul
+              aria-label="Contenido vigente"
+              className="mt-[var(--space-3)] grid gap-[var(--space-2)] pl-[var(--space-4)]"
+            >
+              {currentContent.map((item) => (
+                <li key={item.associationId}>
+                  <strong>{item.name}</strong>
+                  <span className="block text-[12px] text-[var(--text-muted)]">
+                    {item.temporalUnitName}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-[13px] text-[var(--text-secondary)]">
+              No hay contenido vigente para tu avance actual. La disponibilidad
+              se calcula desde tu fecha individual de inicio, dentro del
+              cronograma que tienes asignado.
+            </p>
+          )}
+          <Button variant="secondary" disabled={loading} onClick={retry}>
+            Actualizar contenido
+          </Button>
 
           <Link
             to="/app/estudiante/cronograma/contenido-vigente"
             className="mt-[var(--space-4)] inline-flex items-center gap-[var(--space-2)] text-[12px] font-bold text-[var(--brand-600)] no-underline hover:underline md:text-[13px]"
           >
             Ver contenido vigente
-            <ArrowRight
-              size={16}
-              strokeWidth={1.8}
-              aria-hidden="true"
-            />
+            <ArrowRight size={16} strokeWidth={1.8} aria-hidden="true" />
           </Link>
         </div>
       </div>

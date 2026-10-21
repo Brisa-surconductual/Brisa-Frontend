@@ -1,14 +1,11 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import {
   hasAssociateContentFormErrors,
   validateAssociateContentForm,
 } from '../utils/associateContentFormValidation.js';
 
-
-export function useAssociateContentForm({
-  onValidSubmit,
-} = {}) {
+export function useAssociateContentForm({ onValidSubmit, unit } = {}) {
   const [form, setForm] = useState({
     contentId: '',
     availableFrom: '',
@@ -16,6 +13,8 @@ export function useAssociateContentForm({
   });
 
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const pending = useRef(false);
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -43,24 +42,35 @@ export function useAssociateContentForm({
     });
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
+    if (pending.current) return;
 
-    const validationErrors =
-      validateAssociateContentForm(form);
+    const validationErrors = validateAssociateContentForm(form, unit);
 
     if (hasAssociateContentFormErrors(validationErrors)) {
       setErrors(validationErrors);
+      const field = event.currentTarget?.elements?.namedItem(
+        Object.keys(validationErrors)[0],
+      );
+      field?.focus();
       return;
     }
 
     setErrors({});
 
-    onValidSubmit?.({
-      contentId: form.contentId,
-      availableFrom: form.availableFrom,
-      availableUntil: form.availableUntil,
-    });
+    pending.current = true;
+    setIsSubmitting(true);
+    try {
+      await onValidSubmit?.({
+        contentId: form.contentId,
+        availableFrom: form.availableFrom,
+        availableUntil: form.availableUntil,
+      });
+    } finally {
+      pending.current = false;
+      setIsSubmitting(false);
+    }
   }
 
   /**
@@ -77,5 +87,12 @@ export function useAssociateContentForm({
     }));
   }
 
-  return { form, errors, handleChange, handleSubmit, clearAssociationForm };
+  return {
+    form,
+    errors,
+    isSubmitting,
+    handleChange,
+    handleSubmit,
+    clearAssociationForm,
+  };
 }

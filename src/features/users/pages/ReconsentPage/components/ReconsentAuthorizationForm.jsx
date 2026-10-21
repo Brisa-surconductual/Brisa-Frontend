@@ -11,12 +11,13 @@ export function ReconsentAuthorizationForm({
   attemptedSubmit,
   consentIsComplete,
   isSubmitting,
+  disabled = false,
   onAuthorizationChange,
   onSubmit,
 }) {
   return (
-    <form className="flex flex-col gap-[var(--space-5)]" onSubmit={onSubmit} noValidate>
-      <fieldset className="m-0 flex min-w-0 flex-col gap-[var(--space-4)] rounded-[var(--radius-lg)] border border-[var(--surface-border)] p-[var(--space-5)]">
+    <form className="flex flex-col gap-[var(--space-5)]" onSubmit={onSubmit} noValidate aria-busy={isSubmitting}>
+      <fieldset disabled={disabled || isSubmitting} className="m-0 flex min-w-0 flex-col gap-[var(--space-4)] rounded-[var(--radius-lg)] border border-[var(--surface-border)] p-[var(--space-5)]">
         <legend className="px-[var(--space-2)] text-[14px] font-extrabold text-[var(--text-primary)]">
           Renovación de autorizaciones
         </legend>
@@ -24,6 +25,7 @@ export function ReconsentAuthorizationForm({
         <Checkbox
           id="personalDataAccepted"
           name="personalDataAccepted"
+          disabled={disabled || isSubmitting}
           checked={
             authorizations
               .personalDataAccepted
@@ -45,6 +47,7 @@ export function ReconsentAuthorizationForm({
         <Checkbox
           id="consumptionHistoryAccepted"
           name="consumptionHistoryAccepted"
+          disabled={disabled || isSubmitting}
           checked={
             authorizations
               .consumptionHistoryAccepted
@@ -76,6 +79,7 @@ export function ReconsentAuthorizationForm({
         size="large"
         fullWidth
         loading={isSubmitting}
+        disabled={disabled}
         loadingText="Actualizando consentimiento..."
       >
         Aceptar y volver a revisión

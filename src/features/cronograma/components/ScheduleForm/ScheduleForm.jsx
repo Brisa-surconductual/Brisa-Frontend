@@ -5,6 +5,7 @@ import { TextField } from '@/shared/components/ui/TextField/index.js';
 export function ScheduleForm({
   form,
   errors = {},
+  isSubmitting = false,
   submitText = 'Crear cronograma',
   onChange,
   onSubmit,
@@ -14,9 +15,13 @@ export function ScheduleForm({
     <form
       className="rounded-[var(--radius-lg)] border border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-4)] shadow-[var(--shadow-sm)] md:p-[var(--space-5)]"
       onSubmit={onSubmit}
+      aria-busy={isSubmitting}
       noValidate
     >
-      <div className="flex flex-col gap-[var(--space-5)]">
+      <fieldset
+        disabled={isSubmitting}
+        className="m-0 flex min-w-0 flex-col gap-[var(--space-5)] border-0 p-0"
+      >
         <div>
           <h2 className="m-0 text-[18px] font-bold text-[var(--text-primary)]">
             Información del cronograma
@@ -61,24 +66,21 @@ export function ScheduleForm({
 
           <p className="mt-[var(--space-2)] mb-0 text-[11px] leading-[1.5] text-[var(--text-muted)]">
             Indica si este cronograma será utilizado como cronograma base del
-            programa.
+            programa. El base actual se reemplazará cuando actives este
+            cronograma, después de configurar sus unidades y contenidos.
           </p>
         </div>
 
         <div className="flex flex-col-reverse gap-[var(--space-3)] sm:flex-row sm:justify-end">
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={onCancel}
-          >
+          <Button type="button" variant="secondary" onClick={onCancel}>
             Cancelar
           </Button>
 
-          <Button type="submit">
+          <Button type="submit" disabled={isSubmitting}>
             {submitText}
           </Button>
         </div>
-      </div>
+      </fieldset>
     </form>
   );
 }

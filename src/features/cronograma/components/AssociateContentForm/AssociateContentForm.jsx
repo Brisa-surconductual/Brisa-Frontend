@@ -17,6 +17,9 @@ export function AssociateContentForm({
   onChange,
   onSubmit,
   onCancel,
+  onCreateContent,
+  isSubmitting = false,
+  unit,
 }) {
   const hasContentOptions = contentOptions.length > 0;
 
@@ -24,18 +27,43 @@ export function AssociateContentForm({
     <form
       className="rounded-[var(--radius-lg)] border border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-4)] shadow-[var(--shadow-sm)] md:p-[var(--space-5)]"
       noValidate
+      aria-busy={isSubmitting}
       onSubmit={onSubmit}
     >
-      <div className="flex flex-col gap-[var(--space-5)]">
+      <fieldset
+        disabled={isSubmitting}
+        className="m-0 min-w-0 border-0 p-0 flex flex-col gap-[var(--space-5)]"
+      >
         <div>
           <h2 className="m-0 text-[16px] font-bold text-[var(--text-primary)]">
             Asociar contenido a esta unidad
           </h2>
 
           <p className="mt-[var(--space-2)] mb-0 text-[13px] leading-[1.6] text-[var(--text-muted)]">
-            Selecciona el contenido y el rango de disponibilidad en el que estará habilitado.
+            Selecciona el contenido y el rango de disponibilidad en el que
+            estará habilitado.
           </p>
         </div>
+
+        {unit && (
+          <p className="m-0 text-[13px] text-[var(--text-secondary)]">
+            Rango permitido (hora de tu dispositivo):{' '}
+            {new Intl.DateTimeFormat('es-CO', {
+              dateStyle: 'medium',
+              timeStyle: 'short',
+            }).format(new Date(unit.startDate))}
+            {' — '}
+            {new Intl.DateTimeFormat('es-CO', {
+              dateStyle: 'medium',
+              timeStyle: 'short',
+            }).format(new Date(unit.endDate))}
+            .
+          </p>
+        )}
+        <p className="m-0 text-[13px] text-[var(--text-secondary)]">
+          Estas fechas pertenecen a la plantilla. La disponibilidad se desplaza
+          según el inicio individual de cada estudiante.
+        </p>
 
         <SelectField
           id="associate-content-id"
@@ -51,11 +79,22 @@ export function AssociateContentForm({
           onChange={onChange}
         />
 
+        {!hasContentOptions && onCreateContent && (
+          <div>
+            <Button type="button" onClick={onCreateContent}>
+              Crear contenido para esta unidad
+            </Button>
+          </div>
+        )}
+
         <TextField
           id="associate-content-available-from"
           name="availableFrom"
           type="datetime-local"
+          disabled={!hasContentOptions}
           step="60"
+          min={unit?.startDate}
+          max={unit?.endDate}
           label="Inicio de disponibilidad"
           value={form.availableFrom}
           error={errors.availableFrom}
@@ -67,7 +106,10 @@ export function AssociateContentForm({
           id="associate-content-available-until"
           name="availableUntil"
           type="datetime-local"
+          disabled={!hasContentOptions}
           step="60"
+          min={unit?.startDate}
+          max={unit?.endDate}
           label="Fin de disponibilidad"
           value={form.availableUntil}
           error={errors.availableUntil}
@@ -94,9 +136,11 @@ export function AssociateContentForm({
             Cancelar
           </Button>
 
-          <Button type="submit">Asociar contenido</Button>
+          <Button type="submit" disabled={!hasContentOptions || isSubmitting}>
+            {isSubmitting ? 'Asociando contenido...' : 'Asociar contenido'}
+          </Button>
         </div>
-      </div>
+      </fieldset>
     </form>
   );
 }

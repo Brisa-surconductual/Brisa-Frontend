@@ -3,10 +3,10 @@ import { Navigate } from 'react-router-dom';
 import {
   AlertTriangle,
   ArrowLeft,
+  Loader2,
 } from 'lucide-react';
 
 import {
-  CONSENT_VERSION,
   ConsentDocument,
 } from '../../components/ConsentDocument/index.js';
 
@@ -21,6 +21,7 @@ import {
 import {
   useReconsentPage,
 } from './hooks/useReconsentPage.js';
+import { Button } from '../../../../shared/components/ui/Button/index.js';
 
 export function ReconsentPage() {
   const {
@@ -31,15 +32,17 @@ export function ReconsentPage() {
     attemptedSubmit,
     submitError,
     isSubmitting,
+    consentData,
+    isLoadingConsent,
+    loadError,
+    retryLoadConsent,
     sensitiveFieldLabels,
     consentIsComplete,
     shouldRedirectToReview,
     handleAuthorizationChange,
     handleBack,
     handleSubmit,
-  } = useReconsentPage({
-    consentVersion: CONSENT_VERSION,
-  });
+  } = useReconsentPage();
 
   if (!account) {
     return (
@@ -127,13 +130,30 @@ export function ReconsentPage() {
         </div>
       )}
 
-      <ConsentDocument />
+      {isLoadingConsent ? (
+        <div className="flex h-[300px] items-center justify-center gap-[var(--space-3)]" role="status">
+          <Loader2 className="animate-spin text-[var(--brand-600)] motion-reduce:animate-none" size={24} aria-hidden="true" />
+          <span className="text-[13px] text-[var(--text-secondary)]">Cargando consentimiento vigente...</span>
+        </div>
+      ) : loadError ? (
+        <div className="flex min-h-[300px] flex-col items-start justify-center gap-[var(--space-3)]" role="alert">
+          <p className="m-0 text-[13px] text-[var(--danger-text)]">{loadError}</p>
+          <Button variant="secondary" onClick={retryLoadConsent}>Reintentar carga</Button>
+        </div>
+      ) : (
+        <ConsentDocument
+          titulo={consentData?.titulo}
+          contenido={consentData?.urlContenido}
+          version={consentData?.versionConsetimeinto}
+        />
+      )}
 
       <ReconsentAuthorizationForm
         authorizations={authorizations}
         attemptedSubmit={attemptedSubmit}
         consentIsComplete={consentIsComplete}
         isSubmitting={isSubmitting}
+        disabled={isLoadingConsent || !!loadError || !consentData}
         onAuthorizationChange={
           handleAuthorizationChange
         }
