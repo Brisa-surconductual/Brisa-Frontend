@@ -6,11 +6,14 @@ export function mapCatalogContent(item) {
     associationId: item.idAsociasionUnidadTemporalContenido,
     associated: item.asociado,
     createdAt: item.fechaCreacionContenido,
-    canEdit: item.editable === true,
-    canDelete: item.editable === true,
+    canEdit: item.editable !== false,
+    canDelete: item.editable !== false,
     resourcesReady: item.listoParaProgramar === true,
     resourceCount: item.cantidadRecursos,
     scheduleState: item.estadoCronograma,
+    temporalUnitName: item.nombreUnidadTemporal,
+    cronogramaName: item.nombreUnidadPadreCronograma,
+    cronogramaStatus: item.estadoCronograma,
   };
 }
 
