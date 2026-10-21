@@ -98,6 +98,10 @@ export function ScheduleManagementPage() {
     navigate('/app/administrativo/cronograma/contenidos');
   }
 
+  function handleAssignSchedule() {
+    navigate('/app/administrativo/cronograma/assignar');
+  }
+
   return (
     <div className="min-h-screen bg-[var(--surface-bg)]">
       <AdministrativeHeader roleLabel="Administrativo" onLogout={handleLogout} />
@@ -148,6 +152,13 @@ export function ScheduleManagementPage() {
                 onClick={handleViewContents}
               >
                 Gestionar contenidos
+              </Button>
+
+              <Button 
+                variant="secondary" 
+                onClick={handleAssignSchedule}
+              >
+                Asignar cronograma a usuario
               </Button>
               
               <Button 

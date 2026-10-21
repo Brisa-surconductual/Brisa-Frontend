@@ -25,3 +25,5 @@ export { TemporalInformationPage } from './pages/TemporalInformationPage/index.j
 export { CreateSchedulePage } from './pages/CreateSchedulePage/index.js';
 
 export { SchedulePanelPage } from './pages/SchedulePanelPage/SchedulePanelPage.jsx';
+
+export {AssignSchedulePage} from './pages/AssignSchedulePage/AssignSchedulePage.jsx';

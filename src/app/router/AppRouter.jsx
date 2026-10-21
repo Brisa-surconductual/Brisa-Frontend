@@ -33,6 +33,7 @@ import {
   CurrentContentPage,
   TemporalInformationPage,
   SchedulePanelPage,
+  AssignSchedulePage,
 } from '@/features/cronograma/index.js';
 
 import { RequireAuth } from './RequireAuth.jsx';
@@ -160,6 +161,11 @@ export function AppRouter() {
               <Route
                 path="administrativo/cronograma/crear"
                 element={<CreateSchedulePage />}
+              />
+
+              <Route
+                path="administrativo/cronograma/assignar"
+                element={<AssignSchedulePage />}
               />
 
               <Route

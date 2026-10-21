@@ -18,6 +18,20 @@ import {
   ADMINISTRATIVE_TABS,
 } from '@/shared/data/administrativeTabs.js';
 
+
+function getApiErrorMessage(error, fallbackMessage) {
+  if (error?.response?.data?.message) {
+    const msg = error.response.data.message;
+    return Array.isArray(msg) ? msg.join(', ') : msg; 
+  }
+  
+  if (error?.message) {
+    return error.message;
+  }
+
+  return fallbackMessage;
+}
+
 const EMPTY_CONTENTS = Object.freeze([]);
 
 export function ContentManagementPage() {
@@ -45,14 +59,18 @@ export function ContentManagementPage() {
               content.idAsociasionUnidadTemporalContenido,
             associated: content.asociado,
             createdAt: content.fechaCreacionContenido,
+            temporalUnitName: content.nombreUnidadTemporal,
+            cronogramaName: content.nombreUnidadPadreCronograma, 
+            cronogramaStatus: content.estadoCronograma,
             canEdit: true,
             canDelete: true,
           })),
         );
-      } catch {
-        setLoadError(
+      } catch (error) {
+        setLoadError(getApiErrorMessage(
+          error,
           'No pudimos cargar los contenidos. Intenta nuevamente.',
-        );
+        ));
       } finally {
         setLoading(false);
       }
@@ -149,10 +167,13 @@ export function ContentManagementPage() {
           (content) => content.id !== contentId,
         ),
       );
-    } catch {
-      setLoadError(
-        'No pudimos eliminar el contenido. Verifica su estado e intenta nuevamente.',
+      setLoadError('');
+    } catch (error) {
+      const errorMessage = getApiErrorMessage(
+        error, 
+        'No pudimos eliminar el contenido. Verifica su estado e intenta nuevamente.'
       );
+      setLoadError(errorMessage);
     } finally {
       setPendingDeleteContent(null);
     }
