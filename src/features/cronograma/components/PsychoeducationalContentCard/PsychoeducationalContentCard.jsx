@@ -9,8 +9,7 @@ export function PsychoeducationalContentCard({
   onDelete,
 }) {
   const typeLabel =
-    PSYCHOEDUCATIONAL_CONTENT_TYPE_LABEL[content.type] ??
-    content.type;
+    PSYCHOEDUCATIONAL_CONTENT_TYPE_LABEL[content.type] ?? content.type;
 
   const canEdit = content.canEdit === true;
   const canDelete = content.canDelete === true;
@@ -84,9 +83,16 @@ export function PsychoeducationalContentCard({
         </div>
       ) : (!canEdit || !canDelete) ? (
         <p className="mt-[var(--space-4)] mb-0 text-[12px] leading-[1.5] text-[var(--text-muted)]">
-          Algunas acciones no están disponibles para este contenido.
+          Este contenido pertenece a un cronograma activo. Sus datos y recursos
+          son de solo lectura.
         </p>
       ) : null}
+
+      <p className="mt-[var(--space-3)] text-[13px] text-[var(--text-secondary)]">
+        {content.resourcesReady
+          ? 'Recursos configurados'
+          : 'Pendiente de completar recursos y módulos destino'}
+      </p>
 
       <div className="mt-[var(--space-5)] flex flex-wrap justify-end gap-[var(--space-3)]">
         <Button
@@ -95,7 +101,7 @@ export function PsychoeducationalContentCard({
           disabled={disableEditActions}
           onClick={() => onManageResources?.(content)}
         >
-          Gestionar recursos
+          {canEdit ? 'Gestionar recursos' : 'Ver recursos'}
         </Button>
 
         <Button

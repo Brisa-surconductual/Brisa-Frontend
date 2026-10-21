@@ -54,7 +54,6 @@ export function useLoginPage() {
         password: form.password,
       });
       
-      console.log('Respuesta completa de iniciarSesion:', JSON.stringify(data, null, 2));
 
       const infoUsuario = data.respuesta ? data.respuesta : data;
 

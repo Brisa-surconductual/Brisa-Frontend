@@ -35,6 +35,7 @@ import {
 import { asociarContenidoUnidadTemporal } from '@/features/cronograma/api/contenidoUnidadTemporal/asociarContenidoUnidadTemporal.jsx';
 import { actualizarDisponibilidadContenido } from '@/features/cronograma/api/contenidoUnidadTemporal/actualizarDisponibilidadContenido.jsx';
 import { eliminarAsociacionContenidoUnidadTemporal } from '@/features/cronograma/api/contenidoUnidadTemporal/eliminarAsociacionContenidoUnidadTemporal.jsx';
+import { associationErrorMessage } from '../../utils/associationErrorMessage.js';
 
 const EMPTY_CONTENT_CATALOG = Object.freeze([]);
 const EMPTY_TEMPORAL_UNITS = Object.freeze([]);
@@ -59,10 +60,7 @@ function getTemporalUnitStatus(unit) {
   return 'ACTIVA';
 }
 
-function getScheduledContentStatus(
-  availableFrom,
-  availableUntil,
-) {
+function getScheduledContentStatus(availableFrom, availableUntil) {
   const now = Date.now();
   const start = new Date(availableFrom).getTime();
   const end = new Date(availableUntil).getTime();
@@ -85,14 +83,11 @@ function toDateTimeLocal(value) {
 
   const date = new Date(value);
 
-  const pad = (number) =>
-    String(number).padStart(2, '0');
+  const pad = (number) => String(number).padStart(2, '0');
 
   return `${date.getFullYear()}-${pad(
     date.getMonth() + 1,
-  )}-${pad(date.getDate())}T${pad(
-    date.getHours(),
-  )}:${pad(date.getMinutes())}`;
+  )}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
 function mapScheduledContents(contents, unitId) {
@@ -101,33 +96,24 @@ function mapScheduledContents(contents, unitId) {
     contentId: content.idContenido,
     temporalUnitId: unitId,
     order: content.ordenContenido,
-    availableFrom: toDateTimeLocal(
-      content.fechaInicioDisponibilidad,
-    ),
-    availableUntil: toDateTimeLocal(
-      content.fechaFinDisponibilidad,
-    ),
+    availableFrom: toDateTimeLocal(content.fechaInicioDisponibilidad),
+    availableUntil: toDateTimeLocal(content.fechaFinDisponibilidad),
     status: getScheduledContentStatus(
       content.fechaInicioDisponibilidad,
       content.fechaFinDisponibilidad,
     ),
   }));
 }
-const CONTENT_LIST_HEADING_ID =
-  'associate-content-list-heading';
+const CONTENT_LIST_HEADING_ID = 'associate-content-list-heading';
 export function AssociateContentPage() {
   const navigate = useNavigate();
   const { scheduleId, unitId } = useParams();
 
   const { role, logout } = useAuth();
 
-  const [contentCatalog, setContentCatalog] = useState(
-    EMPTY_CONTENT_CATALOG,
-  );
+  const [contentCatalog, setContentCatalog] = useState(EMPTY_CONTENT_CATALOG);
 
-  const [temporalUnits, setTemporalUnits] = useState(
-    EMPTY_TEMPORAL_UNITS,
-  );
+  const [temporalUnits, setTemporalUnits] = useState(EMPTY_TEMPORAL_UNITS);
 
   const [scheduledContent, setScheduledContent] = useState(
     EMPTY_SCHEDULED_CONTENT,
@@ -135,9 +121,12 @@ export function AssociateContentPage() {
 
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
+  const [associationSuccess, setAssociationSuccess] = useState('');
+  const [scheduleEditable, setScheduleEditable] = useState(false);
 
   const [editingAssociation, setEditingAssociation] = useState(null);
-  const [pendingDeleteAssociation, setPendingDeleteAssociation] = useState(null);
+  const [pendingDeleteAssociation, setPendingDeleteAssociation] =
+    useState(null);
 
   useEffect(() => {
     async function loadPageData() {
@@ -145,22 +134,19 @@ export function AssociateContentPage() {
       setLoadError('');
 
       try {
-        const [
-          catalogData,
-          unitsResponse,
-          scheduledResponse,
-        ] = await Promise.all([
-          obtenerCatalogoContenidos(),
-          getUnitTemporalByShulde(scheduleId),
-          obtenerContenidosUnidadTemporal({
-            scheduleId,
-            temporalUnitId: unitId,
-          }),
-        ]);
+        const [catalogData, unitsResponse, scheduledResponse] =
+          await Promise.all([
+            obtenerCatalogoContenidos(),
+            getUnitTemporalByShulde(scheduleId),
+            obtenerContenidosUnidadTemporal({
+              scheduleId,
+              temporalUnitId: unitId,
+            }),
+          ]);
 
         const unitsData = Array.isArray(unitsResponse)
           ? unitsResponse
-          : unitsResponse?.data ?? [];
+          : (unitsResponse?.data ?? []);
 
         setContentCatalog(
           catalogData.map((content) => ({
@@ -168,10 +154,11 @@ export function AssociateContentPage() {
             title: content.nombre,
             type: content.tipoContenido,
             associated: content.asociado,
-            associationId:
-              content.idAsociasionUnidadTemporalContenido,
+            associationId: content.idAsociasionUnidadTemporalContenido,
+            ready: content.listoParaProgramar === true,
           })),
         );
+        setScheduleEditable(scheduledResponse.estadoCronograma === 'INACTIVO');
 
         setTemporalUnits(
           unitsData.map((temporalUnit) => ({
@@ -185,10 +172,7 @@ export function AssociateContentPage() {
         );
 
         setScheduledContent(
-          mapScheduledContents(
-            scheduledResponse.contenidos ?? [],
-            unitId,
-          ),
+          mapScheduledContents(scheduledResponse.contenidos ?? [], unitId),
         );
       } catch {
         setLoadError(
@@ -204,19 +188,16 @@ export function AssociateContentPage() {
     }
   }, [scheduleId, unitId]);
 
-  const unit = temporalUnits.find(
-    (temporalUnit) => temporalUnit.id === unitId,
-  );
+  const unit = temporalUnits.find((temporalUnit) => temporalUnit.id === unitId);
 
   async function refreshAssociationData() {
-    const [catalogData, scheduledResponse] =
-      await Promise.all([
-        obtenerCatalogoContenidos(),
-        obtenerContenidosUnidadTemporal({
-          scheduleId,
-          temporalUnitId: unitId,
-        }),
-      ]);
+    const [catalogData, scheduledResponse] = await Promise.all([
+      obtenerCatalogoContenidos(),
+      obtenerContenidosUnidadTemporal({
+        scheduleId,
+        temporalUnitId: unitId,
+      }),
+    ]);
 
     setContentCatalog(
       catalogData.map((content) => ({
@@ -224,16 +205,13 @@ export function AssociateContentPage() {
         title: content.nombre,
         type: content.tipoContenido,
         associated: content.asociado,
-        associationId:
-          content.idAsociasionUnidadTemporalContenido,
+        associationId: content.idAsociasionUnidadTemporalContenido,
+        ready: content.listoParaProgramar === true,
       })),
     );
 
     setScheduledContent(
-      mapScheduledContents(
-        scheduledResponse.contenidos ?? [],
-        unitId,
-      ),
+      mapScheduledContents(scheduledResponse.contenidos ?? [], unitId),
     );
   }
 
@@ -248,9 +226,7 @@ export function AssociateContentPage() {
       await actualizarDisponibilidadContenido({
         associationId,
         availableFrom: new Date(availableFrom).toISOString(),
-        availableUntil: new Date(
-          availableUntil,
-        ).toISOString(),
+        availableUntil: new Date(availableUntil).toISOString(),
       });
 
       await refreshAssociationData();
@@ -258,45 +234,57 @@ export function AssociateContentPage() {
       resetAvailabilityForm();
       setEditingAssociation(null);
     } catch {
-      setLoadError(
-        'No pudimos actualizar la disponibilidad del contenido.',
-      );
+      setLoadError('No pudimos actualizar la disponibilidad del contenido.');
     }
   }
 
   async function handleValidSubmit({
-  contentId,
-  availableFrom,
-  availableUntil,
+    contentId,
+    availableFrom,
+    availableUntil,
   }) {
     setLoadError('');
+    setAssociationSuccess('');
+    if (!scheduleEditable) {
+      setLoadError(
+        'El cronograma está activo. La programación es de solo lectura.',
+      );
+      return;
+    }
 
     try {
       await asociarContenidoUnidadTemporal({
         contentId,
         temporalUnitId: unitId,
         availableFrom: new Date(availableFrom).toISOString(),
-        availableUntil: new Date(
-          availableUntil,
-        ).toISOString(),
+        availableUntil: new Date(availableUntil).toISOString(),
       });
-
+    } catch (error) {
+      setLoadError(associationErrorMessage(error));
+      return;
+    }
+    clearAssociationForm();
+    setAssociationSuccess(
+      'Contenido asociado correctamente a esta unidad temporal.',
+    );
+    try {
       await refreshAssociationData();
-      clearAssociationForm();
     } catch {
       setLoadError(
-        'No pudimos asociar el contenido a la unidad temporal.',
+        'La asociación se guardó, pero no pudimos actualizar el listado. Recarga la página antes de volver a asociar contenido.',
       );
     }
   }
   const {
     form,
     errors,
+    isSubmitting,
     handleChange,
     handleSubmit,
     clearAssociationForm,
   } = useAssociateContentForm({
     onValidSubmit: handleValidSubmit,
+    unit,
   });
 
   const {
@@ -376,10 +364,22 @@ export function AssociateContentPage() {
   // provocar el HTTP 409 es otra tarea de HU-CR-02 / RF-10, y le bastará con
   // cambiar este filtro.
   const availableContent = contentCatalog.filter(
-    (item) =>
-      !item.associated &&
-      !takenContentIds.has(item.id),
+    (item) => item.ready && !item.associated && !takenContentIds.has(item.id),
   );
+  const incompleteContent = contentCatalog.filter(
+    (item) => !item.associated && !item.ready,
+  );
+  function completeResources(item) {
+    navigate(
+      `/app/administrativo/cronograma/contenidos/${encodeURIComponent(item.id)}/recursos`,
+      {
+        state: {
+          creationFlow: true,
+          returnToAssociation: { scheduleId, unitId },
+        },
+      },
+    );
+  }
 
   const contentOptions = availableContent.map((item) => ({
     value: item.id,
@@ -391,14 +391,17 @@ export function AssociateContentPage() {
   );
 
   const contentHint = selectedContent
-  ? `Tipo: ${
-      PSYCHOEDUCATIONAL_CONTENT_TYPE_LABEL[
+    ? `Tipo: ${
+        PSYCHOEDUCATIONAL_CONTENT_TYPE_LABEL[selectedContent.type] ??
         selectedContent.type
-      ] ?? selectedContent.type
-    }`
-  : contentOptions.length === 0
-    ? 'No hay contenidos disponibles en el catálogo.'
-    : '';
+      }`
+    : contentOptions.length === 0
+      ? contentCatalog.length === 0
+        ? 'Aún no hay contenidos registrados. Crea un contenido para poder asociarlo a esta unidad.'
+        : incompleteContent.length > 0
+          ? 'Hay contenidos pendientes de recursos. Complétalos antes de asociarlos.'
+          : 'Los contenidos del catálogo ya están vinculados a unidades temporales. Cada contenido solo puede pertenecer a una unidad. Crea un contenido nuevo para continuar.'
+      : '';
 
   function handleLogout() {
     logout();
@@ -431,6 +434,7 @@ export function AssociateContentPage() {
   }
 
   function handleFormChange(event) {
+    setAssociationSuccess('');
     // El mensaje de éxito nombra un contenido y una unidad concretos: deja de
     // describir el formulario en cuanto se toca cualquiera de los campos.
 
@@ -491,17 +495,66 @@ export function AssociateContentPage() {
                 disponibilidad para esta unidad temporal.
               </p>
 
-              <div className="mt-[var(--space-6)]">
-                <AssociateContentForm
-                  form={form}
-                  errors={errors}
-                  contentOptions={contentOptions}
-                  contentHint={contentHint}
-                  onChange={handleFormChange}
-                  onSubmit={handleSubmit}
-                  onCancel={handleCancel}
-                />
-              </div>
+              {!scheduleEditable && (
+                <p role="status" className="mt-[var(--space-4)] text-[13px]">
+                  Este cronograma está activo. Sus contenidos y su programación
+                  son de solo lectura.
+                </p>
+              )}
+              {scheduleEditable && incompleteContent.length > 0 && (
+                <section
+                  className="mt-[var(--space-4)]"
+                  aria-label="Contenidos pendientes de recursos"
+                >
+                  <p className="text-[13px]">
+                    Completa los recursos de estos contenidos antes de
+                    programarlos:
+                  </p>
+                  {incompleteContent.map((item) => (
+                    <Button
+                      key={item.id}
+                      variant="secondary"
+                      onClick={() => completeResources(item)}
+                    >
+                      Completar recursos de {item.title}
+                    </Button>
+                  ))}
+                </section>
+              )}
+              {scheduleEditable && (
+                <div className="mt-[var(--space-6)]">
+                  <AssociateContentForm
+                    form={form}
+                    errors={errors}
+                    contentOptions={contentOptions}
+                    contentHint={contentHint}
+                    isSubmitting={isSubmitting}
+                    unit={
+                      unit
+                        ? {
+                            ...unit,
+                            startDate: toDateTimeLocal(unit.startDate),
+                            endDate: toDateTimeLocal(unit.endDate),
+                          }
+                        : undefined
+                    }
+                    successMessage={associationSuccess}
+                    onChange={handleFormChange}
+                    onSubmit={handleSubmit}
+                    onCancel={handleCancel}
+                    onCreateContent={() =>
+                      navigate(
+                        '/app/administrativo/cronograma/contenidos/nuevo',
+                        {
+                          state: {
+                            returnToAssociation: { scheduleId, unitId },
+                          },
+                        },
+                      )
+                    }
+                  />
+                </div>
+              )}
               {editingAssociation && (
                 <div className="mt-[var(--space-6)]">
                   <ScheduledContentAvailabilityForm
@@ -509,7 +562,9 @@ export function AssociateContentPage() {
                     errors={availabilityErrors}
                     contentTitle={editingAssociation.contentTitle ?? ''}
                     temporalUnitName={editingAssociation.temporalUnitName ?? ''}
-                    temporalUnitRange={editingAssociation.temporalUnitRange ?? ''}
+                    temporalUnitRange={
+                      editingAssociation.temporalUnitRange ?? ''
+                    }
                     onChange={handleAvailabilityChange}
                     onSubmit={handleAvailabilitySubmit}
                     onCancel={handleCancelAvailabilityEdit}
@@ -548,6 +603,7 @@ export function AssociateContentPage() {
                               contentType={content?.type}
                               status={item.status}
                               actions={
+                                scheduleEditable &&
                                 canModifyScheduledContent(item.status) ? (
                                   <>
                                     <Button
@@ -556,7 +612,8 @@ export function AssociateContentPage() {
                                       onClick={() =>
                                         handleEditAvailability({
                                           ...item,
-                                          contentTitle: content?.title ?? item.contentId,
+                                          contentTitle:
+                                            content?.title ?? item.contentId,
                                           temporalUnitName: unit.name,
                                         })
                                       }
@@ -570,7 +627,8 @@ export function AssociateContentPage() {
                                       onClick={() =>
                                         handleRequestDeleteAssociation({
                                           ...item,
-                                          contentTitle: content?.title ?? item.contentId,
+                                          contentTitle:
+                                            content?.title ?? item.contentId,
                                           temporalUnitName: unit.name,
                                         })
                                       }

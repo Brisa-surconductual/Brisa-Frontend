@@ -12,8 +12,7 @@ function parseDateTimeLocal(value) {
     return null;
   }
 
-  const [, year, month, day, hour, minute, second = '0'] =
-    match;
+  const [, year, month, day, hour, minute, second = '0'] = match;
 
   const parsedDate = new Date(
     Number(year),
@@ -35,37 +34,29 @@ function parseDateTimeLocal(value) {
   return isValid ? parsedDate.getTime() : null;
 }
 
-export function validateAssociateContentForm(form) {
+export function validateAssociateContentForm(form, unit) {
   const errors = {};
 
   if (!form.contentId) {
     errors.contentId = 'Selecciona un contenido.';
   }
 
-  const availableFrom =
-    form.availableFrom?.trim() ?? '';
-  const availableUntil =
-    form.availableUntil?.trim() ?? '';
+  const availableFrom = form.availableFrom?.trim() ?? '';
+  const availableUntil = form.availableUntil?.trim() ?? '';
 
-  const availableFromTimestamp =
-    parseDateTimeLocal(availableFrom);
-  const availableUntilTimestamp =
-    parseDateTimeLocal(availableUntil);
+  const availableFromTimestamp = parseDateTimeLocal(availableFrom);
+  const availableUntilTimestamp = parseDateTimeLocal(availableUntil);
 
   if (!availableFrom) {
-    errors.availableFrom =
-      'La fecha y hora de inicio son obligatorias.';
+    errors.availableFrom = 'La fecha y hora de inicio son obligatorias.';
   } else if (availableFromTimestamp === null) {
-    errors.availableFrom =
-      'Ingresa una fecha y hora de inicio válidas.';
+    errors.availableFrom = 'Ingresa una fecha y hora de inicio válidas.';
   }
 
   if (!availableUntil) {
-    errors.availableUntil =
-      'La fecha y hora de fin son obligatorias.';
+    errors.availableUntil = 'La fecha y hora de fin son obligatorias.';
   } else if (availableUntilTimestamp === null) {
-    errors.availableUntil =
-      'Ingresa una fecha y hora de fin válidas.';
+    errors.availableUntil = 'Ingresa una fecha y hora de fin válidas.';
   }
 
   if (
@@ -77,6 +68,26 @@ export function validateAssociateContentForm(form) {
       'La fecha de inicio debe ser anterior a la fecha de fin.';
   }
 
+  if (unit) {
+    const start = new Date(unit.startDate).getTime();
+    const end = new Date(unit.endDate).getTime();
+    if (
+      availableFromTimestamp !== null &&
+      Number.isFinite(start) &&
+      availableFromTimestamp < start
+    ) {
+      errors.availableFrom =
+        'El inicio no puede ser anterior al inicio de la unidad temporal.';
+    }
+    if (
+      availableUntilTimestamp !== null &&
+      Number.isFinite(end) &&
+      availableUntilTimestamp > end
+    ) {
+      errors.availableUntil =
+        'El fin no puede ser posterior al fin de la unidad temporal. Revisa el rango permitido indicado arriba.';
+    }
+  }
   return errors;
 }
 
