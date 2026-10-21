@@ -14,6 +14,8 @@ import { ProgramModalityConfirmDialog } from '../../components/ProgramModalityCo
 
 import { useProgramModalityPage } from './hooks/useProgramModalityPage.js';
 
+import { ChatSectionTabs } from '../../components/ChatSectionTabs/index.js';
+
 export function ProgramModalityPage({
   eligibility = null,
   isLoading = false,
@@ -46,6 +48,8 @@ export function ProgramModalityPage({
         activeTabId={ADMINISTRATIVE_TAB.CHAT}
         onTabChange={handleTabChange}
       />
+
+      <ChatSectionTabs />
 
       <main className="mx-auto flex w-full max-w-[1200px] flex-col gap-[var(--space-6)] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]">
         <Link
