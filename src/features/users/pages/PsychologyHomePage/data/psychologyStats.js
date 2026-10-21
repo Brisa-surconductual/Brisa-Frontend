@@ -1,5 +1,6 @@
 /*
- * Cifras de ejemplo mientras no exista backend.
+ * Definiciones de tarjetas del dashboard. Los valores llegan del backend.
+ * Los catálogos de Población conservan sus datos de ejemplo independientes.
  *
  * REGLA DE ROL: el perfil administrativo solo accede a
  * información AGREGADA, ANÓNIMA y ESTADÍSTICA. Ningún
@@ -10,29 +11,29 @@
 export const PROGRAM_STATS = Object.freeze([
   Object.freeze({
     id: 'ACTIVOS',
-    value: '142',
+    key: 'estudiantesActivos',
     label: 'Estudiantes activos',
     tone: 'brand',
   }),
 
   Object.freeze({
     id: 'COMPLETO',
-    value: '118',
+    key: 'conRegistroCompleto',
     label: 'Con registro completo',
     tone: 'success',
   }),
 
   Object.freeze({
     id: 'PENDIENTE',
-    value: '24',
+    key: 'conRegistroPendiente',
     label: 'Con registro pendiente',
     tone: 'warning',
   }),
 
   Object.freeze({
-    id: 'SEMANAS',
-    value: '7',
-    label: 'Semanas del programa',
+    id: 'DURACION_BASE',
+    key: 'diasCronogramaBase',
+    label: 'Días del cronograma base',
     tone: 'info',
   }),
 ]);
