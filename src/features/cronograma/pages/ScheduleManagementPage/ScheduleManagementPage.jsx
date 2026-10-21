@@ -49,6 +49,10 @@ export function ScheduleManagementPage() {
       navigate('/app/administrativo');
       return;
     }
+    if (tabId === ADMINISTRATIVE_TAB.CHAT) {
+      navigate('/app/administrativo/chat/modalidad');
+      return;
+    }
     navigate(`/app/administrativo?tab=${encodeURIComponent(tabId)}`);
   }
 
@@ -96,6 +100,10 @@ export function ScheduleManagementPage() {
 
   function handleViewContents() {
     navigate('/app/administrativo/cronograma/contenidos');
+  }
+
+  function handleAssignSchedule() {
+    navigate('/app/administrativo/cronograma/assignar');
   }
 
   return (
@@ -148,6 +156,13 @@ export function ScheduleManagementPage() {
                 onClick={handleViewContents}
               >
                 Gestionar contenidos
+              </Button>
+
+              <Button 
+                variant="secondary" 
+                onClick={handleAssignSchedule}
+              >
+                Asignar cronograma a usuario
               </Button>
               
               <Button 

@@ -11,6 +11,7 @@ import {
 } from '@/features/cronograma/utils/psychoeducationalResourceFormValidation.js';
 
 const EMPTY_RESOURCE_FORM = Object.freeze({
+  id: null, // <-- Agregamos el ID para saber si estamos editando
   type: '',
   order: '',
   textContent: '',
@@ -21,6 +22,7 @@ const EMPTY_RESOURCE_FORM = Object.freeze({
 
 function createInitialForm(initialValues = EMPTY_RESOURCE_FORM) {
   return {
+    id: initialValues.id ?? null,
     type: initialValues.type ?? '',
     order:
       initialValues.order !== undefined &&
@@ -38,6 +40,7 @@ function createInitialForm(initialValues = EMPTY_RESOURCE_FORM) {
 
 export function usePsychoeducationalResourceForm({
   initialValues = EMPTY_RESOURCE_FORM,
+  resources = [], 
   onValidSubmit,
 } = {}) {
   const [form, setForm] = useState(() =>
@@ -93,6 +96,23 @@ export function usePsychoeducationalResourceForm({
 
     clearFieldError(name);
 
+    // --- VALIDACIÓN EN TIEMPO REAL ---
+    // Verificamos !form.id para asegurarnos de que es un recurso NUEVO
+    if (name === 'order' && !form.id) {
+      const expectedOrder = resources.length + 1;
+      const numericValue = Number(value);
+
+      if (value !== '' && numericValue !== expectedOrder) {
+        setErrors((currentErrors) => ({
+          ...currentErrors,
+          order: `El orden debe ser secuencial. Como ya existen ${resources.length} recursos, el bloque que corresponde es el ${expectedOrder}.`,
+        }));
+      } else {
+        clearFieldError('order');
+      }
+    }
+    // ---------------------------------
+
     if (name === 'type') {
       clearFieldError('textContent');
       clearFieldError('file');
@@ -134,6 +154,14 @@ export function usePsychoeducationalResourceForm({
 
     const validationErrors =
       validatePsychoeducationalResourceForm(form);
+
+    // Validación final por seguridad al guardar (solo si es nuevo)
+    if (!form.id) {
+      const expectedOrder = resources.length + 1;
+      if (Number(form.order) !== expectedOrder) {
+        validationErrors.order = `El orden debe ser secuencial. El bloque que corresponde es el ${expectedOrder}.`;
+      }
+    }
 
     setErrors(validationErrors);
 

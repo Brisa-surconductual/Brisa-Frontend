@@ -47,6 +47,11 @@ export function usePsychologyHomePage() {
       return;
     }
 
+    if (tabId === ADMINISTRATIVE_TAB.CHAT) {
+      navigate('/app/administrativo/chat/modalidad');
+      return;
+    }
+
     if (
       !LOCAL_ADMINISTRATIVE_TABS.has(
         tabId,

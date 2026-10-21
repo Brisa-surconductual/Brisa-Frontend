@@ -1,10 +1,6 @@
 import { useState } from 'react';
 
-import {
-  useLocation,
-  useNavigate,
-  useParams,
-} from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { useAuth } from '@/app/providers/index.js';
 
@@ -21,16 +17,14 @@ import { usePsychoeducationalContentForm } from './hooks/usePsychoeducationalCon
 
 import { crearContenido } from '@/features/cronograma/api/contenido/crearContenido.jsx';
 import { actualizarContenido } from '@/features/cronograma/api/contenido/actualizarContenido.jsx';
+import { contentFormReturnPath } from '../../utils/contentFormReturnPath.js';
 
 const EMPTY_CONTENT = Object.freeze({
   name: '',
   type: '',
 });
 
-export function ContentFormPage({
-  initialValues,
-  mode = 'create',
-}) {
+export function ContentFormPage({ initialValues, mode = 'create' }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { contentId } = useParams();
@@ -40,18 +34,18 @@ export function ContentFormPage({
   const [submitError, setSubmitError] = useState('');
 
   const isEditMode = mode === 'edit';
+  const returnPath = contentFormReturnPath(
+    location.state?.returnToAssociation,
+    isEditMode,
+  );
 
-  const navigationContent =
-    location.state?.content ?? null;
+  const navigationContent = location.state?.content ?? null;
 
-  const selectedContent =
-    initialValues ?? navigationContent;
+  const selectedContent = initialValues ?? navigationContent;
 
-  const resolvedInitialValues =
-    selectedContent ?? EMPTY_CONTENT;
+  const resolvedInitialValues = selectedContent ?? EMPTY_CONTENT;
 
-  const hasEditContent =
-    !isEditMode || Boolean(selectedContent);
+  const hasEditContent = !isEditMode || Boolean(selectedContent);
 
   async function handleValidSubmit(payload) {
     setIsSubmitting(true);
@@ -59,21 +53,29 @@ export function ContentFormPage({
 
     try {
       if (isEditMode) {
-        const id =
-          selectedContent?.id ??
-          contentId;
+        const id = selectedContent?.id ?? contentId;
 
         await actualizarContenido({
           id,
           ...payload,
         });
       } else {
-        await crearContenido(payload);
+        const created = await crearContenido(payload);
+        if (!created.id_contenido)
+          throw new Error('No se recibió el identificador del contenido.');
+        navigate(
+          `/app/administrativo/cronograma/contenidos/${encodeURIComponent(created.id_contenido)}/recursos`,
+          {
+            state: {
+              creationFlow: true,
+              returnToAssociation: location.state?.returnToAssociation,
+            },
+          },
+        );
+        return;
       }
 
-      navigate(
-        '/app/administrativo/cronograma/contenidos',
-      );
+      navigate(returnPath);
     } catch {
       setSubmitError(
         isEditMode
@@ -85,15 +87,11 @@ export function ContentFormPage({
     }
   }
 
-  const {
-    form,
-    errors,
-    handleChange,
-    handleSubmit,
-  } = usePsychoeducationalContentForm({
-    initialValues: resolvedInitialValues,
-    onValidSubmit: handleValidSubmit,
-  });
+  const { form, errors, handleChange, handleSubmit } =
+    usePsychoeducationalContentForm({
+      initialValues: resolvedInitialValues,
+      onValidSubmit: handleValidSubmit,
+    });
 
   function handleLogout() {
     logout();
@@ -104,51 +102,33 @@ export function ContentFormPage({
   }
 
   function handleTabChange(tabId) {
-    if (
-      tabId ===
-      ADMINISTRATIVE_TAB.CRONOGRAMA
-    ) {
-      navigate(
-        '/app/administrativo/cronograma',
-      );
+    if (tabId === ADMINISTRATIVE_TAB.CRONOGRAMA) {
+      navigate('/app/administrativo/cronograma');
       return;
     }
 
-    if (
-      tabId ===
-      ADMINISTRATIVE_TAB.DASHBOARD
-    ) {
+    if (tabId === ADMINISTRATIVE_TAB.DASHBOARD) {
       navigate('/app/administrativo');
       return;
     }
 
-    navigate(
-      `/app/administrativo?tab=${encodeURIComponent(
-        tabId,
-      )}`,
-    );
+    navigate(`/app/administrativo?tab=${encodeURIComponent(tabId)}`);
   }
 
   function handleBack() {
-    navigate(
-      '/app/administrativo/cronograma/contenidos',
-    );
+    navigate(returnPath);
   }
 
   return (
     <div className="min-h-screen bg-[var(--surface-bg)]">
       <AdministrativeHeader
-        roleLabel={
-          role ?? 'ADMINISTRATIVO'
-        }
+        roleLabel={role ?? 'ADMINISTRATIVO'}
         onLogout={handleLogout}
       />
 
       <AdministrativeTabBar
         tabs={ADMINISTRATIVE_TABS}
-        activeTabId={
-          ADMINISTRATIVE_TAB.CRONOGRAMA
-        }
+        activeTabId={ADMINISTRATIVE_TAB.CRONOGRAMA}
         onTabChange={handleTabChange}
       />
 
@@ -159,7 +139,9 @@ export function ContentFormPage({
             className="mb-[var(--space-5)] text-[13px] font-bold text-[var(--brand-600)]"
             onClick={handleBack}
           >
-            ← Volver a contenidos
+            {location.state?.returnToAssociation && !isEditMode
+              ? '← Volver a la unidad temporal'
+              : '← Volver a contenidos'}
           </button>
 
           <p className="m-0 text-[12px] font-bold tracking-[0.04em] text-[var(--brand-600)] uppercase">
@@ -175,7 +157,7 @@ export function ContentFormPage({
           <p className="mt-[var(--space-2)] mb-0 max-w-[680px] text-[13px] leading-[1.6] text-[var(--text-muted)]">
             {isEditMode
               ? 'Actualiza la información general del contenido seleccionado.'
-              : 'Registra la información general de un nuevo contenido psicoeducativo.'}
+              : 'Paso 1 de 2: registra los datos. Después debes guardar al menos un recurso con su módulo destino para completar el contenido.'}
           </p>
 
           {submitError && (
@@ -194,9 +176,7 @@ export function ContentFormPage({
                 errors={errors}
                 loading={isSubmitting}
                 submitLabel={
-                  isEditMode
-                    ? 'Guardar cambios'
-                    : 'Crear contenido'
+                  isEditMode ? 'Guardar cambios' : 'Continuar con recursos'
                 }
                 onChange={handleChange}
                 onSubmit={handleSubmit}
@@ -211,9 +191,7 @@ export function ContentFormPage({
 
               <p className="mt-[var(--space-2)] mb-0 text-[13px] leading-[1.6] text-[var(--text-muted)]">
                 No se recibió la información del contenido seleccionado.
-                {contentId
-                  ? ` Identificador: ${contentId}.`
-                  : ''}
+                {contentId ? ` Identificador: ${contentId}.` : ''}
               </p>
             </section>
           )}
