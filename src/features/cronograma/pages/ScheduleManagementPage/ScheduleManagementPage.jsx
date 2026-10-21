@@ -49,6 +49,10 @@ export function ScheduleManagementPage() {
       navigate('/app/administrativo');
       return;
     }
+    if (tabId === ADMINISTRATIVE_TAB.CHAT) {
+      navigate('/app/administrativo/chat/modalidad');
+      return;
+    }
     navigate(`/app/administrativo?tab=${encodeURIComponent(tabId)}`);
   }
 
