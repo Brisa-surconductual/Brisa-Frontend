@@ -1,6 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/app/providers/index.js';
+import { obtenerConsentimiento } from '../../../api/obtenerConsetimiento.jsx';
+import { renovarConsentimientoRegistro } from '../../../api/validacionConsetimeinto.jsx';
 
 import {
   useRegistration,
@@ -35,10 +38,10 @@ function focusFirstMissingAuthorization(
   });
 }
 
-export function useReconsentPage({
-  consentVersion,
-}) {
+export function useReconsentPage() {
   const navigate = useNavigate();
+  const { user, idUsuario } = useAuth();
+  const submitting = useRef(false);
 
   const {
     account,
@@ -62,6 +65,46 @@ export function useReconsentPage({
 
   const [isSubmitting, setIsSubmitting] =
     useState(false);
+  const [consentData, setConsentData] = useState(null);
+  const [isLoadingConsent, setIsLoadingConsent] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [loadAttempt, setLoadAttempt] = useState(0);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadConsent() {
+      setIsLoadingConsent(true);
+      setLoadError('');
+      setConsentData(null);
+
+      try {
+        const data = await obtenerConsentimiento();
+        if (
+          !data?.vigente ||
+          !data.idConsentimeinto ||
+          !data.versionConsetimeinto ||
+          !data.urlContenido
+        ) {
+          throw new Error('El documento de consentimiento no está disponible.');
+        }
+        if (isMounted) setConsentData(data);
+      } catch {
+        if (isMounted) {
+          setLoadError('No pudimos cargar el consentimiento vigente. Intenta nuevamente.');
+        }
+      } finally {
+        if (isMounted) setIsLoadingConsent(false);
+      }
+    }
+
+    void loadConsent();
+    return () => { isMounted = false; };
+  }, [loadAttempt]);
+
+  function retryLoadConsent() {
+    setLoadAttempt((attempt) => attempt + 1);
+  }
 
   const sensitiveModifiedFields =
     getSensitiveModifiedFields(modifiedFields);
@@ -107,6 +150,8 @@ export function useReconsentPage({
   async function handleSubmit(event) {
     event.preventDefault();
 
+    if (submitting.current || isLoadingConsent || !consentData || loadError) return;
+
     setAttemptedSubmit(true);
 
     if (!consentIsComplete) {
@@ -122,13 +167,20 @@ export function useReconsentPage({
       return;
     }
 
+    submitting.current = true;
     setIsSubmitting(true);
     setSubmitError('');
 
     try {
+      const existingUserId = account.userId ?? idUsuario;
+      if (user && !existingUserId) {
+        throw new Error('No pudimos identificar tu sesión. Vuelve a iniciar sesión.');
+      }
+
       const renewedConsent =
-        await renewRegistrationConsent({
-          userId: account.userId,
+        await renovarConsentimientoRegistro({
+          idUsuario: existingUserId,
+          consentimiento: consentData,
 
           personalDataAccepted:
             authorizations
@@ -138,7 +190,6 @@ export function useReconsentPage({
             authorizations
               .consumptionHistoryAccepted,
 
-          consentVersion,
         });
 
       renewConsent(renewedConsent);
@@ -151,28 +202,13 @@ export function useReconsentPage({
         },
       });
     } catch (error) {
-      if (
-        error?.code ===
-        'PROVISIONAL_ACCOUNT_NOT_FOUND'
-      ) {
-        returnToAccountCreation();
-        return;
-      }
-
-      if (error?.code === 'CONSENT_REQUIRED') {
-        setAttemptedSubmit(true);
-
-        focusFirstMissingAuthorization(
-          authorizations,
-        );
-
-        return;
-      }
-
       setSubmitError(
+        error?.response?.data?.message ??
+        error?.message ??
         'No pudimos actualizar el consentimiento. Intenta nuevamente.',
       );
     } finally {
+      submitting.current = false;
       setIsSubmitting(false);
     }
   }
@@ -185,6 +221,10 @@ export function useReconsentPage({
     attemptedSubmit,
     submitError,
     isSubmitting,
+    consentData,
+    isLoadingConsent,
+    loadError,
+    retryLoadConsent,
     sensitiveFieldLabels,
     consentIsComplete,
     shouldRedirectToReview,
