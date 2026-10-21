@@ -1,7 +1,10 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { ProtectedLayout } from '@/app/layouts/ProtectedLayout/index.js';
 import { RegistrationLayout } from '@/app/layouts/RegistrationLayout/index.js';
-
+import {
+  ProgramModalityPage,
+  PersonalizedTreesPage,
+} from '@/features/chat/index.js';
 import {
   BaselinePage,
   ConsentPage,
@@ -33,6 +36,7 @@ import {
   CurrentContentPage,
   TemporalInformationPage,
   SchedulePanelPage,
+  AssignSchedulePage,
 } from '@/features/cronograma/index.js';
 
 import { RequireAuth } from './RequireAuth.jsx';
@@ -163,6 +167,11 @@ export function AppRouter() {
               />
 
               <Route
+                path="administrativo/cronograma/assignar"
+                element={<AssignSchedulePage />}
+              />
+
+              <Route
                 path="administrativo/cronograma/nueva"
                 element={<CreateTemporalUnitPage />}
               />
@@ -220,6 +229,17 @@ export function AppRouter() {
                 path="administrativo/cronograma/:scheduleId/unidades/:unitId"
                 element={<TemporalUnitDetailPage />}
               />
+
+              <Route
+                path="administrativo/chat/modalidad"
+                element={<ProgramModalityPage />}
+              />
+
+              <Route
+                path="administrativo/chat/arboles"
+                element={<PersonalizedTreesPage />}
+              />
+
             </Route>
           </Route>
 

@@ -3,6 +3,7 @@ export const ADMINISTRATIVE_TAB = Object.freeze({
   POBLACION: 'POBLACION',
   CRONOGRAMA: 'CRONOGRAMA',
   AJUSTES: 'AJUSTES',
+  CHAT: 'CHAT',
 });
 
 export const ADMINISTRATIVE_TABS = Object.freeze([
@@ -21,5 +22,9 @@ export const ADMINISTRATIVE_TABS = Object.freeze([
   Object.freeze({
     id: ADMINISTRATIVE_TAB.AJUSTES,
     label: 'Ajustes',
+  }),
+  Object.freeze({
+    id: ADMINISTRATIVE_TAB.CHAT,
+    label: 'Chat',
   }),
 ]);

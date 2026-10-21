@@ -237,19 +237,21 @@ export function ContentResourcesPage({ content: contentProp }) {
     } catch (error) {
       if (editingResource && error.response?.status === 403) {
         setSubmitError(
-          error.response?.data?.message ??
-            'No se puede modificar este recurso.',
+          getApiErrorMessage(
+            error, 
+            'No se puede modificar este recurso.'
+          )
         );
 
         resetEditor();
         return;
       }
 
-      setSubmitError(
-        editingResource
-          ? 'No pudimos actualizar el recurso. Verifica la información e intenta nuevamente.'
-          : 'No pudimos guardar el recurso. Verifica la información e intenta nuevamente.',
-      );
+      const fallbackMessage = editingResource
+        ? 'No pudimos actualizar el recurso. Verifica la información e intenta nuevamente.'
+        : 'No pudimos guardar el recurso. Verifica la información e intenta nuevamente.';
+
+      setSubmitError(getApiErrorMessage(error, fallbackMessage));
     } finally {
       setIsSubmitting(false);
     }
@@ -264,6 +266,7 @@ export function ContentResourcesPage({ content: contentProp }) {
     handleSubmit,
     resetForm,
   } = usePsychoeducationalResourceForm({
+    resources,
     onValidSubmit: handleValidSubmit,
   });
 
