@@ -3,6 +3,7 @@ export const initialAuthState = Object.freeze({
   role: null,
   estadoRegistro: null,
   idUsuario: null,
+  alcance: null,
   isAuthenticated: false,
   endReason: null,
   remoteLogoutUnconfirmed: false,
@@ -27,6 +28,11 @@ export function authReducer(state, action) {
         role: action.payload.role,
         estadoRegistro: action.payload.estadoRegistro,
         idUsuario: action.payload.idUsuario,
+        /*
+         * Alcance real de la sesión (LIMITADA | COMPLETA) que
+         * entrega el backend. No se deduce del estado de registro.
+         */
+        alcance: action.payload.alcance ?? null,
         isAuthenticated: true,
         endReason: null,
         remoteLogoutUnconfirmed: false,

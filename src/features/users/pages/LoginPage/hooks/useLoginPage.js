@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { SESSION_END_REASON } from '@/app/config/sessionConfig.js';
 import { useAuth } from '@/app/providers/index.js';
 import { validateLoginForm } from '@/features/users/services/authValidation.js';
+import { getPostLoginPath } from '@/features/users/services/registrationState.js';
 import { iniciarSesion } from '../../../api/inicioSesion.jsx';
 import { clearFieldErrors, createLoginFormState, focusFirstInvalidField, hasValidationErrors } from '../utils/loginForm.js';
 
@@ -70,14 +71,10 @@ export function useLoginPage() {
         role: data.rol,
         estadoRegistro: data.estadoRegistro,
         idUsuario: infoUsuario.idUsuario,
+        alcance: infoUsuario.alcance,
       });
 
-      if (data.estadoRegistro === 'PENDIENTE_CONSENTIMIENTO'){
-        navigate('/registro/consentimiento', { replace: true });
-        return;
-      }
-
-      navigate('/app', { replace: true });
+      navigate(getPostLoginPath(data.estadoRegistro), { replace: true });
     } catch (error) {
       if (error?.response?.status === 401) {
         setSubmitError(

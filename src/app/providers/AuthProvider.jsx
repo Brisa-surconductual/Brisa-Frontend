@@ -20,7 +20,7 @@ export function AuthProvider({ children }) {
   const endSessionRef = useRef(null);
   const endSessionAbortRef = useRef(null);
 
-  function login({ email, role, estadoRegistro, idUsuario }) {
+  function login({ email, role, estadoRegistro, idUsuario, alcance }) {
     /*
      * Una sesión nueva reemplaza la cookie anterior: se cancela
      * cualquier cierre en curso para que su respuesta tardía no
@@ -31,7 +31,7 @@ export function AuthProvider({ children }) {
 
     dispatch({
       type: AUTH_ACTION.LOGIN,
-      payload: { email, role, estadoRegistro, idUsuario },
+      payload: { email, role, estadoRegistro, idUsuario, alcance },
     });
   }
 
@@ -117,6 +117,7 @@ export function AuthProvider({ children }) {
         role: data.rol,
         estadoRegistro: data.estadoRegistro,
         idUsuario: data.idUsuario,
+        alcance: data.alcance,
       });
     }
 
@@ -152,6 +153,7 @@ export function AuthProvider({ children }) {
     role: state.role,
     idUsuario: state.idUsuario,
     estadoRegistro: state.estadoRegistro,
+    alcance: state.alcance,
     isAuthenticated: state.isAuthenticated,
     sessionEndReason: state.endReason,
     remoteLogoutUnconfirmed: state.remoteLogoutUnconfirmed,

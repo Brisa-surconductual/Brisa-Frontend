@@ -69,8 +69,30 @@ describe('Estado de la sesión al cerrar', () => {
       role: SESSION.role,
       estadoRegistro: SESSION.estadoRegistro,
       idUsuario: SESSION.idUsuario,
+      alcance: null,
       isAuthenticated: true,
       endReason: null,
       remoteLogoutUnconfirmed: false,
     }));
+});
+
+describe('Alcance de la sesión', () => {
+  it('conserva el alcance real que entrega el backend', () =>
+    expect(
+      authReducer(initialAuthState, {
+        type: AUTH_ACTION.LOGIN,
+        payload: { ...SESSION, alcance: 'LIMITADA' },
+      }).alcance,
+    ).toBe('LIMITADA'));
+
+  it('el cierre de sesión borra el alcance', () =>
+    expect(
+      authReducer(
+        authReducer(initialAuthState, {
+          type: AUTH_ACTION.LOGIN,
+          payload: { ...SESSION, alcance: 'COMPLETA' },
+        }),
+        { type: AUTH_ACTION.LOGOUT, payload: {} },
+      ).alcance,
+    ).toBeNull());
 });

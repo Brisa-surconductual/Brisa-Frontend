@@ -192,6 +192,7 @@ export function useReviewPage() {
           role: session.rol,
           estadoRegistro: session.estadoRegistro,
           idUsuario: session.idUsuario,
+          alcance: session.alcance,
         });
       } else {
         /*
