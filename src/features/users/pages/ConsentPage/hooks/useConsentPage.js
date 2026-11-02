@@ -53,7 +53,12 @@ export function useConsentPage() {
           setIsLoadingConsent(false);
         }
       } catch (error) {
-        console.error('Error fetching consent data:', error);
+        // Solo el estado HTTP: el error de axios incluye la
+        // cabecera CSRF de la sesión.
+        console.error(
+          'Error cargando el consentimiento. Estado HTTP:',
+          error?.response?.status ?? 'sin respuesta',
+        );
         if (isMounted) {
           setSubmitError('No pudimos cargar el documento de consentimiento actual.');
           setIsLoadingConsent(false);
@@ -116,12 +121,6 @@ export function useConsentPage() {
 
     try {
       if (user) {
-
-        console.log("Enviando al back:", {
-          idUsuario: idUsuario,
-          idConsentimeinto: consentData.idConsentimeinto,
-        });
-
         await validarConsentimiento({
           idUsuario: idUsuario,
           idConsentimeinto: consentData.idConsentimeinto, 
