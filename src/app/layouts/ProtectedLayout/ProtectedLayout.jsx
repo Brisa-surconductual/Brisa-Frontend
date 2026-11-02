@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 
 import {
@@ -15,7 +16,15 @@ import { useInactivityTimeout } from '@/shared/hooks/useInactivityTimeout.js';
  * a estudiante y a psicología.
  */
 export function ProtectedLayout() {
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, isEndingSession, endSession: closeSession } =
+    useAuth();
+
+  /*
+   * El aviso sigue abierto mientras el backend confirma el
+   * cierre: el contenido protegido no debe quedar a la vista
+   * en un equipo desatendido.
+   */
+  const [isClosingFromWarning, setIsClosingFromWarning] = useState(false);
 
   /*
    * Solo cierra la sesión: el redirect a /login lo hace
@@ -25,11 +34,19 @@ export function ProtectedLayout() {
    * en la sesión.
    */
   function endSession(reason) {
-    logout({ reason });
+    setIsClosingFromWarning(true);
+
+    void closeSession({ reason }).finally(() =>
+      setIsClosingFromWarning(false),
+    );
   }
 
+  /*
+   * Mientras el backend responde al cierre la vigilancia se
+   * apaga: el aviso no debe reaparecer ni disparar otro cierre.
+   */
   const { isWarning, remainingMs, extendSession } = useInactivityTimeout({
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && !isEndingSession,
     warningDelayMs: SESSION_TIMEOUT.warningDelayMs,
     countdownMs: SESSION_TIMEOUT.countdownMs,
     onTimeout: () => endSession(SESSION_END_REASON.INACTIVITY),
@@ -40,9 +57,10 @@ export function ProtectedLayout() {
       <Outlet />
 
       <SessionTimeoutModal
-        open={isWarning}
+        open={isWarning || isClosingFromWarning}
         remainingMs={remainingMs}
-        onExtend={extendSession}
+        // Con el cierre ya en curso no se puede seguir en la sesión.
+        onExtend={isClosingFromWarning ? undefined : extendSession}
         onLogout={() => endSession(SESSION_END_REASON.MANUAL)}
       />
     </>

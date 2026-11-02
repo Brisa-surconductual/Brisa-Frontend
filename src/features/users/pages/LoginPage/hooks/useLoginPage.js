@@ -8,7 +8,12 @@ import { clearFieldErrors, createLoginFormState, focusFirstInvalidField, hasVali
 
 export function useLoginPage() {
   const navigate = useNavigate();
-  const { login, sessionEndReason } = useAuth();
+  const {
+    login,
+    sessionEndReason,
+    remoteLogoutUnconfirmed,
+    waitForSessionEnd,
+  } = useAuth();
 
   const wasClosedByInactivity =
     sessionEndReason === SESSION_END_REASON.INACTIVITY;
@@ -49,6 +54,9 @@ export function useLoginPage() {
     setSubmitError('');
 
     try {
+      // Un cierre de sesión en curso termina antes del login.
+      await waitForSessionEnd();
+
       const data = await iniciarSesion({
         email: form.email,
         password: form.password,
@@ -102,6 +110,7 @@ export function useLoginPage() {
     form,
     errors,
     wasClosedByInactivity,
+    remoteLogoutUnconfirmed,
     submitError,
     isSubmitting,
     handleChange,

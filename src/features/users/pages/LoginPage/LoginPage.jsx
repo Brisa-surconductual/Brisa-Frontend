@@ -15,6 +15,7 @@ export function LoginPage() {
     form,
     errors,
     wasClosedByInactivity,
+    remoteLogoutUnconfirmed,
     submitError,
     isSubmitting,
     handleChange,
@@ -96,6 +97,29 @@ export function LoginPage() {
               <p className=" mt-[3px] mb-0 text-[12px] leading-[1.5] "
               >
                 Ingresa de nuevo para continuar donde ibas.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {remoteLogoutUnconfirmed && (
+          <div className="flex items-start gap-[var(--space-3)] rounded-[var(--radius-md)] border border-[var(--warning-border)] bg-[var(--warning-bg)] p-[var(--space-4)] text-[var(--warning-text)]" role="alert"
+          >
+            <AlertTriangle size={20} strokeWidth={1.8} className="mt-px shrink-0" aria-hidden="true"
+            />
+
+            <div>
+              <strong className="block text-[13px]"
+              >
+                No pudimos confirmar el cierre de sesión
+              </strong>
+
+              <p className="mt-[3px] mb-0 text-[12px] leading-[1.5]"
+              >
+                El servidor no confirmó el cierre. Lo intentaremos de nuevo la
+                próxima vez que abras Brisa en este dispositivo. Si usas un
+                equipo compartido, vuelve a abrir Brisa cuando tengas conexión
+                para completarlo.
               </p>
             </div>
           </div>

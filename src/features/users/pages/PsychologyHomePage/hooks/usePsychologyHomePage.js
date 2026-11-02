@@ -12,6 +12,7 @@ import {
 import {
   ADMINISTRATIVE_TAB,
 } from '@/shared/data/administrativeTabs.js';
+import { useLogoutHandler } from '@/shared/hooks/useLogoutHandler.jsx';
 
 const LOCAL_ADMINISTRATIVE_TABS = new Set([
   ADMINISTRATIVE_TAB.DASHBOARD,
@@ -24,7 +25,7 @@ export function usePsychologyHomePage() {
   const [searchParams, setSearchParams] =
     useSearchParams();
 
-  const { user, role, logout } = useAuth();
+  const { user, role } = useAuth();
 
   const requestedTab =
     searchParams.get('tab');
@@ -78,13 +79,8 @@ export function usePsychologyHomePage() {
     setSearchParams(nextSearchParams);
   }
 
-  function handleLogout() {
-    logout();
-
-    navigate('/login', {
-      replace: true,
-    });
-  }
+  // Ajustes cierra la sesión también en el backend.
+  const handleLogout = useLogoutHandler();
 
   return {
     email: user?.email ?? '',

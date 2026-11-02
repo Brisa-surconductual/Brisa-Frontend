@@ -5,6 +5,7 @@ export const initialAuthState = Object.freeze({
   idUsuario: null,
   isAuthenticated: false,
   endReason: null,
+  remoteLogoutUnconfirmed: false,
 });
 
 export const AUTH_ACTION = Object.freeze({
@@ -28,12 +29,21 @@ export function authReducer(state, action) {
         idUsuario: action.payload.idUsuario,
         isAuthenticated: true,
         endReason: null,
+        remoteLogoutUnconfirmed: false,
       };
 
+    /*
+     * `remoteLogoutUnconfirmed` indica que el estado local
+     * se limpió pero el backend no confirmó la invalidación
+     * de la sesión: no debe mostrarse como cierre exitoso.
+     */
     case AUTH_ACTION.LOGOUT:
       return {
         ...initialAuthState,
         endReason: action.payload?.reason ?? null,
+        remoteLogoutUnconfirmed: Boolean(
+          action.payload?.remoteLogoutUnconfirmed,
+        ),
       };
 
     default:
