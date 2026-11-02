@@ -4,9 +4,12 @@ import {
 } from 'react-router-dom';
 
 import {
+  AlertTriangle,
   CheckCircle2,
   ShieldCheck,
 } from 'lucide-react';
+
+import { useAuth } from '@/app/providers/index.js';
 
 import {
   BrisaLogo,
@@ -29,6 +32,13 @@ export function RegistrationCompletedPage() {
 
   const { account } = useRegistration();
 
+  /*
+   * La cuenta puede existir sin una sesión establecida (falló la
+   * consulta de la sesión tras crearla): se pide iniciar sesión
+   * en lugar de presentarla como autenticada.
+   */
+  const { isAuthenticated } = useAuth();
+
   const registrationIsComplete =
     account?.registrationStatus ===
     REGISTRATION_STATUS.COMPLETED;
@@ -43,7 +53,7 @@ export function RegistrationCompletedPage() {
   }
 
   function continueToApp() {
-    navigate('/app', {
+    navigate(isAuthenticated ? '/app' : '/login', {
       replace: true,
     });
   }
@@ -92,13 +102,30 @@ export function RegistrationCompletedPage() {
         Registro completo
       </span>
 
+      {!isAuthenticated && (
+        <div className="flex w-full items-start gap-[var(--space-3)] rounded-[var(--radius-md)] border border-[var(--warning-border)] bg-[var(--warning-bg)] p-[var(--space-4)] text-left text-[var(--warning-text)]" role="status">
+          <AlertTriangle
+            size={20}
+            strokeWidth={1.6}
+            className="shrink-0"
+            aria-hidden="true"
+          />
+
+          <p className="m-0 text-[13px] leading-[1.5]">
+            Tu cuenta fue creada, pero no pudimos iniciar tu sesión
+            automáticamente. Inicia sesión con tu correo y contraseña para
+            continuar.
+          </p>
+        </div>
+      )}
+
       <Button
         type="button"
         size="large"
         fullWidth
         onClick={continueToApp}
       >
-        Continuar
+        {isAuthenticated ? 'Continuar' : 'Iniciar sesión'}
       </Button>
 
       <p className="m-0 text-[11px] text-[var(--text-muted)]">

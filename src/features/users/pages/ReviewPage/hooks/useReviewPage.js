@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useRef,
   useState,
 } from 'react';
 
@@ -11,7 +12,20 @@ import {
 import { useAuth } from '@/app/providers/index.js';
 
 import { registroUsuario } from '../../../api/resgistratio.jsx';
+import { sesionActual } from '../../../api/sesion.jsx';
 import { useRegistration } from '../../../hooks/useRegistration.js';
+
+import {
+  REGISTRATION_OUTCOME,
+  completeRegistration,
+} from '../utils/completeRegistration.js';
+
+/*
+ * Sin respuesta no se sabe si la cuenta quedó creada: no se
+ * reintenta automáticamente (el POST no es idempotente).
+ */
+const CREATION_UNCERTAIN_MESSAGE =
+  'No pudimos confirmar si tu cuenta se creó. Antes de intentarlo de nuevo, intenta iniciar sesión con tu correo y contraseña.';
 
 import {
   normalizeBaselineForm,
@@ -26,7 +40,9 @@ export function useReviewPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { login } = useAuth();
+  const { login, logout, waitForSessionEnd } = useAuth();
+
+  const submittingRef = useRef(false);
 
   const {
     account,
@@ -97,10 +113,19 @@ export function useReviewPage() {
       return;
     }
 
+    // El estado no se actualiza a tiempo ante un doble clic.
+    if (submittingRef.current) {
+      return;
+    }
+
+    submittingRef.current = true;
     setIsSubmitting(true);
     setSubmitError('');
 
     try {
+      // Un cierre de sesión en curso no debe tocar la cookie nueva.
+      await waitForSessionEnd();
+
       const normalizedBaseline =
         normalizeBaselineForm(baseline);
 
@@ -110,12 +135,40 @@ export function useReviewPage() {
         ...normalizedBaseline,
       };
 
-      const data = await registroUsuario(payload);
+      const result = await completeRegistration({
+        payload,
+        createAccount: registroUsuario,
+        fetchSession: sesionActual,
+      });
+
+      if (
+        result.outcome ===
+        REGISTRATION_OUTCOME.CREATION_REJECTED
+      ) {
+        const { error } = result;
+
+        setSubmitError(
+          error?.response?.data?.message ??
+            error?.response?.data?.error ??
+            'No pudimos confirmar el registro. Intenta nuevamente.',
+        );
+        return;
+      }
+
+      if (
+        result.outcome ===
+        REGISTRATION_OUTCOME.CREATION_UNCERTAIN
+      ) {
+        setSubmitError(CREATION_UNCERTAIN_MESSAGE);
+        return;
+      }
+
+      const data = result.createdAccount;
 
       saveAccount({
         ...account,
         email:
-          data?.correoElectronico ??
+          data?.correo_electronico ??
           account.email,
         registrationStatus:
           data?.estado_registro ??
@@ -128,22 +181,35 @@ export function useReviewPage() {
           'ESTUDIANTE',
       });
 
-      login({
-        email:
-          data?.correoElectronico ??
-          account.email,
-        role: data?.rol ?? 'ESTUDIANTE',
-      });
+      if (
+        result.outcome ===
+        REGISTRATION_OUTCOME.SESSION_READY
+      ) {
+        const { session } = result;
+
+        login({
+          email: session.correoElectronico,
+          role: session.rol,
+          estadoRegistro: session.estadoRegistro,
+          idUsuario: session.idUsuario,
+        });
+      } else {
+        /*
+         * La cuenta existe pero la sesión no se estableció: no se
+         * presenta como autenticada. Registro completado pedirá
+         * iniciar sesión con la cuenta creada.
+         */
+        logout();
+      }
 
       navigate('/registro/completado', { replace: true });
-    } catch (error) {
-      const message =
-        error?.response?.data?.message ??
-        error?.response?.data?.error ??
-        'No pudimos confirmar el registro. Intenta nuevamente.';
-
-      setSubmitError(message);
+    } catch {
+      // Error local antes de enviar la solicitud.
+      setSubmitError(
+        'No pudimos confirmar el registro. Intenta nuevamente.',
+      );
     } finally {
+      submittingRef.current = false;
       setIsSubmitting(false);
     }
   }
