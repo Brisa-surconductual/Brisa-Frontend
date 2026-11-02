@@ -1,34 +1,72 @@
-export function ScheduleCard({ schedule, onClick }) {
-  const nombre = schedule.nombreCronograma || 'Sin nombre';
-  const estado = schedule.estado || 'DESCONOCIDO';
-  const fecha = schedule.fechaCreacion ? schedule.fechaCreacion.split('T')[0] : 'Sin fecha';
+import { Link } from 'react-router-dom';
+import { ArrowRight, CalendarDays, Layers } from 'lucide-react';
 
-  const estadoStyles = estado === 'ACTIVO' 
-    ? 'bg-[var(--brand-100)] text-[var(--brand-700)]' 
-    : 'bg-[var(--surface-hover)] text-[var(--text-secondary)]';
+import { ScheduleStatusBadge } from '../ScheduleStatusBadge/index.js';
+
+/*
+ * Tarjeta de cronograma. El acceso al panel es un enlace real
+ * (teclado y lector de pantalla) que se extiende a toda la
+ * tarjeta con un pseudo-elemento: sin interactivos anidados.
+ * Conserva el `state` de navegación ({ schedule }).
+ */
+export function ScheduleCard({ schedule, panelPath }) {
+  const nombre = schedule.nombreCronograma || 'Sin nombre';
+  const fecha = schedule.fechaCreacion
+    ? schedule.fechaCreacion.split('T')[0]
+    : null;
 
   return (
-    <div
-      onClick={onClick}
-      className="cursor-pointer p-[var(--space-5)] min-h-[140px] flex flex-col justify-between rounded-xl border border-[var(--surface-border)] bg-[var(--surface-card)] hover:border-[var(--brand-400)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
-    >
-      <div>
-        <div className="flex items-start justify-between gap-3 mb-3">
-          <h3 className="text-[16px] font-extrabold text-[var(--text-primary)] m-0 leading-tight">
-            {nombre}
-          </h3>
-          <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${estadoStyles}`}>
-            {estado}
-          </span>
-        </div>
-        <p className="m-0 text-[13px] text-[var(--text-muted)] font-medium">
-          Creado: <span className="text-[var(--text-secondary)] font-semibold">{fecha}</span>
-        </p>
+    <article className="group relative flex min-h-[168px] flex-col gap-[var(--space-4)] rounded-[var(--radius-xl)] border border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-5)] shadow-[var(--shadow-sm)] transition-[border-color,box-shadow] duration-150 focus-within:border-[var(--brand-500)] hover:border-[var(--brand-400)] hover:shadow-[var(--shadow-md)] motion-reduce:transition-none">
+      <div className="flex items-start justify-between gap-[var(--space-3)]">
+        <h3 className="m-0 min-w-0 text-[length:var(--font-size-lg)] leading-[var(--line-height-snug)] font-extrabold [overflow-wrap:anywhere] text-[var(--text-primary)]">
+          {nombre}
+        </h3>
+
+        <ScheduleStatusBadge status={schedule.estado} />
       </div>
 
-      <div className="mt-4 flex items-center text-[12px] font-bold text-[var(--brand-600)] uppercase tracking-wider">
-        Ver panel de gestión →
-      </div>
-    </div>
+      <dl className="m-0 flex flex-col gap-[var(--space-2)] text-[length:var(--font-size-sm)]">
+        <div className="flex items-center gap-[var(--space-2)]">
+          <dt className="inline-flex items-center gap-[var(--space-2)] text-[var(--text-muted)]">
+            <Layers size={16} strokeWidth={1.8} aria-hidden="true" />
+            Tipo
+          </dt>
+          <dd className="m-0 font-semibold text-[var(--text-secondary)]">
+            {schedule.esBase ? 'Cronograma base' : 'Cronograma estándar'}
+          </dd>
+        </div>
+
+        <div className="flex items-center gap-[var(--space-2)]">
+          <dt className="inline-flex items-center gap-[var(--space-2)] text-[var(--text-muted)]">
+            <CalendarDays size={16} strokeWidth={1.8} aria-hidden="true" />
+            Creado
+          </dt>
+          <dd className="m-0 font-semibold text-[var(--text-secondary)] tabular-nums">
+            {fecha ?? 'Sin fecha'}
+          </dd>
+        </div>
+      </dl>
+
+      <Link
+        to={panelPath}
+        state={{ schedule }}
+        className="mt-auto inline-flex w-fit items-center rounded-[var(--radius-sm)] text-[length:var(--font-size-sm)] font-bold no-underline after:absolute after:inset-0 after:rounded-[var(--radius-xl)] after:content-['']"
+      >
+        {/*
+         * El color va en el span: globals.css fija `a { color: inherit }`
+         * fuera de capa y anula las utilidades de color sobre <a>.
+         */}
+        <span className="inline-flex items-center gap-[var(--space-2)] text-[var(--brand-600)]">
+          Ver panel de gestión
+          <span className="sr-only"> de {nombre}</span>
+          <ArrowRight
+            size={16}
+            strokeWidth={2}
+            className="transition-transform duration-150 group-hover:translate-x-[2px] motion-reduce:transition-none motion-reduce:group-hover:translate-x-0"
+            aria-hidden="true"
+          />
+        </span>
+      </Link>
+    </article>
   );
 }
