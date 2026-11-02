@@ -34,6 +34,13 @@ export function PsychologyHomePage() {
         <h1 className="m-0 text-[length:var(--font-size-2xl)] leading-[var(--line-height-tight)] font-extrabold tracking-[var(--letter-spacing-tight)] text-[var(--text-primary)] md:text-[length:var(--font-size-3xl)]">
           {sectionTitle}
         </h1>
+
+        {activeTabId === ADMINISTRATIVE_TAB.DASHBOARD && (
+          <p className="mt-[var(--space-1)] mb-0 max-w-[640px] text-[length:var(--font-size-md)] leading-[var(--line-height-normal)] text-[var(--text-secondary)]">
+            Resumen agregado y anónimo del programa. Consulta el estado de
+            las cuentas de estudiantes y accede a las tareas de gestión.
+          </p>
+        )}
       </header>
 
       {activeTabId === ADMINISTRATIVE_TAB.DASHBOARD && (

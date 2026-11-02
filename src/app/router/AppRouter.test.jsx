@@ -3,6 +3,7 @@ import { createRoutesFromChildren, matchRoutes } from 'react-router-dom';
 
 import { SchedulePanelPage, CreateTemporalUnitPage, ScheduleManagementPage } from '@/features/cronograma/index.js';
 import { USER_ROLE } from '@/features/users/types/authTypes.js';
+import { DASHBOARD_SHORTCUTS } from '@/features/users/pages/PsychologyHomePage/data/psychologyStats.js';
 
 import { AdminLayout } from '../layouts/AdminLayout/index.js';
 import { ADMIN_NAV_ITEMS } from '../layouts/AdminLayout/adminNavigation.js';
@@ -174,6 +175,18 @@ describe('Layout administrativo en el router', () => {
   it('cada enlace del menú lleva a una ruta administrativa existente', () => {
     for (const { to } of ADMIN_NAV_ITEMS) {
       expect(layoutChain(to.pathname), to.pathname).toContain(AdminLayout);
+    }
+  });
+
+  it('cada acceso del dashboard lleva a una ruta administrativa protegida', () => {
+    for (const { to } of DASHBOARD_SHORTCUTS) {
+      expect(layoutChain(to), to).toEqual([
+        RequireAuth,
+        ProtectedLayout,
+        RequireAuth,
+        AdminLayout,
+      ]);
+      expect(match(to).at(-1).route.path, to).not.toBe('*');
     }
   });
 });
