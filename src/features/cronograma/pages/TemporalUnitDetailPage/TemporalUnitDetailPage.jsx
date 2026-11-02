@@ -1,10 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { useAuth } from '@/app/providers/index.js';
-
-import { AdministrativeHeader } from '@/shared/components/navigation/AdministrativeHeader/index.js';
-import { AdministrativeTabBar } from '@/shared/components/navigation/AdministrativeTabBar/index.js';
-import { ADMINISTRATIVE_TAB, ADMINISTRATIVE_TABS } from '@/shared/data/administrativeTabs.js';
 
 import { Button } from '@/shared/components/ui/Button/index.js';
 import { TextField } from '@/shared/components/ui/TextField/index.js';
@@ -47,7 +42,6 @@ export function TemporalUnitDetailPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const { scheduleId, unitId } = useParams();
-  const { role, logout } = useAuth();
   const [formError, setFormError] = useState('');
   const [unit, setUnit] = useState(location.state?.unit ?? null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -91,23 +85,6 @@ export function TemporalUnitDetailPage() {
     }
   }, [scheduleId, unitId]);
 
-  function handleLogout() {
-    logout();
-    navigate('/login', { replace: true });
-  }
-
-  function handleTabChange(tabId) {
-    if (tabId === ADMINISTRATIVE_TAB.CRONOGRAMA) {
-      navigate('/app/administrativo/cronograma');
-      return;
-    }
-    if (tabId === ADMINISTRATIVE_TAB.DASHBOARD) {
-      navigate('/app/administrativo');
-      return;
-    }
-    navigate(`/app/administrativo?tab=${encodeURIComponent(tabId)}`);
-  }
-
   function handleBack() {
     navigate(-1);
   }
@@ -135,7 +112,6 @@ export function TemporalUnitDetailPage() {
       idUnidadTemporal: unit.idUnidadTemporal,
     };
 
-   
     if (editForm.nombre) payload.nombre = editForm.nombre;
     if (editForm.fecha_inicio) payload.fecha_inicio = editForm.fecha_inicio;
     if (editForm.fecha_fin) payload.fecha_fin = editForm.fecha_fin;
@@ -205,7 +181,7 @@ export function TemporalUnitDetailPage() {
 
   if (!unit) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-[var(--surface-bg)]">
+      <div className="flex flex-col items-center justify-center px-[var(--space-4)] py-[var(--space-10)] text-center">
         <p className="text-[var(--text-muted)] font-medium mb-4">Unidad no encontrada o datos perdidos.</p>
         <Button onClick={() => navigate('/app/administrativo/cronograma')}>Volver a cronogramas</Button>
       </div>
@@ -213,16 +189,9 @@ export function TemporalUnitDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--surface-bg)] flex flex-col">
-      <AdministrativeHeader roleLabel={role ?? 'ADMINISTRATIVO'} onLogout={handleLogout} />
-      
-      <AdministrativeTabBar
-        tabs={ADMINISTRATIVE_TABS}
-        activeTabId={ADMINISTRATIVE_TAB.CRONOGRAMA}
-        onTabChange={handleTabChange}
-      />
+    <div className="bg-[var(--surface-bg)] flex flex-col">
 
-      <main className="flex-1 pb-[var(--space-8)]">
+      <div className="flex-1 pb-[var(--space-8)]">
         <div className="mx-auto w-full max-w-[1000px] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]">
           
           <button onClick={handleBack} className="mb-[var(--space-5)] text-[13px] font-bold text-[var(--brand-600)] transition-colors hover:text-[var(--brand-700)]">
@@ -251,7 +220,7 @@ export function TemporalUnitDetailPage() {
               </h1>
               
               <div className="mt-[var(--space-2)] flex flex-wrap items-center gap-3 text-[13px] text-[var(--text-muted)] font-medium">
-                <span className="bg-white border border-[var(--surface-border)] px-2 py-1 rounded-md">
+                <span className="bg-[var(--surface-card)] border border-[var(--surface-border)] px-2 py-1 rounded-md">
                   Vigencia: {unit.fechaInicio?.split('T')[0]} al {unit.fechaFin?.split('T')[0]}
                 </span>
                 <span className={`px-2 py-1 rounded-md font-bold uppercase tracking-wider text-[10px] ${
@@ -326,14 +295,14 @@ export function TemporalUnitDetailPage() {
           </section>
 
         </div>
-      </main>
+      </div>
 
       {isEditModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-[var(--radius-xl)] shadow-lg w-full max-w-[500px] overflow-hidden animate-fade-in">
+          <div className="bg-[var(--surface-card)] rounded-[var(--radius-xl)] shadow-lg w-full max-w-[500px] overflow-hidden animate-fade-in">
             <div className="px-6 py-5 border-b border-[var(--surface-border)] flex justify-between items-center">
               <h3 className="m-0 text-[18px] font-bold text-[var(--text-primary)]">Modificar Unidad</h3>
-              <button onClick={() => setIsEditModalOpen(false)} className="text-[var(--text-muted)] hover:text-black font-bold">✕</button>
+              <button onClick={() => setIsEditModalOpen(false)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] font-bold">✕</button>
             </div>
             
             <form onSubmit={handleUpdateSubmit} className="p-6 flex flex-col gap-5">
@@ -374,10 +343,10 @@ export function TemporalUnitDetailPage() {
 
       {isEditModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-[var(--radius-xl)] shadow-lg w-full max-w-[500px] overflow-hidden animate-fade-in">
+          <div className="bg-[var(--surface-card)] rounded-[var(--radius-xl)] shadow-lg w-full max-w-[500px] overflow-hidden animate-fade-in">
             <div className="px-6 py-5 border-b border-[var(--surface-border)] flex justify-between items-center">
               <h3 className="m-0 text-[18px] font-bold text-[var(--text-primary)]">Modificar Unidad</h3>
-              <button onClick={() => setIsEditModalOpen(false)} className="text-[var(--text-muted)] hover:text-black font-bold">✕</button>
+              <button onClick={() => setIsEditModalOpen(false)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] font-bold">✕</button>
             </div>
             
             <form onSubmit={handleUpdateSubmit} className="p-6 flex flex-col gap-4">

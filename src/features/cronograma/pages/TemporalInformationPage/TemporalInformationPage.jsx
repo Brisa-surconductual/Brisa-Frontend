@@ -1,19 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { useAuth } from '@/app/providers/index.js';
-
 import { CurrentContentCard } from '@/features/cronograma/components/CurrentContentCard/index.js';
 import { EmptyScheduleState } from '@/features/cronograma/components/EmptyScheduleState/index.js';
 import { TemporalInformationSummary } from '@/features/cronograma/components/TemporalInformationSummary/index.js';
-
-import { AdministrativeHeader } from '@/shared/components/navigation/AdministrativeHeader/index.js';
-import { AdministrativeTabBar } from '@/shared/components/navigation/AdministrativeTabBar/index.js';
-
-import {
-  ADMINISTRATIVE_TAB,
-  ADMINISTRATIVE_TABS,
-} from '@/shared/data/administrativeTabs.js';
 
 import { obtenerContenidoVigenteUsuario } from '@/features/cronograma/api/contenidoVigente/obtenerContenidoVigenteUsuario.jsx';
 import { obtenerUbicacionTemporalParticipante } from '@/features/cronograma/api/contenidoVigente/obtenerUbicacionTemporalParticipante.jsx';
@@ -71,7 +61,6 @@ export function TemporalInformationPage({
   onSelectContent,
 }) {
   const navigate = useNavigate();
-  const { logout } = useAuth();
 
   const { participantId } = useParams();
 
@@ -145,46 +134,14 @@ export function TemporalInformationPage({
     };
   }, [participantId]);
 
-  function handleLogout() {
-    logout();
-
-    navigate('/login', {
-      replace: true,
-    });
-  }
-
-  function handleTabChange(tabId) {
-    if (tabId === ADMINISTRATIVE_TAB.CRONOGRAMA) {
-      navigate('/app/administrativo/cronograma');
-      return;
-    }
-
-    if (tabId === ADMINISTRATIVE_TAB.DASHBOARD) {
-      navigate('/app/administrativo');
-      return;
-    }
-
-    navigate(`/app/administrativo?tab=${encodeURIComponent(tabId)}`);
-  }
-
   function handleBack() {
     navigate('/app/administrativo/cronograma/progreso');
   }
 
   return (
-    <div className="min-h-screen bg-[var(--surface-bg)]">
-      <AdministrativeHeader
-        roleLabel="Administrativo"
-        onLogout={handleLogout}
-      />
+    <div className="bg-[var(--surface-bg)]">
 
-      <AdministrativeTabBar
-        tabs={ADMINISTRATIVE_TABS}
-        activeTabId={ADMINISTRATIVE_TAB.CRONOGRAMA}
-        onTabChange={handleTabChange}
-      />
-
-      <main>
+      <div>
         <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-[var(--space-5)] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]">
           <button
             type="button"
@@ -270,7 +227,7 @@ export function TemporalInformationPage({
             />
           )}
         </div>
-      </main>
+      </div>
     </div>
   );
 }

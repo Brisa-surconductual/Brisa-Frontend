@@ -1,20 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
-import { useAuth } from '@/app/providers/index.js';
-
 import { PsychoeducationalResourceForm } from '@/features/cronograma/components/PsychoeducationalResourceForm/index.js';
 import { PsychoeducationalResourceList } from '@/features/cronograma/components/PsychoeducationalResourceList/index.js';
 
-import { AdministrativeHeader } from '@/shared/components/navigation/AdministrativeHeader/index.js';
-import { AdministrativeTabBar } from '@/shared/components/navigation/AdministrativeTabBar/index.js';
 import { Button } from '@/shared/components/ui/Button/index.js';
 import { ConfirmationDialog } from '@/shared/components/ui/ConfirmationDialog/index.js';
-
-import {
-  ADMINISTRATIVE_TAB,
-  ADMINISTRATIVE_TABS,
-} from '@/shared/data/administrativeTabs.js';
 
 import { usePsychoeducationalResourceForm } from './hooks/usePsychoeducationalResourceForm.js';
 
@@ -62,7 +53,6 @@ export function ContentResourcesPage({ content: contentProp }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { contentId } = useParams();
-  const { role, logout } = useAuth();
   const editorSectionRef = useRef(null);
 
   const [loadedContent, setLoadedContent] = useState(null);
@@ -401,46 +391,14 @@ export function ContentResourcesPage({ content: contentProp }) {
     }
   }
 
-  function handleLogout() {
-    logout();
-
-    navigate('/login', {
-      replace: true,
-    });
-  }
-
-  function handleTabChange(tabId) {
-    if (tabId === ADMINISTRATIVE_TAB.CRONOGRAMA) {
-      navigate('/app/administrativo/cronograma');
-      return;
-    }
-
-    if (tabId === ADMINISTRATIVE_TAB.DASHBOARD) {
-      navigate('/app/administrativo');
-      return;
-    }
-
-    navigate(`/app/administrativo?tab=${encodeURIComponent(tabId)}`);
-  }
-
   function handleBack() {
     navigate(contentFormReturnPath(location.state?.returnToAssociation));
   }
 
   return (
-    <div className="min-h-screen bg-[var(--surface-bg)]">
-      <AdministrativeHeader
-        roleLabel={role ?? 'ADMINISTRATIVO'}
-        onLogout={handleLogout}
-      />
+    <div className="bg-[var(--surface-bg)]">
 
-      <AdministrativeTabBar
-        tabs={ADMINISTRATIVE_TABS}
-        activeTabId={ADMINISTRATIVE_TAB.CRONOGRAMA}
-        onTabChange={handleTabChange}
-      />
-
-      <main>
+      <div>
         <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-[var(--space-5)] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]">
           <button
             type="button"
@@ -620,7 +578,7 @@ export function ContentResourcesPage({ content: contentProp }) {
             </>
           )}
         </div>
-      </main>
+      </div>
 
       <ConfirmationDialog
         open={Boolean(pendingDeleteResource)}

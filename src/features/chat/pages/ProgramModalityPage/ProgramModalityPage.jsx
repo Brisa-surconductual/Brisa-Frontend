@@ -1,14 +1,6 @@
 import { ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-import { AdministrativeHeader } from '@/shared/components/navigation/AdministrativeHeader/index.js';
-import { AdministrativeTabBar } from '@/shared/components/navigation/AdministrativeTabBar/index.js';
-
-import {
-  ADMINISTRATIVE_TAB,
-  ADMINISTRATIVE_TABS,
-} from '@/shared/data/administrativeTabs.js';
-
 import { ProgramEligibilityCard } from '../../components/ProgramEligibilityCard/index.js';
 import { ProgramModalityConfirmDialog } from '../../components/ProgramModalityConfirmDialog/index.js';
 
@@ -29,29 +21,16 @@ export function ProgramModalityPage({
     handleOpenConfirmation,
     handleCancelConfirmation,
     handleConfirmModality,
-    handleTabChange,
-    handleLogout,
   } = useProgramModalityPage({
     eligibility,
     onEnableModality,
   });
 
   return (
-    <div className="min-h-screen bg-[var(--surface-bg)]">
-      <AdministrativeHeader
-        roleLabel="Administrativo"
-        onLogout={handleLogout}
-      />
-
-      <AdministrativeTabBar
-        tabs={ADMINISTRATIVE_TABS}
-        activeTabId={ADMINISTRATIVE_TAB.CHAT}
-        onTabChange={handleTabChange}
-      />
-
+    <div className="bg-[var(--surface-bg)]">
       <ChatSectionTabs />
 
-      <main className="mx-auto flex w-full max-w-[1200px] flex-col gap-[var(--space-6)] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]">
+      <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-[var(--space-6)] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]">
         <Link
           to="/app/administrativo"
           className="inline-flex w-fit items-center gap-[var(--space-2)] text-sm font-semibold text-[var(--brand-600)] hover:underline"
@@ -94,7 +73,7 @@ export function ProgramModalityPage({
             {feedback.message}
           </p>
         )}
-      </main>
+      </div>
 
       <ProgramModalityConfirmDialog
         open={isConfirmationOpen}

@@ -18,7 +18,7 @@ export function TemporalUnitCard({ unit, onViewDetails }) {
   const badgeStyle = statusStyles[status] || statusStyles['POR_DEFINIR'];
 
   return (
-    <article className="group flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-[var(--radius-lg)] border border-[var(--surface-border)] bg-white p-[var(--space-4)] transition-all duration-200 hover:border-[var(--brand-300)] hover:shadow-sm">
+    <article className="group flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-[var(--radius-lg)] border border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-4)] transition-all duration-200 hover:border-[var(--brand-300)] hover:shadow-sm">
       
       <div className="flex items-start sm:items-center gap-4">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--surface-bg)] text-[14px] font-extrabold text-[var(--text-secondary)]">

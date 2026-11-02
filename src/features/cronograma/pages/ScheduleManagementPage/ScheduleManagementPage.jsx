@@ -1,20 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/app/providers/index.js';
 import { ScheduleCard } from '../../components/ScheduleCard/ScheduleCard'; 
 import { listSchedule } from '../../api/cronograma/listSchedule'; 
-import { AdministrativeHeader } from '@/shared/components/navigation/AdministrativeHeader/index.js';
-import { AdministrativeTabBar } from '@/shared/components/navigation/AdministrativeTabBar/index.js';
-import { ADMINISTRATIVE_TAB, ADMINISTRATIVE_TABS} from '@/shared/data/administrativeTabs.js';
 import { Button } from '@/shared/components/ui/Button/index.js';
 import { ScheduleActivationDialog } from '@/features/cronograma/components/ScheduleActivationDialog/index.js';
-
 
 const EMPTY_UNITS = Object.freeze([]);
 
 export function ScheduleManagementPage() {
   const navigate = useNavigate();
-  const { logout } = useAuth();
 
   const [isActivationDialogOpen, setIsActivationDialogOpen] = useState(false);
 
@@ -24,7 +18,6 @@ export function ScheduleManagementPage() {
   const activationValidations = [];
 
   const units = EMPTY_UNITS; 
-
 
   useEffect(() => {
     const fetchSchedules = async () => {
@@ -37,24 +30,6 @@ export function ScheduleManagementPage() {
     };
     fetchSchedules();
   }, []);
-
-  function handleLogout() {
-    logout();
-    navigate('/login', { replace: true });
-  }
-
-  function handleTabChange(tabId) {
-    if (tabId === ADMINISTRATIVE_TAB.CRONOGRAMA) return;
-    if (tabId === ADMINISTRATIVE_TAB.DASHBOARD) {
-      navigate('/app/administrativo');
-      return;
-    }
-    if (tabId === ADMINISTRATIVE_TAB.CHAT) {
-      navigate('/app/administrativo/chat/modalidad');
-      return;
-    }
-    navigate(`/app/administrativo?tab=${encodeURIComponent(tabId)}`);
-  }
 
   function handleViewDetails(unit) {
     navigate(`/app/administrativo/cronograma/${encodeURIComponent(unit.id)}`, {
@@ -107,16 +82,9 @@ export function ScheduleManagementPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--surface-bg)]">
-      <AdministrativeHeader roleLabel="Administrativo" onLogout={handleLogout} />
+    <div className="bg-[var(--surface-bg)]">
 
-      <AdministrativeTabBar
-        tabs={ADMINISTRATIVE_TABS}
-        activeTabId={ADMINISTRATIVE_TAB.CRONOGRAMA}
-        onTabChange={handleTabChange}
-      />
-
-      <main>
+      <div>
         <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-[var(--space-5)] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]">
           <header className="flex flex-col gap-[var(--space-4)] md:flex-row md:items-start md:justify-between">
             <div>
@@ -136,7 +104,7 @@ export function ScheduleManagementPage() {
             <div className="flex flex-col gap-[var(--space-3)] sm:flex-row sm:flex-wrap">
               <Button 
                 variant="secondary" 
-                className="hover:!bg-[var(--brand-600)] hover:!text-white hover:!border-[var(--brand-600)] focus:!bg-[var(--brand-600)] focus:!text-white transition-colors"
+                className="hover:!bg-[var(--brand-600)] hover:!text-[var(--button-primary-text)] hover:!border-[var(--brand-600)] focus:!bg-[var(--brand-600)] focus:!text-[var(--button-primary-text)] transition-colors"
                 onClick={handleViewProgress}
               >
                 Progreso por usuario
@@ -144,7 +112,7 @@ export function ScheduleManagementPage() {
               
               <Button 
                 variant="secondary" 
-                className="hover:!bg-[var(--brand-600)] hover:!text-white hover:!border-[var(--brand-600)] focus:!bg-[var(--brand-600)] focus:!text-white transition-colors"
+                className="hover:!bg-[var(--brand-600)] hover:!text-[var(--button-primary-text)] hover:!border-[var(--brand-600)] focus:!bg-[var(--brand-600)] focus:!text-[var(--button-primary-text)] transition-colors"
                 onClick={handleViewPauses}
               >
                 Pausas administrativas
@@ -152,7 +120,7 @@ export function ScheduleManagementPage() {
               
               <Button 
                 variant="secondary" 
-                className="hover:!bg-[var(--brand-600)] hover:!text-white hover:!border-[var(--brand-600)] focus:!bg-[var(--brand-600)] focus:!text-white transition-colors"
+                className="hover:!bg-[var(--brand-600)] hover:!text-[var(--button-primary-text)] hover:!border-[var(--brand-600)] focus:!bg-[var(--brand-600)] focus:!text-[var(--button-primary-text)] transition-colors"
                 onClick={handleViewContents}
               >
                 Gestionar contenidos
@@ -167,7 +135,7 @@ export function ScheduleManagementPage() {
               
               <Button 
                 variant="secondary" 
-                className="hover:!bg-[var(--brand-600)] hover:!text-white hover:!border-[var(--brand-600)] focus:!bg-[var(--brand-600)] focus:!text-white transition-colors"
+                className="hover:!bg-[var(--brand-600)] hover:!text-[var(--button-primary-text)] hover:!border-[var(--brand-600)] focus:!bg-[var(--brand-600)] focus:!text-[var(--button-primary-text)] transition-colors"
                 onClick={handleCreateSchedule}
               >
                 Crear cronograma
@@ -207,7 +175,7 @@ export function ScheduleManagementPage() {
             )}
           </section>
         </div>
-      </main>
+      </div>
 
       <ScheduleActivationDialog
         open={isActivationDialogOpen}

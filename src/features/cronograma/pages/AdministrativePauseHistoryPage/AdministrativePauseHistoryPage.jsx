@@ -1,11 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/app/providers/index.js';
 
 import { Button } from '@/shared/components/ui/Button/index.js';
-import { AdministrativeHeader } from '@/shared/components/navigation/AdministrativeHeader/index.js';
-import { AdministrativeTabBar } from '@/shared/components/navigation/AdministrativeTabBar/index.js';
-import { ADMINISTRATIVE_TAB, ADMINISTRATIVE_TABS } from '@/shared/data/administrativeTabs.js';
 import { AdministrativePauseList } from '@/features/cronograma/components/AdministrativePauseList/index.js';
 import { ConfirmationDialog } from '@/shared/components/ui/ConfirmationDialog/index.js';
 
@@ -15,7 +11,6 @@ import { annularAdministrativeBreak } from '@/features/cronograma/api/pausasAdmi
 export function AdministrativePauseHistoryPage() {
   
   const navigate = useNavigate();
-  const { logout } = useAuth();
   const [selectedPause, setSelectedPause] = useState(null);
   const [pauses, setPauses] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -99,23 +94,6 @@ export function AdministrativePauseHistoryPage() {
     }
   }
 
-  function handleLogout() {
-    logout();
-    navigate('/login', { replace: true });
-  }
-
-  function handleTabChange(tabId) {
-    if (tabId === ADMINISTRATIVE_TAB.CRONOGRAMA) {
-      navigate('/app/administrativo/cronograma');
-      return;
-    }
-    if (tabId === ADMINISTRATIVE_TAB.DASHBOARD) {
-      navigate('/app/administrativo');
-      return;
-    }
-    navigate(`/app/administrativo?tab=${encodeURIComponent(tabId)}`);
-  }
-
   function handleBack() {
     navigate('/app/administrativo/cronograma');
   }
@@ -125,16 +103,9 @@ export function AdministrativePauseHistoryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--surface-bg)]">
-      <AdministrativeHeader roleLabel="Administrativo" onLogout={handleLogout} />
+    <div className="bg-[var(--surface-bg)]">
 
-      <AdministrativeTabBar
-        tabs={ADMINISTRATIVE_TABS}
-        activeTabId={ADMINISTRATIVE_TAB.CRONOGRAMA}
-        onTabChange={handleTabChange}
-      />
-
-      <main>
+      <div>
         <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-[var(--space-5)] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]">
           <button
             type="button"
@@ -176,7 +147,7 @@ export function AdministrativePauseHistoryPage() {
             </section>
           )}
         </div>
-      </main>
+      </div>
       
       <ConfirmationDialog
         open={Boolean(selectedPause)}

@@ -1,24 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { useAuth } from '@/app/providers/index.js';
-
 import { PsychoeducationalContentList } from '@/features/cronograma/components/PsychoeducationalContentList/index.js';
 
-import { AdministrativeHeader } from '@/shared/components/navigation/AdministrativeHeader/index.js';
-import { AdministrativeTabBar } from '@/shared/components/navigation/AdministrativeTabBar/index.js';
 import { Button } from '@/shared/components/ui/Button/index.js';
 import { ConfirmationDialog } from '@/shared/components/ui/ConfirmationDialog/index.js';
 
 import { eliminarContenido } from '@/features/cronograma/api/contenido/eliminarContenido.jsx';
 import { obtenerCatalogoContenidos } from '@/features/cronograma/api/contenido/obtenerCatalogoContenidos.jsx';
 import { mapCatalogContent } from '../../utils/contentPreparation.js';
-
-import {
-  ADMINISTRATIVE_TAB,
-  ADMINISTRATIVE_TABS,
-} from '@/shared/data/administrativeTabs.js';
-
 
 function getApiErrorMessage(error, fallbackMessage) {
   if (error?.response?.data?.message) {
@@ -37,7 +27,6 @@ const EMPTY_CONTENTS = Object.freeze([]);
 
 export function ContentManagementPage() {
   const navigate = useNavigate();
-  const { role, logout } = useAuth();
 
   const [contents, setContents] = useState(EMPTY_CONTENTS);
   const [loading, setLoading] = useState(true);
@@ -66,28 +55,6 @@ export function ContentManagementPage() {
   }, []);
 
   const [pendingDeleteContent, setPendingDeleteContent] = useState(null);
-
-  function handleLogout() {
-    logout();
-
-    navigate('/login', {
-      replace: true,
-    });
-  }
-
-  function handleTabChange(tabId) {
-    if (tabId === ADMINISTRATIVE_TAB.CRONOGRAMA) {
-      navigate('/app/administrativo/cronograma');
-      return;
-    }
-
-    if (tabId === ADMINISTRATIVE_TAB.DASHBOARD) {
-      navigate('/app/administrativo');
-      return;
-    }
-
-    navigate(`/app/administrativo?tab=${encodeURIComponent(tabId)}`);
-  }
 
   function handleBack() {
     navigate('/app/administrativo/cronograma');
@@ -157,19 +124,9 @@ export function ContentManagementPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--surface-bg)]">
-      <AdministrativeHeader
-        roleLabel={role ?? 'ADMINISTRATIVO'}
-        onLogout={handleLogout}
-      />
+    <div className="bg-[var(--surface-bg)]">
 
-      <AdministrativeTabBar
-        tabs={ADMINISTRATIVE_TABS}
-        activeTabId={ADMINISTRATIVE_TAB.CRONOGRAMA}
-        onTabChange={handleTabChange}
-      />
-
-      <main>
+      <div>
         <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-[var(--space-5)] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]">
           <button
             type="button"
@@ -223,7 +180,7 @@ export function ContentManagementPage() {
             />
           )}
         </div>
-      </main>
+      </div>
 
       <ConfirmationDialog
         open={Boolean(pendingDeleteContent)}

@@ -63,7 +63,7 @@ export function SearchableUserSelect({ value, onChange }) {
       />
 
       {isOpen && results.length > 0 && (
-        <ul className="absolute top-[calc(100%+4px)] left-0 z-50 max-h-60 w-full overflow-y-auto rounded-[var(--radius-md)] border border-[var(--surface-border)] bg-white shadow-xl">
+        <ul className="absolute top-[calc(100%+4px)] left-0 z-50 max-h-60 w-full overflow-y-auto rounded-[var(--radius-md)] border border-[var(--surface-border)] bg-[var(--surface-card)] shadow-xl">
           {results.map((user) => {
             const email = user.correoElectronico?.value || user.correoElectronico || user.email || 'Sin correo';
             return (

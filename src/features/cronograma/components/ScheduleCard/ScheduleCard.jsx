@@ -5,12 +5,12 @@ export function ScheduleCard({ schedule, onClick }) {
 
   const estadoStyles = estado === 'ACTIVO' 
     ? 'bg-[var(--brand-100)] text-[var(--brand-700)]' 
-    : 'bg-gray-100 text-gray-600';
+    : 'bg-[var(--surface-hover)] text-[var(--text-secondary)]';
 
   return (
     <div
       onClick={onClick}
-      className="cursor-pointer p-[var(--space-5)] min-h-[140px] flex flex-col justify-between rounded-xl border border-gray-200 bg-white hover:border-[var(--brand-400)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+      className="cursor-pointer p-[var(--space-5)] min-h-[140px] flex flex-col justify-between rounded-xl border border-[var(--surface-border)] bg-[var(--surface-card)] hover:border-[var(--brand-400)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
     >
       <div>
         <div className="flex items-start justify-between gap-3 mb-3">
@@ -22,7 +22,7 @@ export function ScheduleCard({ schedule, onClick }) {
           </span>
         </div>
         <p className="m-0 text-[13px] text-[var(--text-muted)] font-medium">
-          Creado: <span className="text-gray-700 font-semibold">{fecha}</span>
+          Creado: <span className="text-[var(--text-secondary)] font-semibold">{fecha}</span>
         </p>
       </div>
 

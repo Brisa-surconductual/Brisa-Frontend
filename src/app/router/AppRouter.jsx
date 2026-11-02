@@ -1,4 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { AdminLayout } from '@/app/layouts/AdminLayout/index.js';
 import { ProtectedLayout } from '@/app/layouts/ProtectedLayout/index.js';
 import { RegistrationLayout } from '@/app/layouts/RegistrationLayout/index.js';
 import {
@@ -151,6 +152,7 @@ export function AppRouter() {
                 />
               }
             >
+              <Route element={<AdminLayout />}>
               <Route
                 path="administrativo"
                 element={<PsychologyHomePage />}
@@ -249,7 +251,7 @@ export function AppRouter() {
                 path="administrativo/chat/arboles"
                 element={<PersonalizedTreesPage />}
               />
-
+              </Route>
             </Route>
           </Route>
         </Route>

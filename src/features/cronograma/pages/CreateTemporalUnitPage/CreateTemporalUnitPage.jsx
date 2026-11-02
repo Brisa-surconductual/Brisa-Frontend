@@ -1,13 +1,5 @@
 import { useState } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { useAuth } from '@/app/providers/index.js';
-
-import { AdministrativeHeader } from '@/shared/components/navigation/AdministrativeHeader/index.js';
-import { AdministrativeTabBar } from '@/shared/components/navigation/AdministrativeTabBar/index.js';
-import {
-  ADMINISTRATIVE_TAB,
-  ADMINISTRATIVE_TABS,
-} from '@/shared/data/administrativeTabs.js';
 
 import { TemporalUnitForm } from '@/features/cronograma/components/TemporalUnitForm/index.js';
 import { useCreateTemporalUnitForm } from './hooks/useCreateTemporalUnitForm.js';
@@ -18,7 +10,6 @@ export function CreateTemporalUnitPage() {
   const navigate = useNavigate();
   const { idSchedule } = useParams();
   const location = useLocation(); // Rescatamos la memoria de React Router
-  const { role, logout } = useAuth();
 
   // Extraemos el schedule que viene del panel para no perderlo
   const schedule = location.state?.schedule;
@@ -36,11 +27,6 @@ export function CreateTemporalUnitPage() {
   } = useCreateTemporalUnitForm({
     onValidSubmit: handleValidSubmit,
   });
-
-  function handleLogout() {
-    logout();
-    navigate('/login', { replace: true });
-  }
 
   async function handleValidSubmit(formValues) {
     const schedules = await listSchedule();
@@ -86,18 +72,6 @@ export function CreateTemporalUnitPage() {
       });
   }
 
-  function handleTabChange(tabId) {
-    if (tabId === ADMINISTRATIVE_TAB.CRONOGRAMA) {
-      navigate('/app/administrativo/cronograma');
-      return;
-    }
-    if (tabId === ADMINISTRATIVE_TAB.DASHBOARD) {
-      navigate('/app/administrativo');
-      return;
-    }
-    navigate(`/app/administrativo?tab=${encodeURIComponent(tabId)}`);
-  }
-
   function handleBack() {
     // Si cancela, también le devolvemos su schedule al panel
     navigate(
@@ -109,19 +83,9 @@ export function CreateTemporalUnitPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--surface-bg)]">
-      <AdministrativeHeader
-        roleLabel={role ?? 'ADMINISTRATIVO'}
-        onLogout={handleLogout}
-      />
+    <div className="flex flex-col bg-[var(--surface-bg)]">
 
-      <AdministrativeTabBar
-        tabs={ADMINISTRATIVE_TABS}
-        activeTabId={ADMINISTRATIVE_TAB.CRONOGRAMA}
-        onTabChange={handleTabChange}
-      />
-
-      <main className="flex-1 relative">
+      <div className="flex-1 relative">
         <div className="mx-auto w-full max-w-[680px] px-[var(--space-4)] py-[var(--space-8)] md:px-[var(--space-7)] md:py-[var(--space-12)]">
           {/* PANTALLA DE ÉXITO (Se muestra si isSuccess es true) */}
           {isSuccess ? (
@@ -192,7 +156,7 @@ export function CreateTemporalUnitPage() {
             </>
           )}
         </div>
-      </main>
+      </div>
     </div>
   );
 }

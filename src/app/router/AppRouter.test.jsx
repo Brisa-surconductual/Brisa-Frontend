@@ -4,6 +4,8 @@ import { createRoutesFromChildren, matchRoutes } from 'react-router-dom';
 import { SchedulePanelPage, CreateTemporalUnitPage, ScheduleManagementPage } from '@/features/cronograma/index.js';
 import { USER_ROLE } from '@/features/users/types/authTypes.js';
 
+import { AdminLayout } from '../layouts/AdminLayout/index.js';
+import { ADMIN_NAV_ITEMS } from '../layouts/AdminLayout/adminNavigation.js';
 import { ProtectedLayout } from '../layouts/ProtectedLayout/index.js';
 import { AppRouter } from './AppRouter.jsx';
 import { RequireAuth } from './RequireAuth.jsx';
@@ -128,6 +130,48 @@ describe('Rutas administrativas protegidas', () => {
 
     for (const path of appPaths) {
       expect(hasProtectedLayout(match(path)), path).toBe(true);
+    }
+  });
+});
+
+describe('Layout administrativo en el router', () => {
+  function layoutChain(pathname) {
+    return match(pathname)
+      .map(({ route }) => route.element?.type)
+      .filter((type) =>
+        [ProtectedLayout, RequireAuth, AdminLayout].includes(type),
+      );
+  }
+
+  it.each(ADMIN_PATHS)(
+    '%s: sesión → ProtectedLayout → rol → AdminLayout',
+    (pathname) =>
+      expect(layoutChain(pathname)).toEqual([
+        RequireAuth,
+        ProtectedLayout,
+        RequireAuth,
+        AdminLayout,
+      ]),
+  );
+
+  it.each(['/app/estudiante', '/app/estudiante/cronograma/contenido-vigente', '/login', '/registro/cuenta'])(
+    '%s no usa el layout administrativo',
+    (pathname) => expect(layoutChain(pathname)).not.toContain(AdminLayout),
+  );
+
+  it('ProtectedLayout aparece una sola vez', () => {
+    for (const pathname of ADMIN_PATHS) {
+      expect(
+        match(pathname).filter(
+          ({ route }) => route.element?.type === ProtectedLayout,
+        ),
+      ).toHaveLength(1);
+    }
+  });
+
+  it('cada enlace del menú lleva a una ruta administrativa existente', () => {
+    for (const { to } of ADMIN_NAV_ITEMS) {
+      expect(layoutChain(to.pathname), to.pathname).toContain(AdminLayout);
     }
   });
 });

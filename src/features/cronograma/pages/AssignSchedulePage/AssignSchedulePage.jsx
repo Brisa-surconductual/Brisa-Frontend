@@ -1,15 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { useAuth } from '@/app/providers/index.js';
-import { AdministrativeHeader } from '@/shared/components/navigation/AdministrativeHeader/index.js';
-import { AdministrativeTabBar } from '@/shared/components/navigation/AdministrativeTabBar/index.js';
 import { Button } from '@/shared/components/ui/Button/index.js';
-
-import {
-  ADMINISTRATIVE_TAB,
-  ADMINISTRATIVE_TABS,
-} from '@/shared/data/administrativeTabs.js';
 
 import { SearchableUserSelect } from '../../components/SearchableUserSelect/SearchableUserSelect.jsx'; 
 
@@ -31,7 +23,6 @@ function getApiErrorMessage(error, fallbackMessage) {
 
 export function AssignSchedulePage() {
   const navigate = useNavigate();
-  const { role, logout } = useAuth();
 
   const [schedules, setSchedules] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -97,33 +88,10 @@ export function AssignSchedulePage() {
     }
   }
 
-  function handleLogout() {
-    logout();
-    navigate('/login', { replace: true });
-  }
-
-  function handleTabChange(tabId) {
-    if (tabId === ADMINISTRATIVE_TAB.CRONOGRAMA) {
-      navigate('/app/administrativo/cronograma');
-      return;
-    }
-    if (tabId === ADMINISTRATIVE_TAB.DASHBOARD) {
-      navigate('/app/administrativo');
-      return;
-    }
-    navigate(`/app/administrativo?tab=${encodeURIComponent(tabId)}`);
-  }
-
   return (
-    <div className="min-h-screen bg-[var(--surface-bg)]">
-      <AdministrativeHeader roleLabel={role ?? 'ADMINISTRATIVO'} onLogout={handleLogout} />
-      <AdministrativeTabBar
-        tabs={ADMINISTRATIVE_TABS}
-        activeTabId={ADMINISTRATIVE_TAB.CRONOGRAMA}
-        onTabChange={handleTabChange}
-      />
+    <div className="bg-[var(--surface-bg)]">
 
-      <main>
+      <div>
         <div className="mx-auto flex w-full max-w-[800px] flex-col gap-[var(--space-5)] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]">
           <button
             type="button"
@@ -182,7 +150,6 @@ export function AssignSchedulePage() {
                     const scheduleId = schedule.idCronograma;
                     const isSelected = selectedScheduleId === scheduleId;
 
-                    
                     return (
                       <article
                         key={scheduleId}
@@ -249,7 +216,7 @@ export function AssignSchedulePage() {
 
           </form>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

@@ -1,15 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { useAuth } from '@/app/providers/index.js';
-
-import { AdministrativeHeader } from '@/shared/components/navigation/AdministrativeHeader/index.js';
-import { AdministrativeTabBar } from '@/shared/components/navigation/AdministrativeTabBar/index.js';
-import {
-  ADMINISTRATIVE_TAB,
-  ADMINISTRATIVE_TABS,
-} from '@/shared/data/administrativeTabs.js';
-
 import { AssociateContentForm } from '@/features/cronograma/components/AssociateContentForm/index.js';
 import { ScheduledContentAvailabilityForm } from '@/features/cronograma/components/ScheduledContentAvailabilityForm/index.js';
 import { ContentRow } from '@/features/cronograma/components/ContentRow/index.js';
@@ -108,8 +99,6 @@ const CONTENT_LIST_HEADING_ID = 'associate-content-list-heading';
 export function AssociateContentPage() {
   const navigate = useNavigate();
   const { scheduleId, unitId } = useParams();
-
-  const { role, logout } = useAuth();
 
   const [contentCatalog, setContentCatalog] = useState(EMPTY_CONTENT_CATALOG);
 
@@ -403,28 +392,6 @@ export function AssociateContentPage() {
           : 'Los contenidos del catálogo ya están vinculados a unidades temporales. Cada contenido solo puede pertenecer a una unidad. Crea un contenido nuevo para continuar.'
       : '';
 
-  function handleLogout() {
-    logout();
-
-    navigate('/login', {
-      replace: true,
-    });
-  }
-
-  function handleTabChange(tabId) {
-    if (tabId === ADMINISTRATIVE_TAB.CRONOGRAMA) {
-      navigate('/app/administrativo/cronograma');
-      return;
-    }
-
-    if (tabId === ADMINISTRATIVE_TAB.DASHBOARD) {
-      navigate('/app/administrativo');
-      return;
-    }
-
-    navigate(`/app/administrativo?tab=${encodeURIComponent(tabId)}`);
-  }
-
   function handleBack() {
     navigate('/app/administrativo/cronograma');
   }
@@ -442,19 +409,9 @@ export function AssociateContentPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--surface-bg)]">
-      <AdministrativeHeader
-        roleLabel={role ?? 'ADMINISTRATIVO'}
-        onLogout={handleLogout}
-      />
+    <div className="bg-[var(--surface-bg)]">
 
-      <AdministrativeTabBar
-        tabs={ADMINISTRATIVE_TABS}
-        activeTabId={ADMINISTRATIVE_TAB.CRONOGRAMA}
-        onTabChange={handleTabChange}
-      />
-
-      <main>
+      <div>
         <div className="mx-auto w-full max-w-[1200px] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]">
           <button
             type="button"
@@ -674,7 +631,7 @@ export function AssociateContentPage() {
             </div>
           )}
         </div>
-      </main>
+      </div>
     </div>
   );
 }

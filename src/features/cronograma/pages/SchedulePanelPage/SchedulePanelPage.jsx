@@ -1,9 +1,7 @@
 import { ScheduleActivationAction } from '../../components/ScheduleActivationAction/ScheduleActivationAction.jsx';
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { useAuth } from '@/app/providers/index.js';
 
-import { AdministrativeHeader } from '@/shared/components/navigation/AdministrativeHeader/index.js';
 import { Button } from '@/shared/components/ui/Button/index.js';
 
 import { TemporalUnitList } from '@/features/cronograma/components/TemporalUnitList/index.js';
@@ -17,7 +15,6 @@ export function SchedulePanelPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { idSchedule } = useParams();
-  const { role, logout } = useAuth();
 
   const [schedule, setSchedule] = useState(location.state?.schedule);
   const [activationMessage, setActivationMessage] = useState('');
@@ -129,25 +126,21 @@ export function SchedulePanelPage() {
 
   if (!schedule) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-[var(--surface-bg)]">
+      <div className="flex flex-col items-center justify-center px-[var(--space-4)] py-[var(--space-10)] text-center">
         <p className="text-[var(--text-muted)] font-medium mb-4">
           {isLoading
             ? 'Consultando cronograma...'
             : loadError || 'No se encontró la información del cronograma.'}
         </p>
-        <Button onClick={handleBack}>Volver a inicio</Button>
+        <Button onClick={handleBack}>Volver a cronogramas</Button>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[var(--surface-bg)]">
-      <AdministrativeHeader
-        roleLabel={role ?? 'ADMINISTRATIVO'}
-        onLogout={logout}
-      />
+    <div className="bg-[var(--surface-bg)]">
 
-      <main className="pb-[var(--space-8)]">
+      <div className="pb-[var(--space-8)]">
         <div className="mx-auto w-full max-w-[1200px] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]">
           <button
             type="button"
@@ -157,7 +150,7 @@ export function SchedulePanelPage() {
             ← Volver a todos los cronogramas
           </button>
 
-          <header className="rounded-[var(--radius-xl)] border border-[var(--surface-border)] bg-white p-[var(--space-5)] md:p-[var(--space-6)] shadow-sm">
+          <header className="rounded-[var(--radius-xl)] border border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-5)] md:p-[var(--space-6)] shadow-sm">
             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-[var(--space-4)]">
               <div className="flex-1">
                 <p className="m-0 text-[12px] font-bold tracking-[0.04em] text-[var(--brand-600)] uppercase">
@@ -298,7 +291,7 @@ export function SchedulePanelPage() {
             )}
           </section>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
