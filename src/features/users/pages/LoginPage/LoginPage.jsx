@@ -1,13 +1,17 @@
 import {
   AlertTriangle,
   ArrowLeft,
-  Clock,
   CheckCircle2,
+  Clock,
 } from 'lucide-react';
-
-import { LoginForm } from './components/LoginForm.jsx';
-import { useLoginPage } from './hooks/useLoginPage.js';
 import { useLocation } from 'react-router-dom';
+
+import { BrisaLogo } from '@/shared/components/brand/BrisaLogo/index.js';
+
+import { LoginBrandPanel } from './components/LoginBrandPanel.jsx';
+import { LoginForm } from './components/LoginForm.jsx';
+import { LoginNotice } from './components/LoginNotice.jsx';
+import { useLoginPage } from './hooks/useLoginPage.js';
 
 export function LoginPage() {
   const location = useLocation();
@@ -27,135 +31,111 @@ export function LoginPage() {
   const passwordReset = Boolean(location.state?.passwordReset);
 
   return (
-    <div className="flex min-h-screen justify-center bg-[var(--surface-bg)] md:items-center md:p-[var(--space-8)]"
-    >
-      <div className="flex min-h-screen w-full max-w-[480px] flex-col gap-[var(--space-6)] bg-[var(--surface-card)] px-[var(--space-5)] pt-[var(--space-7)] pb-[var(--space-9)] md:min-h-0 md:rounded-[var(--radius-xl)] md:border md:border-[var(--surface-border)] md:p-[var(--space-7)] md:shadow-[var(--shadow-md)] "
-      >
-        <header
-          className=" flex items-center gap-[var(--space-3)] "
-        >
-          <button type="button" className=" inline-flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-[var(--radius-full)] border-0 bg-[var(--surface-hover)] p-0 text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-border)] " onClick={goBack} aria-label="Volver"
-          >
-            <ArrowLeft size={20} strokeWidth={1.7} aria-hidden="true"
-            />
-          </button>
+    <div className="min-h-screen bg-[var(--surface-card)] md:bg-[var(--surface-bg)] lg:flex lg:items-center lg:justify-center lg:p-[var(--space-8)]">
+      <div className="mx-auto grid min-h-screen w-full max-w-[var(--container-auth)] lg:min-h-[640px] lg:grid-cols-2 lg:overflow-hidden lg:rounded-[var(--radius-3xl)] lg:border lg:border-[var(--surface-border)] lg:bg-[var(--surface-card)] lg:shadow-[var(--shadow-xl)]">
+        <LoginBrandPanel />
 
-          <span className="text-[13px] font-bold text-[var(--text-secondary)]"
-          >
-            Iniciar sesión
-          </span>
-        </header>
+        <main className="flex flex-col px-[var(--space-5)] pt-[var(--space-6)] pb-[var(--space-9)] md:items-center md:justify-center md:p-[var(--space-8)] lg:p-[var(--space-10)]">
+          <div className="flex w-full max-w-[var(--container-form)] flex-col gap-[var(--space-6)] md:rounded-[var(--radius-2xl)] md:border md:border-[var(--surface-border)] md:bg-[var(--surface-card)] md:p-[var(--space-8)] md:shadow-[var(--shadow-md)] lg:rounded-none lg:border-0 lg:p-0 lg:shadow-none">
+            <header className="flex items-center justify-between gap-[var(--space-3)]">
+              <button
+                type="button"
+                className="inline-flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-[var(--radius-full)] border border-[var(--surface-border)] bg-[var(--surface-card)] p-0 text-[var(--text-primary)] transition-colors duration-150 hover:bg-[var(--surface-hover)] motion-reduce:transition-none"
+                onClick={goBack}
+                aria-label="Volver"
+              >
+                <ArrowLeft size={20} strokeWidth={1.7} aria-hidden="true" />
+              </button>
 
-        <section className="flex flex-col">
-          <h1 className="m-0 text-[22px] leading-[1.2] font-extrabold text-[var(--text-primary)]"
-          >
-            Bienvenido de nuevo
-          </h1>
+              {/* En escritorio la marca vive en el panel lateral. */}
+              <div className="lg:hidden">
+                <BrisaLogo />
+              </div>
+            </header>
 
-          <p className="mt-[var(--space-1)] mb-0 text-[14px] leading-[1.6] text-[var(--text-secondary)]"
-          >
-            Ingresa con tu correo electrónico
-          </p>
-        </section>
-        {passwordReset && (
-          <div
-            className="flex items-start gap-[var(--space-3)] rounded-[var(--radius-md)] border border-[var(--info-border)] bg-[var(--info-bg)] p-[var(--space-4)] text-[var(--info-text)]"
-            role="status"
-          >
-            <CheckCircle2
-              size={20}
-              strokeWidth={1.8}
-              className="mt-px shrink-0"
-              aria-hidden="true"
-            />
+            <section className="flex flex-col gap-[var(--space-2)]">
+              <p className="m-0 text-[length:var(--font-size-xs)] font-bold tracking-[var(--letter-spacing-wide)] text-[var(--brand-600)] uppercase">
+                Iniciar sesión
+              </p>
 
-            <div>
-              <strong className="block text-[13px]">
-                Contraseña actualizada
-              </strong>
+              <h1 className="m-0 text-[length:var(--font-size-2xl)] leading-[var(--line-height-tight)] font-extrabold tracking-[var(--letter-spacing-tight)] text-[var(--text-primary)] md:text-[length:var(--font-size-3xl)]">
+                Te damos la bienvenida
+              </h1>
 
-              <p className="mt-[3px] mb-0 text-[12px] leading-[1.5]">
+              <p className="m-0 text-[length:var(--font-size-md)] leading-[var(--line-height-normal)] text-[var(--text-secondary)] md:text-[length:var(--font-size-base)]">
+                Ingresa con tu correo electrónico y tu contraseña.
+              </p>
+            </section>
+
+            {passwordReset && (
+              <LoginNotice
+                tone="success"
+                icon={CheckCircle2}
+                title="Contraseña actualizada"
+                role="status"
+              >
                 Tu contraseña se restableció correctamente. Ya puedes iniciar
                 sesión.
-              </p>
-            </div>
-          </div>
-        )}
+              </LoginNotice>
+            )}
 
-        {wasClosedByInactivity && (
-          <div className="flex items-start gap-[var(--space-3)] rounded-[var(--radius-md)] border border-[var(--warning-border)] bg-[var(--warning-bg)] p-[var(--space-4)] text-[var(--warning-text)]" role="status"
-          >
-            <Clock size={20} strokeWidth={1.8} className="mt-px shrink-0" aria-hidden="true"
-            />
-
-            <div>
-              <strong className=" block text-[13px] "
-              >
-                Cerramos tu sesión por inactividad
-              </strong>
-
-              <p className=" mt-[3px] mb-0 text-[12px] leading-[1.5] "
+            {wasClosedByInactivity && (
+              <LoginNotice
+                tone="warning"
+                icon={Clock}
+                title="Cerramos tu sesión por inactividad"
+                role="status"
               >
                 Ingresa de nuevo para continuar donde ibas.
-              </p>
-            </div>
-          </div>
-        )}
+              </LoginNotice>
+            )}
 
-        {remoteLogoutUnconfirmed && (
-          <div className="flex items-start gap-[var(--space-3)] rounded-[var(--radius-md)] border border-[var(--warning-border)] bg-[var(--warning-bg)] p-[var(--space-4)] text-[var(--warning-text)]" role="alert"
-          >
-            <AlertTriangle size={20} strokeWidth={1.8} className="mt-px shrink-0" aria-hidden="true"
-            />
-
-            <div>
-              <strong className="block text-[13px]"
-              >
-                No pudimos confirmar el cierre de sesión
-              </strong>
-
-              <p className="mt-[3px] mb-0 text-[12px] leading-[1.5]"
+            {remoteLogoutUnconfirmed && (
+              <LoginNotice
+                tone="warning"
+                icon={AlertTriangle}
+                title="No pudimos confirmar el cierre de sesión"
+                role="alert"
               >
                 El servidor no confirmó el cierre. Lo intentaremos de nuevo la
                 próxima vez que abras Brisa en este dispositivo. Si usas un
                 equipo compartido, vuelve a abrir Brisa cuando tengas conexión
                 para completarlo.
-              </p>
-            </div>
-          </div>
-        )}
+              </LoginNotice>
+            )}
 
-        {submitError && (
-          <div className=" flex items-start gap-[var(--space-3)] rounded-[var(--radius-md)] border border-[var(--danger-border)] bg-[var(--danger-bg)] p-[var(--space-4)] text-[var(--danger-text)] " role="alert"
-          >
-            <AlertTriangle size={20} strokeWidth={1.8} className="mt-px shrink-0" aria-hidden="true"
-            />
-
-            <div>
-              <strong className="block text-[13px] "
-              >
-                No pudimos iniciar sesión
-              </strong>
-
-              <p className=" mt-[3px] mb-0 text-[12px] leading-[1.5] "
+            {submitError && (
+              <LoginNotice
+                tone="danger"
+                icon={AlertTriangle}
+                title="No pudimos iniciar sesión"
+                role="alert"
               >
                 {submitError}
-              </p>
-            </div>
+              </LoginNotice>
+            )}
+
+            <LoginForm
+              form={form}
+              errors={errors}
+              isSubmitting={isSubmitting}
+              onChange={handleChange}
+              onSubmit={handleSubmit}
+              onForgotPassword={goToRecover}
+            />
+
+            <p className="m-0 flex flex-wrap items-center justify-center gap-x-[var(--space-1)] border-t border-[var(--surface-border)] pt-[var(--space-5)] text-center text-[length:var(--font-size-sm)] text-[var(--text-secondary)]">
+              ¿No tienes cuenta?
+              <button
+                type="button"
+                className="inline-flex min-h-[44px] items-center rounded-[var(--radius-sm)] border-0 bg-transparent px-[var(--space-1)] font-bold text-[var(--brand-600)] underline-offset-4 hover:underline"
+                onClick={goToCreateAccount}
+              >
+                Crear cuenta
+              </button>
+            </p>
           </div>
-        )}
-
-        <LoginForm form={form} errors={errors} isSubmitting={isSubmitting} onChange={handleChange} onSubmit={handleSubmit} onForgotPassword={goToRecover}
-        />
-
-        <p className="m-0 text-center text-[13px] text-[var(--text-secondary)] "
-        >
-          ¿No tienes cuenta?{' '}
-          <button type="button" className=" border-0 bg-transparent p-0 font-semibold text-[var(--brand-600)] hover:underline " onClick={goToCreateAccount}
-          >
-            Crear cuenta
-          </button>
-        </p>
+        </main>
       </div>
     </div>
   );
