@@ -70,10 +70,32 @@ describe('Estado de la sesión al cerrar', () => {
       estadoRegistro: SESSION.estadoRegistro,
       idUsuario: SESSION.idUsuario,
       alcance: null,
+      limiteInactividadMinutos: null,
       isAuthenticated: true,
       endReason: null,
       remoteLogoutUnconfirmed: false,
     }));
+});
+
+describe('Límite de inactividad de la sesión', () => {
+  it('conserva el límite real que entrega el backend', () =>
+    expect(
+      authReducer(initialAuthState, {
+        type: AUTH_ACTION.LOGIN,
+        payload: { ...SESSION, limiteInactividadMinutos: 15 },
+      }).limiteInactividadMinutos,
+    ).toBe(15));
+
+  it.each([undefined, null, 0, -5, '15', Number.NaN])(
+    'descarta un límite inválido (%s)',
+    (limite) =>
+      expect(
+        authReducer(initialAuthState, {
+          type: AUTH_ACTION.LOGIN,
+          payload: { ...SESSION, limiteInactividadMinutos: limite },
+        }).limiteInactividadMinutos,
+      ).toBeNull(),
+  );
 });
 
 describe('Alcance de la sesión', () => {

@@ -193,6 +193,7 @@ export function useReviewPage() {
           estadoRegistro: session.estadoRegistro,
           idUsuario: session.idUsuario,
           alcance: session.alcance,
+          limiteInactividadMinutos: session.limiteInactividadMinutos,
         });
       } else {
         /*

@@ -72,6 +72,7 @@ export function useLoginPage() {
         estadoRegistro: data.estadoRegistro,
         idUsuario: infoUsuario.idUsuario,
         alcance: infoUsuario.alcance,
+        limiteInactividadMinutos: infoUsuario.limiteInactividadMinutos,
       });
 
       navigate(getPostLoginPath(data.estadoRegistro), { replace: true });

@@ -3,12 +3,19 @@ import { Outlet } from 'react-router-dom';
 
 import {
   SESSION_END_REASON,
-  SESSION_TIMEOUT,
+  getActivitySyncIntervalMs,
+  resolveSessionTimeout,
 } from '@/app/config/sessionConfig.js';
 import { useAuth } from '@/app/providers/index.js';
+import { ACTIVITY_RESULT } from '@/app/providers/sessionActivity.js';
 
 import { SessionTimeoutModal } from '@/shared/components/ui/SessionTimeoutModal/index.js';
 import { useInactivityTimeout } from '@/shared/hooks/useInactivityTimeout.js';
+
+import { useSessionActivitySync } from './hooks/useSessionActivitySync.js';
+
+const EXTEND_ERROR_MESSAGE =
+  'No pudimos confirmar tu sesión con el servidor. Intenta de nuevo.';
 
 /*
  * Envuelve toda la zona protegida: el control de
@@ -16,8 +23,12 @@ import { useInactivityTimeout } from '@/shared/hooks/useInactivityTimeout.js';
  * a estudiante y a psicología.
  */
 export function ProtectedLayout() {
-  const { isAuthenticated, isEndingSession, endSession: closeSession } =
-    useAuth();
+  const {
+    isAuthenticated,
+    isEndingSession,
+    limiteInactividadMinutos,
+    endSession: closeSession,
+  } = useAuth();
 
   /*
    * El aviso sigue abierto mientras el backend confirma el
@@ -25,6 +36,19 @@ export function ProtectedLayout() {
    * en un equipo desatendido.
    */
   const [isClosingFromWarning, setIsClosingFromWarning] = useState(false);
+  const [isExtending, setIsExtending] = useState(false);
+  const [extendError, setExtendError] = useState('');
+
+  const isSessionActive = isAuthenticated && !isEndingSession;
+
+  // Tiempos alineados con el límite real del backend.
+  const timeout = resolveSessionTimeout(limiteInactividadMinutos);
+
+  const { notifyActivity, confirmActivity } = useSessionActivitySync({
+    enabled: isSessionActive,
+    syncIntervalMs: getActivitySyncIntervalMs(limiteInactividadMinutos),
+    onExpired: () => endSession(SESSION_END_REASON.EXPIRED),
+  });
 
   /*
    * Solo cierra la sesión: el redirect a /login lo hace
@@ -34,7 +58,7 @@ export function ProtectedLayout() {
    * en la sesión.
    */
   function endSession(reason) {
-    setIsClosingFromWarning(true);
+    if (isWarning) setIsClosingFromWarning(true);
 
     void closeSession({ reason }).finally(() =>
       setIsClosingFromWarning(false),
@@ -46,11 +70,38 @@ export function ProtectedLayout() {
    * apaga: el aviso no debe reaparecer ni disparar otro cierre.
    */
   const { isWarning, remainingMs, extendSession } = useInactivityTimeout({
-    enabled: isAuthenticated && !isEndingSession,
-    warningDelayMs: SESSION_TIMEOUT.warningDelayMs,
-    countdownMs: SESSION_TIMEOUT.countdownMs,
+    enabled: isSessionActive,
+    warningDelayMs: timeout.warningDelayMs,
+    countdownMs: timeout.countdownMs,
     onTimeout: () => endSession(SESSION_END_REASON.INACTIVITY),
+    onActivity: notifyActivity,
   });
+
+  /*
+   * "Seguir aquí" confirma la sesión con el backend antes de
+   * reiniciar el contador: no se extiende una sesión rechazada.
+   */
+  async function handleExtend() {
+    if (isExtending) return;
+
+    setIsExtending(true);
+    setExtendError('');
+
+    const result = await confirmActivity();
+
+    setIsExtending(false);
+
+    if (result === ACTIVITY_RESULT.ACTIVE) {
+      extendSession();
+      return;
+    }
+
+    if (result === ACTIVITY_RESULT.UNCONFIRMED) {
+      setExtendError(EXTEND_ERROR_MESSAGE);
+    }
+
+    // EXPIRED: el cierre ya se inició. CANCELLED: ya estaba en curso.
+  }
 
   return (
     <>
@@ -60,7 +111,9 @@ export function ProtectedLayout() {
         open={isWarning || isClosingFromWarning}
         remainingMs={remainingMs}
         // Con el cierre ya en curso no se puede seguir en la sesión.
-        onExtend={isClosingFromWarning ? undefined : extendSession}
+        onExtend={isClosingFromWarning ? undefined : handleExtend}
+        isExtending={isExtending}
+        extendError={isClosingFromWarning ? '' : extendError}
         onLogout={() => endSession(SESSION_END_REASON.MANUAL)}
       />
     </>

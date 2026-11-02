@@ -34,7 +34,14 @@ export function useConsentPage() {
     resetRegistration,
   } = useRegistration();
 
-  const { user, role, login, logout, idUsuario } = useAuth();
+  const {
+    user,
+    role,
+    login,
+    logout,
+    idUsuario,
+    limiteInactividadMinutos,
+  } = useAuth();
   const activeAccount = registrationAccount || (typeof user === 'string' ? { email: user } : user);
 
   const [authorizations, setAuthorizations] = useState({ ...INITIAL_AUTHORIZATIONS });
@@ -150,6 +157,7 @@ export function useConsentPage() {
         estadoRegistro: session.estadoRegistro,
         idUsuario: session.idUsuario,
         alcance: session.alcance,
+        limiteInactividadMinutos: session.limiteInactividadMinutos,
       });
     } else if (action === REFRESHED_SESSION_ACTION.END) {
       logout();
@@ -160,6 +168,8 @@ export function useConsentPage() {
         estadoRegistro: null,
         idUsuario,
         alcance: null,
+        // El límite no cambia en la misma sesión: se conserva.
+        limiteInactividadMinutos,
       });
     }
 

@@ -4,10 +4,16 @@ export const initialAuthState = Object.freeze({
   estadoRegistro: null,
   idUsuario: null,
   alcance: null,
+  limiteInactividadMinutos: null,
   isAuthenticated: false,
   endReason: null,
   remoteLogoutUnconfirmed: false,
 });
+
+// Un valor no numérico o no positivo se descarta (sin dato).
+function toPositiveNumber(value) {
+  return Number.isFinite(value) && value > 0 ? value : null;
+}
 
 export const AUTH_ACTION = Object.freeze({
   LOGIN: 'LOGIN',
@@ -33,6 +39,10 @@ export function authReducer(state, action) {
          * entrega el backend. No se deduce del estado de registro.
          */
         alcance: action.payload.alcance ?? null,
+        // Límite real de inactividad del backend para esta sesión.
+        limiteInactividadMinutos: toPositiveNumber(
+          action.payload.limiteInactividadMinutos,
+        ),
         isAuthenticated: true,
         endReason: null,
         remoteLogoutUnconfirmed: false,
