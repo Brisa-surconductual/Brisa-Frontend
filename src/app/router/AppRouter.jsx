@@ -231,6 +231,16 @@ export function AppRouter() {
               />
 
               <Route
+                path="administrativo/cronograma/:idSchedule/panel"
+                element={<SchedulePanelPage />}
+              />
+
+              <Route
+                path="administrativo/cronograma/:idSchedule/crear-unidad"
+                element={<CreateTemporalUnitPage />}
+              />
+
+              <Route
                 path="administrativo/chat/modalidad"
                 element={<ProgramModalityPage />}
               />
@@ -242,22 +252,6 @@ export function AppRouter() {
 
             </Route>
           </Route>
-
-          <Route 
-                path="/app/administrativo/cronograma"
-                element={<ScheduleManagementPage />} 
-          />
-          
-          <Route 
-                path="/app/administrativo/cronograma/:idSchedule/panel" 
-                element={<SchedulePanelPage />}
-           />
-          
-          <Route 
-                path="/app/administrativo/cronograma/:idSchedule/crear-unidad" 
-                element={<CreateTemporalUnitPage />} 
-          />
-          
         </Route>
 
         <Route
