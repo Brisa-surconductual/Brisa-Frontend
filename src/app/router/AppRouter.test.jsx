@@ -7,6 +7,8 @@ import { USER_ROLE } from '@/features/users/types/authTypes.js';
 import { AdminLayout } from '../layouts/AdminLayout/index.js';
 import { ADMIN_NAV_ITEMS } from '../layouts/AdminLayout/adminNavigation.js';
 import { ProtectedLayout } from '../layouts/ProtectedLayout/index.js';
+import { StudentLayout } from '../layouts/StudentLayout/index.js';
+import { STUDENT_NAV_ITEMS } from '../layouts/StudentLayout/studentNavigation.js';
 import { AppRouter } from './AppRouter.jsx';
 import { RequireAuth } from './RequireAuth.jsx';
 
@@ -172,6 +174,51 @@ describe('Layout administrativo en el router', () => {
   it('cada enlace del menú lleva a una ruta administrativa existente', () => {
     for (const { to } of ADMIN_NAV_ITEMS) {
       expect(layoutChain(to.pathname), to.pathname).toContain(AdminLayout);
+    }
+  });
+});
+
+describe('Layout del estudiante en el router', () => {
+  const STUDENT_PATHS = [
+    '/app/estudiante',
+    '/app/estudiante/cronograma/contenido-vigente',
+  ];
+
+  function chain(pathname) {
+    return match(pathname)
+      .map(({ route }) => route.element?.type)
+      .filter((type) =>
+        [ProtectedLayout, RequireAuth, StudentLayout, AdminLayout].includes(
+          type,
+        ),
+      );
+  }
+
+  it.each(STUDENT_PATHS)(
+    '%s: sesión → ProtectedLayout → ESTUDIANTE → StudentLayout',
+    (pathname) => {
+      expect(chain(pathname)).toEqual([
+        RequireAuth,
+        ProtectedLayout,
+        RequireAuth,
+        StudentLayout,
+      ]);
+      expect(guardRoles(match(pathname))).toEqual([
+        null,
+        [USER_ROLE.ESTUDIANTE],
+      ]);
+    },
+  );
+
+  it('ninguna ruta administrativa usa el layout del estudiante', () => {
+    for (const pathname of ADMIN_PATHS) {
+      expect(chain(pathname)).not.toContain(StudentLayout);
+    }
+  });
+
+  it('cada enlace del estudiante lleva a una ruta existente con su layout', () => {
+    for (const { to } of STUDENT_NAV_ITEMS) {
+      expect(chain(to)).toContain(StudentLayout);
     }
   });
 });

@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AdminLayout } from '@/app/layouts/AdminLayout/index.js';
 import { ProtectedLayout } from '@/app/layouts/ProtectedLayout/index.js';
+import { StudentLayout } from '@/app/layouts/StudentLayout/index.js';
 import { RegistrationLayout } from '@/app/layouts/RegistrationLayout/index.js';
 import {
   ProgramModalityPage,
@@ -132,15 +133,17 @@ export function AppRouter() {
                 />
               }
             >
-              <Route
-                path="estudiante"
-                element={<StudentHomePage />}
-              />
+              <Route element={<StudentLayout />}>
+                <Route
+                  path="estudiante"
+                  element={<StudentHomePage />}
+                />
 
-              <Route
-                path="estudiante/cronograma/contenido-vigente"
-                element={<CurrentContentPage />}
-              />
+                <Route
+                  path="estudiante/cronograma/contenido-vigente"
+                  element={<CurrentContentPage />}
+                />
+              </Route>
             </Route>
 
             <Route
