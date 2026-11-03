@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { AlertTriangle, CalendarOff, FileStack } from 'lucide-react';
 
+import { BackButton } from '@/features/cronograma/components/BackButton/index.js';
 import { CurrentContentCard } from '@/features/cronograma/components/CurrentContentCard/index.js';
-import { EmptyScheduleState } from '@/features/cronograma/components/EmptyScheduleState/index.js';
+import { PanelNotice } from '@/features/cronograma/components/PanelNotice/index.js';
+import { SchedulePageHeader } from '@/features/cronograma/components/SchedulePageHeader/index.js';
 import { TemporalInformationSummary } from '@/features/cronograma/components/TemporalInformationSummary/index.js';
 
 import { obtenerContenidoVigenteUsuario } from '@/features/cronograma/api/contenidoVigente/obtenerContenidoVigenteUsuario.jsx';
@@ -139,95 +142,101 @@ export function TemporalInformationPage({
   }
 
   return (
-    <div className="bg-[var(--surface-bg)]">
+    <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-[var(--space-6)] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]">
+      <BackButton onClick={handleBack}>Volver al progreso</BackButton>
 
-      <div>
-        <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-[var(--space-5)] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]">
-          <button
-            type="button"
-            className="w-fit cursor-pointer border-0 bg-transparent p-0 text-[13px] font-semibold text-[var(--brand-600)]"
-            onClick={handleBack}
-          >
-            ← Volver al progreso
-          </button>
+      <SchedulePageHeader
+        eyebrow="Progreso por usuario"
+        title="Información temporal"
+        description="Consulta la ubicación temporal del participante y los contenidos vigentes asociados a su momento actual dentro del cronograma."
+      />
 
-          <header>
-            <p className="m-0 text-[12px] font-bold tracking-[0.04em] text-[var(--brand-600)] uppercase">
-              Cronograma
-            </p>
-
-            <h1 className="mt-[var(--space-1)] mb-0 text-[26px] font-extrabold text-[var(--text-primary)] md:text-[30px]">
-              Información temporal
-            </h1>
-
-            <p className="mt-[var(--space-2)] mb-0 max-w-[720px] text-[13px] leading-[1.6] text-[var(--text-muted)]">
-              Consulta la ubicación temporal del participante y los contenidos
-              vigentes asociados a su momento actual dentro del cronograma.
-            </p>
-          </header>
-
-          {loading ? (
-            <p
-              className="m-0 py-[var(--space-7)] text-center text-[13px] text-[var(--text-muted)]"
-              role="status"
-            >
-              Cargando información del participante...
-            </p>
-          ) : loadError ? (
+      {loading ? (
+        <div aria-busy="true" className="flex flex-col gap-[var(--space-4)]">
+          <p role="status" className="sr-only">
+            Cargando información del participante...
+          </p>
+          {['h-[200px]', 'h-[120px]'].map((heightClass) => (
             <div
-              className="rounded-[var(--radius-md)] border border-[var(--danger-border)] bg-[var(--danger-bg)] p-[var(--space-4)] text-[13px] font-semibold text-[var(--danger-text)]"
-              role="alert"
-            >
-              {loadError}
-            </div>
-          ) : temporalInformation ? (
-            <>
-              <TemporalInformationSummary
-                participantName={temporalInformation.participantName}
-                temporalUnitName={temporalInformation.temporalUnitName}
-                temporalUnitOrder={temporalInformation.temporalUnitOrder}
-                calculationDateText={temporalInformation.calculationDateText}
-                elapsedTimeText={temporalInformation.elapsedTimeText}
-                completed={temporalInformation.completed}
-                message={temporalInformation.message}
-              />
-
-              <section aria-labelledby="current-content-title">
-                <h2
-                  id="current-content-title"
-                  className="m-0 text-[16px] font-bold text-[var(--text-primary)]"
-                >
-                  Contenidos vigentes
-                </h2>
-
-                {currentContent.length > 0 ? (
-                  <div className="mt-[var(--space-3)] grid gap-[var(--space-4)]">
-                    {currentContent.map((content) => (
-                      <CurrentContentCard
-                        key={content.associationId ?? content.id}
-                        content={content}
-                        onSelect={onSelectContent}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="mt-[var(--space-3)]">
-                    <EmptyScheduleState
-                      title="No hay contenido vigente"
-                      description="El participante no tiene contenido disponible para su ubicación temporal actual."
-                    />
-                  </div>
-                )}
-              </section>
-            </>
-          ) : (
-            <EmptyScheduleState
-              title="No hay información temporal disponible"
-              description="Cuando exista información temporal del participante, aparecerá en esta vista."
+              key={heightClass}
+              className={`${heightClass} animate-pulse rounded-[var(--radius-xl)] border border-[var(--surface-border)] bg-[var(--surface-card)] motion-reduce:animate-none`}
+              aria-hidden="true"
             />
-          )}
+          ))}
         </div>
-      </div>
+      ) : loadError ? (
+        <PanelNotice
+          tone="danger"
+          icon={AlertTriangle}
+          title="Información no disponible"
+          role="alert"
+        >
+          {loadError}
+        </PanelNotice>
+      ) : temporalInformation ? (
+        <>
+          <TemporalInformationSummary
+            participantName={temporalInformation.participantName}
+            temporalUnitName={temporalInformation.temporalUnitName}
+            temporalUnitOrder={temporalInformation.temporalUnitOrder}
+            calculationDateText={temporalInformation.calculationDateText}
+            elapsedTimeText={temporalInformation.elapsedTimeText}
+            completed={temporalInformation.completed}
+            message={temporalInformation.message}
+          />
+
+          <section
+            aria-labelledby="current-content-title"
+            className="flex flex-col gap-[var(--space-4)]"
+          >
+            <div className="flex items-baseline justify-between gap-[var(--space-3)]">
+              <h2
+                id="current-content-title"
+                className="m-0 text-[length:var(--font-size-lg)] font-extrabold text-[var(--text-primary)]"
+              >
+                Contenidos vigentes
+              </h2>
+
+              <p className="m-0 text-[length:var(--font-size-sm)] font-semibold text-[var(--text-secondary)] tabular-nums">
+                {currentContent.length}{' '}
+                {currentContent.length === 1 ? 'contenido' : 'contenidos'}
+              </p>
+            </div>
+
+            {currentContent.length > 0 ? (
+              <div className="grid gap-[var(--space-4)]">
+                {currentContent.map((content) => (
+                  <CurrentContentCard
+                    key={content.associationId ?? content.id}
+                    content={content}
+                    onSelect={onSelectContent}
+                  />
+                ))}
+              </div>
+            ) : (
+              <PanelNotice
+                tone="neutral"
+                icon={FileStack}
+                title="No hay contenido vigente"
+                role="status"
+              >
+                El participante no tiene contenido disponible para su
+                ubicación temporal actual.
+              </PanelNotice>
+            )}
+          </section>
+        </>
+      ) : (
+        <PanelNotice
+          tone="neutral"
+          icon={CalendarOff}
+          title="No hay información temporal disponible"
+          role="status"
+        >
+          Cuando exista información temporal del participante, aparecerá en
+          esta vista.
+        </PanelNotice>
+      )}
     </div>
   );
 }

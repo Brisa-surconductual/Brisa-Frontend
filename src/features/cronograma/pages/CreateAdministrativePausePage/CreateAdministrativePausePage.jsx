@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AdministrativePauseForm } from '@/features/cronograma/components/AdministrativePauseForm/index.js';
+import { BackButton } from '@/features/cronograma/components/BackButton/index.js';
+import { SchedulePageHeader } from '@/features/cronograma/components/SchedulePageHeader/index.js';
 import { useCreateAdministrativePauseForm } from './hooks/useCreateAdministrativePauseForm.js';
 import { registerAdministrativeBreak } from '../../api/pausasAdministrativas/registerAdministartiveBreak.jsx';
 
@@ -62,42 +64,29 @@ export function CreateAdministrativePausePage() {
   }
 
   return (
-    <div className="bg-[var(--surface-bg)]">
+    <div className="mx-auto flex w-full max-w-[800px] flex-col gap-[var(--space-6)] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]">
+      <BackButton onClick={handleBack}>
+        Volver al historial de pausas
+      </BackButton>
 
-      <div>
-        <div className="mx-auto w-full max-w-[900px] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]">
-          <button
-            type="button"
-            className="mb-[var(--space-5)] cursor-pointer border-0 bg-transparent p-0 text-[13px] font-semibold text-[var(--brand-600)]"
-            onClick={handleBack}
-          >
-            ← Volver al historial de pausas
-          </button>
+      <SchedulePageHeader
+        eyebrow="Pausas administrativas"
+        title="Registrar pausa administrativa"
+        description="Registra un periodo de pausa para un participante del cronograma."
+      />
 
-          <p className="m-0 text-[12px] font-bold tracking-[0.04em] text-[var(--brand-600)] uppercase">
-            Cronograma
-          </p>
-
-          <h1 className="mt-[var(--space-1)] mb-0 text-[26px] font-extrabold text-[var(--text-primary)] md:text-[30px]">
-            Registrar pausa administrativa
-          </h1>
-
-          <p className="mt-[var(--space-2)] mb-0 max-w-[680px] text-[13px] leading-[1.6] text-[var(--text-muted)]">
-            Registra un periodo de pausa para un participante del cronograma.
-          </p>
-
-          <AdministrativePauseForm
-            form={form}
-            errors={errors}
-            formError={formError}
-            successMessage={successMessage}
-            participantOptions={EMPTY_PARTICIPANT_OPTIONS}
-            onChange={handleChange}
-            onSubmit={handleFormSubmit}
-            onCancel={handleBack}
-          />
-        </div>
-      </div>
+      <AdministrativePauseForm
+        form={form}
+        errors={errors}
+        formError={formError}
+        successMessage={successMessage}
+        // Tras registrar, el envío queda bloqueado mientras se redirige.
+        submitDisabled={Boolean(successMessage)}
+        participantOptions={EMPTY_PARTICIPANT_OPTIONS}
+        onChange={handleChange}
+        onSubmit={handleFormSubmit}
+        onCancel={handleBack}
+      />
     </div>
   );
 }

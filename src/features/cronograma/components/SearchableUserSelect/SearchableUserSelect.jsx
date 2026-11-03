@@ -7,6 +7,7 @@ import { getNextActiveIndex } from '../../utils/comboboxNavigation.js';
 const INPUT_ID = 'assign-participant';
 const LISTBOX_ID = 'assign-participant-options';
 const HINT_ID = 'assign-participant-hint';
+const ERROR_ID = 'assign-participant-error';
 
 function getUserEmail(user, fallback) {
   return user.correoElectronico?.value || user.correoElectronico || user.email || fallback;
@@ -18,7 +19,7 @@ function getUserEmail(user, fallback) {
  * con teclado: flechas para recorrer, Enter para elegir y Escape
  * para cerrar la lista.
  */
-export function SearchableUserSelect({ value, onChange }) {
+export function SearchableUserSelect({ value, onChange, error = '' }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -131,7 +132,8 @@ export function SearchableUserSelect({ value, onChange }) {
           aria-activedescendant={
             activeOption >= 0 ? `${LISTBOX_ID}-${activeOption}` : undefined
           }
-          aria-describedby={HINT_ID}
+          aria-describedby={error ? `${HINT_ID} ${ERROR_ID}` : HINT_ID}
+          aria-invalid={Boolean(error)}
           aria-required="true"
           value={query}
           onChange={(e) => {
@@ -141,7 +143,7 @@ export function SearchableUserSelect({ value, onChange }) {
           }}
           onKeyDown={handleKeyDown}
           placeholder="Escribe al menos 2 letras del correo..."
-          className="min-h-[44px] w-full rounded-[var(--radius-md)] border-[1.5px] border-[var(--surface-border)] bg-[var(--surface-card)] py-[10px] pr-[13px] pl-[42px] text-[14px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--brand-400)] focus:shadow-[var(--focus-ring)] focus:outline-none"
+          className="min-h-[44px] w-full rounded-[var(--radius-md)] border-[1.5px] border-[var(--surface-border)] bg-[var(--surface-card)] py-[10px] pr-[13px] pl-[42px] text-[14px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--brand-400)] focus:shadow-[var(--focus-ring)] focus:outline-none aria-[invalid=true]:border-[var(--danger)]"
           autoComplete="off"
         />
 
@@ -177,6 +179,16 @@ export function SearchableUserSelect({ value, onChange }) {
       >
         Usa las flechas para recorrer los resultados y Enter para elegir.
       </p>
+
+      {error && (
+        <p
+          id={ERROR_ID}
+          className="m-0 text-[11px] leading-[1.45] font-semibold text-[var(--danger-text)]"
+          role="alert"
+        >
+          {error}
+        </p>
+      )}
 
       {value && (
         <p className="m-0 inline-flex items-center gap-[var(--space-1)] text-[length:var(--font-size-xs)] font-bold text-[var(--success-text)]">

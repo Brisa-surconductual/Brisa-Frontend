@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AlertTriangle, CalendarOff, CircleCheck, Plus } from 'lucide-react';
 
 import { Button } from '@/shared/components/ui/Button/index.js';
 import { AdministrativePauseList } from '@/features/cronograma/components/AdministrativePauseList/index.js';
+import { BackButton } from '@/features/cronograma/components/BackButton/index.js';
+import { PanelNotice } from '@/features/cronograma/components/PanelNotice/index.js';
+import { SchedulePageHeader } from '@/features/cronograma/components/SchedulePageHeader/index.js';
 import { ConfirmationDialog } from '@/shared/components/ui/ConfirmationDialog/index.js';
 
 import { getAdministrativeBreak } from '@/features/cronograma/api/pausasAdministrativas/getAdministrativeBreak';
@@ -17,6 +21,8 @@ export function AdministrativePauseHistoryPage() {
   const [actionError, setActionError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Un fallo de carga no debe parecer un historial vacío.
+  const [loadError, setLoadError] = useState('');
 
   useEffect(() => {
     const fetchPauses = async () => {
@@ -31,6 +37,9 @@ export function AdministrativePauseHistoryPage() {
         console.error(
           'Error cargando pausas administrativas. Estado HTTP:',
           error?.response?.status ?? 'sin respuesta',
+        );
+        setLoadError(
+          'No pudimos cargar las pausas administrativas. Intenta nuevamente.',
         );
       } finally {
         setIsLoading(false);
@@ -103,52 +112,100 @@ export function AdministrativePauseHistoryPage() {
   }
 
   return (
-    <div className="bg-[var(--surface-bg)]">
+    <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-[var(--space-6)] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]">
+      <BackButton onClick={handleBack}>Volver a cronogramas</BackButton>
 
-      <div>
-        <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-[var(--space-5)] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]">
-          <button
-            type="button"
-            className="w-fit cursor-pointer border-0 bg-transparent p-0 text-[13px] font-semibold text-[var(--brand-600)]"
-            onClick={handleBack}
+      <SchedulePageHeader
+        eyebrow="Administración · Cronogramas"
+        title="Pausas administrativas"
+        description="Consulta el historial de pausas administrativas registradas."
+        actions={
+          <Button onClick={handleCreatePause} className="w-full sm:w-auto">
+            <Plus size={18} strokeWidth={2} aria-hidden="true" />
+            Registrar pausa
+          </Button>
+        }
+      />
+
+      {successMessage && (
+        <PanelNotice tone="success" icon={CircleCheck} role="status">
+          {successMessage}
+        </PanelNotice>
+      )}
+
+      {actionError && (
+        <PanelNotice
+          tone="danger"
+          icon={AlertTriangle}
+          title="No se pudo anular la pausa"
+          role="alert"
+        >
+          {actionError}
+        </PanelNotice>
+      )}
+
+      <section
+        aria-labelledby="historial-pausas-titulo"
+        aria-busy={isLoading}
+        className="flex flex-col gap-[var(--space-4)]"
+      >
+        <div className="flex items-baseline justify-between gap-[var(--space-3)]">
+          <h2
+            id="historial-pausas-titulo"
+            className="m-0 text-[length:var(--font-size-lg)] font-extrabold text-[var(--text-primary)]"
           >
-            ← Volver al cronograma
-          </button>
+            Historial
+          </h2>
 
-          <header className="flex flex-col gap-[var(--space-4)] md:flex-row md:items-start md:justify-between">
-            <div>
-              <p className="m-0 text-[12px] font-bold tracking-[0.04em] text-[var(--brand-600)] uppercase">
-                Cronograma
-              </p>
-              <h1 className="mt-[var(--space-1)] mb-0 text-[26px] font-extrabold text-[var(--text-primary)] md:text-[30px]">
-                Pausas administrativas
-              </h1>
-              <p className="mt-[var(--space-2)] mb-0 max-w-[680px] text-[13px] leading-[1.6] text-[var(--text-muted)]">
-                Consulta el historial de pausas administrativas registradas.
-              </p>
-            </div>
-            <Button className="shrink-0" onClick={handleCreatePause}>
-              Registrar pausa
-            </Button>
-          </header>
-
-          {isLoading ? (
-            <p className="text-[14px] text-[var(--text-muted)] mt-4">Cargando pausas administrativas...</p>
-          ) : pauses.length > 0 ? (
-            <AdministrativePauseList pauses={pauses} onAnnul={handleAnnulPause} />
-          ) : (
-            <section className="rounded-[var(--radius-lg)] border border-dashed border-[var(--surface-border)] bg-[var(--surface-card)] px-[var(--space-5)] py-[var(--space-8)] text-center">
-              <h2 className="m-0 text-[16px] font-bold text-[var(--text-primary)]">
-                No hay pausas para mostrar
-              </h2>
-              <p className="mx-auto mt-[var(--space-2)] mb-0 max-w-[520px] text-[12px] leading-[1.6] text-[var(--text-muted)]">
-                Cuando existan pausas administrativas registradas, aparecerán en este historial.
-              </p>
-            </section>
+          {!isLoading && !loadError && (
+            <p className="m-0 text-[length:var(--font-size-sm)] font-semibold text-[var(--text-secondary)] tabular-nums">
+              {pauses.length} {pauses.length === 1 ? 'pausa' : 'pausas'}
+            </p>
           )}
         </div>
-      </div>
-      
+
+        {isLoading ? (
+          <>
+            <p role="status" className="sr-only">
+              Cargando pausas administrativas...
+            </p>
+            <div className="grid gap-[var(--space-4)] lg:grid-cols-2" aria-hidden="true">
+              {[0, 1].map((index) => (
+                <div
+                  key={index}
+                  className="h-[240px] animate-pulse rounded-[var(--radius-xl)] border border-[var(--surface-border)] bg-[var(--surface-card)] motion-reduce:animate-none"
+                />
+              ))}
+            </div>
+          </>
+        ) : loadError ? (
+          <PanelNotice
+            tone="danger"
+            icon={AlertTriangle}
+            title="Historial no disponible"
+            role="alert"
+          >
+            {loadError}
+          </PanelNotice>
+        ) : pauses.length > 0 ? (
+          <AdministrativePauseList
+            pauses={pauses}
+            disabled={isSubmitting}
+            onAnnul={handleAnnulPause}
+          />
+        ) : (
+          <PanelNotice
+            tone="neutral"
+            icon={CalendarOff}
+            title="No hay pausas para mostrar"
+            role="status"
+          >
+            Cuando existan pausas administrativas registradas, aparecerán en
+            este historial.
+          </PanelNotice>
+        )}
+      </section>
+
       <ConfirmationDialog
         open={Boolean(selectedPause)}
         title="Anular pausa administrativa"

@@ -28,6 +28,7 @@ export const hookStub = {
   values: {},
   initials: [],
   setters: [],
+  effects: [],
   index: 0,
 };
 
@@ -54,6 +55,8 @@ export function mockReact(actual) {
     },
     useEffect(...args) {
       if (!hookStub.active) return actual.useEffect(...args);
+      // Se registra para que la prueba decida si ejecutarlo.
+      hookStub.effects.push(args[0]);
       return undefined;
     },
     useRef(initial) {
@@ -70,6 +73,7 @@ export function renderDirect(Component, values = {}, props = {}) {
     values,
     initials: [],
     setters: [],
+    effects: [],
     index: 0,
   });
 
