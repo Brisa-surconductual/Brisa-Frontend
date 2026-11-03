@@ -50,13 +50,9 @@ export function ScheduleCard({ schedule, panelPath }) {
       <Link
         to={panelPath}
         state={{ schedule }}
-        className="mt-auto inline-flex w-fit items-center rounded-[var(--radius-sm)] text-[length:var(--font-size-sm)] font-bold no-underline after:absolute after:inset-0 after:rounded-[var(--radius-xl)] after:content-['']"
+        className="mt-auto inline-flex w-fit items-center rounded-[var(--radius-sm)] text-[length:var(--font-size-sm)] font-bold text-[var(--brand-600)] no-underline after:absolute after:inset-0 after:rounded-[var(--radius-xl)] after:content-['']"
       >
-        {/*
-         * El color va en el span: globals.css fija `a { color: inherit }`
-         * fuera de capa y anula las utilidades de color sobre <a>.
-         */}
-        <span className="inline-flex items-center gap-[var(--space-2)] text-[var(--brand-600)]">
+        <span className="inline-flex items-center gap-[var(--space-2)]">
           Ver panel de gestión
           <span className="sr-only"> de {nombre}</span>
           <ArrowRight

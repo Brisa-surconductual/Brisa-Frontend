@@ -1,16 +1,35 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import {
+  AlertTriangle,
+  CalendarRange,
+  CircleCheck,
+  FileStack,
+  ListOrdered,
+  Pencil,
+  Plus,
+  SearchX,
+  Trash2,
+} from 'lucide-react';
 
 import { Button } from '@/shared/components/ui/Button/index.js';
-import { TextField } from '@/shared/components/ui/TextField/index.js';
 import { ConfirmationDialog } from '@/shared/components/ui/ConfirmationDialog/index.js';
 import {updateUnitTemporal} from '../../api/unidadTemporal/updateUnitTemporal';
-import {FormAlert} from '../../../../shared/components/ui/FromAlert/FromALert'
 import {deleteUnitTemporal} from '../../api/unidadTemporal/delelteUnitTemporal';
 
+import { BackButton } from '@/features/cronograma/components/BackButton/index.js';
 import { ContentRow } from '@/features/cronograma/components/ContentRow/index.js';
+import { EditTemporalUnitDialog } from '@/features/cronograma/components/EditTemporalUnitDialog/index.js';
+import { PanelNotice } from '@/features/cronograma/components/PanelNotice/index.js';
+import { SchedulePageHeader } from '@/features/cronograma/components/SchedulePageHeader/index.js';
+import { TemporalUnitStatusBadge } from '@/features/cronograma/components/TemporalUnitStatusBadge/index.js';
 import { obtenerContenidosUnidadTemporal } from '@/features/cronograma/api/contenidoUnidadTemporal/obtenerContenidosUnidadTemporal.jsx';
 import { SCHEDULED_CONTENT_STATUS } from '@/features/cronograma/types/contentTypes.js';
+
+const PAGE_CLASS =
+  'mx-auto flex w-full max-w-[1200px] flex-col gap-[var(--space-6)] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]';
+const CARD_CLASS =
+  'rounded-[var(--radius-xl)] border border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-4)] shadow-[var(--shadow-sm)] sm:p-[var(--space-5)] md:p-[var(--space-6)]';
 
 function getScheduledContentStatus(
   availableFrom,
@@ -179,214 +198,221 @@ export function TemporalUnitDetailPage() {
     }
   }
 
+  // Tras eliminar, la unidad ya no existe: sus acciones quedan
+  // deshabilitadas mientras se regresa al panel.
+  const isDeleted = Boolean(successMessage);
+
   if (!unit) {
     return (
-      <div className="flex flex-col items-center justify-center px-[var(--space-4)] py-[var(--space-10)] text-center">
-        <p className="text-[var(--text-muted)] font-medium mb-4">Unidad no encontrada o datos perdidos.</p>
-        <Button onClick={() => navigate('/app/administrativo/cronograma')}>Volver a cronogramas</Button>
+      <div className={PAGE_CLASS}>
+        <PanelNotice
+          tone="neutral"
+          icon={SearchX}
+          title="Unidad no disponible"
+          role="status"
+          action={
+            <Button
+              variant="secondary"
+              onClick={() => navigate('/app/administrativo/cronograma')}
+            >
+              Volver a cronogramas
+            </Button>
+          }
+        >
+          Unidad no encontrada o datos perdidos.
+        </PanelNotice>
       </div>
     );
   }
 
   return (
-    <div className="bg-[var(--surface-bg)] flex flex-col">
+    <div className={PAGE_CLASS}>
+      <BackButton onClick={handleBack}>
+        Volver al panel del cronograma
+      </BackButton>
 
-      <div className="flex-1 pb-[var(--space-8)]">
-        <div className="mx-auto w-full max-w-[1000px] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]">
-          
-          <button onClick={handleBack} className="mb-[var(--space-5)] text-[13px] font-bold text-[var(--brand-600)] transition-colors hover:text-[var(--brand-700)]">
-            ← Volver al panel del cronograma
-          </button>
-
-          <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-5 pb-[var(--space-6)] border-b border-[var(--surface-border)]">
-            <div className="w-full">
-              
-              <div className="mb-4 flex flex-col gap-2">
-                <FormAlert message={actionError} type="error" />
-                <FormAlert message={successMessage} type="success" />
-              </div>
-
-              <div className="flex items-center gap-3 mb-[var(--space-2)]">
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--brand-100)] text-[12px] font-extrabold text-[var(--brand-700)]">
-                  {unit.orden ?? '-'}
-                </span>
-                <p className="m-0 text-[12px] font-bold tracking-[0.04em] text-[var(--text-muted)] uppercase">
-                  Unidad Temporal
-                </p>
-              </div>
-              
-              <h1 className="m-0 text-[26px] font-extrabold text-[var(--text-primary)] md:text-[30px]">
-                {unit.nombreUnidadTemporal}
-              </h1>
-              
-              <div className="mt-[var(--space-2)] flex flex-wrap items-center gap-3 text-[13px] text-[var(--text-muted)] font-medium">
-                <span className="bg-[var(--surface-card)] border border-[var(--surface-border)] px-2 py-1 rounded-md">
-                  Vigencia: {unit.fechaInicio?.split('T')[0]} al {unit.fechaFin?.split('T')[0]}
-                </span>
-                <span className={`px-2 py-1 rounded-md font-bold uppercase tracking-wider text-[10px] ${
-                  unit.status === 'ACTIVA' ? 'bg-[var(--brand-50)] text-[var(--brand-700)]' : 
-                  unit.status === 'COMPLETADA' ? 'bg-[var(--success-bg)] text-[var(--success-text)]' : 
-                  'bg-[var(--surface-hover)] text-[var(--text-muted)]'
-                }`}>
-                  {unit.status}
-                </span>
-              </div>
-            </div>
-            
-            <div className="flex w-full sm:w-auto gap-3 shrink-0">
-              <Button variant="secondary" onClick={() => { setFormError(''); setIsEditModalOpen(true); }} className="flex-1 sm:flex-none">
+      <div className={CARD_CLASS}>
+        <SchedulePageHeader
+          eyebrow="Unidad temporal"
+          title={unit.nombreUnidadTemporal}
+          badge={
+            unit.status ? (
+              <TemporalUnitStatusBadge status={unit.status} />
+            ) : null
+          }
+          actions={
+            <>
+              <Button
+                variant="secondary"
+                disabled={isDeleted}
+                onClick={() => { setFormError(''); setIsEditModalOpen(true); }}
+              >
+                <Pencil size={18} strokeWidth={1.8} aria-hidden="true" />
                 Editar
               </Button>
-              <Button variant="danger" onClick={handleDeleteClick} className="flex-1 sm:flex-none">
-                Eliminar
-              </Button>
-            </div>
-          </header>
-
-          <section className="mt-[var(--space-8)]">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-[18px] font-extrabold text-[var(--text-primary)] m-0">
-                Contenidos Asociados
-              </h2>
-              <Button variant="secondary" onClick={handleAssociateContent} className="text-[13px]">
-                + Asociar contenido
-              </Button>
-            </div>
-            
-            {contentsError ? (
-              <p
-                className="text-[13px] font-semibold text-[var(--danger)]"
-                role="alert"
+              <Button
+                variant="secondary"
+                disabled={isDeleted}
+                onClick={handleDeleteClick}
               >
-                {contentsError}
-              </p>
-            ) : isLoadingContents ? (
-              <p className="text-[14px] text-[var(--text-muted)]">
-                Cargando contenidos asociados...
-              </p>
-            ) : associatedContents.length > 0 ? (
-              <ul className="m-0 grid list-none gap-[var(--space-2)] p-0">
-                {associatedContents.map((content) => (
-                  <li key={content.idContenidoCronograma}>
-                    <ContentRow
-                      order={content.ordenContenido}
-                      title={content.nombreContenido}
-                      contentType={content.tipo}
-                      status={getScheduledContentStatus(
-                        content.fechaInicioDisponibilidad,
-                        content.fechaFinDisponibilidad,
-                      )}
-                      subtitle={`${formatAvailability(
-                        content.fechaInicioDisponibilidad,
-                      )} → ${formatAvailability(
-                        content.fechaFinDisponibilidad,
-                      )}`}
-                    />
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="rounded-[var(--radius-lg)] border border-dashed border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-8)] text-center shadow-sm">
-                <p className="m-0 text-[14px] text-[var(--text-muted)]">
-                  Aún no hay contenidos asociados a esta unidad temporal.
-                </p>
-              </div>
-)}
-          </section>
+                {/* Peso visual secundario; el color y el ícono indican riesgo. */}
+                <span className="inline-flex items-center gap-[var(--space-2)] text-[var(--danger-text)]">
+                  <Trash2 size={18} strokeWidth={1.8} aria-hidden="true" />
+                  Eliminar
+                </span>
+              </Button>
+            </>
+          }
+        >
+          <dl className="m-0 mt-[var(--space-2)] flex flex-wrap gap-x-[var(--space-6)] gap-y-[var(--space-2)] text-[length:var(--font-size-sm)]">
+            <div className="flex items-center gap-[var(--space-2)]">
+              <dt className="inline-flex items-center gap-[var(--space-2)] text-[var(--text-muted)]">
+                <ListOrdered size={16} strokeWidth={1.8} aria-hidden="true" />
+                Orden
+              </dt>
+              <dd className="m-0 font-semibold text-[var(--text-primary)] tabular-nums">
+                {unit.orden ?? '-'}
+              </dd>
+            </div>
 
-        </div>
+            <div className="flex items-center gap-[var(--space-2)]">
+              <dt className="inline-flex items-center gap-[var(--space-2)] text-[var(--text-muted)]">
+                <CalendarRange size={16} strokeWidth={1.8} aria-hidden="true" />
+                Vigencia
+              </dt>
+              <dd className="m-0 font-semibold text-[var(--text-primary)] tabular-nums">
+                {unit.fechaInicio?.split('T')[0]} al {unit.fechaFin?.split('T')[0]}
+              </dd>
+            </div>
+
+            <div className="flex items-center gap-[var(--space-2)]">
+              <dt className="inline-flex items-center gap-[var(--space-2)] text-[var(--text-muted)]">
+                <FileStack size={16} strokeWidth={1.8} aria-hidden="true" />
+                Contenidos
+              </dt>
+              <dd className="m-0 font-semibold text-[var(--text-primary)] tabular-nums">
+                {isLoadingContents
+                  ? '…'
+                  : contentsError
+                    ? '—'
+                    : associatedContents.length}
+              </dd>
+            </div>
+          </dl>
+        </SchedulePageHeader>
       </div>
 
-      {isEditModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-[var(--surface-card)] rounded-[var(--radius-xl)] shadow-lg w-full max-w-[500px] overflow-hidden animate-fade-in">
-            <div className="px-6 py-5 border-b border-[var(--surface-border)] flex justify-between items-center">
-              <h3 className="m-0 text-[18px] font-bold text-[var(--text-primary)]">Modificar Unidad</h3>
-              <button onClick={() => setIsEditModalOpen(false)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] font-bold">✕</button>
-            </div>
-            
-            <form onSubmit={handleUpdateSubmit} className="p-6 flex flex-col gap-5">
-              <TextField 
-                label="Nombre de la unidad" 
-                name="nombre" 
-                value={editForm.nombre} 
-                onChange={handleEditChange} 
-                required 
-              />
-              <div className="grid grid-cols-2 gap-4">
-                <TextField 
-                  label="Fecha inicio" 
-                  name="fecha_inicio" 
-                  type="date" 
-                  value={editForm.fecha_inicio} 
-                  onChange={handleEditChange} 
-                  required 
-                />
-                <TextField 
-                  label="Fecha fin" 
-                  name="fecha_fin" 
-                  type="date" 
-                  value={editForm.fecha_fin} 
-                  onChange={handleEditChange} 
-                  required 
-                />
-              </div>
-              
-              <div className="mt-2 flex justify-end gap-3 pt-2">
-                <Button type="button" variant="secondary" onClick={() => setIsEditModalOpen(false)}>Cancelar</Button>
-                <Button type="submit" loading={isSubmitting}>Guardar cambios</Button>
-              </div>
-            </form>
-          </div>
-        </div>
+      {actionError && (
+        <PanelNotice
+          tone="danger"
+          icon={AlertTriangle}
+          title="No se pudo eliminar la unidad"
+          role="alert"
+        >
+          {actionError}
+        </PanelNotice>
       )}
 
-      {isEditModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-[var(--surface-card)] rounded-[var(--radius-xl)] shadow-lg w-full max-w-[500px] overflow-hidden animate-fade-in">
-            <div className="px-6 py-5 border-b border-[var(--surface-border)] flex justify-between items-center">
-              <h3 className="m-0 text-[18px] font-bold text-[var(--text-primary)]">Modificar Unidad</h3>
-              <button onClick={() => setIsEditModalOpen(false)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] font-bold">✕</button>
-            </div>
-            
-            <form onSubmit={handleUpdateSubmit} className="p-6 flex flex-col gap-4">
-              
-              <FormAlert message={formError} />
-
-              <TextField 
-                label="Nombre de la unidad" 
-                name="nombre" 
-                value={editForm.nombre} 
-                onChange={handleEditChange} 
-                required 
-              />
-              <div className="grid grid-cols-2 gap-4">
-                <TextField 
-                  label="Fecha inicio" 
-                  name="fecha_inicio" 
-                  type="date" 
-                  value={editForm.fecha_inicio} 
-                  onChange={handleEditChange} 
-                  required 
-                />
-                <TextField 
-                  label="Fecha fin" 
-                  name="fecha_fin" 
-                  type="date" 
-                  value={editForm.fecha_fin} 
-                  onChange={handleEditChange} 
-                  required 
-                />
-              </div>
-              
-              <div className="mt-2 flex justify-end gap-3 pt-2">
-                <Button type="button" variant="secondary" onClick={() => setIsEditModalOpen(false)}>Cancelar</Button>
-                <Button type="submit" loading={isSubmitting}>Guardar cambios</Button>
-              </div>
-            </form>
-          </div>
-        </div>
+      {successMessage && (
+        <PanelNotice tone="success" icon={CircleCheck} role="status">
+          {successMessage} Regresando al panel...
+        </PanelNotice>
       )}
+
+      <section
+        aria-labelledby="contenidos-asociados-titulo"
+        aria-busy={isLoadingContents}
+        className={`${CARD_CLASS} flex flex-col gap-[var(--space-5)]`}
+      >
+        <div className="flex flex-col gap-[var(--space-4)] sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <h2
+              id="contenidos-asociados-titulo"
+              className="m-0 text-[length:var(--font-size-lg)] font-extrabold text-[var(--text-primary)]"
+            >
+              Contenidos asociados
+            </h2>
+            <p className="mt-[var(--space-1)] mb-0 text-[length:var(--font-size-sm)] leading-[var(--line-height-normal)] text-[var(--text-secondary)]">
+              Contenidos programados en esta unidad y su rango de
+              disponibilidad.
+            </p>
+          </div>
+
+          <Button
+            onClick={handleAssociateContent}
+            disabled={isDeleted}
+            className="shrink-0"
+          >
+            <Plus size={18} strokeWidth={2} aria-hidden="true" />
+            Asociar contenido
+          </Button>
+        </div>
+
+        {contentsError ? (
+          <PanelNotice
+            tone="danger"
+            icon={AlertTriangle}
+            title="Contenidos no disponibles"
+            role="alert"
+          >
+            {contentsError}
+          </PanelNotice>
+        ) : isLoadingContents ? (
+          <>
+            <p role="status" className="sr-only">
+              Cargando contenidos asociados...
+            </p>
+            <div className="flex flex-col gap-[var(--space-2)]" aria-hidden="true">
+              {[0, 1].map((index) => (
+                <div
+                  key={index}
+                  className="h-[64px] animate-pulse rounded-[var(--radius-lg)] border border-[var(--surface-border)] bg-[var(--surface-hover)] motion-reduce:animate-none"
+                />
+              ))}
+            </div>
+          </>
+        ) : associatedContents.length > 0 ? (
+          <ul className="m-0 grid list-none gap-[var(--space-2)] p-0">
+            {associatedContents.map((content) => (
+              <li key={content.idContenidoCronograma}>
+                <ContentRow
+                  order={content.ordenContenido}
+                  title={content.nombreContenido}
+                  contentType={content.tipo}
+                  status={getScheduledContentStatus(
+                    content.fechaInicioDisponibilidad,
+                    content.fechaFinDisponibilidad,
+                  )}
+                  subtitle={`${formatAvailability(
+                    content.fechaInicioDisponibilidad,
+                  )} al ${formatAvailability(
+                    content.fechaFinDisponibilidad,
+                  )}`}
+                />
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <PanelNotice
+            tone="neutral"
+            icon={FileStack}
+            title="Sin contenidos asociados"
+            role="status"
+          >
+            Aún no hay contenidos asociados a esta unidad temporal.
+          </PanelNotice>
+        )}
+      </section>
+
+      <EditTemporalUnitDialog
+        open={isEditModalOpen}
+        form={editForm}
+        error={formError}
+        isSubmitting={isSubmitting}
+        onChange={handleEditChange}
+        onSubmit={handleUpdateSubmit}
+        onClose={() => setIsEditModalOpen(false)}
+      />
 
       <ConfirmationDialog
         open={isDeleteDialogOpen}

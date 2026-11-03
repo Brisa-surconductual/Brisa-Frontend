@@ -1,37 +1,10 @@
 import {
   ArrowRight,
   CalendarDays,
-  CircleCheck,
-  CircleDot,
-  CircleHelp,
-  Lock,
   UserCheck,
 } from 'lucide-react';
 
-import { TEMPORAL_UNIT_STATUS_LABEL } from '@/features/cronograma/types/scheduleTypes.js';
-
-/*
- * Presentación del estado temporal que calcula el panel. Ícono y
- * etiqueta acompañan al tono: el color no comunica solo.
- */
-const STATUS_PRESENTATION = Object.freeze({
-  ACTIVA: Object.freeze({
-    Icon: CircleDot,
-    className: 'border-[var(--brand-200)] bg-[var(--brand-50)] text-[var(--brand-700)]',
-  }),
-  COMPLETADA: Object.freeze({
-    Icon: CircleCheck,
-    className: 'border-[var(--success-border)] bg-[var(--success-bg)] text-[var(--success-text)]',
-  }),
-  BLOQUEADA: Object.freeze({
-    Icon: Lock,
-    className: 'border-[var(--surface-border)] bg-[var(--surface-hover)] text-[var(--text-secondary)]',
-  }),
-  POR_DEFINIR: Object.freeze({
-    Icon: CircleHelp,
-    className: 'border-[var(--warning-border)] bg-[var(--warning-bg)] text-[var(--warning-text)]',
-  }),
-});
+import { TemporalUnitStatusBadge } from '../TemporalUnitStatusBadge/index.js';
 
 export function TemporalUnitCard({ unit, onViewDetails }) {
   const {
@@ -42,11 +15,6 @@ export function TemporalUnitCard({ unit, onViewDetails }) {
     status,
     esUtilizadoPorUsuario,
   } = unit;
-
-  const presentation =
-    STATUS_PRESENTATION[status] ?? STATUS_PRESENTATION.POR_DEFINIR;
-  const StatusIcon = presentation.Icon;
-  const statusLabel = TEMPORAL_UNIT_STATUS_LABEL[status] ?? status;
 
   return (
     <article className="flex flex-col gap-[var(--space-4)] rounded-[var(--radius-xl)] border border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-4)] shadow-[var(--shadow-sm)] transition-[border-color] duration-150 hover:border-[var(--brand-300)] motion-reduce:transition-none sm:flex-row sm:items-center sm:justify-between md:p-[var(--space-5)]">
@@ -64,12 +32,7 @@ export function TemporalUnitCard({ unit, onViewDetails }) {
               {nombreUnidadTemporal}
             </h3>
 
-            <span
-              className={`inline-flex items-center gap-[var(--space-1)] rounded-[var(--radius-full)] border px-[var(--space-2)] py-[2px] text-[length:var(--font-size-xs)] font-bold ${presentation.className}`}
-            >
-              <StatusIcon size={13} strokeWidth={2} aria-hidden="true" />
-              {statusLabel}
-            </span>
+            <TemporalUnitStatusBadge status={status} />
           </div>
 
           <div className="flex flex-wrap items-center gap-x-[var(--space-4)] gap-y-[var(--space-1)] text-[length:var(--font-size-sm)] text-[var(--text-secondary)]">
