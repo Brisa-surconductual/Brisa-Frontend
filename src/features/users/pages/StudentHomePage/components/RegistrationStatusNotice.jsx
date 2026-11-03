@@ -85,42 +85,46 @@ export function RegistrationStatusNotice({
   const statusLabel = label ?? estadoRegistro;
 
   return (
-    <>
-      <div className={`flex items-start gap-[var(--space-3)] rounded-[var(--radius-md)] border p-[var(--space-3)] md:p-[var(--space-4)] ${toneClass.box}`}>
-        <Icon size={20} strokeWidth={1.8} className="mt-px shrink-0" aria-hidden="true" />
+    <section
+      aria-labelledby="estado-cuenta-titulo"
+      className={`flex flex-col gap-[var(--space-3)] rounded-[var(--radius-xl)] border p-[var(--space-4)] sm:flex-row sm:items-start sm:gap-[var(--space-4)] md:p-[var(--space-5)] ${toneClass.box}`}
+    >
+      <span
+        className="flex h-[40px] w-[40px] shrink-0 items-center justify-center rounded-[var(--radius-full)] bg-[var(--surface-card)]"
+        aria-hidden="true"
+      >
+        <Icon size={20} strokeWidth={1.8} />
+      </span>
 
-        <div>
-          <strong className="block text-[13px] md:text-[14px]">
-            {title}
-          </strong>
+      <div className="flex min-w-0 flex-1 flex-col gap-[var(--space-1)]">
+        <p
+          id="estado-cuenta-titulo"
+          className="m-0 text-[length:var(--font-size-xs)] font-bold tracking-[var(--letter-spacing-wide)] uppercase opacity-90"
+        >
+          Estado de tu cuenta
+        </p>
 
-          <p className="mt-[var(--space-1)] mb-0 text-[12px] leading-[1.5] opacity-90 md:text-[13px]">
-            {description}
-          </p>
+        <strong className="block text-[length:var(--font-size-base)] leading-[var(--line-height-snug)] font-extrabold">
+          {title}
+        </strong>
 
-          {view === REGISTRATION_STATUS_VIEW.PENDING_CONSENT && (
-            <Button
-              variant="secondary"
-              size="small"
-              className="mt-[var(--space-3)]"
-              onClick={onGoToConsent}
-            >
+        <p className="m-0 text-[length:var(--font-size-sm)] leading-[var(--line-height-normal)]">
+          {description}
+        </p>
+
+        {view === REGISTRATION_STATUS_VIEW.PENDING_CONSENT && (
+          <div className="mt-[var(--space-2)]">
+            <Button variant="secondary" onClick={onGoToConsent}>
               Revisar consentimiento
             </Button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
-      <div className="flex items-center justify-between gap-[var(--space-3)]">
-        <span className="text-[13px] font-bold text-[var(--text-primary)] md:text-[14px]">
-          Estado de tu cuenta
-        </span>
-
-        <span className={`inline-flex items-center gap-[var(--space-1)] whitespace-nowrap rounded-[var(--radius-full)] border px-[var(--space-2)] py-[3px] font-[var(--font-mono)] text-[10px] font-bold ${toneClass.box}`}>
-          <span className={`h-[6px] w-[6px] shrink-0 rounded-[var(--radius-full)] ${toneClass.dot}`} aria-hidden="true" />
-          {statusLabel}
-        </span>
-      </div>
-    </>
+      <span className="inline-flex w-fit shrink-0 items-center gap-[var(--space-1)] self-start rounded-[var(--radius-full)] border border-current bg-[var(--surface-card)] px-[var(--space-2)] py-[3px] font-[var(--font-mono)] text-[length:var(--font-size-xs)] font-bold whitespace-nowrap">
+        <span className={`h-[6px] w-[6px] shrink-0 rounded-[var(--radius-full)] ${toneClass.dot}`} aria-hidden="true" />
+        {statusLabel}
+      </span>
+    </section>
   );
 }
