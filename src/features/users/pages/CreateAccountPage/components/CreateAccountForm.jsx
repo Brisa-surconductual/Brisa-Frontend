@@ -102,7 +102,7 @@ export function CreateAccountForm({
 
         <Link
           to="/login"
-          className="rounded-[var(--radius-sm)] font-semibold text-[var(--brand-600)] no-underline hover:underline focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-[var(--brand-500)]"
+          className="inline-flex min-h-[44px] items-center rounded-[var(--radius-sm)] px-[var(--space-1)] font-semibold text-[var(--brand-600)] no-underline hover:underline focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-[var(--brand-500)]"
         >
           Iniciar sesión
         </Link>
