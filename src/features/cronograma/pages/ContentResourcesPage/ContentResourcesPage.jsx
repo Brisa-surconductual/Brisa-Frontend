@@ -32,6 +32,7 @@ import { reordenarRecursosContenido } from '@/features/cronograma/api/recursoCon
 
 import { actualizarRecursoContenido } from '@/features/cronograma/api/recursoContenido/actualizarRecursoContenido.jsx';
 import { eliminarRecursoContenido } from '@/features/cronograma/api/recursoContenido/eliminarRecursoContenido.jsx';
+import { getApiErrorMessage } from '../../utils/apiErrorMessage.js';
 import { contentFormReturnPath } from '../../utils/contentFormReturnPath.js';
 import {
   mapCatalogContent,

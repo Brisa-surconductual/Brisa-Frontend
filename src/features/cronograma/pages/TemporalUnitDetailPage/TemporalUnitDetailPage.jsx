@@ -141,8 +141,6 @@ export function TemporalUnitDetailPage() {
     if (editForm.fecha_fin) payload.fecha_fin = editForm.fecha_fin;
 
     try {
-      console.log('Enviando actualización al backend:', payload);
-      
       await updateUnitTemporal(payload);
       
       setUnit({
@@ -156,7 +154,12 @@ export function TemporalUnitDetailPage() {
     } catch (error) {
       const mensajeDelBack = error.response?.data?.message || 'Ocurrió un error inesperado';
       setFormError(Array.isArray(mensajeDelBack) ? mensajeDelBack[0] : mensajeDelBack);
-      console.error('Detalle técnico:', error);
+      // Solo el estado HTTP: el error de axios incluye el
+      // payload y la cabecera CSRF.
+      console.error(
+        'Error al actualizar la unidad. Estado HTTP:',
+        error?.response?.status ?? 'sin respuesta',
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -170,8 +173,6 @@ export function TemporalUnitDetailPage() {
     setActionError(''); // Limpiamos errores previos
     
     try {
-      console.log('Eliminando unidad:', unit.idUnidadTemporal);
-      
       await deleteUnitTemporal(unit.idUnidadTemporal);
       
       setIsDeleteDialogOpen(false);
@@ -180,7 +181,12 @@ export function TemporalUnitDetailPage() {
         handleBack();
       }, 1500);
     } catch (error) {
-      console.error('Detalle técnico de eliminación:', error);
+      // Solo el estado HTTP: el error de axios incluye el
+      // payload y la cabecera CSRF.
+      console.error(
+        'Error al eliminar la unidad. Estado HTTP:',
+        error?.response?.status ?? 'sin respuesta',
+      );
       
       const data = error.response?.data;
       let mensajeDelBack = 'No fue posible eliminar la unidad temporal.';

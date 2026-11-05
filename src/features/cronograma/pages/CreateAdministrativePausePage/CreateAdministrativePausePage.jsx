@@ -32,8 +32,6 @@ export function CreateAdministrativePausePage() {
         };
 
         try {
-          console.log('Registrando pausa para usuario:', idUsuario, payload);
-          
           await registerAdministrativeBreak(idUsuario, payload);
 
           setSuccessMessage('¡Pausa administrativa registrada correctamente!');
@@ -43,7 +41,12 @@ export function CreateAdministrativePausePage() {
           }, 1500);
 
         } catch (error) {
-          console.error('Error al registrar pausa:', error);
+          // Solo el estado HTTP: el error de axios incluye el
+          // payload (motivo de la pausa) y la cabecera CSRF.
+          console.error(
+            'Error al registrar pausa. Estado HTTP:',
+            error?.response?.status ?? 'sin respuesta',
+          );
           
           const data = error.response?.data;
           let mensajeDelBack = 'No fue posible registrar la pausa administrativa.';

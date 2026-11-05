@@ -31,7 +31,12 @@ export function AdministrativePauseHistoryPage() {
         const dataArray = Array.isArray(response) ? response : (response?.data || []);
         setPauses(dataArray);
       } catch (error) {
-        console.error("Error cargando pausas administrativas:", error);
+        // Solo el estado HTTP: el error de axios incluye la
+        // cabecera CSRF de la sesión.
+        console.error(
+          'Error cargando pausas administrativas. Estado HTTP:',
+          error?.response?.status ?? 'sin respuesta',
+        );
       } finally {
         setIsLoading(false);
       }
@@ -57,8 +62,6 @@ export function AdministrativePauseHistoryPage() {
     const { idUsuario, idPausaAdministrativa } = selectedPause;
 
     try {
-      console.log('Anulando pausa:', { idUsuario, idPausaAdministrativa });
-
       await annularAdministrativeBreak(idUsuario, idPausaAdministrativa);
 
       setPauses((prevPauses) =>
@@ -73,7 +76,12 @@ export function AdministrativePauseHistoryPage() {
       setSelectedPause(null);
 
     } catch (error) {
-      console.error('Error al anular la pausa:', error);
+      // Solo el estado HTTP: el error de axios incluye la URL
+      // con el identificador del estudiante y la cabecera CSRF.
+      console.error(
+        'Error al anular la pausa. Estado HTTP:',
+        error?.response?.status ?? 'sin respuesta',
+      );
 
       const data = error.response?.data;
       let mensajeDelBack = 'No fue posible anular la pausa administrativa.';

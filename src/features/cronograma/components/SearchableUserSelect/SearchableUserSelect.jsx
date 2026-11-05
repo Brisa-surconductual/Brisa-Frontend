@@ -22,7 +22,12 @@ export function SearchableUserSelect({ value, onChange }) {
         setResults(dataArray);
         setIsOpen(dataArray.length > 0); 
       } catch (error) {
-        console.error('Error buscando usuarios:', error);
+        // Solo el estado HTTP: el error de axios incluye el término
+        // buscado y la cabecera CSRF.
+        console.error(
+          'Error buscando usuarios. Estado HTTP:',
+          error?.response?.status ?? 'sin respuesta',
+        );
         setResults([]);
         setIsOpen(false);
       }
@@ -36,7 +41,7 @@ export function SearchableUserSelect({ value, onChange }) {
     
     setQuery(email);       
     setIsOpen(false);      
-    onChange(user.idUsuario); e
+    onChange(user.idUsuario);
   }
 
   return (
