@@ -1,15 +1,17 @@
 import { AdministrativePauseCard } from '@/features/cronograma/components/AdministrativePauseCard/index.js';
 
-export function AdministrativePauseList({ pauses, onAnnul }) {
+export function AdministrativePauseList({ pauses, onAnnul, disabled = false }) {
   return (
-    <div className="grid gap-[var(--space-4)] lg:grid-cols-2">
+    <ul className="m-0 grid list-none gap-[var(--space-4)] p-0 lg:grid-cols-2">
       {pauses.map((pause) => (
-        <AdministrativePauseCard
-          key={pause.idPausaAdministrativa} // Llave real del backend
-          pause={pause} // Le pasamos todo el objeto directo
-          onAnnul={() => onAnnul?.(pause)}
-        />
+        <li key={pause.idPausaAdministrativa}>
+          <AdministrativePauseCard
+            pause={pause}
+            disabled={disabled}
+            onAnnul={() => onAnnul?.(pause)}
+          />
+        </li>
       ))}
-    </div>
+    </ul>
   );
 }

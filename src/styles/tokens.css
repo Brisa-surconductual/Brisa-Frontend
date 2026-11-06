@@ -108,6 +108,50 @@
   --shadow-lg:
     0 8px 24px rgb(22 21 16 / 10%),
     0 2px 6px rgb(22 21 16 / 6%);
+
+  /*
+   * Rediseño v2 (Etapa 2). Tokens aditivos: no modifican los
+   * existentes, así las pantallas aún no rediseñadas no cambian.
+   */
+
+  /* Escala tipográfica */
+  --font-size-xs: 12px;
+  --font-size-sm: 13px;
+  --font-size-md: 14px;
+  --font-size-base: 15px;
+  --font-size-lg: 17px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 30px;
+  --font-size-4xl: 36px;
+
+  --line-height-tight: 1.15;
+  --line-height-snug: 1.3;
+  --line-height-normal: 1.55;
+  --line-height-relaxed: 1.7;
+
+  --letter-spacing-tight: -0.02em;
+  --letter-spacing-wide: 0.08em;
+
+  /* Radios y elevación de composición */
+  --radius-3xl: 28px;
+  --shadow-xl:
+    0 24px 48px -12px rgb(22 21 16 / 18%),
+    0 4px 12px rgb(22 21 16 / 6%);
+
+  /* Anillo de foco (complementa a :focus-visible) */
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--brand-500) 30%, transparent);
+
+  /* Superficie de identidad (panel de marca) */
+  --surface-brand: var(--brand-700);
+  --surface-brand-raised: var(--brand-600);
+  --surface-brand-line: color-mix(in srgb, var(--neutral-0) 16%, transparent);
+  --text-on-brand: var(--neutral-0);
+  --text-on-brand-muted: var(--brand-100);
+
+  /* Contenedores de composición */
+  --container-auth: 1080px;
+  --container-form: 420px;
 }
 
 [data-theme="dark"] {
@@ -157,4 +201,14 @@
   --button-secondary-border: #514b3f;
   --button-secondary-hover-bg: var(--surface-hover);
   --button-secondary-hover-border: #6a6253;
+
+  /* Rediseño v2: la escala de marca se invierte en oscuro */
+  --shadow-xl:
+    0 24px 48px -12px rgb(0 0 0 / 60%),
+    0 4px 12px rgb(0 0 0 / 40%);
+  --surface-brand: #0c3c37;
+  --surface-brand-raised: #11534c;
+  --surface-brand-line: color-mix(in srgb, #eaf6f5 14%, transparent);
+  --text-on-brand: #eaf6f5;
+  --text-on-brand-muted: #9ed9d2;
 }

@@ -1,4 +1,8 @@
+import { FileStack } from 'lucide-react';
+
 import { PsychoeducationalContentCard } from '@/features/cronograma/components/PsychoeducationalContentCard/index.js';
+
+import { PanelNotice } from '../PanelNotice/index.js';
 
 export function PsychoeducationalContentList({
   contents,
@@ -8,32 +12,34 @@ export function PsychoeducationalContentList({
 }) {
   if (contents.length === 0) {
     return (
-      <section className="rounded-[var(--radius-xl)] border border-dashed border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-7)] text-center">
-        <h2 className="m-0 text-[17px] font-extrabold text-[var(--text-primary)]">
-          No hay contenidos registrados
-        </h2>
-
-        <p className="mx-auto mt-[var(--space-2)] mb-0 max-w-[520px] text-[13px] leading-[1.6] text-[var(--text-muted)]">
-          Cuando existan contenidos psicoeducativos aparecerán en esta sección.
-        </p>
-      </section>
+      <PanelNotice
+        tone="neutral"
+        icon={FileStack}
+        title="No hay contenidos registrados"
+        role="status"
+      >
+        Cuando existan contenidos psicoeducativos aparecerán en esta sección.
+      </PanelNotice>
     );
   }
 
   return (
-    <section
-      className="grid gap-[var(--space-4)] md:grid-cols-2"
+    <ul
+      className="m-0 grid list-none gap-[var(--space-4)] p-0 md:grid-cols-2 2xl:grid-cols-3"
       aria-label="Contenidos psicoeducativos"
     >
       {contents.map((content) => (
-        <PsychoeducationalContentCard
-          key={content.id}
-          content={content}
-          onManageResources={onManageResources}
-          onEdit={onEdit}
-          onDelete={onDelete}
-        />
+        <li key={content.id} className="flex">
+          <div className="flex w-full flex-col [&>article]:flex-1">
+            <PsychoeducationalContentCard
+              content={content}
+              onManageResources={onManageResources}
+              onEdit={onEdit}
+              onDelete={onDelete}
+            />
+          </div>
+        </li>
       ))}
-    </section>
+    </ul>
   );
 }

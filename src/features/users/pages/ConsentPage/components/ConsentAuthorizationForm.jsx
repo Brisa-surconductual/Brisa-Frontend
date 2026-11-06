@@ -1,6 +1,12 @@
 import { Button } from '../../../../../shared/components/ui/Button/index.js';
 import { Checkbox } from '../../../../../shared/components/ui/Checkbox/index.js';
 
+const AUTHORIZATIONS_ERROR_ID = 'consent-authorizations-error';
+
+/*
+ * Dos autorizaciones independientes y obligatorias (RF-05). El
+ * mensaje de error queda ligado al grupo con aria-describedby.
+ */
 export function ConsentAuthorizationForm({
   authorizations,
   attemptedSubmit,
@@ -11,16 +17,26 @@ export function ConsentAuthorizationForm({
   onCancelRegistration,
   isFromLogin,
 }) {
+  const showError = attemptedSubmit && !consentIsComplete;
+
   return (
     <form className="flex flex-col gap-[var(--space-5)]" onSubmit={onSubmit} noValidate>
-      <fieldset className="m-0 flex min-w-0 flex-col gap-[var(--space-4)] rounded-[var(--radius-lg)] border border-[var(--surface-border)] p-[var(--space-5)]">
-        <legend className="px-[var(--space-2)] text-[14px] font-extrabold text-[var(--text-primary)]">
+      <fieldset
+        className="m-0 flex min-w-0 flex-col gap-[var(--space-3)] rounded-[var(--radius-xl)] border border-[var(--surface-border)] bg-[var(--surface-bg)] p-[var(--space-4)] sm:p-[var(--space-5)]"
+        aria-describedby={showError ? AUTHORIZATIONS_ERROR_ID : undefined}
+      >
+        <legend className="float-left mb-[var(--space-1)] w-full p-0 text-[length:var(--font-size-md)] font-extrabold text-[var(--text-primary)]">
           Autorizaciones obligatorias
         </legend>
+
+        <p className="clear-both m-0 text-[length:var(--font-size-xs)] text-[var(--text-secondary)]">
+          Debes aceptar las dos para continuar.
+        </p>
 
         <Checkbox
           id="personalDataAccepted"
           name="personalDataAccepted"
+          className="bg-[var(--surface-card)]"
           checked={
             authorizations
               .personalDataAccepted
@@ -42,6 +58,7 @@ export function ConsentAuthorizationForm({
         <Checkbox
           id="consumptionHistoryAccepted"
           name="consumptionHistoryAccepted"
+          className="bg-[var(--surface-card)]"
           checked={
             authorizations
               .consumptionHistoryAccepted
@@ -61,12 +78,15 @@ export function ConsentAuthorizationForm({
         </Checkbox>
       </fieldset>
 
-      {attemptedSubmit &&
-        !consentIsComplete && (
-          <p className="mt-[calc(var(--space-3)*-1)] mb-0 text-[12px] leading-[1.5] text-[var(--danger-text)]" role="alert">
-            Debes aceptar ambas autorizaciones para continuar.
-          </p>
-        )}
+      {showError && (
+        <p
+          id={AUTHORIZATIONS_ERROR_ID}
+          className="mt-[calc(var(--space-3)*-1)] mb-0 text-[length:var(--font-size-sm)] leading-[var(--line-height-normal)] font-semibold text-[var(--danger-text)]"
+          role="alert"
+        >
+          Debes aceptar ambas autorizaciones para continuar.
+        </p>
+      )}
 
       <div className="flex flex-col gap-[var(--space-3)]">
         <Button

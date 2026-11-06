@@ -52,7 +52,7 @@ export function ProgramModalityConfirmDialog({
       aria-describedby={descriptionId}
       onCancel={handleCancel}
       onClick={handleBackdropClick}
-      className="m-auto w-[min(calc(100%-32px),460px)] max-w-[460px] border-0 bg-transparent p-0 text-[var(--text-primary)] backdrop:bg-[rgb(22_21_16/68%)] backdrop:backdrop-blur-[2px]"
+      className="m-auto w-[min(calc(100%-32px),460px)] max-w-[460px] border-0 bg-transparent p-0 text-[var(--text-primary)] backdrop:bg-[color-mix(in_srgb,var(--neutral-900)_68%,transparent)] backdrop:backdrop-blur-[2px]"
     >
       <div className="rounded-[var(--radius-2xl)] border border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-6)] shadow-[var(--shadow-lg)]">
         <div className="mb-[var(--space-4)] inline-flex rounded-[var(--radius-full)] bg-[var(--warning-bg)] p-[var(--space-3)] text-[var(--warning-text)]">
@@ -61,14 +61,14 @@ export function ProgramModalityConfirmDialog({
 
         <h2
           id={titleId}
-          className="m-0 text-xl font-extrabold text-[var(--text-primary)]"
+          className="m-0 text-[length:var(--font-size-xl)] font-extrabold text-[var(--text-primary)]"
         >
           Confirmar transición de modalidad
         </h2>
 
         <div
           id={descriptionId}
-          className="mt-[var(--space-4)] flex flex-col gap-[var(--space-3)] text-sm leading-relaxed text-[var(--text-secondary)]"
+          className="mt-[var(--space-4)] flex flex-col gap-[var(--space-3)] text-[length:var(--font-size-sm)] leading-[var(--line-height-normal)] text-[var(--text-secondary)]"
         >
           <p className="m-0">
             Se verificaron{' '}
@@ -83,7 +83,7 @@ export function ProgramModalityConfirmDialog({
             participantes activos del programa.
           </p>
 
-          <div className="rounded-[var(--radius-md)] border border-[var(--warning-border)] bg-[var(--warning-bg)] p-[var(--space-3)] text-[var(--warning-text)]">
+          <div className="rounded-[var(--radius-lg)] border border-[var(--warning-border)] bg-[var(--warning-bg)] p-[var(--space-3)] text-[var(--warning-text)]">
             La transición es unidireccional dentro de este alcance. Las sesiones
             existentes conservarán su información y modalidad histórica.
           </div>

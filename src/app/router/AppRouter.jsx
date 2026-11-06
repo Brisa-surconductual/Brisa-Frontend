@@ -1,5 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { AdminLayout } from '@/app/layouts/AdminLayout/index.js';
 import { ProtectedLayout } from '@/app/layouts/ProtectedLayout/index.js';
+import { StudentLayout } from '@/app/layouts/StudentLayout/index.js';
 import { RegistrationLayout } from '@/app/layouts/RegistrationLayout/index.js';
 import {
   ProgramModalityPage,
@@ -131,15 +133,17 @@ export function AppRouter() {
                 />
               }
             >
-              <Route
-                path="estudiante"
-                element={<StudentHomePage />}
-              />
+              <Route element={<StudentLayout />}>
+                <Route
+                  path="estudiante"
+                  element={<StudentHomePage />}
+                />
 
-              <Route
-                path="estudiante/cronograma/contenido-vigente"
-                element={<CurrentContentPage />}
-              />
+                <Route
+                  path="estudiante/cronograma/contenido-vigente"
+                  element={<CurrentContentPage />}
+                />
+              </Route>
             </Route>
 
             <Route
@@ -151,6 +155,7 @@ export function AppRouter() {
                 />
               }
             >
+              <Route element={<AdminLayout />}>
               <Route
                 path="administrativo"
                 element={<PsychologyHomePage />}
@@ -231,6 +236,16 @@ export function AppRouter() {
               />
 
               <Route
+                path="administrativo/cronograma/:idSchedule/panel"
+                element={<SchedulePanelPage />}
+              />
+
+              <Route
+                path="administrativo/cronograma/:idSchedule/crear-unidad"
+                element={<CreateTemporalUnitPage />}
+              />
+
+              <Route
                 path="administrativo/chat/modalidad"
                 element={<ProgramModalityPage />}
               />
@@ -239,25 +254,9 @@ export function AppRouter() {
                 path="administrativo/chat/arboles"
                 element={<PersonalizedTreesPage />}
               />
-
+              </Route>
             </Route>
           </Route>
-
-          <Route 
-                path="/app/administrativo/cronograma"
-                element={<ScheduleManagementPage />} 
-          />
-          
-          <Route 
-                path="/app/administrativo/cronograma/:idSchedule/panel" 
-                element={<SchedulePanelPage />}
-           />
-          
-          <Route 
-                path="/app/administrativo/cronograma/:idSchedule/crear-unidad" 
-                element={<CreateTemporalUnitPage />} 
-          />
-          
         </Route>
 
         <Route

@@ -2,114 +2,118 @@ import { useCurrentContents } from '../../hooks/useCurrentContents.js';
 import { AssignedScheduleSummary } from '../../components/AssignedScheduleSummary/AssignedScheduleSummary.jsx';
 
 import { useNavigate } from 'react-router-dom';
+import { AlertTriangle, CalendarClock, RefreshCw } from 'lucide-react';
 
-import { useAuth } from '@/app/providers/index.js';
-
+import { BackButton } from '@/features/cronograma/components/BackButton/index.js';
 import { CurrentContentCard } from '@/features/cronograma/components/CurrentContentCard/index.js';
-import { EmptyScheduleState } from '@/features/cronograma/components/EmptyScheduleState/index.js';
-
-import { StudentBottomNav } from '@/features/users/components/StudentBottomNav/index.js';
-import { StudentHeader } from '@/features/users/components/StudentHeader/index.js';
+import { PanelNotice } from '@/features/cronograma/components/PanelNotice/index.js';
+import { SchedulePageHeader } from '@/features/cronograma/components/SchedulePageHeader/index.js';
 
 import { Button } from '@/shared/components/ui/Button/index.js';
 
+/*
+ * Encabezado, navegación y cierre de sesión los aporta el
+ * StudentLayout. Aquí solo el contenido vigente.
+ */
 export function CurrentContentPage({ onSelectContent }) {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
 
   const { currentContent, loading, loadError, retry } = useCurrentContents();
-
-  function handleLogout() {
-    logout();
-
-    navigate('/login', {
-      replace: true,
-    });
-  }
 
   function handleBack() {
     navigate('/app/estudiante');
   }
 
-  const displayName = user?.name ?? user?.email ?? 'Estudiante';
-
   return (
-    <div className="min-h-screen w-full bg-[var(--surface-bg)]">
-      <div className="flex min-h-screen w-full flex-col bg-[var(--surface-bg)]">
-        <StudentHeader
-          displayName={displayName}
-          roleLabel="Estudiante"
-          onLogout={handleLogout}
-        />
+    <div className="flex w-full flex-col gap-[var(--space-5)] md:gap-[var(--space-6)]">
+      <BackButton onClick={handleBack}>Volver al inicio</BackButton>
 
-        <main className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col gap-[var(--space-5)] p-[var(--space-4)] md:p-[var(--space-7)]">
-          <button
-            type="button"
-            className="w-fit cursor-pointer border-0 bg-transparent p-0 text-[13px] font-semibold text-[var(--brand-600)]"
-            onClick={handleBack}
+      <SchedulePageHeader
+        eyebrow="Tu programa"
+        title="Contenido vigente"
+        description="Consulta el contenido que se encuentra disponible actualmente dentro de tu cronograma."
+      />
+
+      <AssignedScheduleSummary />
+
+      <section
+        aria-labelledby="contenidos-disponibles-titulo"
+        aria-busy={loading}
+        className="flex flex-col gap-[var(--space-4)]"
+      >
+        <div className="flex items-baseline justify-between gap-[var(--space-3)]">
+          <h2
+            id="contenidos-disponibles-titulo"
+            className="m-0 text-[length:var(--font-size-lg)] font-extrabold text-[var(--text-primary)]"
           >
-            ← Volver al inicio
-          </button>
+            Disponible ahora
+          </h2>
 
-          <header>
-            <p className="m-0 text-[12px] font-bold tracking-[0.04em] text-[var(--brand-600)] uppercase">
-              Tu programa
+          {!loading && !loadError && currentContent.length > 0 && (
+            <p className="m-0 text-[length:var(--font-size-sm)] font-semibold text-[var(--text-secondary)] tabular-nums">
+              {currentContent.length}{' '}
+              {currentContent.length === 1 ? 'contenido' : 'contenidos'}
             </p>
+          )}
+        </div>
 
-            <h1 className="mt-[var(--space-1)] mb-0 text-[26px] font-extrabold text-[var(--text-primary)] md:text-[30px]">
-              Contenido vigente
-            </h1>
-
-            <p className="mt-[var(--space-2)] mb-0 max-w-[720px] text-[13px] leading-[1.6] text-[var(--text-muted)]">
-              Consulta el contenido que se encuentra disponible actualmente
-              dentro de tu cronograma.
-            </p>
-          </header>
-
-          <AssignedScheduleSummary />
-
-          {loading ? (
-            <p
-              className="m-0 py-[var(--space-7)] text-center text-[13px] text-[var(--text-muted)]"
-              role="status"
-            >
+        {loading ? (
+          <>
+            <p role="status" className="sr-only">
               Cargando contenido vigente...
             </p>
-          ) : loadError ? (
-            <div
-              className="rounded-[var(--radius-md)] border border-[var(--danger-border)] bg-[var(--danger-bg)] p-[var(--space-4)] text-[13px] font-semibold text-[var(--danger-text)]"
-              role="alert"
-            >
-              {loadError}
-              <div className="mt-[var(--space-3)]">
-                <Button variant="secondary" onClick={retry}>
-                  Reintentar consulta
-                </Button>
-              </div>
-            </div>
-          ) : currentContent.length > 0 ? (
-            <section
-              className="grid gap-[var(--space-4)]"
-              aria-label="Contenido vigente"
-            >
-              {currentContent.map((content) => (
-                <CurrentContentCard
-                  key={content.associationId ?? content.id}
-                  content={content}
-                  onSelect={onSelectContent}
+            <div className="flex flex-col gap-[var(--space-3)]" aria-hidden="true">
+              {[0, 1].map((index) => (
+                <div
+                  key={index}
+                  className="h-[150px] animate-pulse rounded-[var(--radius-xl)] border border-[var(--surface-border)] bg-[var(--surface-card)] motion-reduce:animate-none"
                 />
               ))}
-            </section>
-          ) : (
-            <EmptyScheduleState
-              title="No hay contenido vigente"
-              description="El contenido aparecerá cuando su ventana coincida con tu avance individual. Se consulta el cronograma que tienes asignado, que puede ser distinto del base vigente para nuevos estudiantes."
-            />
-          )}
-        </main>
-
-        <StudentBottomNav activeItemId="inicio" />
-      </div>
+            </div>
+          </>
+        ) : loadError ? (
+          <PanelNotice
+            tone="danger"
+            icon={AlertTriangle}
+            title="No pudimos mostrar tu contenido"
+            role="alert"
+            action={
+              <Button variant="secondary" onClick={retry}>
+                <RefreshCw size={16} strokeWidth={1.8} aria-hidden="true" />
+                Reintentar consulta
+              </Button>
+            }
+          >
+            {loadError}
+          </PanelNotice>
+        ) : currentContent.length > 0 ? (
+          <ul
+            className="m-0 grid list-none gap-[var(--space-4)] p-0 lg:grid-cols-2"
+            aria-label="Contenido vigente"
+          >
+            {currentContent.map((content) => (
+              <li key={content.associationId ?? content.id} className="flex [&>article]:flex-1">
+                <CurrentContentCard
+                  content={content}
+                  onSelect={onSelectContent}
+                  headingLevel={3}
+                />
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <PanelNotice
+            tone="neutral"
+            icon={CalendarClock}
+            title="No hay contenido vigente"
+            role="status"
+          >
+            El contenido aparecerá cuando su ventana coincida con tu avance
+            individual. Se consulta el cronograma que tienes asignado, que
+            puede ser distinto del base vigente para nuevos estudiantes.
+          </PanelNotice>
+        )}
+      </section>
     </div>
   );
 }

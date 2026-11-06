@@ -3,12 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import { SESSION_END_REASON } from '@/app/config/sessionConfig.js';
 import { useAuth } from '@/app/providers/index.js';
 import { validateLoginForm } from '@/features/users/services/authValidation.js';
+import { getPostLoginPath } from '@/features/users/services/registrationState.js';
 import { iniciarSesion } from '../../../api/inicioSesion.jsx';
 import { clearFieldErrors, createLoginFormState, focusFirstInvalidField, hasValidationErrors } from '../utils/loginForm.js';
 
 export function useLoginPage() {
   const navigate = useNavigate();
-  const { login, sessionEndReason } = useAuth();
+  const {
+    login,
+    sessionEndReason,
+    remoteLogoutUnconfirmed,
+    waitForSessionEnd,
+  } = useAuth();
 
   const wasClosedByInactivity =
     sessionEndReason === SESSION_END_REASON.INACTIVITY;
@@ -49,6 +55,9 @@ export function useLoginPage() {
     setSubmitError('');
 
     try {
+      // Un cierre de sesión en curso termina antes del login.
+      await waitForSessionEnd();
+
       const data = await iniciarSesion({
         email: form.email,
         password: form.password,
@@ -62,14 +71,11 @@ export function useLoginPage() {
         role: data.rol,
         estadoRegistro: data.estadoRegistro,
         idUsuario: infoUsuario.idUsuario,
+        alcance: infoUsuario.alcance,
+        limiteInactividadMinutos: infoUsuario.limiteInactividadMinutos,
       });
 
-      if (data.estadoRegistro === 'PENDIENTE_CONSENTIMIENTO'){
-        navigate('/registro/consentimiento', { replace: true });
-        return;
-      }
-
-      navigate('/app', { replace: true });
+      navigate(getPostLoginPath(data.estadoRegistro), { replace: true });
     } catch (error) {
       if (error?.response?.status === 401) {
         setSubmitError(
@@ -102,6 +108,7 @@ export function useLoginPage() {
     form,
     errors,
     wasClosedByInactivity,
+    remoteLogoutUnconfirmed,
     submitError,
     isSubmitting,
     handleChange,

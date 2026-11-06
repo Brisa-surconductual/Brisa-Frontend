@@ -1,20 +1,24 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import {
+  AlertTriangle,
+  CircleAlert,
+  CircleCheck,
+  Eye,
+  ListChecks,
+  SearchX,
+  X,
+} from 'lucide-react';
 
-import { useAuth } from '@/app/providers/index.js';
-
+import { BackButton } from '@/features/cronograma/components/BackButton/index.js';
+import { PanelNotice } from '@/features/cronograma/components/PanelNotice/index.js';
 import { PsychoeducationalResourceForm } from '@/features/cronograma/components/PsychoeducationalResourceForm/index.js';
 import { PsychoeducationalResourceList } from '@/features/cronograma/components/PsychoeducationalResourceList/index.js';
+import { SchedulePageHeader } from '@/features/cronograma/components/SchedulePageHeader/index.js';
+import { StatusChip } from '@/features/cronograma/components/StatusChip/index.js';
 
-import { AdministrativeHeader } from '@/shared/components/navigation/AdministrativeHeader/index.js';
-import { AdministrativeTabBar } from '@/shared/components/navigation/AdministrativeTabBar/index.js';
 import { Button } from '@/shared/components/ui/Button/index.js';
 import { ConfirmationDialog } from '@/shared/components/ui/ConfirmationDialog/index.js';
-
-import {
-  ADMINISTRATIVE_TAB,
-  ADMINISTRATIVE_TABS,
-} from '@/shared/data/administrativeTabs.js';
 
 import { usePsychoeducationalResourceForm } from './hooks/usePsychoeducationalResourceForm.js';
 
@@ -26,6 +30,9 @@ import { crearRecursoContenido } from '@/features/cronograma/api/recursoContenid
 import { solicitarUrlSubidaRecurso } from '@/features/cronograma/api/recursoContenido/solicitarUrlSubidaRecurso.jsx';
 import { subirRecursoFirmado } from '@/features/cronograma/api/recursoContenido/subirRecursoFirmado.jsx';
 
+import {
+  PSYCHOEDUCATIONAL_CONTENT_TYPE_LABEL,
+} from '@/features/cronograma/types/contentTypes.js';
 import { PSYCHOEDUCATIONAL_RESOURCE_TYPE } from '@/features/cronograma/types/resourceTypes.js';
 
 import { reordenarRecursosContenido } from '@/features/cronograma/api/recursoContenido/reordenarRecursosContenido.jsx';
@@ -38,6 +45,9 @@ import {
   mapCatalogContent,
   resourcesAreReady,
 } from '../../utils/contentPreparation.js';
+
+const CARD_CLASS =
+  'rounded-[var(--radius-xl)] border border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-4)] shadow-[var(--shadow-sm)] sm:p-[var(--space-5)]';
 
 const EMPTY_RESOURCES = Object.freeze([]);
 const EMPTY_DESTINATION_MODULES = Object.freeze([]);
@@ -62,7 +72,6 @@ export function ContentResourcesPage({ content: contentProp }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { contentId } = useParams();
-  const { role, logout } = useAuth();
   const editorSectionRef = useRef(null);
 
   const [loadedContent, setLoadedContent] = useState(null);
@@ -401,226 +410,253 @@ export function ContentResourcesPage({ content: contentProp }) {
     }
   }
 
-  function handleLogout() {
-    logout();
-
-    navigate('/login', {
-      replace: true,
-    });
-  }
-
-  function handleTabChange(tabId) {
-    if (tabId === ADMINISTRATIVE_TAB.CRONOGRAMA) {
-      navigate('/app/administrativo/cronograma');
-      return;
-    }
-
-    if (tabId === ADMINISTRATIVE_TAB.DASHBOARD) {
-      navigate('/app/administrativo');
-      return;
-    }
-
-    navigate(`/app/administrativo?tab=${encodeURIComponent(tabId)}`);
-  }
-
   function handleBack() {
     navigate(contentFormReturnPath(location.state?.returnToAssociation));
   }
 
+  const fromAssociation = Boolean(location.state?.returnToAssociation);
+  const contentTypeLabel = content
+    ? (PSYCHOEDUCATIONAL_CONTENT_TYPE_LABEL[content.type] ?? content.type)
+    : '';
+
   return (
-    <div className="min-h-screen bg-[var(--surface-bg)]">
-      <AdministrativeHeader
-        roleLabel={role ?? 'ADMINISTRATIVO'}
-        onLogout={handleLogout}
+    <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-[var(--space-6)] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]">
+      <BackButton onClick={handleBack}>
+        {fromAssociation
+          ? 'Volver a la unidad temporal'
+          : 'Volver a contenidos'}
+      </BackButton>
+
+      <SchedulePageHeader
+        eyebrow="Recursos psicoeducativos"
+        title="Gestionar recursos"
+        description="Administra los bloques de texto y los recursos multimedia que componen el contenido psicoeducativo."
       />
 
-      <AdministrativeTabBar
-        tabs={ADMINISTRATIVE_TABS}
-        activeTabId={ADMINISTRATIVE_TAB.CRONOGRAMA}
-        onTabChange={handleTabChange}
-      />
+      {loadError && (
+        <PanelNotice tone="danger" icon={AlertTriangle} role="alert">
+          {loadError}
+        </PanelNotice>
+      )}
 
-      <main>
-        <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-[var(--space-5)] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]">
-          <button
-            type="button"
-            className="w-fit text-[13px] font-bold text-[var(--brand-600)]"
-            onClick={handleBack}
-          >
-            {location.state?.returnToAssociation
-              ? '← Volver a la unidad temporal'
-              : '← Volver a contenidos'}
-          </button>
-
-          <header>
-            <p className="m-0 text-[12px] font-bold tracking-[0.04em] text-[var(--brand-600)] uppercase">
-              Recursos psicoeducativos
-            </p>
-
-            <h1 className="mt-[var(--space-1)] mb-0 text-[26px] font-extrabold text-[var(--text-primary)] md:text-[30px]">
-              Gestionar recursos
-            </h1>
-
-            <p className="mt-[var(--space-2)] mb-0 max-w-[720px] text-[13px] leading-[1.6] text-[var(--text-muted)]">
-              Administra los bloques de texto y los recursos multimedia que
-              componen el contenido psicoeducativo.
-            </p>
-          </header>
-
-          {loadError && (
-            <div
-              className="rounded-[var(--radius-md)] border border-[var(--danger-border)] bg-[var(--danger-bg)] p-[var(--space-4)] text-[13px] font-semibold text-[var(--danger-text)]"
-              role="alert"
-            >
-              {loadError}
-            </div>
-          )}
-
-          {location.state?.creationFlow && (
-            <section className="rounded-[var(--radius-lg)] border border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-4)]">
-              <h2 className="m-0 text-[16px] font-bold">
+      {location.state?.creationFlow && (
+        <section
+          aria-labelledby="paso-recursos-titulo"
+          className={`${CARD_CLASS} flex flex-col gap-[var(--space-3)] border-[var(--brand-200)] sm:flex-row sm:items-center sm:justify-between`}
+        >
+          <div className="flex min-w-0 items-start gap-[var(--space-3)]">
+            <ListChecks
+              size={20}
+              strokeWidth={1.8}
+              className="mt-[2px] shrink-0 text-[var(--brand-600)]"
+              aria-hidden="true"
+            />
+            <div className="min-w-0">
+              <h2
+                id="paso-recursos-titulo"
+                className="m-0 text-[length:var(--font-size-md)] font-extrabold text-[var(--text-primary)]"
+              >
                 Paso 2 de 2: recursos y módulos destino
               </h2>
               <p
                 role="status"
-                className="text-[13px] text-[var(--text-secondary)]"
+                className="mt-[var(--space-1)] mb-0 text-[length:var(--font-size-sm)] leading-[var(--line-height-normal)] text-[var(--text-secondary)]"
               >
                 {resourcesReady
                   ? 'El contenido tiene recursos y módulos destino activos. Ya puedes continuar.'
                   : 'El contenido está pendiente: guarda al menos un recurso y asigna un módulo destino activo a cada bloque.'}
               </p>
-              <Button
-                disabled={!resourcesReady || !canManage || isSubmitting}
-                onClick={handleBack}
-              >
-                {location.state?.returnToAssociation
-                  ? 'Continuar y asociar a la unidad'
-                  : 'Finalizar contenido'}
-              </Button>
-            </section>
-          )}
+            </div>
+          </div>
 
-          {loading ? (
-            <p role="status">Cargando contenido y recursos...</p>
-          ) : !content ? (
-            <section className="rounded-[var(--radius-xl)] border border-dashed border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-6)]">
-              <h2 className="m-0 text-[17px] font-extrabold text-[var(--text-primary)]">
-                Contenido no disponible
-              </h2>
+          <Button
+            disabled={!resourcesReady || !canManage || isSubmitting}
+            onClick={handleBack}
+            className="shrink-0"
+          >
+            {fromAssociation
+              ? 'Continuar y asociar a la unidad'
+              : 'Finalizar contenido'}
+          </Button>
+        </section>
+      )}
 
-              <p className="mt-[var(--space-2)] mb-0 text-[13px] leading-[1.6] text-[var(--text-muted)]">
-                No se recibió la información del contenido seleccionado.
-                {contentId ? ` Identificador: ${contentId}.` : ''}
-              </p>
-            </section>
-          ) : (
-            <>
-              <section className="rounded-[var(--radius-lg)] border border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-4)]">
-                <p className="m-0 text-[11px] font-bold tracking-[0.04em] text-[var(--text-muted)] uppercase">
-                  Contenido seleccionado
-                </p>
+      {loading ? (
+        <div aria-busy="true" className="flex flex-col gap-[var(--space-4)]">
+          <p role="status" className="sr-only">
+            Cargando contenido y recursos...
+          </p>
+          {['h-[96px]', 'h-[280px]'].map((heightClass) => (
+            <div
+              key={heightClass}
+              className={`${heightClass} animate-pulse rounded-[var(--radius-xl)] border border-[var(--surface-border)] bg-[var(--surface-card)] motion-reduce:animate-none`}
+              aria-hidden="true"
+            />
+          ))}
+        </div>
+      ) : !content ? (
+        <PanelNotice
+          tone="neutral"
+          icon={SearchX}
+          title="Contenido no disponible"
+          role="status"
+          action={
+            <Button variant="secondary" onClick={handleBack}>
+              {fromAssociation ? 'Volver a la unidad' : 'Volver a contenidos'}
+            </Button>
+          }
+        >
+          No se recibió la información del contenido seleccionado.
+          {contentId ? ` Identificador: ${contentId}.` : ''}
+        </PanelNotice>
+      ) : (
+        <>
+          <section
+            aria-labelledby="contenido-seleccionado-titulo"
+            className={`${CARD_CLASS} flex flex-col gap-[var(--space-3)]`}
+          >
+            <p className="m-0 text-[length:var(--font-size-xs)] font-bold tracking-[var(--letter-spacing-wide)] text-[var(--text-muted)] uppercase">
+              Contenido seleccionado
+            </p>
 
-                <h2 className="mt-[var(--space-1)] mb-0 text-[18px] font-extrabold text-[var(--text-primary)]">
-                  {content.name}
-                </h2>
+            <h2
+              id="contenido-seleccionado-titulo"
+              className="m-0 text-[length:var(--font-size-xl)] leading-[var(--line-height-snug)] font-extrabold [overflow-wrap:anywhere] text-[var(--text-primary)]"
+            >
+              {content.name}
+            </h2>
 
-                {!canManage && (
-                  <p className="mt-[var(--space-2)] mb-0 text-[12px] leading-[1.5] text-[var(--text-muted)]">
-                    Los recursos de este contenido están disponibles únicamente
-                    para consulta.
-                  </p>
-                )}
-              </section>
-
-              {canManage && (
-                <section ref={editorSectionRef} className="scroll-mt-[160px]">
-                  <div className="mb-[var(--space-4)] flex flex-wrap items-center justify-between gap-[var(--space-3)]">
-                    <div>
-                      <h2 className="m-0 text-[18px] font-extrabold text-[var(--text-primary)]">
-                        {editingResource ? 'Editar recurso' : 'Agregar recurso'}
-                      </h2>
-
-                      <p className="mt-[var(--space-1)] mb-0 text-[12px] text-[var(--text-muted)]">
-                        {editingResource
-                          ? `Modificando el bloque ${editingResource.order}.`
-                          : 'Agrega un nuevo bloque al contenido.'}
-                      </p>
-                    </div>
-
-                    {editingResource && (
-                      <Button
-                        variant="secondary"
-                        size="small"
-                        onClick={resetEditor}
-                      >
-                        Cancelar edición
-                      </Button>
-                    )}
-                  </div>
-
-                  {submitError && (
-                    <div
-                      className="mb-[var(--space-4)] rounded-[var(--radius-md)] border border-[var(--danger-border)] bg-[var(--danger-bg)] p-[var(--space-4)] text-[13px] font-semibold text-[var(--danger-text)]"
-                      role="alert"
-                    >
-                      {submitError}
-                    </div>
-                  )}
-
-                  <PsychoeducationalResourceForm
-                    key={formSession}
-                    form={form}
-                    errors={errors}
-                    destinationModules={destinationModules}
-                    loading={loading || isSubmitting}
-                    editing={Boolean(editingResource)}
-                    submitLabel={
-                      editingResource ? 'Guardar cambios' : 'Agregar recurso'
-                    }
-                    onChange={handleChange}
-                    onFileChange={handleFileChange}
-                    onModuleToggle={handleModuleToggle}
-                    onSubmit={handleSubmit}
-                    onCancel={resetEditor}
-                  />
-                </section>
+            <div className="flex flex-wrap items-center gap-[var(--space-2)]">
+              {contentTypeLabel && (
+                <StatusChip tone="brand">{contentTypeLabel}</StatusChip>
               )}
 
-              <section>
-                <div className="mb-[var(--space-4)]">
-                  <h2 className="m-0 text-[18px] font-extrabold text-[var(--text-primary)]">
+              {resourcesReady ? (
+                <StatusChip tone="success" icon={CircleCheck}>
+                  Listo para programar
+                </StatusChip>
+              ) : (
+                <StatusChip tone="warning" icon={CircleAlert}>
+                  Pendiente de recursos
+                </StatusChip>
+              )}
+
+              {!canManage && (
+                <StatusChip tone="neutral" icon={Eye}>
+                  Solo consulta
+                </StatusChip>
+              )}
+            </div>
+
+            {!canManage && (
+              <p className="m-0 text-[length:var(--font-size-sm)] leading-[var(--line-height-normal)] text-[var(--text-secondary)]">
+                Los recursos de este contenido están disponibles únicamente
+                para consulta.
+              </p>
+            )}
+          </section>
+
+          {submitError && (
+            <PanelNotice tone="danger" icon={AlertTriangle} role="alert">
+              {submitError}
+            </PanelNotice>
+          )}
+
+          <div
+            className={
+              canManage
+                ? 'grid items-start gap-[var(--space-6)] xl:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]'
+                : 'flex flex-col gap-[var(--space-6)]'
+            }
+          >
+            {canManage && (
+              <section
+                ref={editorSectionRef}
+                aria-labelledby="editor-recurso-titulo"
+                className="flex min-w-0 scroll-mt-[160px] flex-col gap-[var(--space-4)]"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-[var(--space-3)]">
+                  <div className="min-w-0">
+                    <h2
+                      id="editor-recurso-titulo"
+                      className="m-0 text-[length:var(--font-size-lg)] font-extrabold text-[var(--text-primary)]"
+                    >
+                      {editingResource ? 'Editar recurso' : 'Agregar recurso'}
+                    </h2>
+
+                    <p className="mt-[var(--space-1)] mb-0 text-[length:var(--font-size-sm)] text-[var(--text-secondary)]">
+                      {editingResource
+                        ? `Modificando el bloque ${editingResource.order}.`
+                        : 'Agrega un nuevo bloque al contenido.'}
+                    </p>
+                  </div>
+
+                  {editingResource && (
+                    <Button variant="secondary" onClick={resetEditor}>
+                      <X size={17} strokeWidth={1.8} aria-hidden="true" />
+                      Cancelar edición
+                    </Button>
+                  )}
+                </div>
+
+                <PsychoeducationalResourceForm
+                  key={formSession}
+                  form={form}
+                  errors={errors}
+                  destinationModules={destinationModules}
+                  loading={loading || isSubmitting}
+                  editing={Boolean(editingResource)}
+                  submitLabel={
+                    editingResource ? 'Guardar cambios' : 'Agregar recurso'
+                  }
+                  onChange={handleChange}
+                  onFileChange={handleFileChange}
+                  onModuleToggle={handleModuleToggle}
+                  onSubmit={handleSubmit}
+                  onCancel={resetEditor}
+                />
+              </section>
+            )}
+
+            <section
+              aria-labelledby="bloques-contenido-titulo"
+              aria-busy={isSubmitting}
+              className="flex min-w-0 flex-col gap-[var(--space-4)]"
+            >
+              <div className="flex items-start justify-between gap-[var(--space-3)]">
+                <div className="min-w-0">
+                  <h2
+                    id="bloques-contenido-titulo"
+                    className="m-0 text-[length:var(--font-size-lg)] font-extrabold text-[var(--text-primary)]"
+                  >
                     Bloques del contenido
                   </h2>
 
-                  <p className="mt-[var(--space-1)] mb-0 text-[12px] text-[var(--text-muted)]">
+                  <p className="mt-[var(--space-1)] mb-0 text-[length:var(--font-size-sm)] text-[var(--text-secondary)]">
                     Los recursos se presentan según su orden de bloque.
                   </p>
                 </div>
 
-                {loading ? (
-                  <p
-                    className="m-0 py-[var(--space-7)] text-center text-[13px] text-[var(--text-muted)]"
-                    role="status"
-                  >
-                    Cargando recursos...
-                  </p>
-                ) : (
-                  <PsychoeducationalResourceList
-                    resources={resources}
-                    destinationModules={destinationModules}
-                    canManage={canManage}
-                    canReorder={canManage && !isSubmitting}
-                    onMoveUp={handleMoveUp}
-                    onMoveDown={handleMoveDown}
-                    onEdit={handleEdit}
-                    onDelete={handleRequestDelete}
-                  />
-                )}
-              </section>
-            </>
-          )}
-        </div>
-      </main>
+                <span className="shrink-0 rounded-[var(--radius-full)] bg-[var(--surface-hover)] px-[var(--space-3)] py-[2px] text-[length:var(--font-size-xs)] font-bold text-[var(--text-secondary)] tabular-nums">
+                  {resources.length}
+                  <span className="sr-only"> recursos</span>
+                </span>
+              </div>
+
+              <PsychoeducationalResourceList
+                resources={resources}
+                destinationModules={destinationModules}
+                canManage={canManage}
+                canReorder={canManage && !isSubmitting}
+                onMoveUp={handleMoveUp}
+                onMoveDown={handleMoveDown}
+                onEdit={handleEdit}
+                onDelete={handleRequestDelete}
+              />
+            </section>
+          </div>
+        </>
+      )}
 
       <ConfirmationDialog
         open={Boolean(pendingDeleteResource)}
