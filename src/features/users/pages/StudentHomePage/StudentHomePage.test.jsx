@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { MemoryRouter } from 'react-router-dom';
 
 import { REGISTRATION_STATUS_VIEW } from '@/features/users/services/registrationState.js';
 
@@ -26,7 +27,11 @@ function render(state) {
     ...state,
   };
 
-  return renderToStaticMarkup(<StudentHomePage />);
+  return renderToStaticMarkup(
+    <MemoryRouter>
+      <StudentHomePage />
+    </MemoryRouter>,
+  );
 }
 
 describe('Inicio del estudiante dentro del StudentLayout', () => {

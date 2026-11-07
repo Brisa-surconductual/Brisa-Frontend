@@ -8,3 +8,4 @@ export { ChatThread } from './components/ChatThread/index.js';
 export { NodeInputForm } from './components/NodeInputForm/index.js';
 export { ProgramModalityPage } from './pages/ProgramModalityPage/index.js';
 export { PersonalizedTreesPage } from './pages/PersonalizedTreesPage/index.js';
+export { ChatEntryPage } from './pages/ChatEntryPage/index.js';
