@@ -140,8 +140,11 @@ describe('Acceso a la asignación (RF-125)', () => {
     expect(html).not.toContain('todavía no está disponible');
   });
 
-  it('no ofrece retirar participantes (E7)', () => {
-    expect(textOf(openPanel())).not.toMatch(/Retirar|Eliminar participante/);
+  it('el panel de asignación no mezcla el retiro (E7 vive en cada tarjeta)', () => {
+    const html = openPanel();
+    const panel = html.slice(html.indexOf('Asignar participantes</h3>'), html.indexOf('</form>'));
+
+    expect(textOf(panel)).not.toMatch(/Retirar|Eliminar participante/);
   });
 });
 

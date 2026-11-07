@@ -19,6 +19,7 @@ export const DEMO_DELAY_MS = 400;
 
 let store = null;
 let participantStore = null;
+let staleRemovalDone = false;
 
 function getStore() {
   if (!store) {
@@ -122,7 +123,18 @@ export async function listCohortParticipants(cohortId) {
       throw new Error('Error simulado al consultar participantes en el modo de demostración.');
     }
 
-    return demo.findCohort(cohortId) ? getParticipantStore().listByCohort(cohortId) : null;
+    if (!demo.findCohort(cohortId)) return null;
+
+    const participants = getParticipantStore().listByCohort(cohortId);
+
+    // Datos desactualizados: otra operación retira a PART-0002 justo
+    // después de esta consulta, una sola vez por carga.
+    if (scenario === DEMO_SCENARIO.STALE_REMOVAL && cohortId === 'demo-cohorte-b' && !staleRemovalDone) {
+      staleRemovalDone = true;
+      getParticipantStore().remove(cohortId, 'demo-participante-2', { findCohort: demo.findCohort });
+    }
+
+    return participants;
   });
 }
 
@@ -150,8 +162,15 @@ export const assignParticipants = (cohortId, participantIds) =>
     getParticipantStore().assign(cohortId, participantIds, { findCohort: demo.findCohort }),
   );
 
+// Retiro (RF-125): ver el resultado estructurado en participantDemoStore.js.
+export const removeCohortParticipant = (cohortId, participantId) =>
+  write((demo) =>
+    getParticipantStore().remove(cohortId, participantId, { findCohort: demo.findCohort }),
+  );
+
 // Solo para pruebas automatizadas: simula una recarga de la aplicación.
 export function resetDemoSource() {
   store = null;
   participantStore = null;
+  staleRemovalDone = false;
 }

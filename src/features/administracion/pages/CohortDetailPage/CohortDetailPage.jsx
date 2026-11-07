@@ -3,6 +3,7 @@ import {
   AlertTriangle,
   ArrowLeft,
   CalendarRange,
+  CircleCheck,
   FlaskConical,
   ListTree,
   PlugZap,
@@ -14,6 +15,7 @@ import {
 } from 'lucide-react';
 
 import { Button } from '@/shared/components/ui/Button/index.js';
+import { ConfirmationDialog } from '@/shared/components/ui/ConfirmationDialog/index.js';
 
 import { CohortNotice } from '../../components/CohortNotice/index.js';
 import { CohortPeriod } from '../../components/CohortPeriod/index.js';
@@ -25,6 +27,9 @@ import { PARTICIPATION_STATUS } from '../../types/participantStatus.js';
 
 import { COHORT_LIST_PATH, useCohortDetail } from './hooks/useCohortDetail.js';
 import { useParticipantAssignment } from './hooks/useParticipantAssignment.js';
+import { useParticipantRemoval } from './hooks/useParticipantRemoval.js';
+
+const NOTICE_ICON = Object.freeze({ success: CircleCheck, warning: AlertTriangle, danger: AlertTriangle });
 
 const PARTICIPATION_SUMMARY = Object.freeze([
   Object.freeze({ status: PARTICIPATION_STATUS.ACTIVE, singular: 'activo', plural: 'activos' }),
@@ -55,10 +60,10 @@ function SummaryItem({ icon: Icon, label, children }) {
 }
 
 /*
- * Detalle de una cohorte con la consulta y la asignación de sus
- * participantes (/cohortes/:idCohorte, RF-125). El retiro aún no existe.
- * La página solo compone; el estado vive en useCohortDetail y
- * useParticipantAssignment.
+ * Detalle de una cohorte con la consulta, la asignación y el retiro de
+ * sus participantes (/cohortes/:idCohorte, RF-125). La página solo
+ * compone; el estado vive en useCohortDetail, useParticipantAssignment
+ * y useParticipantRemoval.
  */
 export function CohortDetailPage() {
   const { idCohorte } = useParams();
@@ -75,10 +80,13 @@ export function CohortDetailPage() {
     canManage,
     retry,
     addParticipants,
+    removeParticipant,
   } = useCohortDetail({ cohortId: idCohorte ?? null });
 
   const title = cohort?.name?.trim() || (cohort ? 'Sin nombre' : 'Detalle de cohorte');
   const showCohort = Boolean(cohort) && !isLoading;
+  // Sin la lista actual no se ofrece asignar ni retirar.
+  const canManageParticipants = Boolean(canManage) && showCohort && !participantsError;
 
   const {
     canAssign,
@@ -105,10 +113,32 @@ export function CohortDetailPage() {
     dismissResult,
   } = useParticipantAssignment({
     cohortId: idCohorte ?? null,
-    // Sin la lista actual no se ofrece asignar: evitaría ver duplicados.
-    enabled: Boolean(canManage) && showCohort && !participantsError,
+    enabled: canManageParticipants,
     onAssigned: addParticipants,
   });
+
+  const {
+    canRemove,
+    busyIds: removingIds,
+    notice: removalNotice,
+    noticeRef: removalNoticeRef,
+    pendingRemoval,
+    requestRemoval,
+    cancelRemoval,
+    confirmRemoval,
+  } = useParticipantRemoval({
+    cohortId: idCohorte ?? null,
+    cohortName: title,
+    enabled: canManageParticipants,
+    onRemoved: (participantId) => {
+      removeParticipant(participantId);
+      // El catálogo abierto ya no refleja la nueva situación.
+      if (isAssigning) retryCatalog();
+    },
+    onStale: retry,
+  });
+
+  const pendingCode = pendingRemoval?.code?.trim() || 'sin código disponible';
 
   return (
     <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-[var(--space-6)] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]">
@@ -151,6 +181,19 @@ export function CohortDetailPage() {
         <CohortNotice tone="info" icon={PlugZap} title="Integración pendiente" role="status">
           La consulta de participantes todavía no está conectada al servidor.
           Cuando se integre, aquí aparecerán los participantes de la cohorte.
+        </CohortNotice>
+      )}
+
+      {removalNotice && (
+        <CohortNotice
+          ref={removalNoticeRef}
+          tabIndex={-1}
+          tone={removalNotice.tone}
+          icon={NOTICE_ICON[removalNotice.tone]}
+          title={removalNotice.title}
+          role={removalNotice.tone === 'success' ? 'status' : 'alert'}
+        >
+          {removalNotice.message}
         </CohortNotice>
       )}
 
@@ -328,13 +371,35 @@ export function CohortDetailPage() {
               <ul className="m-0 grid list-none grid-cols-1 gap-[var(--space-4)] p-0 md:grid-cols-2 xl:grid-cols-3">
                 {participants.map((participant, index) => (
                   <li key={participant.id ?? participant.code ?? index}>
-                    <ParticipantCard participant={participant} />
+                    <ParticipantCard
+                      participant={participant}
+                      removeAction={
+                        canRemove && participant.id
+                          ? {
+                              busy: removingIds.includes(participant.id),
+                              onClick: () => requestRemoval(participant),
+                            }
+                          : null
+                      }
+                    />
                   </li>
                 ))}
               </ul>
             )}
           </section>
         </>
+      )}
+
+      {canRemove && (
+        <ConfirmationDialog
+          open={Boolean(pendingRemoval)}
+          title={`¿Retirar a «${pendingCode}» de «${title}»?`}
+          description="El participante dejará de formar parte de esta cohorte. No se elimina del sistema ni cambian su registro, consentimiento o línea base, ni otras cohortes. Los cambios son temporales y no se guardan en el servidor."
+          confirmText="Retirar participante"
+          cancelText="Cancelar"
+          onConfirm={confirmRemoval}
+          onCancel={cancelRemoval}
+        />
       )}
     </div>
   );

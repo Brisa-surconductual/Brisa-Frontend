@@ -1,4 +1,6 @@
-import { CircleAlert } from 'lucide-react';
+import { CircleAlert, UserMinus } from 'lucide-react';
+
+import { Button } from '@/shared/components/ui/Button/index.js';
 
 import { PARTICIPATION_STATUS } from '../../types/participantStatus.js';
 import {
@@ -13,7 +15,8 @@ import { ParticipantStatusBadge } from '../ParticipantStatusBadge/index.js';
  * seudonimizado, estado en la cohorte, registro, consentimiento, línea
  * base y motivos de validación pendiente. Cualquier otro campo que
  * traiga la fuente (correo, nombre, documento, consumo, resultados) se
- * ignora. Es de solo lectura: no ofrece asignar, retirar ni editar.
+ * ignora. Sin `removeAction` es de solo lectura; con él ofrece retirar
+ * al participante de la cohorte ({ busy, onClick }). Nunca edita.
  */
 const CHECKS = Object.freeze([
   Object.freeze({ check: PARTICIPANT_CHECK.REGISTRATION, label: 'Registro', field: 'registrationStatus' }),
@@ -28,7 +31,7 @@ function toReasons(value) {
     : [];
 }
 
-export function ParticipantCard({ participant }) {
+export function ParticipantCard({ participant, removeAction = null }) {
   const code = participant.code?.trim();
   const reasons = toReasons(participant.pendingReasons);
   const isPending = participant.participationStatus === PARTICIPATION_STATUS.PENDING_VALIDATION;
@@ -62,21 +65,41 @@ export function ParticipantCard({ participant }) {
         ))}
       </dl>
 
-      {(isPending || reasons.length > 0) && (
-        <div className="mt-auto rounded-[var(--radius-lg)] border border-[var(--warning-border)] bg-[var(--warning-bg)] p-[var(--space-3)] text-[length:var(--font-size-sm)] text-[var(--warning-text)]">
-          <p className="m-0 flex items-center gap-[var(--space-2)] font-bold">
-            <CircleAlert size={16} strokeWidth={1.8} className="shrink-0" aria-hidden="true" />
-            Motivos de validación pendiente
-          </p>
+      {(isPending || reasons.length > 0 || removeAction) && (
+        <div className="mt-auto flex flex-col gap-[var(--space-4)]">
+          {(isPending || reasons.length > 0) && (
+            <div className="rounded-[var(--radius-lg)] border border-[var(--warning-border)] bg-[var(--warning-bg)] p-[var(--space-3)] text-[length:var(--font-size-sm)] text-[var(--warning-text)]">
+              <p className="m-0 flex items-center gap-[var(--space-2)] font-bold">
+                <CircleAlert size={16} strokeWidth={1.8} className="shrink-0" aria-hidden="true" />
+                Motivos de validación pendiente
+              </p>
 
-          {reasons.length > 0 ? (
-            <ul className="mt-[var(--space-2)] mb-0 flex list-disc flex-col gap-[var(--space-1)] pl-[var(--space-6)]">
-              {reasons.map((reason, index) => (
-                <li key={`${index}-${reason}`}>{reason}</li>
-              ))}
-            </ul>
-          ) : (
-            <p className="mt-[var(--space-1)] mb-0">La fuente de datos no indicó motivos.</p>
+              {reasons.length > 0 ? (
+                <ul className="mt-[var(--space-2)] mb-0 flex list-disc flex-col gap-[var(--space-1)] pl-[var(--space-6)]">
+                  {reasons.map((reason, index) => (
+                    <li key={`${index}-${reason}`}>{reason}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-[var(--space-1)] mb-0">La fuente de datos no indicó motivos.</p>
+              )}
+            </div>
+          )}
+
+          {removeAction && (
+            <div className="flex justify-end border-t border-[var(--surface-border)] pt-[var(--space-3)]">
+              <Button
+                variant="secondary"
+                loading={removeAction.busy}
+                loadingText="Retirando..."
+                onClick={removeAction.onClick}
+                className="min-h-[44px]"
+              >
+                <UserMinus size={16} strokeWidth={1.8} aria-hidden="true" />
+                Retirar
+                <span className="sr-only"> {code || 'participante sin código'} de la cohorte</span>
+              </Button>
+            </div>
           )}
         </div>
       )}

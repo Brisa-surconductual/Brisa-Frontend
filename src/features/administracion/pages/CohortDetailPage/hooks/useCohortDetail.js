@@ -21,8 +21,9 @@ export const PARTICIPANTS_ERROR_MESSAGE =
 
 /*
  * Detalle de una cohorte y consulta de sus participantes (RF-125).
- * No asigna ni retira por sí mismo: `addParticipants` solo refleja en
- * la lista los registros que ya devolvió la fuente al asignar. Presenta los estados tal como los informa la fuente, sin calcular
+ * No asigna ni retira por sí mismo: `addParticipants` y
+ * `removeParticipant` solo reflejan en la lista lo que ya resolvió la
+ * fuente al asignar o retirar. Presenta los estados tal como los informa la fuente, sin calcular
  * la elegibilidad. Distingue carga, cohorte inexistente, error de la
  * cohorte, error de los participantes, lista vacía e integración
  * pendiente; un fallo nunca se reemplaza por datos ficticios.
@@ -106,5 +107,8 @@ export function useCohortDetail({ cohortId, source = DEFAULT_SOURCE } = {}) {
         ...current.filter(({ id }) => !assigned.some((participant) => participant.id === id)),
         ...assigned,
       ]),
+    // Quita de la lista al participante que la fuente ya retiró.
+    removeParticipant: (participantId) =>
+      setParticipants((current) => current.filter(({ id }) => id !== participantId)),
   };
 }

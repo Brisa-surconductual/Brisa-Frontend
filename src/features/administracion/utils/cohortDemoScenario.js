@@ -15,7 +15,10 @@
  * - conflictos-asignacion: PART-0009 ya está en la Cohorte Piloto B
  *   (ACTIVA) y el catálogo está desactualizado (todos aparecen
  *   disponibles), así los conflictos se ven al confirmar.
- * La asignación también falla con error-guardado.
+ * - retiro-desactualizado: al consultar la Cohorte Piloto B, otra
+ *   operación retira a PART-0002 sin que la lista lo refleje; al
+ *   retirarlo se ve el conflicto por datos desactualizados.
+ * La asignación y el retiro también fallan con error-guardado.
  */
 export const DEMO_SCENARIO = Object.freeze({
   LIST: 'lista',
@@ -29,6 +32,7 @@ export const DEMO_SCENARIO = Object.freeze({
   PARTICIPANTS_ERROR: 'error-participantes',
   CATALOG_ERROR: 'error-catalogo',
   ASSIGNMENT_CONFLICTS: 'conflictos-asignacion',
+  STALE_REMOVAL: 'retiro-desactualizado',
 });
 
 // Escenario de la demostración; un valor desconocido muestra la lista.

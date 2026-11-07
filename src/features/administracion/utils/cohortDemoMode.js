@@ -13,7 +13,8 @@
  *                          | sin-cronogramas | error-guardado
  *                          | activacion-bloqueada | carga-participantes
  *                          | error-participantes | error-catalogo
- *                          | conflictos-asignacion  (opcional)
+ *                          | conflictos-asignacion | retiro-desactualizado
+ *                                                   (opcional)
  *
  * - vacio: no hay cohortes; carga: las consultas no terminan;
  * - error: las consultas fallan; error-guardado: guardar falla;
@@ -22,7 +23,9 @@
  * - carga-participantes / error-participantes: solo la consulta de
  *   participantes no termina o falla;
  * - error-catalogo: falla la consulta de participantes disponibles;
- * - conflictos-asignacion: los conflictos aparecen al asignar.
+ * - conflictos-asignacion: los conflictos aparecen al asignar;
+ * - retiro-desactualizado: retirar a PART-0002 de la Cohorte Piloto B
+ *   choca con una operación anterior.
  */
 export function isCohortDemoEnabled(env = import.meta.env) {
   return Boolean(env.DEV) && env.VITE_M08_DEMO === 'true';

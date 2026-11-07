@@ -36,3 +36,14 @@ export async function listAvailableParticipants(cohortId) {
 export async function assignParticipants(cohortId, participantIds) {
   return (await loadDemoSource()).assignParticipants(cohortId, participantIds);
 }
+
+/*
+ * Retira al participante de la cohorte (RF-125). Semántica PROVISIONAL:
+ * solo elimina la asociación; no borra al participante ni cambia sus
+ * estados ni otras cohortes. Devuelve { ok: true, removed } o
+ * { ok: false, error } (REMOVAL_ERROR) sin cambios. Un fallo de la
+ * fuente rechaza la promesa.
+ */
+export async function removeCohortParticipant(cohortId, participantId) {
+  return (await loadDemoSource()).removeCohortParticipant(cohortId, participantId);
+}

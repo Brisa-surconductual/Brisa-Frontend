@@ -1,5 +1,6 @@
 import { ASSIGNMENT_ERROR, ASSIGNMENT_ISSUE } from '../types/participantAssignment.js';
 import { COHORT_STATUS } from '../types/cohortStatus.js';
+import { REMOVAL_ERROR } from '../types/participantRemoval.js';
 import { DEMO_AVAILABILITY } from './participantCatalogDemoData.js';
 
 /*
@@ -14,7 +15,8 @@ import { DEMO_AVAILABILITY } from './participantCatalogDemoData.js';
  *
  * Hace las veces del backend en la demostración: los conflictos y el
  * resultado de cada asignación se deciden AQUÍ (y el resultado viene
- * fijado en el catálogo ficticio), nunca en la interfaz. Reglas
+ * fijado en los datos ficticios: el catálogo o el registro inicial de
+ * cada participante), nunca en la interfaz. Reglas
  * PROVISIONALES hasta confirmar el contrato:
  *   - un participante no puede repetirse en la misma cohorte;
  *   - no puede asignarse si ya pertenece a otra cohorte ACTIVA;
@@ -24,10 +26,55 @@ import { DEMO_AVAILABILITY } from './participantCatalogDemoData.js';
  * `findCohort(id)` consulta el almacén de cohortes (el mismo del
  * listado) para saber si una cohorte existe y en qué estado está.
  */
+/*
+ * Participante del registro a partir de una asociación inicial: conserva
+ * su código, sus estados administrativos y, como resultado de una nueva
+ * asignación, el estado y los motivos que ya informó la fuente para él.
+ * No se calcula nada nuevo.
+ */
+function fromMembership(membership) {
+  return Object.freeze({
+    id: membership.id,
+    code: membership.code,
+    registrationStatus: membership.registrationStatus,
+    consentStatus: membership.consentStatus,
+    baselineStatus: membership.baselineStatus,
+    demoResult: Object.freeze({
+      participationStatus: membership.participationStatus,
+      pendingReasons: Object.freeze([...(membership.pendingReasons ?? [])]),
+    }),
+  });
+}
+
+/*
+ * Registro único de participantes de la demostración: los asociados al
+ * inicio y los del catálogo, una sola vez por identificador (si uno
+ * aparece en ambos, manda el catálogo). Retirar una asociación no los
+ * borra de aquí, así pueden volver a ofrecerse para asignación.
+ */
+function buildRegistry(participants, catalog) {
+  const registry = new Map();
+
+  for (const membership of participants) {
+    if (!registry.has(membership.id)) registry.set(membership.id, fromMembership(membership));
+  }
+
+  for (const candidate of catalog) registry.set(candidate.id, candidate);
+
+  return Object.freeze([...registry.values()]);
+}
+
 export function createParticipantStore({ participants = [], catalog = [] } = {}) {
   let memberships = Object.freeze([...participants]);
+  const registry = buildRegistry(participants, catalog);
 
-  const findCandidate = (id) => catalog.find((candidate) => candidate.id === id) ?? null;
+  const findCandidate = (id) => registry.find((candidate) => candidate.id === id) ?? null;
+
+  // Existe en la demostración (los marcados como inexistentes, no).
+  const isKnown = (id) => {
+    const candidate = findCandidate(id);
+    return Boolean(candidate) && candidate.demoAvailability !== DEMO_AVAILABILITY.MISSING;
+  };
 
   function issueFor(cohortId, candidate, findCohort) {
     if (!candidate || candidate.demoAvailability === DEMO_AVAILABILITY.MISSING) {
@@ -71,13 +118,14 @@ export function createParticipantStore({ participants = [], catalog = [] } = {})
       Object.freeze(memberships.filter((participant) => participant.cohortId === cohortId)),
 
     /*
-     * Catálogo para una cohorte: { id, code, issue } con `issue` null si
-     * puede asignarse. `stale` imita un catálogo desactualizado: lista a
+     * Catálogo para una cohorte: todo el registro como { id, code, issue },
+     * con `issue` null si puede asignarse según el estado actual de las
+     * asociaciones. `stale` imita un catálogo desactualizado: lista a
      * todos como disponibles y los conflictos aparecen al asignar.
      */
     listCandidates(cohortId, { findCohort, stale = false }) {
       return Object.freeze(
-        catalog
+        registry
           .filter((candidate) => stale || candidate.demoAvailability !== DEMO_AVAILABILITY.MISSING)
           .map((candidate) =>
             Object.freeze({
@@ -120,6 +168,31 @@ export function createParticipantStore({ participants = [], catalog = [] } = {})
       memberships = Object.freeze([...memberships, ...assigned]);
 
       return Object.freeze({ ok: true, assigned });
+    },
+
+    /*
+     * Retiro (RF-125, semántica PROVISIONAL): elimina solo la asociación
+     * del participante con esta cohorte. Vuelve a verificar la cohorte y
+     * la asociación antes de aplicarlo, así un retiro repetido o con
+     * datos desactualizados no cambia nada ni informa un éxito falso.
+     * Devuelve { ok: true, removed } o { ok: false, error }.
+     */
+    remove(cohortId, participantId, { findCohort }) {
+      if (!findCohort(cohortId)) {
+        return Object.freeze({ ok: false, error: REMOVAL_ERROR.COHORT_NOT_FOUND });
+      }
+
+      if (!isKnown(participantId)) {
+        return Object.freeze({ ok: false, error: REMOVAL_ERROR.PARTICIPANT_NOT_FOUND });
+      }
+
+      const removed = memberships.find(({ id, cohortId: owner }) => id === participantId && owner === cohortId);
+
+      if (!removed) return Object.freeze({ ok: false, error: REMOVAL_ERROR.NOT_ASSOCIATED });
+
+      memberships = Object.freeze(memberships.filter((membership) => membership !== removed));
+
+      return Object.freeze({ ok: true, removed });
     },
   };
 }

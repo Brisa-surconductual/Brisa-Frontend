@@ -156,11 +156,23 @@ describe('useCohortDetail', () => {
     expect(react.setters[SET_ATTEMPT]).toHaveBeenCalledTimes(1);
   });
 
-  it('no retira ni edita: solo reintenta y refleja asignaciones ya resueltas por la fuente', () => {
+  it('no edita: solo reintenta y refleja asignaciones y retiros ya resueltos por la fuente', () => {
     const result = useCohortDetail({ cohortId: 'c-1', source: source() });
     const operations = Object.keys(result).filter((key) => typeof result[key] === 'function');
 
-    expect(operations).toEqual(['retry', 'addParticipants']);
+    expect(operations).toEqual(['retry', 'addParticipants', 'removeParticipant']);
+  });
+
+  it('removeParticipant quita solo a ese participante y conserva el estado de los demás', () => {
+    const src = source();
+    const result = useCohortDetail({ cohortId: 'c-1', source: src });
+
+    result.removeParticipant('p-1');
+    const [update] = react.setters[SET_PARTICIPANTS].mock.lastCall;
+
+    expect(update(PARTICIPANTS)).toEqual([PARTICIPANTS[1]]);
+    expect(update(PARTICIPANTS)[0]).toBe(PARTICIPANTS[1]);
+    expect(src.getCohort).not.toHaveBeenCalled();
   });
 
   it('addParticipants añade los asignados sin duplicar ni tocar la fuente', () => {
