@@ -40,6 +40,7 @@ import {
   SchedulePanelPage,
   AssignSchedulePage,
 } from '@/features/cronograma/index.js';
+import { CohortListPage } from '@/features/administracion/index.js';
 
 import { RequireAuth } from './RequireAuth.jsx';
 import { RoleHomeRedirect } from './RoleHomeRedirect.jsx';
@@ -243,6 +244,11 @@ export function AppRouter() {
               <Route
                 path="administrativo/cronograma/:idSchedule/crear-unidad"
                 element={<CreateTemporalUnitPage />}
+              />
+
+              <Route
+                path="administrativo/cohortes"
+                element={<CohortListPage />}
               />
 
               <Route

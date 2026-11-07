@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createRoutesFromChildren, matchRoutes } from 'react-router-dom';
 
 import { SchedulePanelPage, CreateTemporalUnitPage, ScheduleManagementPage } from '@/features/cronograma/index.js';
+import { CohortListPage } from '@/features/administracion/index.js';
 import { USER_ROLE } from '@/features/users/types/authTypes.js';
 import { DASHBOARD_SHORTCUTS } from '@/features/users/pages/PsychologyHomePage/data/psychologyStats.js';
 
@@ -70,6 +71,7 @@ const ADMIN_PATHS = Object.freeze([
   '/app/administrativo/cronograma/s-1/unidades/u-1',
   '/app/administrativo/cronograma/s-1/panel',
   '/app/administrativo/cronograma/s-1/crear-unidad',
+  '/app/administrativo/cohortes',
   '/app/administrativo/chat/modalidad',
   '/app/administrativo/chat/arboles',
 ]);
@@ -118,6 +120,17 @@ describe('Rutas administrativas protegidas', () => {
     expect(
       match('/app/administrativo/cronograma').at(-1).route.element.type,
     ).toBe(ScheduleManagementPage);
+  });
+
+  it('el listado de cohortes (M08) se declara una sola vez y monta su página', () => {
+    const declarations = leafPaths(ROUTES).filter(
+      (path) => path === '/app/administrativo/cohortes',
+    );
+
+    expect(declarations).toHaveLength(1);
+    expect(
+      match('/app/administrativo/cohortes').at(-1).route.element.type,
+    ).toBe(CohortListPage);
   });
 
   it('ninguna ruta se declara dos veces', () => {

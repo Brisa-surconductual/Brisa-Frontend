@@ -43,16 +43,23 @@ describe('Sección administrativa activa', () => {
   ])('%s pertenece a Chat', (pathname) =>
     expect(getActiveAdminSection(pathname)).toBe(ADMIN_SECTION.CHAT));
 
+  it.each([
+    '/app/administrativo/cohortes',
+    '/app/administrativo/cohortes/',
+  ])('%s pertenece a Cohortes', (pathname) =>
+    expect(getActiveAdminSection(pathname)).toBe(ADMIN_SECTION.COHORTES));
+
   it('fuera del área administrativa no marca ninguna sección', () =>
     expect(getActiveAdminSection('/app/estudiante')).toBeNull());
 });
 
 describe('Elementos de navegación', () => {
-  it('ofrece las cinco secciones reales en orden', () =>
+  it('ofrece las seis secciones reales en orden', () =>
     expect(ADMIN_NAV_ITEMS.map(({ label }) => label)).toEqual([
       'Dashboard',
       'Población',
       'Cronogramas',
+      'Cohortes',
       'Chat',
       'Ajustes',
     ]));
@@ -65,6 +72,7 @@ describe('Elementos de navegación', () => {
 
   it('expone la etiqueta de cada sección', () => {
     expect(getAdminSectionLabel(ADMIN_SECTION.CRONOGRAMA)).toBe('Cronogramas');
+    expect(getAdminSectionLabel(ADMIN_SECTION.COHORTES)).toBe('Cohortes');
     expect(getAdminSectionLabel(null)).toBe('');
   });
 });

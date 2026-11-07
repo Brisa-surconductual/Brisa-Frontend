@@ -21,17 +21,18 @@ function pageFiles(dir) {
   });
 }
 
-// Cronogramas y chat (salvo la página del estudiante) y el panel.
+// Cronogramas, chat (salvo la página del estudiante), administración
+// (M08) y el panel.
 const ADMIN_PAGES = pageFiles(FEATURES_DIR).filter(
   (path) =>
-    (/features[\\/](cronograma|chat)[\\/]pages/.test(path) &&
+    (/features[\\/](cronograma|chat|administracion)[\\/]pages/.test(path) &&
       !/CurrentContentPage/.test(path)) ||
     /PsychologyHomePage\.jsx$/.test(path),
 );
 
 describe('Navegación administrativa sin duplicados', () => {
   it('encuentra las páginas administrativas', () =>
-    expect(ADMIN_PAGES.length).toBeGreaterThanOrEqual(17));
+    expect(ADMIN_PAGES.length).toBeGreaterThanOrEqual(18));
 
   it.each(ADMIN_PAGES.map((path) => [path.replace(/.*features[\\/]/, ''), path]))(
     '%s no monta navegación ni <main> propios',

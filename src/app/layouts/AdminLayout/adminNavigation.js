@@ -1,6 +1,7 @@
 import {
   CalendarRange,
   LayoutDashboard,
+  Layers,
   MessagesSquare,
   Settings,
   Users,
@@ -14,6 +15,8 @@ export const ADMIN_SECTION = Object.freeze({
   DASHBOARD: ADMINISTRATIVE_TAB.DASHBOARD,
   POBLACION: ADMINISTRATIVE_TAB.POBLACION,
   CRONOGRAMA: ADMINISTRATIVE_TAB.CRONOGRAMA,
+  // Cohortes (M08) no es una pestaña del panel: su id es local.
+  COHORTES: 'COHORTES',
   CHAT: ADMINISTRATIVE_TAB.CHAT,
   AJUSTES: ADMINISTRATIVE_TAB.AJUSTES,
 });
@@ -44,6 +47,12 @@ export const ADMIN_NAV_ITEMS = Object.freeze([
     label: 'Cronogramas',
     Icon: CalendarRange,
     to: Object.freeze({ pathname: `${ADMIN_HOME}/cronograma` }),
+  }),
+  Object.freeze({
+    id: ADMIN_SECTION.COHORTES,
+    label: 'Cohortes',
+    Icon: Layers,
+    to: Object.freeze({ pathname: `${ADMIN_HOME}/cohortes` }),
   }),
   Object.freeze({
     id: ADMIN_SECTION.CHAT,
@@ -78,6 +87,10 @@ export function getActiveAdminSection(pathname, search = '') {
 
   if (path.startsWith(`${ADMIN_HOME}/cronograma`)) {
     return ADMIN_SECTION.CRONOGRAMA;
+  }
+
+  if (path.startsWith(`${ADMIN_HOME}/cohortes`)) {
+    return ADMIN_SECTION.COHORTES;
   }
 
   if (path.startsWith(`${ADMIN_HOME}/chat`)) {
