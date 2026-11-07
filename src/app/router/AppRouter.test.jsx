@@ -71,6 +71,8 @@ const ADMIN_PATHS = Object.freeze([
   '/app/administrativo/cronograma/s-1/panel',
   '/app/administrativo/cronograma/s-1/crear-unidad',
   '/app/administrativo/chat/modalidad',
+  '/app/administrativo/chat/grupal',
+  '/app/administrativo/chat/grupal/f-1',
   '/app/administrativo/chat/arboles',
 ]);
 
@@ -284,7 +286,8 @@ describe('Rutas sin cambios', () => {
             .replace('/u-1/informacion', '/:participantId/informacion')
             .replace('/c-1/', '/:contentId/')
             .replace('/s-1/unidades/u-1', '/:scheduleId/unidades/:unitId')
-            .replace('/s-1/', '/:idSchedule/'),
+            .replace('/s-1/', '/:idSchedule/')
+            .replace('/grupal/f-1', '/grupal/:flowId'),
         ),
         '*',
       ].sort(),

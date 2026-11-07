@@ -5,8 +5,10 @@ import { StudentLayout } from '@/app/layouts/StudentLayout/index.js';
 import { RegistrationLayout } from '@/app/layouts/RegistrationLayout/index.js';
 import {
   ChatEntryPage,
-  ProgramModalityPage,
-  PersonalizedTreesPage,
+  GroupTreeDetailPage,
+  GroupTreesPage,
+  ProgramModalityScreen,
+  PersonalizedTreesScreen,
 } from '@/features/chat/index.js';
 import {
   BaselinePage,
@@ -253,12 +255,22 @@ export function AppRouter() {
 
               <Route
                 path="administrativo/chat/modalidad"
-                element={<ProgramModalityPage />}
+                element={<ProgramModalityScreen />}
+              />
+
+              <Route
+                path="administrativo/chat/grupal"
+                element={<GroupTreesPage />}
+              />
+
+              <Route
+                path="administrativo/chat/grupal/:flowId"
+                element={<GroupTreeDetailPage />}
               />
 
               <Route
                 path="administrativo/chat/arboles"
-                element={<PersonalizedTreesPage />}
+                element={<PersonalizedTreesScreen />}
               />
               </Route>
             </Route>
