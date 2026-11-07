@@ -2,6 +2,7 @@ import { SCHEDULE_STATUS } from '../types/scheduleStatus.js';
 import { DEMO_SCENARIO, getDemoScenario } from '../utils/cohortDemoScenario.js';
 import { DEMO_COHORTS } from './cohortDemoData.js';
 import { createCohortStore } from './cohortDemoStore.js';
+import { DEMO_PARTICIPANT_CATALOG } from './participantCatalogDemoData.js';
 import { DEMO_PARTICIPANTS } from './participantDemoData.js';
 import { createParticipantStore } from './participantDemoStore.js';
 import { DEMO_SCHEDULES } from './scheduleDemoData.js';
@@ -34,7 +35,17 @@ function getStore() {
 
 function getParticipantStore() {
   if (!participantStore) {
-    participantStore = createParticipantStore({ participants: DEMO_PARTICIPANTS });
+    participantStore = createParticipantStore({
+      participants: DEMO_PARTICIPANTS,
+      catalog: DEMO_PARTICIPANT_CATALOG,
+    });
+
+    // Conflicto preparado: PART-0009 ya pertenece a una cohorte ACTIVA.
+    if (getDemoScenario() === DEMO_SCENARIO.ASSIGNMENT_CONFLICTS) {
+      participantStore.assign('demo-cohorte-b', ['demo-candidato-9'], {
+        findCohort: getStore().findCohort,
+      });
+    }
   }
 
   return participantStore;
@@ -114,6 +125,30 @@ export async function listCohortParticipants(cohortId) {
     return demo.findCohort(cohortId) ? getParticipantStore().listByCohort(cohortId) : null;
   });
 }
+
+/*
+ * Participantes que pueden proponerse para la cohorte: { id, code,
+ * issue }, o null si la cohorte no existe. `issue` lo decide la fuente.
+ */
+export const listAvailableParticipants = (cohortId) =>
+  read((demo) => {
+    if (getDemoScenario() === DEMO_SCENARIO.CATALOG_ERROR) {
+      throw new Error('Error simulado al consultar participantes disponibles.');
+    }
+
+    if (!demo.findCohort(cohortId)) return null;
+
+    return getParticipantStore().listCandidates(cohortId, {
+      findCohort: demo.findCohort,
+      stale: getDemoScenario() === DEMO_SCENARIO.ASSIGNMENT_CONFLICTS,
+    });
+  });
+
+// Asignación (RF-125): ver el resultado estructurado en participantDemoStore.js.
+export const assignParticipants = (cohortId, participantIds) =>
+  write((demo) =>
+    getParticipantStore().assign(cohortId, participantIds, { findCohort: demo.findCohort }),
+  );
 
 // Solo para pruebas automatizadas: simula una recarga de la aplicación.
 export function resetDemoSource() {

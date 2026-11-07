@@ -16,3 +16,23 @@ import { loadDemoSource } from './cohortSource.js';
 export async function listCohortParticipants(cohortId) {
   return (await loadDemoSource()).listCohortParticipants(cohortId);
 }
+
+/*
+ * Participantes que pueden proponerse para la cohorte (RF-125):
+ * [{ id, code, issue }], con `issue` null o un ASSIGNMENT_ISSUE que
+ * decide la fuente; null si la cohorte no existe. Solo códigos
+ * seudonimizados: ningún dato personal.
+ */
+export async function listAvailableParticipants(cohortId) {
+  return (await loadDemoSource()).listAvailableParticipants(cohortId);
+}
+
+/*
+ * Asigna los participantes a la cohorte. Devuelve { ok: true, assigned }
+ * con el estado que decidió la fuente para cada uno, o
+ * { ok: false, error, issues } sin asignar ninguno (operación atómica,
+ * PROVISIONAL). Un fallo de la fuente rechaza la promesa.
+ */
+export async function assignParticipants(cohortId, participantIds) {
+  return (await loadDemoSource()).assignParticipants(cohortId, participantIds);
+}

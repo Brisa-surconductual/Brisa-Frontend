@@ -156,10 +156,31 @@ describe('useCohortDetail', () => {
     expect(react.setters[SET_ATTEMPT]).toHaveBeenCalledTimes(1);
   });
 
-  it('solo expone consulta: ninguna operación de asignar, retirar o editar', () => {
+  it('no retira ni edita: solo reintenta y refleja asignaciones ya resueltas por la fuente', () => {
     const result = useCohortDetail({ cohortId: 'c-1', source: source() });
     const operations = Object.keys(result).filter((key) => typeof result[key] === 'function');
 
-    expect(operations).toEqual(['retry']);
+    expect(operations).toEqual(['retry', 'addParticipants']);
+  });
+
+  it('addParticipants añade los asignados sin duplicar ni tocar la fuente', () => {
+    const src = source();
+    const result = useCohortDetail({ cohortId: 'c-1', source: src });
+    const added = { id: 'p-3', cohortId: 'c-1', code: 'X-3', participationStatus: 'ACTIVO' };
+    const repeated = { ...PARTICIPANTS[0], participationStatus: 'INACTIVO' };
+
+    result.addParticipants([added, repeated]);
+    const [update] = react.setters[SET_PARTICIPANTS].mock.lastCall;
+
+    expect(update(PARTICIPANTS)).toEqual([PARTICIPANTS[1], added, repeated]);
+    expect(src.getCohort).not.toHaveBeenCalled();
+    expect(src.listParticipants).not.toHaveBeenCalled();
+  });
+
+  it('sin integración no permite gestionar; en demostración sí', () => {
+    expect(
+      useCohortDetail({ cohortId: 'c-1', source: source({ mode: COHORT_SOURCE_MODE.PENDING_INTEGRATION }) }).canManage,
+    ).toBe(false);
+    expect(useCohortDetail({ cohortId: 'c-1', source: source() }).canManage).toBe(true);
   });
 });

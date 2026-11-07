@@ -9,6 +9,7 @@ import {
   RefreshCw,
   SearchX,
   ShieldCheck,
+  UserPlus,
   UsersRound,
 } from 'lucide-react';
 
@@ -17,10 +18,13 @@ import { Button } from '@/shared/components/ui/Button/index.js';
 import { CohortNotice } from '../../components/CohortNotice/index.js';
 import { CohortPeriod } from '../../components/CohortPeriod/index.js';
 import { CohortStatusBadge } from '../../components/CohortStatusBadge/index.js';
+import { ParticipantAssignmentPanel } from '../../components/ParticipantAssignmentPanel/index.js';
+import { ParticipantAssignmentResult } from '../../components/ParticipantAssignmentResult/index.js';
 import { ParticipantCard } from '../../components/ParticipantCard/index.js';
 import { PARTICIPATION_STATUS } from '../../types/participantStatus.js';
 
 import { COHORT_LIST_PATH, useCohortDetail } from './hooks/useCohortDetail.js';
+import { useParticipantAssignment } from './hooks/useParticipantAssignment.js';
 
 const PARTICIPATION_SUMMARY = Object.freeze([
   Object.freeze({ status: PARTICIPATION_STATUS.ACTIVE, singular: 'activo', plural: 'activos' }),
@@ -51,10 +55,10 @@ function SummaryItem({ icon: Icon, label, children }) {
 }
 
 /*
- * Detalle de una cohorte con la consulta de sus participantes
- * (/cohortes/:idCohorte, RF-125). Solo consulta: no asigna, retira ni
- * modifica participantes. La página solo compone; el estado vive en
- * useCohortDetail.
+ * Detalle de una cohorte con la consulta y la asignación de sus
+ * participantes (/cohortes/:idCohorte, RF-125). El retiro aún no existe.
+ * La página solo compone; el estado vive en useCohortDetail y
+ * useParticipantAssignment.
  */
 export function CohortDetailPage() {
   const { idCohorte } = useParams();
@@ -68,11 +72,43 @@ export function CohortDetailPage() {
     participantsError,
     isDemo,
     isIntegrationPending,
+    canManage,
     retry,
+    addParticipants,
   } = useCohortDetail({ cohortId: idCohorte ?? null });
 
   const title = cohort?.name?.trim() || (cohort ? 'Sin nombre' : 'Detalle de cohorte');
   const showCohort = Boolean(cohort) && !isLoading;
+
+  const {
+    canAssign,
+    isOpen: isAssigning,
+    available,
+    unavailable,
+    isLoadingCandidates,
+    catalogError,
+    selected,
+    selectionError,
+    conflicts,
+    requestError,
+    isSubmitting,
+    result: assignmentResult,
+    headingRef,
+    resultRef,
+    triggerRef,
+    open: openAssignment,
+    cancel: cancelAssignment,
+    toggle,
+    remove,
+    submit,
+    retryCatalog,
+    dismissResult,
+  } = useParticipantAssignment({
+    cohortId: idCohorte ?? null,
+    // Sin la lista actual no se ofrece asignar: evitaría ver duplicados.
+    enabled: Boolean(canManage) && showCohort && !participantsError,
+    onAssigned: addParticipants,
+  });
 
   return (
     <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-[var(--space-6)] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]">
@@ -215,6 +251,17 @@ export function CohortDetailPage() {
                 )}
               </div>
 
+              {canAssign && !isAssigning && (
+                <Button
+                  ref={triggerRef}
+                  onClick={openAssignment}
+                  className="w-full min-h-[44px] sm:w-fit"
+                >
+                  <UserPlus size={16} strokeWidth={1.8} aria-hidden="true" />
+                  Asignar participantes
+                </Button>
+              )}
+
               <p className="m-0 inline-flex items-start gap-[var(--space-2)] text-[length:var(--font-size-sm)] text-[var(--text-secondary)]">
                 <ShieldCheck size={16} strokeWidth={1.8} className="mt-[2px] shrink-0" aria-hidden="true" />
                 Solo se muestran códigos seudonimizados y estados administrativos.
@@ -222,6 +269,34 @@ export function CohortDetailPage() {
                 lo calcula.
               </p>
             </div>
+
+            {canAssign && isAssigning && (
+              <ParticipantAssignmentPanel
+                headingRef={headingRef}
+                available={available}
+                unavailable={unavailable}
+                isLoadingCandidates={isLoadingCandidates}
+                catalogError={catalogError}
+                selected={selected}
+                selectionError={selectionError}
+                conflicts={conflicts}
+                requestError={requestError}
+                isSubmitting={isSubmitting}
+                onToggle={toggle}
+                onRemove={remove}
+                onSubmit={submit}
+                onCancel={cancelAssignment}
+                onRetryCatalog={retryCatalog}
+              />
+            )}
+
+            {assignmentResult && (
+              <ParticipantAssignmentResult
+                ref={resultRef}
+                assigned={assignmentResult}
+                onDismiss={dismissResult}
+              />
+            )}
 
             {participantsError && (
               <CohortNotice
@@ -242,8 +317,10 @@ export function CohortDetailPage() {
 
             {!participantsError && participants.length === 0 && (
               <CohortNotice tone="neutral" icon={UsersRound} title="Esta cohorte aún no tiene participantes" role="status">
-                Cuando se asocien participantes a la cohorte, aparecerán aquí. La
-                asignación de participantes todavía no está disponible.
+                Cuando se asocien participantes a la cohorte, aparecerán aquí.
+                {canAssign
+                  ? ' Usa «Asignar participantes» para incorporarlos.'
+                  : ' La asignación de participantes todavía no está disponible.'}
               </CohortNotice>
             )}
 

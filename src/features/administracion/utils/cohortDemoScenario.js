@@ -10,7 +10,12 @@
  * - activacion-bloqueada: los cronogramas de las cohortes iniciales
  *   ya no están activos, y activarlas se rechaza;
  * - carga-participantes / error-participantes: solo la consulta de
- *   participantes de una cohorte no termina o falla.
+ *   participantes de una cohorte no termina o falla;
+ * - error-catalogo: solo la consulta de participantes disponibles falla;
+ * - conflictos-asignacion: PART-0009 ya está en la Cohorte Piloto B
+ *   (ACTIVA) y el catálogo está desactualizado (todos aparecen
+ *   disponibles), así los conflictos se ven al confirmar.
+ * La asignación también falla con error-guardado.
  */
 export const DEMO_SCENARIO = Object.freeze({
   LIST: 'lista',
@@ -22,6 +27,8 @@ export const DEMO_SCENARIO = Object.freeze({
   ACTIVATION_BLOCKED: 'activacion-bloqueada',
   PARTICIPANTS_LOADING: 'carga-participantes',
   PARTICIPANTS_ERROR: 'error-participantes',
+  CATALOG_ERROR: 'error-catalogo',
+  ASSIGNMENT_CONFLICTS: 'conflictos-asignacion',
 });
 
 // Escenario de la demostración; un valor desconocido muestra la lista.
