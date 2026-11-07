@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import { CATEGORIA_ERROR_CHAT, CHAT_ERROR_CODE } from './chatErrorCodes.js';
 
-// Copiada a mano de las tablas de las secciones 3 a 7 del contrato. Si el
-// contrato agrega o quita un `codigo`, esta lista se actualiza a propósito.
+// Lista a mano de los `codigo` que maneja el frontend. Si el backend agrega
+// o quita uno, esta lista se actualiza a propósito.
 const CODIGOS_DEL_CONTRATO = [
   'NO_AUTENTICADO',
   'FLUJO_NO_DISPONIBLE',
@@ -38,12 +38,21 @@ const CODIGOS_DEL_CONTRATO = [
   'ARBOL_NO_DISPONIBLE_PRECARGA',
   'SINCRONIZACION_INTERRUMPIDA',
   'SINCRONIZACION_FALLIDA',
+  // Los que el backend emite hoy en POST /chat/sesiones/iniciar
+  'SIN_CRONOGRAMA',
+  'PERFIL_INCOMPLETO',
+  'SIN_FLUJO_PUBLICADO',
+  'FLUJO_NO_PUBLICADO',
+  'NODO_INICIAL_NO_DISPONIBLE',
+  'ERROR_CARGA_ARBOL',
+  'NODO_ACTUAL_NO_DISPONIBLE',
+  'NODO_FUERA_DE_FLUJO',
 ];
 
 const entradas = Object.entries(CHAT_ERROR_CODE);
 
 describe('CHAT_ERROR_CODE', () => {
-  it('tiene exactamente los códigos del contrato', () => {
+  it('tiene exactamente los códigos que maneja el frontend', () => {
     expect(Object.keys(CHAT_ERROR_CODE).sort()).toEqual(
       [...CODIGOS_DEL_CONTRATO].sort(),
     );

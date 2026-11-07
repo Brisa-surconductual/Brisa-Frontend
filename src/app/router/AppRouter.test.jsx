@@ -277,6 +277,7 @@ describe('Rutas sin cambios', () => {
         '/registro/completado',
         '/app (index)',
         '/app/estudiante',
+        '/app/estudiante/chat',
         '/app/estudiante/cronograma/contenido-vigente',
         ...ADMIN_PATHS.map((path) =>
           path

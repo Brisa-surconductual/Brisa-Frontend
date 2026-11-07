@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { MemoryRouter } from 'react-router-dom';
 
 import { REGISTRATION_STATUS_VIEW } from '@/features/users/services/registrationState.js';
 
@@ -42,7 +43,11 @@ beforeEach(() => {
 
 describe('Inicio del estudiante: datos reales de la sesión', () => {
   it('CP-01 saluda con la parte local del correo, sin dominio ni nombres ficticios', () => {
-    const html = renderToStaticMarkup(<StudentHomePage />);
+    const html = renderToStaticMarkup(
+    <MemoryRouter>
+      <StudentHomePage />
+    </MemoryRouter>,
+  );
 
     expect(html).toContain('Hola, ana.qa</h1>');
     expect(html).not.toContain('example.com');
@@ -58,7 +63,11 @@ describe('Inicio del estudiante: datos reales de la sesión', () => {
 
   it('CP-03 REGISTRO_COMPLETO con sesión limitada no se presenta como completo', () => {
     auth.value = session({ alcance: 'LIMITADA' });
-    const html = renderToStaticMarkup(<StudentHomePage />);
+    const html = renderToStaticMarkup(
+    <MemoryRouter>
+      <StudentHomePage />
+    </MemoryRouter>,
+  );
 
     expect(useStudentHomePage().registrationStatusView).toBe(REGISTRATION_STATUS_VIEW.LIMITED_SESSION);
     expect(html).toContain('Tu sesión necesita actualizarse');
@@ -101,31 +110,51 @@ describe('Inicio del estudiante: datos reales de la sesión', () => {
 });
 
 describe('Módulos del programa (CP-12)', () => {
+  const renderGrid = () =>
+    renderToStaticMarkup(
+      <MemoryRouter>
+        <ModuleGrid />
+      </MemoryRouter>,
+    );
+
   it('conserva catálogo, orden, nombres, descripciones y versión', () => {
-    const html = renderToStaticMarkup(<ModuleGrid />);
+    const html = renderGrid();
     const positions = STUDENT_MODULES.map(({ name }) => html.indexOf(`${name}</h3>`));
 
     expect(positions.every((position) => position >= 0)).toBe(true);
     expect(positions).toEqual([...positions].sort((a, b) => a - b));
     for (const { description, release } of STUDENT_MODULES) {
       expect(html).toContain(description);
-      expect(html).toContain('Disponible próximamente');
       expect(html).toContain(`Módulo ${release}`);
     }
   });
 
-  it('no ofrece enlaces ni botones funcionales', () => {
-    const html = renderToStaticMarkup(<ModuleGrid />);
+  it('el chat es la puerta de entrada al módulo y ya no dice próximamente', () => {
+    const html = renderGrid();
+    const chatCard = html.slice(html.indexOf('<a '), html.indexOf('</a>'));
 
-    expect(html).not.toContain('<a');
+    expect(chatCard).toContain('href="/app/estudiante/chat"');
+    expect(chatCard).toContain('Chat</h3>');
+    expect(chatCard).toContain('Abrir');
+    expect(chatCard).not.toContain('próximamente');
+  });
+
+  it('los demás módulos siguen como tarjetas informativas, sin enlaces ni botones', () => {
+    const html = renderGrid();
+
+    expect(html.match(/<a /g)).toHaveLength(1);
+    expect(html.match(/Disponible próximamente/g)).toHaveLength(STUDENT_MODULES.length - 1);
     expect(html).not.toContain('<button');
-    expect(html).not.toContain('href=');
   });
 });
 
 describe('Estructura del inicio (CP-20)', () => {
   it('un solo h1, módulos bajo h2 y sin <main> propio', () => {
-    const html = renderToStaticMarkup(<StudentHomePage />);
+    const html = renderToStaticMarkup(
+    <MemoryRouter>
+      <StudentHomePage />
+    </MemoryRouter>,
+  );
 
     expect(html.match(/<h1/g)).toHaveLength(1);
     expect(html).toMatch(/<h2 id="modulos-programa-titulo"/);
