@@ -7,15 +7,13 @@ import { ESTADO_PANTALLA_ENTRADA } from '../../types/estadoPantallaEntrada.js';
 import { BrisaMark } from './components/BrisaMark/index.js';
 import { EntryStatePanel } from './components/EntryStatePanel/index.js';
 import { useChatEntryPage } from './hooks/useChatEntryPage.js';
-import { formatLastInteraction } from './utils/formatLastInteraction.js';
+import { formatDateTime } from '../../utils/formatDateTime.js';
 
 const TITLE_ID = 'chat-entrada-titulo';
 
 function SessionDetails({ sesion }) {
   const unidad = sesion.ubicacionTemporal;
-  const ultimaActividad = formatLastInteraction(
-    sesion.sesion.fechaUltimaInteraccion,
-  );
+  const ultimaActividad = formatDateTime(sesion.sesion.fechaUltimaInteraccion);
 
   return (
     <dl className="m-0 mt-[var(--space-4)] flex flex-col gap-[var(--space-2)] text-[length:var(--font-size-sm)]">

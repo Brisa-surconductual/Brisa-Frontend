@@ -1,11 +1,18 @@
 import { NavLink } from 'react-router-dom';
-import { GitBranch, SlidersHorizontal } from 'lucide-react';
+import { GitBranch, SlidersHorizontal, Users } from 'lucide-react';
 
 const SECTIONS = Object.freeze([
   Object.freeze({
     label: 'Modalidad',
     path: '/app/administrativo/chat/modalidad',
     icon: SlidersHorizontal,
+  }),
+  Object.freeze({
+    label: 'Árbol grupal',
+    path: '/app/administrativo/chat/grupal',
+    icon: Users,
+    // El detalle de un flujo cuelga de esta ruta y conserva la pestaña activa.
+    end: false,
   }),
   Object.freeze({
     label: 'Árboles',
@@ -26,11 +33,11 @@ export function ChatSectionTabs() {
       className="border-b border-[var(--surface-border)] bg-[var(--surface-card)]"
     >
       <div className="mx-auto flex w-full max-w-[1200px] gap-[var(--space-1)] overflow-x-auto px-[var(--space-4)] md:px-[var(--space-7)]">
-        {SECTIONS.map(({ label, path, icon: Icon }) => (
+        {SECTIONS.map(({ label, path, icon: Icon, end = true }) => (
           <NavLink
             key={path}
             to={path}
-            end
+            end={end}
             className={({ isActive }) =>
               `inline-flex min-h-[48px] items-center gap-[var(--space-2)] border-b-2 px-[var(--space-4)] text-[length:var(--font-size-sm)] whitespace-nowrap no-underline transition-colors duration-150 motion-reduce:transition-none ${
                 isActive
