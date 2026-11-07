@@ -11,3 +11,5 @@ export { CohortListPage } from './pages/CohortListPage/index.js';
 export { CohortFormPage } from './pages/CohortFormPage/index.js';
 
 export { CohortDetailPage } from './pages/CohortDetailPage/index.js';
+
+export { AuditLogPage } from './pages/AuditLogPage/index.js';

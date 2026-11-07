@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createRoutesFromChildren, matchRoutes } from 'react-router-dom';
 
 import { SchedulePanelPage, CreateTemporalUnitPage, ScheduleManagementPage } from '@/features/cronograma/index.js';
-import { CohortDetailPage, CohortFormPage, CohortListPage } from '@/features/administracion/index.js';
+import { AuditLogPage, CohortDetailPage, CohortFormPage, CohortListPage } from '@/features/administracion/index.js';
 import { USER_ROLE } from '@/features/users/types/authTypes.js';
 import { DASHBOARD_SHORTCUTS } from '@/features/users/pages/PsychologyHomePage/data/psychologyStats.js';
 
@@ -75,6 +75,7 @@ const ADMIN_PATHS = Object.freeze([
   '/app/administrativo/cohortes/nueva',
   '/app/administrativo/cohortes/co-1',
   '/app/administrativo/cohortes/co-1/editar',
+  '/app/administrativo/auditoria',
   '/app/administrativo/chat/modalidad',
   '/app/administrativo/chat/arboles',
 ]);
@@ -156,6 +157,15 @@ describe('Rutas administrativas protegidas', () => {
     expect(
       match('/app/administrativo/cohortes/demo-temporal-1/editar').at(-1).route.element.type,
     ).toBe(CohortFormPage);
+  });
+
+  it('la auditoría (RF-123) se declara una sola vez y monta su página', () => {
+    const declarations = leafPaths(ROUTES).filter(
+      (path) => path === '/app/administrativo/auditoria',
+    );
+
+    expect(declarations).toHaveLength(1);
+    expect(match('/app/administrativo/auditoria').at(-1).route.element.type).toBe(AuditLogPage);
   });
 
   it('ninguna ruta se declara dos veces', () => {

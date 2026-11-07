@@ -3,6 +3,7 @@ import {
   LayoutDashboard,
   Layers,
   MessagesSquare,
+  ScrollText,
   Settings,
   Users,
 } from 'lucide-react';
@@ -18,6 +19,8 @@ export const ADMIN_SECTION = Object.freeze({
   // Cohortes (M08) no es una pestaña del panel: su id es local.
   COHORTES: 'COHORTES',
   CHAT: ADMINISTRATIVE_TAB.CHAT,
+  // Auditoría (M08, RF-123) tampoco es una pestaña del panel.
+  AUDITORIA: 'AUDITORIA',
   AJUSTES: ADMINISTRATIVE_TAB.AJUSTES,
 });
 
@@ -60,6 +63,14 @@ export const ADMIN_NAV_ITEMS = Object.freeze([
     Icon: MessagesSquare,
     to: Object.freeze({ pathname: `${ADMIN_HOME}/chat/modalidad` }),
   }),
+  // Provisional: visible para el rol administrativo; la autorización
+  // real de la consulta la decide el backend (RF-123, RF-04).
+  Object.freeze({
+    id: ADMIN_SECTION.AUDITORIA,
+    label: 'Auditoría',
+    Icon: ScrollText,
+    to: Object.freeze({ pathname: `${ADMIN_HOME}/auditoria` }),
+  }),
   Object.freeze({
     id: ADMIN_SECTION.AJUSTES,
     label: 'Ajustes',
@@ -95,6 +106,10 @@ export function getActiveAdminSection(pathname, search = '') {
 
   if (path.startsWith(`${ADMIN_HOME}/chat`)) {
     return ADMIN_SECTION.CHAT;
+  }
+
+  if (path.startsWith(`${ADMIN_HOME}/auditoria`)) {
+    return ADMIN_SECTION.AUDITORIA;
   }
 
   if (path === ADMIN_HOME) {
