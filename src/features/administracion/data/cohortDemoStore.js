@@ -1,3 +1,4 @@
+import { evaluateCohortTransition } from '../services/cohortTransitions.js';
 import { COHORT_STATUS } from '../types/cohortStatus.js';
 
 /*
@@ -13,6 +14,8 @@ import { COHORT_STATUS } from '../types/cohortStatus.js';
  * (`demo-temporal-N`), distintos de los del backend.
  */
 export const TEMPORARY_ID_PREFIX = 'demo-temporal-';
+
+export const STATUS_CHANGE_NOT_FOUND = 'NOT_FOUND';
 
 export function createCohortStore({ cohorts: initialCohorts = [], schedules = [] } = {}) {
   let cohorts = Object.freeze([...initialCohorts]);
@@ -65,6 +68,31 @@ export function createCohortStore({ cohorts: initialCohorts = [], schedules = []
       );
 
       return updated;
+    },
+
+    /*
+     * Cambio de estado (RF-124). Vuelve a evaluar la transición con la
+     * cohorte y los cronogramas actuales, así una acción repetida o con
+     * datos desactualizados no deja estados inconsistentes. Devuelve
+     * { ok: true, cohort } o { ok: false, reason, message, cohort }.
+     */
+    changeCohortStatus(id, transition) {
+      const current = find(id);
+
+      if (!current) return Object.freeze({ ok: false, reason: STATUS_CHANGE_NOT_FOUND, cohort: null });
+
+      const evaluation = evaluateCohortTransition(current, transition, schedules);
+
+      if (!evaluation.allowed) {
+        return Object.freeze({ ok: false, reason: evaluation.reason, message: evaluation.message, cohort: current });
+      }
+
+      const updated = Object.freeze({ ...current, status: evaluation.nextStatus });
+      cohorts = Object.freeze(
+        cohorts.map((cohort) => (cohort.id === id ? updated : cohort)),
+      );
+
+      return Object.freeze({ ok: true, cohort: updated });
     },
 
     listSchedules: () => schedules,

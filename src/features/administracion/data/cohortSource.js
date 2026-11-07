@@ -54,3 +54,13 @@ export async function createCohort(values) {
 export async function updateCohort(id, values) {
   return (await loadDemoSource()).updateCohort(id, values);
 }
+
+/*
+ * Cambio de estado (RF-124): `transition` es COHORT_TRANSITION.
+ * Devuelve { ok: true, cohort } o { ok: false, reason, message, cohort }
+ * si la transición ya no es válida; un fallo de la fuente rechaza la
+ * promesa y no cambia nada.
+ */
+export async function changeCohortStatus(id, transition) {
+  return (await loadDemoSource()).changeCohortStatus(id, transition);
+}

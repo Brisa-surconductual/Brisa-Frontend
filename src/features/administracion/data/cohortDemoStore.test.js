@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { TEMPORARY_ID_PREFIX, createCohortStore } from './cohortDemoStore.js';
+import { COHORT_TRANSITION } from '../services/cohortTransitions.js';
+import { STATUS_CHANGE_NOT_FOUND, TEMPORARY_ID_PREFIX, createCohortStore } from './cohortDemoStore.js';
 
 // Conjunto arbitrario, distinto de los datos de demostración: el
 // almacén no depende de ningún registro concreto.
@@ -50,5 +51,52 @@ describe('Almacén temporal de cohortes', () => {
     const store = createCohortStore({ cohorts: [], schedules: [] });
 
     expect(store.createCohort(VALUES).scheduleName).toBeUndefined();
+  });
+});
+
+describe('Cambio de estado en el almacén temporal', () => {
+  const DRAFT = Object.freeze({ id: 'x-2', name: 'Borrador', startDate: '2027-01-04', endDate: '2027-03-26', status: 'BORRADOR', scheduleId: 'p' });
+  const INACTIVE_PLAN = Object.freeze([Object.freeze({ id: 'p', name: 'Plan P', status: 'INACTIVO' })]);
+
+  it('activa y luego inactiva, sin tocar otras cohortes ni los registros iniciales', () => {
+    const store = createCohortStore({ cohorts: [...COHORTS, DRAFT], schedules: SCHEDULES });
+
+    expect(store.changeCohortStatus('x-2', COHORT_TRANSITION.ACTIVATE)).toMatchObject({ ok: true, cohort: { status: 'ACTIVA' } });
+    expect(store.changeCohortStatus('x-2', COHORT_TRANSITION.INACTIVATE)).toMatchObject({ ok: true, cohort: { status: 'INACTIVA' } });
+    expect(store.findCohort('x-2').status).toBe('INACTIVA');
+    expect(store.findCohort('x-1')).toBe(COHORTS[0]);
+    expect(DRAFT.status).toBe('BORRADOR');
+  });
+
+  it('una acción repetida no aplica dos veces: la segunda se rechaza y no cambia nada', () => {
+    const store = createCohortStore({ cohorts: [DRAFT], schedules: SCHEDULES });
+    store.changeCohortStatus('x-2', COHORT_TRANSITION.ACTIVATE);
+    const before = store.listCohorts();
+
+    expect(store.changeCohortStatus('x-2', COHORT_TRANSITION.ACTIVATE)).toMatchObject({
+      ok: false, reason: 'NOT_ALLOWED', cohort: { status: 'ACTIVA' },
+    });
+    expect(store.listCohorts()).toBe(before);
+  });
+
+  it('vuelve a verificar con los datos actuales: cronograma inactivo bloquea la activación', () => {
+    const store = createCohortStore({ cohorts: [DRAFT], schedules: INACTIVE_PLAN });
+
+    expect(store.changeCohortStatus('x-2', COHORT_TRANSITION.ACTIVATE)).toMatchObject({
+      ok: false,
+      reason: 'SCHEDULE_NOT_ACTIVE',
+      message: 'No es posible activar la cohorte porque el cronograma asociado no está activo.',
+    });
+    expect(store.findCohort('x-2').status).toBe('BORRADOR');
+  });
+
+  it('transición no definida e identificador inexistente', () => {
+    const store = createCohortStore({ cohorts: [{ ...DRAFT, status: 'INACTIVA' }], schedules: SCHEDULES });
+
+    expect(store.changeCohortStatus('x-2', COHORT_TRANSITION.ACTIVATE).ok).toBe(false);
+    expect(store.findCohort('x-2').status).toBe('INACTIVA');
+    expect(store.changeCohortStatus('nada', COHORT_TRANSITION.ACTIVATE)).toEqual({
+      ok: false, reason: STATUS_CHANGE_NOT_FOUND, cohort: null,
+    });
   });
 });

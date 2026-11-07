@@ -21,9 +21,13 @@ export function CohortNotice({
   role,
   action,
   children,
+  ref,
+  tabIndex,
 }) {
   return (
     <div
+      ref={ref}
+      tabIndex={tabIndex}
       className={`flex flex-col gap-[var(--space-3)] rounded-[var(--radius-lg)] border px-[var(--space-4)] py-[var(--space-3)] sm:flex-row sm:items-center sm:justify-between ${TONE_CLASS[tone] ?? TONE_CLASS.info}`}
       role={role}
     >

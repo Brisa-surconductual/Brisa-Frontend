@@ -87,6 +87,17 @@ describe('useCohortList', () => {
     expect(react.setters[SET_COHORTS]).not.toHaveBeenCalled();
   });
 
+  it('reemplaza una cohorte cambiada sin tocar las demás (contadores al día)', () => {
+    const { replaceCohort } = useCohortList({ source: source(COHORT_SOURCE_MODE.DEMO) });
+    const current = [{ id: 'c-1', status: 'BORRADOR' }, { id: 'c-2', status: 'ACTIVA' }];
+
+    replaceCohort({ id: 'c-1', status: 'ACTIVA' });
+    const update = react.setters[SET_COHORTS].mock.calls.at(-1)[0];
+
+    expect(update(current)).toEqual([{ id: 'c-1', status: 'ACTIVA' }, { id: 'c-2', status: 'ACTIVA' }]);
+    expect(current[0].status).toBe('BORRADOR');
+  });
+
   it('reintentar vuelve a consultar', () => {
     const { retry } = useCohortList({ source: source(COHORT_SOURCE_MODE.DEMO) });
 

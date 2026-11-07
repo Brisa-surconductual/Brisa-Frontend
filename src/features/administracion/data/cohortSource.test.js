@@ -5,7 +5,9 @@ import { COHORT_STATUS } from '../types/cohortStatus.js';
 import { SCHEDULE_STATUS } from '../types/scheduleStatus.js';
 import { DEMO_COHORTS } from './cohortDemoData.js';
 import { DEMO_DELAY_MS, resetDemoSource } from './cohortDemoSource.js';
+import { COHORT_TRANSITION } from '../services/cohortTransitions.js';
 import {
+  changeCohortStatus,
   createCohort,
   getCohort,
   getCohortSourceMode,
@@ -48,6 +50,7 @@ describe('Fuente de cohortes sin integración', () => {
       () => listSchedules(),
       () => createCohort(NEW_COHORT),
       () => updateCohort('demo-cohorte-a', NEW_COHORT),
+      () => changeCohortStatus('demo-cohorte-a', COHORT_TRANSITION.ACTIVATE),
     ]) {
       await expect(operation()).rejects.toThrow('no está integrada');
     }
@@ -162,5 +165,52 @@ describe('Fuente de cohortes en modo de demostración', () => {
     await new Promise((resolve) => setTimeout(resolve, DEMO_DELAY_MS * 2));
 
     expect(settled).not.toHaveBeenCalled();
+  });
+});
+
+describe('Cambio de estado en modo de demostración', () => {
+  it('activar una cohorte en borrador se refleja en el listado y persiste hasta recargar', async () => {
+    enableDemo();
+    const result = await changeCohortStatus('demo-cohorte-a', COHORT_TRANSITION.ACTIVATE);
+
+    expect(result).toMatchObject({ ok: true, cohort: { id: 'demo-cohorte-a', status: COHORT_STATUS.ACTIVE } });
+    expect((await getCohort('demo-cohorte-a')).status).toBe(COHORT_STATUS.ACTIVE);
+    expect(DEMO_COHORTS[0].status).toBe(COHORT_STATUS.DRAFT);
+
+    resetDemoSource();
+    expect((await getCohort('demo-cohorte-a')).status).toBe(COHORT_STATUS.DRAFT);
+  });
+
+  it('inactivar una cohorte activa', async () => {
+    enableDemo();
+
+    expect(await changeCohortStatus('demo-cohorte-b', COHORT_TRANSITION.INACTIVATE)).toMatchObject({
+      ok: true, cohort: { status: COHORT_STATUS.INACTIVE },
+    });
+  });
+
+  it('una cohorte inactiva no puede reactivarse', async () => {
+    enableDemo();
+
+    expect(await changeCohortStatus('demo-cohorte-c', COHORT_TRANSITION.ACTIVATE)).toMatchObject({
+      ok: false, reason: 'NOT_ALLOWED', cohort: { status: COHORT_STATUS.INACTIVE },
+    });
+  });
+
+  it('escenario de activación bloqueada: el cronograma ya no está activo', async () => {
+    enableDemo('activacion-bloqueada');
+
+    expect(await changeCohortStatus('demo-cohorte-a', COHORT_TRANSITION.ACTIVATE)).toMatchObject({
+      ok: false,
+      message: 'No es posible activar la cohorte porque el cronograma asociado no está activo.',
+    });
+    expect((await getCohort('demo-cohorte-a')).status).toBe(COHORT_STATUS.DRAFT);
+  });
+
+  it('escenario de error al guardar: el cambio de estado falla sin cambios parciales', async () => {
+    enableDemo('error-guardado');
+
+    await expect(changeCohortStatus('demo-cohorte-a', COHORT_TRANSITION.ACTIVATE)).rejects.toThrow('Error simulado');
+    expect(await listCohorts()).toEqual(DEMO_COHORTS);
   });
 });

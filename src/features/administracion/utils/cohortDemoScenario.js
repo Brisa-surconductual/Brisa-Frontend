@@ -5,7 +5,10 @@
  *
  * - lista (predeterminado); vacio: no hay cohortes;
  * - carga: las consultas no terminan; error: las consultas fallan;
- * - error-guardado: guardar falla; sin-cronogramas: ninguno activo.
+ * - error-guardado: guardar o cambiar de estado falla;
+ * - sin-cronogramas: ninguno activo;
+ * - activacion-bloqueada: los cronogramas de las cohortes iniciales
+ *   ya no están activos, y activarlas se rechaza.
  */
 export const DEMO_SCENARIO = Object.freeze({
   LIST: 'lista',
@@ -14,6 +17,7 @@ export const DEMO_SCENARIO = Object.freeze({
   ERROR: 'error',
   NO_ACTIVE_SCHEDULES: 'sin-cronogramas',
   SAVE_ERROR: 'error-guardado',
+  ACTIVATION_BLOCKED: 'activacion-bloqueada',
 });
 
 // Escenario de la demostración; un valor desconocido muestra la lista.

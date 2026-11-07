@@ -71,5 +71,10 @@ export function useCohortList({ source = DEFAULT_SOURCE } = {}) {
     // demostración); sin integración no hay operaciones ficticias.
     canManage: mode !== COHORT_SOURCE_MODE.PENDING_INTEGRATION,
     retry: () => setAttempt((value) => value + 1),
+    // Refleja en el listado una cohorte cambiada (p. ej. su estado).
+    replaceCohort: (updated) =>
+      setCohorts((current) =>
+        current.map((cohort) => (cohort.id === updated.id ? updated : cohort)),
+      ),
   };
 }

@@ -22,14 +22,32 @@ function getStore() {
 
     store = createCohortStore({
       cohorts: scenario === DEMO_SCENARIO.EMPTY ? [] : DEMO_COHORTS,
-      schedules:
-        scenario === DEMO_SCENARIO.NO_ACTIVE_SCHEDULES
-          ? DEMO_SCHEDULES.filter(({ status }) => status !== SCHEDULE_STATUS.ACTIVE)
-          : DEMO_SCHEDULES,
+      schedules: schedulesFor(scenario),
     });
   }
 
   return store;
+}
+
+/*
+ * Catálogo según el escenario: sin cronogramas activos, o con los
+ * usados por las cohortes ya inactivos (para ver una activación
+ * rechazada). Nunca modifica el catálogo original.
+ */
+function schedulesFor(scenario) {
+  if (scenario === DEMO_SCENARIO.NO_ACTIVE_SCHEDULES) {
+    return DEMO_SCHEDULES.filter(({ status }) => status !== SCHEDULE_STATUS.ACTIVE);
+  }
+
+  if (scenario === DEMO_SCENARIO.ACTIVATION_BLOCKED) {
+    const inUse = new Set(DEMO_COHORTS.map(({ scheduleId }) => scheduleId));
+
+    return DEMO_SCHEDULES.map((schedule) =>
+      inUse.has(schedule.id) ? Object.freeze({ ...schedule, status: SCHEDULE_STATUS.INACTIVE }) : schedule,
+    );
+  }
+
+  return DEMO_SCHEDULES;
 }
 
 const pause = () => new Promise((resolve) => setTimeout(resolve, DEMO_DELAY_MS));
@@ -63,6 +81,8 @@ export const getCohort = (id) => read((demo) => demo.findCohort(id));
 export const listSchedules = () => read((demo) => demo.listSchedules());
 export const createCohort = (values) => write((demo) => demo.createCohort(values));
 export const updateCohort = (id, values) => write((demo) => demo.updateCohort(id, values));
+export const changeCohortStatus = (id, transition) =>
+  write((demo) => demo.changeCohortStatus(id, transition));
 
 // Solo para pruebas automatizadas: simula una recarga de la aplicación.
 export function resetDemoSource() {

@@ -2,6 +2,8 @@ import { useNavigate } from 'react-router-dom';
 import {
   AlertTriangle,
   CircleCheck,
+  CirclePause,
+  CirclePlay,
   FlaskConical,
   Layers,
   PlugZap,
@@ -10,13 +12,16 @@ import {
 } from 'lucide-react';
 
 import { Button } from '@/shared/components/ui/Button/index.js';
+import { ConfirmationDialog } from '@/shared/components/ui/ConfirmationDialog/index.js';
 
 import { CohortCard } from '../../components/CohortCard/index.js';
 import { CohortNotice } from '../../components/CohortNotice/index.js';
+import { COHORT_TRANSITION, getAvailableTransitions } from '../../services/cohortTransitions.js';
 import { COHORT_STATUS } from '../../types/cohortStatus.js';
 
 import { useCohortList } from './hooks/useCohortList.js';
 import { useCohortSaveNotice } from './hooks/useCohortSaveNotice.js';
+import { useCohortStatusActions } from './hooks/useCohortStatusActions.js';
 
 const COHORT_LIST_PATH = '/app/administrativo/cohortes';
 
@@ -30,6 +35,14 @@ const SAVE_NOTICE_TITLE = Object.freeze({
   edit: 'Cambios aplicados temporalmente',
 });
 
+// Acción de estado que ofrece cada transición definida (RF-124).
+const STATUS_ACTION = Object.freeze({
+  [COHORT_TRANSITION.ACTIVATE]: Object.freeze({ label: 'Activar', busyLabel: 'Activando...', icon: CirclePlay }),
+  [COHORT_TRANSITION.INACTIVATE]: Object.freeze({ label: 'Inactivar', busyLabel: 'Inactivando...', icon: CirclePause }),
+});
+
+const NOTICE_ICON = Object.freeze({ success: CircleCheck, warning: AlertTriangle, danger: AlertTriangle });
+
 const STATUS_SUMMARY = Object.freeze([
   Object.freeze({ status: COHORT_STATUS.ACTIVE, singular: 'activa', plural: 'activas' }),
   Object.freeze({ status: COHORT_STATUS.DRAFT, singular: 'en borrador', plural: 'en borrador' }),
@@ -37,8 +50,9 @@ const STATUS_SUMMARY = Object.freeze([
 ]);
 
 /*
- * Consulta de cohortes (RF-124) con acceso a su creación y edición
- * cuando la fuente lo admite. Los cambios de estado llegan después.
+ * Consulta de cohortes (RF-124) con acceso a su creación, edición y
+ * cambio de estado cuando la fuente lo admite. Una cohorte INACTIVA no
+ * ofrece acciones de estado: su reactivación no está definida.
  */
 export function CohortListPage() {
   const navigate = useNavigate();
@@ -52,9 +66,37 @@ export function CohortListPage() {
     isIntegrationPending,
     canManage,
     retry,
+    replaceCohort,
   } = useCohortList();
+  const {
+    busyIds,
+    notice: statusNotice,
+    noticeRef,
+    pendingInactivation,
+    requestActivation,
+    requestInactivation,
+    cancelInactivation,
+    confirmInactivation,
+  } = useCohortStatusActions({ onCohortChanged: replaceCohort });
 
   const hasCohorts = !isLoading && !loadError && cohorts.length > 0;
+
+  function getStatusAction(cohort) {
+    const [transition] = getAvailableTransitions(cohort);
+    const action = STATUS_ACTION[transition];
+
+    if (!canManage || !cohort.id || !action) return null;
+
+    return {
+      ...action,
+      busy: busyIds.includes(cohort.id),
+      onClick: () =>
+        transition === COHORT_TRANSITION.ACTIVATE
+          ? requestActivation(cohort)
+          : requestInactivation(cohort),
+    };
+  }
+
 
   return (
     <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-[var(--space-8)] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]">
@@ -75,7 +117,7 @@ export function CohortListPage() {
         </div>
 
         {canManage && (
-          <Button onClick={() => navigate(`${COHORT_LIST_PATH}/nueva`)} className="w-full md:w-auto">
+          <Button onClick={() => navigate(`${COHORT_LIST_PATH}/nueva`)} className="w-full md:w-auto md:shrink-0 md:whitespace-nowrap">
             <Plus size={18} strokeWidth={2} aria-hidden="true" />
             Nueva cohorte
           </Button>
@@ -103,6 +145,19 @@ export function CohortListPage() {
           role="status"
         >
           «{saveNotice.name}» ya aparece en el listado.
+        </CohortNotice>
+      )}
+
+      {statusNotice && (
+        <CohortNotice
+          ref={noticeRef}
+          tabIndex={-1}
+          tone={statusNotice.tone}
+          icon={NOTICE_ICON[statusNotice.tone]}
+          title={statusNotice.title}
+          role={statusNotice.tone === 'success' ? 'status' : 'alert'}
+        >
+          {statusNotice.message}
         </CohortNotice>
       )}
 
@@ -202,12 +257,25 @@ export function CohortListPage() {
                   <CohortCard
                     cohort={cohort}
                     editPath={canManage && cohort.id ? getEditPath(cohort) : null}
+                    statusAction={getStatusAction(cohort)}
                   />
                 </li>
               ))}
             </ul>
           )}
         </section>
+      )}
+
+      {canManage && (
+        <ConfirmationDialog
+          open={Boolean(pendingInactivation)}
+          title={pendingInactivation ? `¿Inactivar «${pendingInactivation.name}»?` : 'Inactivar cohorte'}
+          description="La cohorte pasará a estado Inactiva. Su reactivación aún no está definida, por lo que no podrás volver a activarla desde esta pantalla. Los cambios son temporales y no se guardan en el servidor."
+          confirmText="Inactivar cohorte"
+          cancelText="Cancelar"
+          onConfirm={confirmInactivation}
+          onCancel={cancelInactivation}
+        />
       )}
     </div>
   );
