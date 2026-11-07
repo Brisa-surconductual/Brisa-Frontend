@@ -1,20 +1,29 @@
 import { COHORT_SOURCE_MODE } from '../types/cohortSourceMode.js';
-import {
-  DEMO_SCENARIO,
-  getDemoScenario,
-  isCohortDemoEnabled,
-} from '../utils/cohortDemoMode.js';
+import { isCohortDemoEnabled } from '../utils/cohortDemoMode.js';
 
 /*
- * Fuente de datos de cohortes que consumen los hooks.
+ * Fuente de datos de cohortes y cronogramas que consumen los hooks.
  *
  * Hoy solo existe la fuente de demostración de desarrollo. Sin ella,
- * el modo es PENDING_INTEGRATION y no se consulta nada: el M08 aún
- * no está conectado al servidor. Al autorizarse la integración, esta
- * función delegará en un adaptador de `api/` y conservará la misma
- * firma; nunca se responderá con datos ficticios ante un error real.
+ * el modo es PENDING_INTEGRATION: no se consulta ni se guarda nada,
+ * porque el M08 aún no está conectado al servidor. Al autorizarse la
+ * integración, estas funciones delegarán en adaptadores de `api/` con
+ * la misma firma; un error real nunca se responderá con datos ficticios.
  */
-export const DEMO_DELAY_MS = 400;
+const NOT_INTEGRATED = 'La gestión de cohortes aún no está integrada.';
+
+/*
+ * Único punto que carga la demostración. El import dinámico está
+ * dentro de la condición: en producción la rama se elimina y ningún
+ * dato, escenario ni almacén de demostración llega al build.
+ */
+async function loadDemoSource() {
+  if (!(import.meta.env.DEV && import.meta.env.VITE_M08_DEMO === 'true')) {
+    throw new Error(NOT_INTEGRATED);
+  }
+
+  return import('./cohortDemoSource.js');
+}
 
 export function getCohortSourceMode() {
   return isCohortDemoEnabled()
@@ -23,22 +32,25 @@ export function getCohortSourceMode() {
 }
 
 export async function listCohorts() {
-  if (!(import.meta.env.DEV && import.meta.env.VITE_M08_DEMO === 'true')) {
-    throw new Error('La consulta de cohortes aún no está integrada.');
-  }
+  return (await loadDemoSource()).listCohorts();
+}
 
-  // Import dinámico: en producción esta rama se elimina y los datos
-  // ficticios no llegan al build.
-  const { DEMO_COHORTS } = await import('./cohortDemoData.js');
-  const scenario = getDemoScenario();
+// Cohorte por identificador, o null si no existe.
+export async function getCohort(id) {
+  return (await loadDemoSource()).getCohort(id);
+}
 
-  if (scenario === DEMO_SCENARIO.LOADING) return new Promise(() => {});
+// Catálogo de cronogramas para asociar a una cohorte.
+export async function listSchedules() {
+  return (await loadDemoSource()).listSchedules();
+}
 
-  await new Promise((resolve) => setTimeout(resolve, DEMO_DELAY_MS));
+// `values`: { name, startDate, endDate, scheduleId } ya validados.
+export async function createCohort(values) {
+  return (await loadDemoSource()).createCohort(values);
+}
 
-  if (scenario === DEMO_SCENARIO.ERROR) {
-    throw new Error('Error simulado del modo de demostración.');
-  }
-
-  return scenario === DEMO_SCENARIO.EMPTY ? [] : DEMO_COHORTS;
+// Devuelve la cohorte actualizada, o null si ya no existe.
+export async function updateCohort(id, values) {
+  return (await loadDemoSource()).updateCohort(id, values);
 }

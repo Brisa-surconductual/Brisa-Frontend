@@ -1,12 +1,13 @@
-import { CalendarRange, ListTree } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { CalendarRange, ListTree, Pencil } from 'lucide-react';
 
 import { formatCohortDate } from '../../utils/formatCohortDate.js';
 import { CohortStatusBadge } from '../CohortStatusBadge/index.js';
 
 /*
  * Tarjeta de consulta de una cohorte (RF-124): nombre, estado,
- * periodo del programa y cronograma asociado. Solo lectura: las
- * acciones de gestión llegan en entregas posteriores.
+ * periodo del programa y cronograma asociado. Con `editPath` ofrece
+ * el acceso a su edición; sin él es de solo lectura.
  */
 function ProgramDate({ value }) {
   const label = formatCohortDate(value);
@@ -14,7 +15,7 @@ function ProgramDate({ value }) {
   return label ? <time dateTime={value}>{label}</time> : 'Fecha no disponible';
 }
 
-export function CohortCard({ cohort }) {
+export function CohortCard({ cohort, editPath = null }) {
   const name = cohort.name?.trim() || 'Sin nombre';
 
   return (
@@ -52,6 +53,17 @@ export function CohortCard({ cohort }) {
           </dd>
         </div>
       </dl>
+
+      {editPath && (
+        <Link
+          to={editPath}
+          className="mt-auto inline-flex min-h-[44px] w-fit items-center gap-[var(--space-2)] rounded-[var(--radius-md)] px-[var(--space-2)] -ml-[var(--space-2)] text-[length:var(--font-size-sm)] font-bold text-[var(--brand-600)] no-underline transition-colors duration-150 hover:bg-[var(--surface-hover)] motion-reduce:transition-none"
+        >
+          <Pencil size={16} strokeWidth={1.8} aria-hidden="true" />
+          Editar
+          <span className="sr-only"> {name}</span>
+        </Link>
+      )}
     </article>
   );
 }

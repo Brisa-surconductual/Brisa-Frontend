@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createRoutesFromChildren, matchRoutes } from 'react-router-dom';
 
 import { SchedulePanelPage, CreateTemporalUnitPage, ScheduleManagementPage } from '@/features/cronograma/index.js';
-import { CohortListPage } from '@/features/administracion/index.js';
+import { CohortFormPage, CohortListPage } from '@/features/administracion/index.js';
 import { USER_ROLE } from '@/features/users/types/authTypes.js';
 import { DASHBOARD_SHORTCUTS } from '@/features/users/pages/PsychologyHomePage/data/psychologyStats.js';
 
@@ -72,6 +72,8 @@ const ADMIN_PATHS = Object.freeze([
   '/app/administrativo/cronograma/s-1/panel',
   '/app/administrativo/cronograma/s-1/crear-unidad',
   '/app/administrativo/cohortes',
+  '/app/administrativo/cohortes/nueva',
+  '/app/administrativo/cohortes/co-1/editar',
   '/app/administrativo/chat/modalidad',
   '/app/administrativo/chat/arboles',
 ]);
@@ -131,6 +133,17 @@ describe('Rutas administrativas protegidas', () => {
     expect(
       match('/app/administrativo/cohortes').at(-1).route.element.type,
     ).toBe(CohortListPage);
+  });
+
+  it('crear y editar cohortes montan el formulario en su modo, con idCohorte', () => {
+    const create = match('/app/administrativo/cohortes/nueva').at(-1);
+    const edit = match('/app/administrativo/cohortes/demo-temporal-1/editar').at(-1);
+
+    expect(create.route.element.type).toBe(CohortFormPage);
+    expect(create.route.element.props.mode).toBeUndefined();
+    expect(edit.route.element.type).toBe(CohortFormPage);
+    expect(edit.route.element.props.mode).toBe('edit');
+    expect(edit.params).toEqual({ idCohorte: 'demo-temporal-1' });
   });
 
   it('ninguna ruta se declara dos veces', () => {
@@ -293,6 +306,7 @@ describe('Rutas sin cambios', () => {
         '/app/estudiante/cronograma/contenido-vigente',
         ...ADMIN_PATHS.map((path) =>
           path
+            .replace('/cohortes/co-1/', '/cohortes/:idCohorte/')
             .replace('/u-1/informacion', '/:participantId/informacion')
             .replace('/c-1/', '/:contentId/')
             .replace('/s-1/unidades/u-1', '/:scheduleId/unidades/:unitId')

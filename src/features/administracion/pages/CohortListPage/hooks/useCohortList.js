@@ -67,6 +67,9 @@ export function useCohortList({ source = DEFAULT_SOURCE } = {}) {
     loadError,
     isDemo: mode === COHORT_SOURCE_MODE.DEMO,
     isIntegrationPending,
+    // Crear y editar solo cuando hay una fuente que lo admite (hoy, la
+    // demostración); sin integración no hay operaciones ficticias.
+    canManage: mode !== COHORT_SOURCE_MODE.PENDING_INTEGRATION,
     retry: () => setAttempt((value) => value + 1),
   };
 }

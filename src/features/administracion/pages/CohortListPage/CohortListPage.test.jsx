@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { MemoryRouter } from 'react-router-dom';
 
 import { DEMO_COHORTS } from '../../data/cohortDemoData.js';
 import { countCohortsByStatus } from '../../services/cohortSummary.js';
@@ -20,12 +21,17 @@ const BASE = Object.freeze({
   loadError: '',
   isDemo: false,
   isIntegrationPending: false,
+  canManage: false,
   retry: vi.fn(),
 });
 
-function render(changes) {
+function render(changes, entry = '/app/administrativo/cohortes') {
   state.value = changes ? { ...BASE, ...changes } : null;
-  return renderToStaticMarkup(<CohortListPage />).replaceAll('<!-- -->', '');
+  return renderToStaticMarkup(
+    <MemoryRouter initialEntries={[entry]}>
+      <CohortListPage />
+    </MemoryRouter>,
+  ).replaceAll('<!-- -->', '');
 }
 
 const withDemoList = () =>
@@ -103,6 +109,66 @@ describe('Listado de cohortes (RF-124)', () => {
 
     expect(html.match(/<h1/g)).toHaveLength(1);
     expect(html).not.toContain('<main');
+  });
+});
+
+describe('Acceso a creación y edición (E3)', () => {
+  const managed = () =>
+    render({ cohorts: DEMO_COHORTS, statusCounts: countCohortsByStatus(DEMO_COHORTS), isDemo: true, canManage: true });
+
+  it('con gestión disponible ofrece «Nueva cohorte» y un «Editar» por cohorte', () => {
+    const html = managed();
+
+    expect(html).toMatch(/<button[^>]*>[\s\S]*Nueva cohorte<\/button>/);
+    for (const { id, name } of DEMO_COHORTS) {
+      expect(html).toContain(`href="/app/administrativo/cohortes/${id}/editar"`);
+      expect(html).toContain(`Editar<span class="sr-only"> ${name}</span>`);
+    }
+  });
+
+  it('el aviso de demostración advierte que los cambios son temporales', () => {
+    expect(managed()).toContain('Los cambios son temporales y no se guardan en el servidor.');
+  });
+
+  it('sin integración no hay acciones de gestión', () => {
+    const html = render({ isIntegrationPending: true });
+
+    expect(html).not.toContain('Nueva cohorte');
+    expect(html).not.toContain('/editar');
+  });
+
+  it('en el estado vacío con gestión solo ofrece crear', () => {
+    const html = render({ isDemo: true, canManage: true });
+
+    expect(html).toContain('Nueva cohorte');
+    expect(html).toContain('Aún no hay cohortes');
+    expect(html).not.toContain('/editar');
+  });
+});
+
+describe('Aviso al volver del formulario', () => {
+  function renderWithNotice(cohortNotice, changes = { isDemo: true, canManage: true }) {
+    state.value = { ...BASE, ...changes };
+    return renderToStaticMarkup(
+      <MemoryRouter initialEntries={[{ pathname: '/app/administrativo/cohortes', state: { cohortNotice } }]}>
+        <CohortListPage />
+      </MemoryRouter>,
+    ).replaceAll('<!-- -->', '');
+  }
+
+  it.each([
+    ['create', 'Cohorte creada temporalmente'],
+    ['edit', 'Cambios aplicados temporalmente'],
+  ])('%s: «%s», sin anunciar un guardado definitivo', (action, title) => {
+    const html = renderWithNotice({ action, name: 'Cohorte QA' });
+
+    expect(html).toMatch(new RegExp(`role="status"[\\s\\S]*${title}`));
+    expect(html).toContain('«Cohorte QA» ya aparece en el listado.');
+    expect(html).not.toMatch(/guardad[oa] (correctamente|definitivamente)/i);
+  });
+
+  it('sin aviso en la navegación no muestra nada', () => {
+    expect(render({ isDemo: true, canManage: true })).not.toContain('temporalmente');
   });
 });
 

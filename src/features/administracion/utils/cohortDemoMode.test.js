@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { DEMO_SCENARIO, getDemoScenario, isCohortDemoEnabled } from './cohortDemoMode.js';
+import { isCohortDemoEnabled } from './cohortDemoMode.js';
+import { DEMO_SCENARIO, getDemoScenario } from './cohortDemoScenario.js';
 
 describe('Activación del modo de demostración', () => {
   it.each([

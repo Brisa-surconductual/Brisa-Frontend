@@ -7,3 +7,5 @@ export { validateCohortForm } from './services/cohortValidation.js';
 // Páginas
 
 export { CohortListPage } from './pages/CohortListPage/index.js';
+
+export { CohortFormPage } from './pages/CohortFormPage/index.js';

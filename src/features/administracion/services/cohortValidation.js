@@ -1,5 +1,7 @@
 import { parseDateOnly } from '@/shared/utils/dateUtils.js';
 
+import { SCHEDULE_STATUS } from '../types/scheduleStatus.js';
+
 /*
  * Validación del formulario de cohorte (RF-124):
  * - el nombre no puede estar vacío;
@@ -10,8 +12,8 @@ import { parseDateOnly } from '@/shared/utils/dateUtils.js';
  *
  * Las fechas se comparan como fechas de calendario en UTC, sin
  * la hora local del navegador, para evitar desfases por zona
- * horaria. El cronograma asociado y su estado se validarán
- * cuando exista la fuente de cronogramas.
+ * horaria. El cronograma asociado se valida aparte
+ * (validateCohortSchedule), porque depende del catálogo disponible.
  */
 export function validateCohortForm({
   name = '',
@@ -43,4 +45,25 @@ export function validateCohortForm({
   }
 
   return errors;
+}
+
+// Cronogramas que pueden asociarse a una cohorte (RF-124: activos).
+export function getActiveSchedules(schedules = []) {
+  return schedules.filter(({ status }) => status === SCHEDULE_STATUS.ACTIVE);
+}
+
+/*
+ * RF-124: toda cohorte debe asociarse a un cronograma psicoeducativo
+ * activo. Recibe el catálogo como argumento: no consulta ninguna fuente.
+ */
+export function validateCohortSchedule(scheduleId = '', schedules = []) {
+  if (!scheduleId) {
+    return { scheduleId: 'Selecciona el cronograma asociado.' };
+  }
+
+  const isActive = getActiveSchedules(schedules).some(({ id }) => id === scheduleId);
+
+  return isActive
+    ? {}
+    : { scheduleId: 'La cohorte debe asociarse a un cronograma psicoeducativo activo.' };
 }

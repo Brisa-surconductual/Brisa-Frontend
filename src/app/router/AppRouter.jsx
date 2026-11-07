@@ -40,7 +40,10 @@ import {
   SchedulePanelPage,
   AssignSchedulePage,
 } from '@/features/cronograma/index.js';
-import { CohortListPage } from '@/features/administracion/index.js';
+import {
+  CohortFormPage,
+  CohortListPage,
+} from '@/features/administracion/index.js';
 
 import { RequireAuth } from './RequireAuth.jsx';
 import { RoleHomeRedirect } from './RoleHomeRedirect.jsx';
@@ -249,6 +252,16 @@ export function AppRouter() {
               <Route
                 path="administrativo/cohortes"
                 element={<CohortListPage />}
+              />
+
+              <Route
+                path="administrativo/cohortes/nueva"
+                element={<CohortFormPage />}
+              />
+
+              <Route
+                path="administrativo/cohortes/:idCohorte/editar"
+                element={<CohortFormPage mode="edit" />}
               />
 
               <Route

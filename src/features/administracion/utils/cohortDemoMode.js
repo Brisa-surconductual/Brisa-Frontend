@@ -9,24 +9,13 @@
  * Para habilitarlo, en un .env.local (no versionado) o al lanzar
  * `npm run dev`:
  *   VITE_M08_DEMO=true
- *   VITE_M08_DEMO_SCENARIO=lista | vacio | carga | error   (opcional)
+ *   VITE_M08_DEMO_SCENARIO=lista | vacio | carga | error
+ *                          | sin-cronogramas | error-guardado   (opcional)
+ *
+ * - vacio: no hay cohortes; carga: las consultas no terminan;
+ * - error: las consultas fallan; error-guardado: guardar falla;
+ * - sin-cronogramas: ningún cronograma está activo.
  */
-export const DEMO_SCENARIO = Object.freeze({
-  LIST: 'lista',
-  EMPTY: 'vacio',
-  LOADING: 'carga',
-  ERROR: 'error',
-});
-
 export function isCohortDemoEnabled(env = import.meta.env) {
   return Boolean(env.DEV) && env.VITE_M08_DEMO === 'true';
-}
-
-// Escenario de la demostración; un valor desconocido muestra la lista.
-export function getDemoScenario(env = import.meta.env) {
-  const scenario = env.VITE_M08_DEMO_SCENARIO;
-
-  return Object.values(DEMO_SCENARIO).includes(scenario)
-    ? scenario
-    : DEMO_SCENARIO.LIST;
 }

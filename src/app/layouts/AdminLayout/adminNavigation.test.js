@@ -46,6 +46,8 @@ describe('Sección administrativa activa', () => {
   it.each([
     '/app/administrativo/cohortes',
     '/app/administrativo/cohortes/',
+    '/app/administrativo/cohortes/nueva',
+    '/app/administrativo/cohortes/c-1/editar',
   ])('%s pertenece a Cohortes', (pathname) =>
     expect(getActiveAdminSection(pathname)).toBe(ADMIN_SECTION.COHORTES));
 

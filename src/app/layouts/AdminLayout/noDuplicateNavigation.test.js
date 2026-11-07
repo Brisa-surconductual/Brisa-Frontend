@@ -32,7 +32,7 @@ const ADMIN_PAGES = pageFiles(FEATURES_DIR).filter(
 
 describe('Navegación administrativa sin duplicados', () => {
   it('encuentra las páginas administrativas', () =>
-    expect(ADMIN_PAGES.length).toBeGreaterThanOrEqual(18));
+    expect(ADMIN_PAGES.length).toBeGreaterThanOrEqual(19));
 
   it.each(ADMIN_PAGES.map((path) => [path.replace(/.*features[\\/]/, ''), path]))(
     '%s no monta navegación ni <main> propios',

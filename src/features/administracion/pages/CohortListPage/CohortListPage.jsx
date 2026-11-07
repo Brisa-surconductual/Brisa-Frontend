@@ -1,8 +1,11 @@
+import { useNavigate } from 'react-router-dom';
 import {
   AlertTriangle,
+  CircleCheck,
   FlaskConical,
   Layers,
   PlugZap,
+  Plus,
   RefreshCw,
 } from 'lucide-react';
 
@@ -13,6 +16,19 @@ import { CohortNotice } from '../../components/CohortNotice/index.js';
 import { COHORT_STATUS } from '../../types/cohortStatus.js';
 
 import { useCohortList } from './hooks/useCohortList.js';
+import { useCohortSaveNotice } from './hooks/useCohortSaveNotice.js';
+
+const COHORT_LIST_PATH = '/app/administrativo/cohortes';
+
+function getEditPath(cohort) {
+  return `${COHORT_LIST_PATH}/${encodeURIComponent(cohort.id)}/editar`;
+}
+
+// Sin la palabra «guardada»: en la demostración nada llega al servidor.
+const SAVE_NOTICE_TITLE = Object.freeze({
+  create: 'Cohorte creada temporalmente',
+  edit: 'Cambios aplicados temporalmente',
+});
 
 const STATUS_SUMMARY = Object.freeze([
   Object.freeze({ status: COHORT_STATUS.ACTIVE, singular: 'activa', plural: 'activas' }),
@@ -21,10 +37,12 @@ const STATUS_SUMMARY = Object.freeze([
 ]);
 
 /*
- * Consulta de cohortes (RF-124, solo lectura). La creación, edición
- * y cambios de estado llegan en entregas posteriores.
+ * Consulta de cohortes (RF-124) con acceso a su creación y edición
+ * cuando la fuente lo admite. Los cambios de estado llegan después.
  */
 export function CohortListPage() {
+  const navigate = useNavigate();
+  const saveNotice = useCohortSaveNotice();
   const {
     cohorts,
     statusCounts,
@@ -32,6 +50,7 @@ export function CohortListPage() {
     loadError,
     isDemo,
     isIntegrationPending,
+    canManage,
     retry,
   } = useCohortList();
 
@@ -39,7 +58,8 @@ export function CohortListPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-[var(--space-8)] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]">
-      <header className="flex flex-col gap-[var(--space-1)]">
+      <header className="flex flex-col gap-[var(--space-4)] md:flex-row md:items-end md:justify-between">
+        <div className="flex flex-col gap-[var(--space-1)]">
         <p className="m-0 text-[length:var(--font-size-xs)] font-bold tracking-[var(--letter-spacing-wide)] text-[var(--brand-600)] uppercase">
           Administración
         </p>
@@ -52,6 +72,14 @@ export function CohortListPage() {
           Consulta los grupos de participantes del programa, su periodo y el
           cronograma psicoeducativo asociado.
         </p>
+        </div>
+
+        {canManage && (
+          <Button onClick={() => navigate(`${COHORT_LIST_PATH}/nueva`)} className="w-full md:w-auto">
+            <Plus size={18} strokeWidth={2} aria-hidden="true" />
+            Nueva cohorte
+          </Button>
+        )}
       </header>
 
       {isDemo && (
@@ -62,7 +90,19 @@ export function CohortListPage() {
           role="note"
         >
           Estás viendo cohortes ficticias del modo de desarrollo. No provienen
-          del servidor ni representan participantes reales.
+          del servidor ni representan participantes reales. Los cambios son
+          temporales y no se guardan en el servidor.
+        </CohortNotice>
+      )}
+
+      {saveNotice && !isIntegrationPending && (
+        <CohortNotice
+          tone="success"
+          icon={CircleCheck}
+          title={SAVE_NOTICE_TITLE[saveNotice.action] ?? SAVE_NOTICE_TITLE.edit}
+          role="status"
+        >
+          «{saveNotice.name}» ya aparece en el listado.
         </CohortNotice>
       )}
 
@@ -159,7 +199,10 @@ export function CohortListPage() {
             <ul className="m-0 grid list-none grid-cols-1 gap-[var(--space-4)] p-0 md:grid-cols-2 xl:grid-cols-3">
               {cohorts.map((cohort, index) => (
                 <li key={cohort.id ?? index}>
-                  <CohortCard cohort={cohort} />
+                  <CohortCard
+                    cohort={cohort}
+                    editPath={canManage && cohort.id ? getEditPath(cohort) : null}
+                  />
                 </li>
               ))}
             </ul>

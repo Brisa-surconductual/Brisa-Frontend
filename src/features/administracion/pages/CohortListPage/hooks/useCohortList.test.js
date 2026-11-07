@@ -37,7 +37,7 @@ describe('useCohortList', () => {
     const list = vi.fn();
     const result = useCohortList({ source: source(COHORT_SOURCE_MODE.PENDING_INTEGRATION, list) });
 
-    expect(result).toMatchObject({ isIntegrationPending: true, isDemo: false, isLoading: false });
+    expect(result).toMatchObject({ isIntegrationPending: true, isDemo: false, isLoading: false, canManage: false });
     react.effects[0]();
     expect(list).not.toHaveBeenCalled();
   });
@@ -48,7 +48,7 @@ describe('useCohortList', () => {
       source: source(COHORT_SOURCE_MODE.DEMO, vi.fn().mockResolvedValue(cohorts)),
     });
 
-    expect(result).toMatchObject({ isDemo: true, isLoading: true });
+    expect(result).toMatchObject({ isDemo: true, isLoading: true, canManage: true });
     react.effects[0]();
     await vi.waitFor(() => expect(react.setters[SET_LOADING]).toHaveBeenLastCalledWith(false));
     expect(react.setters[SET_COHORTS]).toHaveBeenLastCalledWith(cohorts);

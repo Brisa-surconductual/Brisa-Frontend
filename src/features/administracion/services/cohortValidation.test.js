@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { validateCohortForm } from './cohortValidation.js';
+import {
+  getActiveSchedules,
+  validateCohortForm,
+  validateCohortSchedule,
+} from './cohortValidation.js';
 
 const VALID = Object.freeze({
   name: 'Cohorte de prueba',
@@ -84,5 +88,37 @@ describe('Validación del formulario de cohorte (RF-124)', () => {
 
   it('reporta varios errores a la vez', () => {
     expect(Object.keys(validateCohortForm({}))).toEqual(['name', 'startDate', 'endDate']);
+  });
+});
+
+describe('Cronograma asociado (RF-124)', () => {
+  const SCHEDULES = Object.freeze([
+    Object.freeze({ id: 's-activo', name: 'Activo', status: 'ACTIVO' }),
+    Object.freeze({ id: 's-inactivo', name: 'Inactivo', status: 'INACTIVO' }),
+  ]);
+
+  it('solo ofrece cronogramas activos', () => {
+    expect(getActiveSchedules(SCHEDULES).map(({ id }) => id)).toEqual(['s-activo']);
+    expect(getActiveSchedules()).toEqual([]);
+  });
+
+  it('acepta un cronograma activo', () => {
+    expect(validateCohortSchedule('s-activo', SCHEDULES)).toEqual({});
+  });
+
+  it('exige seleccionar un cronograma', () => {
+    expect(validateCohortSchedule('', SCHEDULES)).toEqual({
+      scheduleId: 'Selecciona el cronograma asociado.',
+    });
+  });
+
+  it.each([['s-inactivo'], ['no-existe']])('rechaza %s: no es un cronograma activo', (scheduleId) => {
+    expect(validateCohortSchedule(scheduleId, SCHEDULES)).toEqual({
+      scheduleId: 'La cohorte debe asociarse a un cronograma psicoeducativo activo.',
+    });
+  });
+
+  it('sin cronogramas activos ninguna selección es válida', () => {
+    expect(validateCohortSchedule('s-activo', [SCHEDULES[1]]).scheduleId).toBeDefined();
   });
 });

@@ -4,6 +4,8 @@
  */
 const TONE_CLASS = Object.freeze({
   info: 'border-[var(--info-border)] bg-[var(--info-bg)] text-[var(--info-text)]',
+  success:
+    'border-[var(--success-border)] bg-[var(--success-bg)] text-[var(--success-text)]',
   warning:
     'border-[var(--warning-border)] bg-[var(--warning-bg)] text-[var(--warning-text)]',
   danger:
