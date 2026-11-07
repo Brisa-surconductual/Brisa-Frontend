@@ -3,9 +3,17 @@ export const initialAuthState = Object.freeze({
   role: null,
   estadoRegistro: null,
   idUsuario: null,
+  alcance: null,
+  limiteInactividadMinutos: null,
   isAuthenticated: false,
   endReason: null,
+  remoteLogoutUnconfirmed: false,
 });
+
+// Un valor no numérico o no positivo se descarta (sin dato).
+function toPositiveNumber(value) {
+  return Number.isFinite(value) && value > 0 ? value : null;
+}
 
 export const AUTH_ACTION = Object.freeze({
   LOGIN: 'LOGIN',
@@ -26,14 +34,32 @@ export function authReducer(state, action) {
         role: action.payload.role,
         estadoRegistro: action.payload.estadoRegistro,
         idUsuario: action.payload.idUsuario,
+        /*
+         * Alcance real de la sesión (LIMITADA | COMPLETA) que
+         * entrega el backend. No se deduce del estado de registro.
+         */
+        alcance: action.payload.alcance ?? null,
+        // Límite real de inactividad del backend para esta sesión.
+        limiteInactividadMinutos: toPositiveNumber(
+          action.payload.limiteInactividadMinutos,
+        ),
         isAuthenticated: true,
         endReason: null,
+        remoteLogoutUnconfirmed: false,
       };
 
+    /*
+     * `remoteLogoutUnconfirmed` indica que el estado local
+     * se limpió pero el backend no confirmó la invalidación
+     * de la sesión: no debe mostrarse como cierre exitoso.
+     */
     case AUTH_ACTION.LOGOUT:
       return {
         ...initialAuthState,
         endReason: action.payload?.reason ?? null,
+        remoteLogoutUnconfirmed: Boolean(
+          action.payload?.remoteLogoutUnconfirmed,
+        ),
       };
 
     default:

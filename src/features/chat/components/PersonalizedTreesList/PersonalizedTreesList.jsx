@@ -1,3 +1,7 @@
+import { AlertTriangle, GitBranch } from 'lucide-react';
+
+import { ChatAdminNotice } from '../ChatAdminNotice/index.js';
+
 const COMBINATIONS = [
   {
     dependence: 'ABSTINENCIA_FISICA',
@@ -21,12 +25,16 @@ const COMBINATIONS = [
   },
 ];
 
-const STATUS_STYLES = {
-  PUBLICADO: 'bg-[var(--success-bg)] text-[var(--success-text)]',
-  BORRADOR: 'bg-[var(--surface-hover)] text-[var(--text-secondary)]',
-  ARCHIVADO: 'bg-[var(--danger-bg)] text-[var(--danger-text)]',
-  SIN_CREAR: 'bg-[var(--warning-bg)] text-[var(--warning-text)]',
-};
+const STATUS_STYLES = Object.freeze({
+  PUBLICADO:
+    'border-[var(--success-border)] bg-[var(--success-bg)] text-[var(--success-text)]',
+  BORRADOR:
+    'border-[var(--surface-border)] bg-[var(--surface-hover)] text-[var(--text-secondary)]',
+  ARCHIVADO:
+    'border-[var(--danger-border)] bg-[var(--danger-bg)] text-[var(--danger-text)]',
+  SIN_CREAR:
+    'border-[var(--warning-border)] bg-[var(--warning-bg)] text-[var(--warning-text)]',
+});
 
 function findLatestTree(trees, combination) {
   return trees
@@ -52,44 +60,93 @@ export function PersonalizedTreesList({
 }) {
   if (isLoading) {
     return (
-      <p role="status" className="text-sm text-[var(--text-secondary)]">
-        Consultando árboles conversacionales...
-      </p>
+      <section aria-busy="true" className="flex flex-col gap-[var(--space-4)]">
+        <p
+          role="status"
+          className="m-0 text-[length:var(--font-size-sm)] text-[var(--text-secondary)]"
+        >
+          Consultando árboles conversacionales...
+        </p>
+
+        <ul
+          className="m-0 grid list-none grid-cols-1 gap-[var(--space-4)] p-0 md:grid-cols-2"
+          aria-hidden="true"
+        >
+          {COMBINATIONS.map(({ dependence, craving }) => (
+            <li
+              key={`${dependence}-${craving}`}
+              className="h-[132px] animate-pulse rounded-[var(--radius-xl)] border border-[var(--surface-border)] bg-[var(--surface-card)] motion-reduce:animate-none"
+            />
+          ))}
+        </ul>
+      </section>
     );
   }
 
   if (error) {
     return (
-      <p role="alert" className="text-sm text-[var(--danger-text)]">
+      <ChatAdminNotice
+        tone="danger"
+        icon={AlertTriangle}
+        title="Árboles no disponibles"
+        role="alert"
+      >
         No fue posible consultar los árboles conversacionales.
-      </p>
+      </ChatAdminNotice>
     );
   }
 
   if (!Array.isArray(trees)) {
     return (
-      <p role="status" className="text-sm text-[var(--text-muted)]">
-        Los árboles estarán disponibles cuando se consulte la información del
-        programa.
-      </p>
+      <section
+        aria-labelledby="personalized-trees-empty-title"
+        className="flex flex-col items-start gap-[var(--space-3)] rounded-[var(--radius-xl)] border border-dashed border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-6)]"
+      >
+        <span
+          className="inline-flex h-[44px] w-[44px] items-center justify-center rounded-[var(--radius-lg)] bg-[var(--surface-hover)] text-[var(--text-secondary)]"
+          aria-hidden="true"
+        >
+          <GitBranch size={22} strokeWidth={1.7} />
+        </span>
+
+        <h2
+          id="personalized-trees-empty-title"
+          className="m-0 text-[length:var(--font-size-lg)] font-extrabold text-[var(--text-primary)]"
+        >
+          Sin árboles para mostrar
+        </h2>
+
+        <p
+          role="status"
+          className="m-0 max-w-[560px] text-[length:var(--font-size-sm)] leading-[var(--line-height-normal)] text-[var(--text-secondary)]"
+        >
+          Los árboles estarán disponibles cuando se consulte la información del
+          programa.
+        </p>
+      </section>
     );
   }
 
   return (
-    <section aria-labelledby="personalized-trees-title">
-      <h2
-        id="personalized-trees-title"
-        className="mb-[var(--space-2)] text-xl font-extrabold text-[var(--text-primary)]"
-      >
-        Árboles personalizados
-      </h2>
+    <section
+      aria-labelledby="personalized-trees-title"
+      className="flex flex-col gap-[var(--space-4)]"
+    >
+      <div className="flex flex-col gap-[var(--space-1)]">
+        <h2
+          id="personalized-trees-title"
+          className="m-0 text-[length:var(--font-size-lg)] font-extrabold text-[var(--text-primary)]"
+        >
+          Árboles personalizados
+        </h2>
 
-      <p className="mb-[var(--space-5)] text-sm text-[var(--text-secondary)]">
-        Árboles conversacionales organizados por combinación de tipo de
-        dependencia y tipo de craving.
-      </p>
+        <p className="m-0 text-[length:var(--font-size-sm)] text-[var(--text-secondary)]">
+          Árboles conversacionales organizados por combinación de tipo de
+          dependencia y tipo de craving.
+        </p>
+      </div>
 
-      <ul className="grid list-none grid-cols-1 gap-[var(--space-4)] p-0 md:grid-cols-2">
+      <ul className="m-0 grid list-none grid-cols-1 gap-[var(--space-4)] p-0 md:grid-cols-2">
         {COMBINATIONS.map((combination) => {
           const tree = findLatestTree(trees, combination);
           const status = tree
@@ -103,29 +160,39 @@ export function PersonalizedTreesList({
           return (
             <li
               key={`${combination.dependence}-${combination.craving}`}
-              className="rounded-[var(--radius-lg)] border border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-5)] shadow-[var(--shadow-sm)]"
+              className="flex flex-col gap-[var(--space-3)] rounded-[var(--radius-xl)] border border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-5)] shadow-[var(--shadow-sm)]"
             >
               <div className="flex flex-wrap items-start justify-between gap-[var(--space-3)]">
-                <h3 className="m-0 flex-1 text-sm font-bold text-[var(--text-primary)]">
-                  {combination.label}
-                </h3>
+                <div className="flex min-w-0 flex-1 items-start gap-[var(--space-3)]">
+                  <span
+                    className="inline-flex h-[40px] w-[40px] shrink-0 items-center justify-center rounded-[var(--radius-lg)] bg-[var(--brand-50)] text-[var(--brand-700)]"
+                    aria-hidden="true"
+                  >
+                    <GitBranch size={20} strokeWidth={1.8} />
+                  </span>
+
+                  <h3 className="m-0 min-w-0 pt-[var(--space-2)] text-[length:var(--font-size-sm)] font-bold text-[var(--text-primary)]">
+                    {combination.label}
+                  </h3>
+                </div>
 
                 <span
-                  className={`rounded-[var(--radius-full)] px-[var(--space-3)] py-[var(--space-1)] text-xs font-bold ${
+                  className={`rounded-[var(--radius-full)] border px-[var(--space-3)] py-[var(--space-1)] font-[var(--font-mono)] text-[length:var(--font-size-xs)] font-bold ${
                     STATUS_STYLES[status] ?? STATUS_STYLES.SIN_CREAR
                   }`}
                 >
+                  <span className="sr-only">Estado: </span>
                   {status.replaceAll('_', ' ')}
                 </span>
               </div>
 
               {tree?.nombre && (
-                <p className="mt-[var(--space-3)] text-sm text-[var(--text-secondary)]">
+                <p className="m-0 text-[length:var(--font-size-sm)] [overflow-wrap:anywhere] text-[var(--text-secondary)]">
                   {tree.nombre}
                 </p>
               )}
 
-              <div className="mt-[var(--space-4)] flex flex-wrap gap-[var(--space-4)] text-xs text-[var(--text-muted)]">
+              <div className="mt-auto flex flex-wrap gap-[var(--space-4)] border-t border-[var(--surface-border)] pt-[var(--space-3)] font-[var(--font-mono)] text-[length:var(--font-size-xs)] text-[var(--text-secondary)]">
                 <span>
                   {tree ? `Versión ${tree.version}` : 'Sin versiones'}
                 </span>

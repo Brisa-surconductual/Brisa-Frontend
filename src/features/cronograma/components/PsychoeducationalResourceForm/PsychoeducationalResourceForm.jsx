@@ -33,6 +33,7 @@ export function PsychoeducationalResourceForm({
 
   const textErrorId = 'resource-text-content-error';
   const fileErrorId = 'resource-file-error';
+  const fileHintId = 'resource-file-hint';
 
   const acceptedFileTypes =
     PSYCHOEDUCATIONAL_RESOURCE_FILE_ACCEPT[
@@ -41,38 +42,49 @@ export function PsychoeducationalResourceForm({
 
   return (
     <form
-      className="rounded-[var(--radius-xl)] border border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-5)] shadow-[var(--shadow-sm)] md:p-[var(--space-6)]"
+      className="@container rounded-[var(--radius-xl)] border border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-4)] shadow-[var(--shadow-sm)] sm:p-[var(--space-5)] md:p-[var(--space-6)]"
       onSubmit={onSubmit}
+      aria-busy={loading}
+      aria-label={editing ? 'Editar recurso' : 'Agregar recurso'}
       noValidate
     >
       <div className="grid gap-[var(--space-5)]">
-        <SelectField
-          id="psychoeducational-resource-type"
-          name="type"
-          label="Tipo de recurso"
-          value={form.type}
-          options={PSYCHOEDUCATIONAL_RESOURCE_TYPE_OPTIONS}
-          error={errors.type}
-          placeholder="Selecciona un tipo"
-          required
-          disabled={loading || editing}
-          onChange={onChange}
-        />
+        <div className="grid gap-[var(--space-4)] @md:grid-cols-2">
+          <SelectField
+            id="psychoeducational-resource-type"
+            name="type"
+            label="Tipo de recurso"
+            value={form.type}
+            options={PSYCHOEDUCATIONAL_RESOURCE_TYPE_OPTIONS}
+            error={errors.type}
+            placeholder="Selecciona un tipo"
+            required
+            disabled={loading || editing}
+            onChange={onChange}
+          />
 
-        <TextField
-          id="psychoeducational-resource-order"
-          name="order"
-          label="Orden del bloque"
-          type="number"
-          min="1"
-          step="1"
-          value={form.order}
-          error={errors.order}
-          placeholder="Ej. 1"
-          required
-          disabled={loading || editing}
-          onChange={onChange}
-        />
+          <TextField
+            id="psychoeducational-resource-order"
+            name="order"
+            label="Orden del bloque"
+            type="number"
+            min="1"
+            step="1"
+            value={form.order}
+            error={errors.order}
+            placeholder="Ej. 1"
+            required
+            disabled={loading || editing}
+            onChange={onChange}
+          />
+        </div>
+
+        {editing && (
+          <p className="m-0 text-[length:var(--font-size-xs)] text-[var(--text-secondary)]">
+            El tipo y el orden no se modifican al editar: para reordenar usa
+            los controles de cada bloque.
+          </p>
+        )}
 
         {isTextResource && (
           <div className="flex flex-col gap-[6px]">
@@ -95,9 +107,9 @@ export function PsychoeducationalResourceForm({
               rows={6}
               value={form.textContent}
               placeholder="Escribe el contenido del bloque"
-              className={`w-full resize-y rounded-[var(--radius-md)] border-[1.5px] bg-[var(--surface-card)] px-[13px] py-[10px] font-[var(--font-sans)] text-[14px] text-[var(--text-primary)] transition-[border-color,box-shadow] duration-120 placeholder:text-[var(--text-muted)] placeholder:opacity-75 enabled:hover:border-[var(--neutral-300)] focus:border-[var(--brand-400)] focus:outline-none focus:shadow-[0_0_0_3px_rgb(29_131_120/12%)] disabled:cursor-not-allowed disabled:bg-[var(--surface-hover)] disabled:text-[var(--text-muted)] motion-reduce:transition-none ${
+              className={`w-full resize-y rounded-[var(--radius-md)] border-[1.5px] bg-[var(--surface-card)] px-[13px] py-[10px] font-[var(--font-sans)] text-[14px] text-[var(--text-primary)] transition-[border-color,box-shadow] duration-120 placeholder:text-[var(--text-muted)] placeholder:opacity-75 enabled:hover:border-[var(--neutral-300)] focus:border-[var(--brand-400)] focus:outline-none focus:shadow-[var(--focus-ring)] disabled:cursor-not-allowed disabled:bg-[var(--surface-hover)] disabled:text-[var(--text-muted)] motion-reduce:transition-none ${
                 errors.textContent
-                  ? 'border-[var(--danger)] shadow-[0_0_0_3px_rgb(193_59_48/8%)]'
+                  ? 'border-[var(--danger)] shadow-[0_0_0_3px_color-mix(in_srgb,var(--danger)_10%,transparent)]'
                   : 'border-[var(--surface-border)]'
               }`}
               required
@@ -157,11 +169,21 @@ export function PsychoeducationalResourceForm({
               aria-invalid={Boolean(errors.file)}
               aria-describedby={
                 errors.file
-                  ? fileErrorId
-                  : undefined
+                  ? `${fileHintId} ${fileErrorId}`
+                  : fileHintId
               }
               onChange={onFileChange}
             />
+
+            {/* Mismo filtro `accept` que ya aplica el campo. */}
+            <p
+              id={fileHintId}
+              className="m-0 text-[11px] text-[var(--text-muted)]"
+            >
+              {acceptedFileTypes
+                ? `Tipo admitido: ${acceptedFileTypes}.`
+                : 'Se admite cualquier tipo de archivo.'}
+            </p>
 
             {form.file && (
               <p className="m-0 text-[11px] text-[var(--text-muted)]">
@@ -198,7 +220,7 @@ export function PsychoeducationalResourceForm({
         />
       </div>
 
-      <div className="mt-[var(--space-6)] flex flex-col-reverse gap-[var(--space-3)] sm:flex-row sm:justify-end">
+      <div className="mt-[var(--space-6)] flex flex-col-reverse gap-[var(--space-3)] border-t border-[var(--surface-border)] pt-[var(--space-4)] @md:flex-row @md:justify-end">
         <Button
           type="button"
           variant="secondary"

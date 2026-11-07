@@ -1,24 +1,18 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AlertTriangle, Plus } from 'lucide-react';
 
-import { useAuth } from '@/app/providers/index.js';
-
+import { BackButton } from '@/features/cronograma/components/BackButton/index.js';
+import { PanelNotice } from '@/features/cronograma/components/PanelNotice/index.js';
 import { PsychoeducationalContentList } from '@/features/cronograma/components/PsychoeducationalContentList/index.js';
+import { SchedulePageHeader } from '@/features/cronograma/components/SchedulePageHeader/index.js';
 
-import { AdministrativeHeader } from '@/shared/components/navigation/AdministrativeHeader/index.js';
-import { AdministrativeTabBar } from '@/shared/components/navigation/AdministrativeTabBar/index.js';
 import { Button } from '@/shared/components/ui/Button/index.js';
 import { ConfirmationDialog } from '@/shared/components/ui/ConfirmationDialog/index.js';
 
 import { eliminarContenido } from '@/features/cronograma/api/contenido/eliminarContenido.jsx';
 import { obtenerCatalogoContenidos } from '@/features/cronograma/api/contenido/obtenerCatalogoContenidos.jsx';
 import { mapCatalogContent } from '../../utils/contentPreparation.js';
-
-import {
-  ADMINISTRATIVE_TAB,
-  ADMINISTRATIVE_TABS,
-} from '@/shared/data/administrativeTabs.js';
-
 
 function getApiErrorMessage(error, fallbackMessage) {
   if (error?.response?.data?.message) {
@@ -37,7 +31,6 @@ const EMPTY_CONTENTS = Object.freeze([]);
 
 export function ContentManagementPage() {
   const navigate = useNavigate();
-  const { role, logout } = useAuth();
 
   const [contents, setContents] = useState(EMPTY_CONTENTS);
   const [loading, setLoading] = useState(true);
@@ -66,28 +59,6 @@ export function ContentManagementPage() {
   }, []);
 
   const [pendingDeleteContent, setPendingDeleteContent] = useState(null);
-
-  function handleLogout() {
-    logout();
-
-    navigate('/login', {
-      replace: true,
-    });
-  }
-
-  function handleTabChange(tabId) {
-    if (tabId === ADMINISTRATIVE_TAB.CRONOGRAMA) {
-      navigate('/app/administrativo/cronograma');
-      return;
-    }
-
-    if (tabId === ADMINISTRATIVE_TAB.DASHBOARD) {
-      navigate('/app/administrativo');
-      return;
-    }
-
-    navigate(`/app/administrativo?tab=${encodeURIComponent(tabId)}`);
-  }
 
   function handleBack() {
     navigate('/app/administrativo/cronograma');
@@ -156,74 +127,75 @@ export function ContentManagementPage() {
     }
   }
 
+  // Un fallo de carga no se presenta como catálogo vacío.
+  const showEmptyState = !loadError || contents.length > 0;
+
   return (
-    <div className="min-h-screen bg-[var(--surface-bg)]">
-      <AdministrativeHeader
-        roleLabel={role ?? 'ADMINISTRATIVO'}
-        onLogout={handleLogout}
+    <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-[var(--space-6)] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]">
+      <BackButton onClick={handleBack}>Volver a cronogramas</BackButton>
+
+      <SchedulePageHeader
+        eyebrow="Administración · Cronogramas"
+        title="Contenidos psicoeducativos"
+        description="Consulta y administra los contenidos disponibles para el cronograma."
+        actions={
+          <Button onClick={handleCreate} className="w-full sm:w-auto">
+            <Plus size={18} strokeWidth={2} aria-hidden="true" />
+            Crear contenido
+          </Button>
+        }
       />
 
-      <AdministrativeTabBar
-        tabs={ADMINISTRATIVE_TABS}
-        activeTabId={ADMINISTRATIVE_TAB.CRONOGRAMA}
-        onTabChange={handleTabChange}
-      />
+      {loadError && (
+        <PanelNotice tone="danger" icon={AlertTriangle} role="alert">
+          {loadError}
+        </PanelNotice>
+      )}
 
-      <main>
-        <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-[var(--space-5)] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]">
-          <button
-            type="button"
-            className="w-fit text-[13px] font-bold text-[var(--brand-600)]"
-            onClick={handleBack}
+      <section
+        aria-labelledby="catalogo-contenidos-titulo"
+        aria-busy={loading}
+        className="flex flex-col gap-[var(--space-4)]"
+      >
+        <div className="flex items-baseline justify-between gap-[var(--space-3)]">
+          <h2
+            id="catalogo-contenidos-titulo"
+            className="m-0 text-[length:var(--font-size-lg)] font-extrabold text-[var(--text-primary)]"
           >
-            ← Volver al cronograma
-          </button>
+            Catálogo
+          </h2>
 
-          <header className="flex flex-col gap-[var(--space-4)] md:flex-row md:items-start md:justify-between">
-            <div>
-              <p className="m-0 text-[12px] font-bold tracking-[0.04em] text-[var(--brand-600)] uppercase">
-                Administración
-              </p>
-
-              <h1 className="mt-[var(--space-1)] mb-0 text-[26px] font-extrabold text-[var(--text-primary)] md:text-[30px]">
-                Contenidos psicoeducativos
-              </h1>
-
-              <p className="mt-[var(--space-2)] mb-0 max-w-[680px] text-[13px] leading-[1.6] text-[var(--text-muted)]">
-                Consulta y administra los contenidos disponibles para el
-                cronograma.
-              </p>
-            </div>
-
-            <Button onClick={handleCreate}>Crear contenido</Button>
-          </header>
-
-          {loadError && (
-            <div
-              className="rounded-[var(--radius-md)] border border-[var(--danger-border)] bg-[var(--danger-bg)] p-[var(--space-4)] text-[13px] font-semibold text-[var(--danger-text)]"
-              role="alert"
-            >
-              {loadError}
-            </div>
-          )}
-
-          {loading ? (
-            <p
-              className="m-0 py-[var(--space-7)] text-center text-[13px] text-[var(--text-muted)]"
-              role="status"
-            >
-              Cargando contenidos...
+          {!loading && (
+            <p className="m-0 text-[length:var(--font-size-sm)] font-semibold text-[var(--text-secondary)] tabular-nums">
+              {contents.length}{' '}
+              {contents.length === 1 ? 'contenido' : 'contenidos'}
             </p>
-          ) : (
-            <PsychoeducationalContentList
-              contents={contents}
-              onManageResources={handleManageResources}
-              onEdit={handleEdit}
-              onDelete={handleRequestDelete}
-            />
           )}
         </div>
-      </main>
+
+        {loading ? (
+          <>
+            <p role="status" className="sr-only">
+              Cargando contenidos...
+            </p>
+            <div className="grid gap-[var(--space-4)] md:grid-cols-2" aria-hidden="true">
+              {[0, 1, 2, 3].map((index) => (
+                <div
+                  key={index}
+                  className="h-[260px] animate-pulse rounded-[var(--radius-xl)] border border-[var(--surface-border)] bg-[var(--surface-card)] motion-reduce:animate-none"
+                />
+              ))}
+            </div>
+          </>
+        ) : showEmptyState ? (
+          <PsychoeducationalContentList
+            contents={contents}
+            onManageResources={handleManageResources}
+            onEdit={handleEdit}
+            onDelete={handleRequestDelete}
+          />
+        ) : null}
+      </section>
 
       <ConfirmationDialog
         open={Boolean(pendingDeleteContent)}

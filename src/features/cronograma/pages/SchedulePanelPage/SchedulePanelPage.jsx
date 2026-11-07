@@ -1,15 +1,27 @@
-import { ScheduleActivationAction } from '../../components/ScheduleActivationAction/ScheduleActivationAction.jsx';
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { useAuth } from '@/app/providers/index.js';
+import {
+  AlertTriangle,
+  ArrowLeft,
+  CalendarDays,
+  CalendarPlus,
+  CalendarRange,
+  CircleCheck,
+  Info,
+  Layers,
+  ListOrdered,
+  Lock,
+  SearchX,
+} from 'lucide-react';
 
-import { AdministrativeHeader } from '@/shared/components/navigation/AdministrativeHeader/index.js';
 import { Button } from '@/shared/components/ui/Button/index.js';
 
-import { TemporalUnitList } from '@/features/cronograma/components/TemporalUnitList/index.js';
-import { EmptyScheduleState } from '@/features/cronograma/components/EmptyScheduleState/index.js';
+import { PanelNotice } from '@/features/cronograma/components/PanelNotice/index.js';
 import { ScheduleFilters } from '@/features/cronograma/components/ScheduleFilters/index.js';
+import { ScheduleStatusBadge } from '@/features/cronograma/components/ScheduleStatusBadge/index.js';
+import { TemporalUnitList } from '@/features/cronograma/components/TemporalUnitList/index.js';
 
+import { ScheduleActivationAction } from '../../components/ScheduleActivationAction/ScheduleActivationAction.jsx';
 import { getUnitTemporalByShulde } from '../../api/unidadTemporal/getUnitTemporalByShulde';
 import { listSchedule } from '../../api/cronograma/listSchedule.jsx';
 
@@ -17,7 +29,6 @@ export function SchedulePanelPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { idSchedule } = useParams();
-  const { role, logout } = useAuth();
 
   const [schedule, setSchedule] = useState(location.state?.schedule);
   const [activationMessage, setActivationMessage] = useState('');
@@ -127,178 +138,224 @@ export function SchedulePanelPage() {
     );
   }
 
+  const isActiveSchedule = schedule?.estado === 'ACTIVO';
+  const canCreateUnit =
+    !isLoading && !loadError && schedule?.estado === 'INACTIVO';
+
+  const backLink = (
+    <button
+      type="button"
+      className="-ml-[var(--space-2)] inline-flex min-h-[44px] w-fit items-center gap-[var(--space-2)] rounded-[var(--radius-md)] border-0 bg-transparent px-[var(--space-2)] text-[length:var(--font-size-sm)] font-bold text-[var(--brand-600)] hover:underline"
+      onClick={handleBack}
+    >
+      <ArrowLeft size={16} strokeWidth={2} aria-hidden="true" />
+      Volver a todos los cronogramas
+    </button>
+  );
+
   if (!schedule) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-[var(--surface-bg)]">
-        <p className="text-[var(--text-muted)] font-medium mb-4">
-          {isLoading
-            ? 'Consultando cronograma...'
-            : loadError || 'No se encontró la información del cronograma.'}
-        </p>
-        <Button onClick={handleBack}>Volver a inicio</Button>
+      <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-[var(--space-5)] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]">
+        {backLink}
+
+        {isLoading ? (
+          <div aria-busy="true" className="flex flex-col gap-[var(--space-4)]">
+            <p role="status" className="sr-only">
+              Consultando cronograma...
+            </p>
+            <div
+              className="h-[168px] animate-pulse rounded-[var(--radius-xl)] border border-[var(--surface-border)] bg-[var(--surface-card)] motion-reduce:animate-none"
+              aria-hidden="true"
+            />
+          </div>
+        ) : (
+          <PanelNotice
+            tone={loadError ? 'danger' : 'neutral'}
+            icon={loadError ? AlertTriangle : SearchX}
+            title={loadError ? 'No pudimos cargar el cronograma' : 'Cronograma no encontrado'}
+            role={loadError ? 'alert' : 'status'}
+            action={
+              <Button variant="secondary" size="small" onClick={handleBack}>
+                Volver a cronogramas
+              </Button>
+            }
+          >
+            {loadError || 'No se encontró la información del cronograma.'}
+          </PanelNotice>
+        )}
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[var(--surface-bg)]">
-      <AdministrativeHeader
-        roleLabel={role ?? 'ADMINISTRATIVO'}
-        onLogout={logout}
-      />
+    <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-[var(--space-6)] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]">
+      {backLink}
 
-      <main className="pb-[var(--space-8)]">
-        <div className="mx-auto w-full max-w-[1200px] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]">
-          <button
-            type="button"
-            className="mb-[var(--space-5)] text-[13px] font-bold text-[var(--brand-600)] transition-colors hover:text-[var(--brand-700)]"
-            onClick={handleBack}
-          >
-            ← Volver a todos los cronogramas
-          </button>
-
-          <header className="rounded-[var(--radius-xl)] border border-[var(--surface-border)] bg-white p-[var(--space-5)] md:p-[var(--space-6)] shadow-sm">
-            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-[var(--space-4)]">
-              <div className="flex-1">
-                <p className="m-0 text-[12px] font-bold tracking-[0.04em] text-[var(--brand-600)] uppercase">
-                  Panel de Gestión
-                </p>
-                <h1 className="mt-[var(--space-1)] mb-0 text-[28px] font-extrabold text-[var(--text-primary)] md:text-[32px]">
-                  {schedule.nombreCronograma}
-                </h1>
-
-                <div className="mt-[var(--space-4)] flex flex-wrap gap-[var(--space-4)] text-[13px]">
-                  <div className="flex items-center gap-2 bg-[var(--surface-hover)] px-3 py-1.5 rounded-md border border-[var(--surface-border)]">
-                    <span className="text-[var(--text-muted)] font-semibold">
-                      Estado:
-                    </span>
-                    <span
-                      className={`font-bold ${schedule.estado === 'ACTIVO' ? 'text-[var(--success-text)]' : 'text-[var(--text-secondary)]'}`}
-                    >
-                      {schedule.estado}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 bg-[var(--surface-hover)] px-3 py-1.5 rounded-md border border-[var(--surface-border)]">
-                    <span className="text-[var(--text-muted)] font-semibold">
-                      Tipo:
-                    </span>
-                    <span className="font-bold text-[var(--text-primary)]">
-                      {schedule.esBase
-                        ? 'Cronograma Base'
-                        : 'Cronograma Estándar'}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 bg-[var(--surface-hover)] px-3 py-1.5 rounded-md border border-[var(--surface-border)]">
-                    <span className="text-[var(--text-muted)] font-semibold">
-                      Creación:
-                    </span>
-                    <span className="font-bold text-[var(--text-primary)]">
-                      {schedule.fechaCreacion
-                        ? schedule.fechaCreacion.split('T')[0]
-                        : 'N/A'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-[var(--space-2)] md:mt-0 flex flex-col sm:flex-row gap-3">
-                <ScheduleActivationAction
-                  schedule={schedule}
-                  disabled={
-                    isLoading || Boolean(loadError) || units.length === 0
-                  }
-                  onActivated={(activeSchedule) => {
-                    setSchedule(activeSchedule);
-                    setActivationMessage(
-                      'Cronograma activado. Los nuevos estudiantes recibirán el cronograma base activo.',
-                    );
-                    navigate(location.pathname, {
-                      replace: true,
-                      state: { ...location.state, schedule: activeSchedule },
-                    });
-                  }}
-                />
-                <Button
-                  disabled={
-                    isLoading ||
-                    Boolean(loadError) ||
-                    schedule.estado !== 'INACTIVO'
-                  }
-                  onClick={handleCreateTemporalUnit}
-                  className="shadow-sm"
-                >
-                  + Crear unidad temporal
-                </Button>
-              </div>
-            </div>
-          </header>
-
-          <p
-            role={loadError ? 'alert' : 'status'}
-            className="mt-[var(--space-4)] text-[13px] text-[var(--text-secondary)]"
-          >
-            {loadError ||
-              (schedule.estado === 'ACTIVO'
-                ? 'Este cronograma está activo y su estructura es de solo lectura. Para cambiar la planificación, configura un nuevo cronograma inactivo antes de activarlo.'
-                : 'Añade las unidades temporales y asocia sus contenidos antes de activar el cronograma. Sin unidades no se puede activar.')}
+      <header className="flex flex-col gap-[var(--space-5)] rounded-[var(--radius-xl)] border border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-5)] shadow-[var(--shadow-sm)] md:p-[var(--space-6)] lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex min-w-0 flex-col gap-[var(--space-3)]">
+          <p className="m-0 text-[length:var(--font-size-xs)] font-bold tracking-[var(--letter-spacing-wide)] text-[var(--brand-600)] uppercase">
+            Panel del cronograma
           </p>
 
-          {activationMessage && (
-            <p
-              role="status"
-              className="mt-[var(--space-4)] text-[var(--success-text)]"
-            >
-              {activationMessage}
-            </p>
-          )}
-          <section className="mt-[var(--space-6)]">
-            <ScheduleFilters
-              status={statusFilter}
-              date={dateFilter}
-              resultCount={filteredUnits.length}
-              totalCount={units.length}
-              onStatusChange={setStatusFilter}
-              onDateChange={setDateFilter}
-            />
-          </section>
+          <div className="flex flex-wrap items-center gap-[var(--space-3)]">
+            <h1 className="m-0 text-[length:var(--font-size-2xl)] leading-[var(--line-height-tight)] font-extrabold tracking-[var(--letter-spacing-tight)] [overflow-wrap:anywhere] text-[var(--text-primary)] md:text-[length:var(--font-size-3xl)]">
+              {schedule.nombreCronograma}
+            </h1>
 
-          <section className="mt-[var(--space-8)]">
-            <div className="mb-[var(--space-5)] flex items-end justify-between">
-              <div>
-                <h2 className="m-0 text-[20px] font-extrabold text-[var(--text-primary)]">
-                  Unidades Temporales
-                </h2>
-                <p className="mt-1 mb-0 text-[13px] text-[var(--text-muted)]">
-                  Gestiona los bloques de tiempo asignados a este cronograma.
-                </p>
-              </div>
-              <div className="text-[13px] font-bold text-[var(--brand-600)] bg-[var(--brand-50)] px-3 py-1 rounded-full">
-                Mostrando: {filteredUnits.length}
-              </div>
+            <ScheduleStatusBadge status={schedule.estado} />
+          </div>
+
+          <dl className="m-0 flex flex-wrap gap-x-[var(--space-6)] gap-y-[var(--space-2)] text-[length:var(--font-size-sm)]">
+            <div className="flex items-center gap-[var(--space-2)]">
+              <dt className="inline-flex items-center gap-[var(--space-2)] text-[var(--text-muted)]">
+                <Layers size={16} strokeWidth={1.8} aria-hidden="true" />
+                Tipo
+              </dt>
+              <dd className="m-0 font-semibold text-[var(--text-primary)]">
+                {schedule.esBase ? 'Cronograma base' : 'Cronograma estándar'}
+              </dd>
             </div>
 
-            {isLoading ? (
-              <p className="text-[14px] text-[var(--text-muted)]">
-                Cargando unidades temporales...
-              </p>
-            ) : filteredUnits.length > 0 ? (
-              <TemporalUnitList
-                units={filteredUnits}
-                onViewDetails={handleViewUnitDetails}
-              />
-            ) : (
-              <EmptyScheduleState
-                title="No hay resultados"
-                description={
-                  units.length > 0
-                    ? 'Ninguna unidad temporal coincide con los filtros aplicados.'
-                    : 'Aún no hay unidades temporales creadas.'
-                }
-              />
-            )}
-          </section>
+            <div className="flex items-center gap-[var(--space-2)]">
+              <dt className="inline-flex items-center gap-[var(--space-2)] text-[var(--text-muted)]">
+                <CalendarDays size={16} strokeWidth={1.8} aria-hidden="true" />
+                Creación
+              </dt>
+              <dd className="m-0 font-semibold text-[var(--text-primary)] tabular-nums">
+                {schedule.fechaCreacion
+                  ? schedule.fechaCreacion.split('T')[0]
+                  : 'N/A'}
+              </dd>
+            </div>
+
+            <div className="flex items-center gap-[var(--space-2)]">
+              <dt className="inline-flex items-center gap-[var(--space-2)] text-[var(--text-muted)]">
+                <ListOrdered size={16} strokeWidth={1.8} aria-hidden="true" />
+                Unidades
+              </dt>
+              <dd className="m-0 font-semibold text-[var(--text-primary)] tabular-nums">
+                {isLoading ? '…' : units.length}
+              </dd>
+            </div>
+          </dl>
         </div>
-      </main>
+
+        <div className="flex flex-col gap-[var(--space-3)] sm:flex-row lg:shrink-0">
+          <ScheduleActivationAction
+            schedule={schedule}
+            disabled={
+              isLoading || Boolean(loadError) || units.length === 0
+            }
+            onActivated={(activeSchedule) => {
+              setSchedule(activeSchedule);
+              setActivationMessage(
+                'Cronograma activado. Los nuevos estudiantes recibirán el cronograma base activo.',
+              );
+              navigate(location.pathname, {
+                replace: true,
+                state: { ...location.state, schedule: activeSchedule },
+              });
+            }}
+          />
+
+          <Button
+            // Sin unidades, crear la primera es la acción que corresponde.
+            variant={units.length === 0 ? 'primary' : 'secondary'}
+            disabled={!canCreateUnit}
+            onClick={handleCreateTemporalUnit}
+          >
+            <CalendarPlus size={18} strokeWidth={2} aria-hidden="true" />
+            Crear unidad temporal
+          </Button>
+        </div>
+      </header>
+
+      {loadError ? (
+        <PanelNotice tone="danger" icon={AlertTriangle} role="alert">
+          {loadError}
+        </PanelNotice>
+      ) : isActiveSchedule ? (
+        <PanelNotice
+          tone="neutral"
+          icon={Lock}
+          title="Cronograma activo · solo lectura"
+          role="status"
+        >
+          Este cronograma está activo y su estructura es de solo lectura. Para
+          cambiar la planificación, configura un nuevo cronograma inactivo
+          antes de activarlo.
+        </PanelNotice>
+      ) : (
+        <PanelNotice tone="info" icon={Info} role="status">
+          Añade las unidades temporales y asocia sus contenidos antes de activar
+          el cronograma. Sin unidades no se puede activar.
+        </PanelNotice>
+      )}
+
+      {activationMessage && (
+        <PanelNotice tone="success" icon={CircleCheck} role="status">
+          {activationMessage}
+        </PanelNotice>
+      )}
+
+      <ScheduleFilters
+        status={statusFilter}
+        date={dateFilter}
+        resultCount={filteredUnits.length}
+        totalCount={units.length}
+        onStatusChange={setStatusFilter}
+        onDateChange={setDateFilter}
+      />
+
+      <section
+        aria-labelledby="unidades-titulo"
+        aria-busy={isLoading}
+        className="flex flex-col gap-[var(--space-4)]"
+      >
+        <div>
+          <h2
+            id="unidades-titulo"
+            className="m-0 text-[length:var(--font-size-lg)] font-extrabold text-[var(--text-primary)]"
+          >
+            Unidades temporales
+          </h2>
+          <p className="mt-[var(--space-1)] mb-0 text-[length:var(--font-size-sm)] text-[var(--text-secondary)]">
+            Gestiona los bloques de tiempo asignados a este cronograma.
+          </p>
+        </div>
+
+        {isLoading ? (
+          <>
+            <p role="status" className="sr-only">
+              Cargando unidades temporales...
+            </p>
+            <div className="flex flex-col gap-[var(--space-3)]" aria-hidden="true">
+              {[0, 1, 2].map((index) => (
+                <div
+                  key={index}
+                  className="h-[88px] animate-pulse rounded-[var(--radius-xl)] border border-[var(--surface-border)] bg-[var(--surface-card)] motion-reduce:animate-none"
+                />
+              ))}
+            </div>
+          </>
+        ) : filteredUnits.length > 0 ? (
+          <TemporalUnitList
+            units={filteredUnits}
+            onViewDetails={handleViewUnitDetails}
+          />
+        ) : (
+          <PanelNotice
+            tone="neutral"
+            icon={units.length > 0 ? SearchX : CalendarRange}
+            title="No hay resultados"
+            role="status"
+          >
+            {units.length > 0
+              ? 'Ninguna unidad temporal coincide con los filtros aplicados.'
+              : 'Aún no hay unidades temporales creadas.'}
+          </PanelNotice>
+        )}
+      </section>
     </div>
   );
 }

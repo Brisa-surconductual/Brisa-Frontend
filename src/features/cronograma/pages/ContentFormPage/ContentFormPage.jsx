@@ -1,23 +1,27 @@
 import { useState } from 'react';
 
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { AlertTriangle, SearchX } from 'lucide-react';
 
-import { useAuth } from '@/app/providers/index.js';
-
+import { BackButton } from '@/features/cronograma/components/BackButton/index.js';
+import { NextStepsCard } from '@/features/cronograma/components/NextStepsCard/index.js';
+import { PanelNotice } from '@/features/cronograma/components/PanelNotice/index.js';
 import { PsychoeducationalContentForm } from '@/features/cronograma/components/PsychoeducationalContentForm/index.js';
+import { SchedulePageHeader } from '@/features/cronograma/components/SchedulePageHeader/index.js';
 
-import { AdministrativeHeader } from '@/shared/components/navigation/AdministrativeHeader/index.js';
-import { AdministrativeTabBar } from '@/shared/components/navigation/AdministrativeTabBar/index.js';
-import {
-  ADMINISTRATIVE_TAB,
-  ADMINISTRATIVE_TABS,
-} from '@/shared/data/administrativeTabs.js';
+import { Button } from '@/shared/components/ui/Button/index.js';
 
 import { usePsychoeducationalContentForm } from './hooks/usePsychoeducationalContentForm.js';
 
 import { crearContenido } from '@/features/cronograma/api/contenido/crearContenido.jsx';
 import { actualizarContenido } from '@/features/cronograma/api/contenido/actualizarContenido.jsx';
 import { contentFormReturnPath } from '../../utils/contentFormReturnPath.js';
+
+// Flujo real de creación: el contenido queda listo al tener recursos.
+const CREATION_STEPS = Object.freeze([
+  'Registra el nombre y el tipo del contenido.',
+  'Guarda al menos un recurso y asigna su módulo destino.',
+]);
 
 const EMPTY_CONTENT = Object.freeze({
   name: '',
@@ -28,7 +32,6 @@ export function ContentFormPage({ initialValues, mode = 'create' }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { contentId } = useParams();
-  const { role, logout } = useAuth();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
@@ -93,110 +96,90 @@ export function ContentFormPage({ initialValues, mode = 'create' }) {
       onValidSubmit: handleValidSubmit,
     });
 
-  function handleLogout() {
-    logout();
-
-    navigate('/login', {
-      replace: true,
-    });
-  }
-
-  function handleTabChange(tabId) {
-    if (tabId === ADMINISTRATIVE_TAB.CRONOGRAMA) {
-      navigate('/app/administrativo/cronograma');
-      return;
-    }
-
-    if (tabId === ADMINISTRATIVE_TAB.DASHBOARD) {
-      navigate('/app/administrativo');
-      return;
-    }
-
-    navigate(`/app/administrativo?tab=${encodeURIComponent(tabId)}`);
-  }
-
   function handleBack() {
     navigate(returnPath);
   }
 
+  const fromAssociation = Boolean(
+    location.state?.returnToAssociation && !isEditMode,
+  );
+
   return (
-    <div className="min-h-screen bg-[var(--surface-bg)]">
-      <AdministrativeHeader
-        roleLabel={role ?? 'ADMINISTRATIVO'}
-        onLogout={handleLogout}
+    <div className="mx-auto flex w-full max-w-[1100px] flex-col gap-[var(--space-6)] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]">
+      <BackButton onClick={handleBack}>
+        {fromAssociation
+          ? 'Volver a la unidad temporal'
+          : 'Volver a contenidos'}
+      </BackButton>
+
+      <SchedulePageHeader
+        eyebrow="Contenidos psicoeducativos"
+        title={
+          isEditMode
+            ? 'Editar contenido psicoeducativo'
+            : 'Crear contenido psicoeducativo'
+        }
+        description={
+          isEditMode
+            ? 'Actualiza la información general del contenido seleccionado.'
+            : 'Paso 1 de 2: registra los datos. Después debes guardar al menos un recurso con su módulo destino para completar el contenido.'
+        }
       />
 
-      <AdministrativeTabBar
-        tabs={ADMINISTRATIVE_TABS}
-        activeTabId={ADMINISTRATIVE_TAB.CRONOGRAMA}
-        onTabChange={handleTabChange}
-      />
+      {submitError && (
+        <PanelNotice tone="danger" icon={AlertTriangle} role="alert">
+          {submitError}
+        </PanelNotice>
+      )}
 
-      <main>
-        <div className="mx-auto w-full max-w-[900px] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]">
-          <button
-            type="button"
-            className="mb-[var(--space-5)] text-[13px] font-bold text-[var(--brand-600)]"
-            onClick={handleBack}
-          >
-            {location.state?.returnToAssociation && !isEditMode
-              ? '← Volver a la unidad temporal'
-              : '← Volver a contenidos'}
-          </button>
+      {hasEditContent ? (
+        <div
+          className={
+            isEditMode
+              ? 'max-w-[720px]'
+              : 'grid items-start gap-[var(--space-6)] lg:grid-cols-[minmax(0,1fr)_320px]'
+          }
+        >
+          <PsychoeducationalContentForm
+            form={form}
+            errors={errors}
+            loading={isSubmitting}
+            submitLabel={
+              isEditMode ? 'Guardar cambios' : 'Continuar con recursos'
+            }
+            onChange={handleChange}
+            onSubmit={handleSubmit}
+            onCancel={handleBack}
+          />
 
-          <p className="m-0 text-[12px] font-bold tracking-[0.04em] text-[var(--brand-600)] uppercase">
-            Administración
-          </p>
-
-          <h1 className="mt-[var(--space-1)] mb-0 text-[26px] font-extrabold text-[var(--text-primary)] md:text-[30px]">
-            {isEditMode
-              ? 'Editar contenido psicoeducativo'
-              : 'Crear contenido psicoeducativo'}
-          </h1>
-
-          <p className="mt-[var(--space-2)] mb-0 max-w-[680px] text-[13px] leading-[1.6] text-[var(--text-muted)]">
-            {isEditMode
-              ? 'Actualiza la información general del contenido seleccionado.'
-              : 'Paso 1 de 2: registra los datos. Después debes guardar al menos un recurso con su módulo destino para completar el contenido.'}
-          </p>
-
-          {submitError && (
-            <div
-              className="mt-[var(--space-5)] rounded-[var(--radius-md)] border border-[var(--danger-border)] bg-[var(--danger-bg)] p-[var(--space-4)] text-[13px] font-semibold text-[var(--danger-text)]"
-              role="alert"
-            >
-              {submitError}
-            </div>
-          )}
-
-          {hasEditContent ? (
-            <div className="mt-[var(--space-6)]">
-              <PsychoeducationalContentForm
-                form={form}
-                errors={errors}
-                loading={isSubmitting}
-                submitLabel={
-                  isEditMode ? 'Guardar cambios' : 'Continuar con recursos'
-                }
-                onChange={handleChange}
-                onSubmit={handleSubmit}
-                onCancel={handleBack}
-              />
-            </div>
-          ) : (
-            <section className="mt-[var(--space-6)] rounded-[var(--radius-xl)] border border-dashed border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-6)]">
-              <h2 className="m-0 text-[17px] font-extrabold text-[var(--text-primary)]">
-                Contenido no disponible
-              </h2>
-
-              <p className="mt-[var(--space-2)] mb-0 text-[13px] leading-[1.6] text-[var(--text-muted)]">
-                No se recibió la información del contenido seleccionado.
-                {contentId ? ` Identificador: ${contentId}.` : ''}
-              </p>
-            </section>
+          {!isEditMode && (
+            <NextStepsCard
+              id="crear-contenido-pasos"
+              title={
+                fromAssociation
+                  ? 'Después volverás a la unidad'
+                  : 'Cómo se completa'
+              }
+              steps={CREATION_STEPS}
+            />
           )}
         </div>
-      </main>
+      ) : (
+        <PanelNotice
+          tone="neutral"
+          icon={SearchX}
+          title="Contenido no disponible"
+          role="status"
+          action={
+            <Button variant="secondary" onClick={handleBack}>
+              Volver a contenidos
+            </Button>
+          }
+        >
+          No se recibió la información del contenido seleccionado.
+          {contentId ? ` Identificador: ${contentId}.` : ''}
+        </PanelNotice>
+      )}
     </div>
   );
 }

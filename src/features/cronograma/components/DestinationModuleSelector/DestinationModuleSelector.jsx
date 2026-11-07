@@ -41,7 +41,7 @@ export function DestinationModuleSelector({
           </p>
         </div>
       ) : (
-        <div className="grid gap-[var(--space-2)] sm:grid-cols-2">
+        <div className="grid gap-[var(--space-2)] @md:grid-cols-2">
           {modules.map((module) => {
             const checked =
               selectedModuleIds.includes(module.id);
