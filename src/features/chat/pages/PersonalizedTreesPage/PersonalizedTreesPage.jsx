@@ -1,4 +1,4 @@
-import { PlugZap } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, PlugZap } from 'lucide-react';
 
 import { ChatAdminHeader } from '../../components/ChatAdminHeader/index.js';
 import { ChatAdminNotice } from '../../components/ChatAdminNotice/index.js';
@@ -9,6 +9,10 @@ export function PersonalizedTreesPage({
   trees = null,
   isLoading = false,
   error = null,
+  notice = '',
+  actionError = '',
+  renderActions,
+  dialog = null,
 }) {
   // Sin datos ni error: la consulta aún no llega a esta pantalla.
   const isPendingIntegration = !Array.isArray(trees) && !isLoading && !error;
@@ -34,11 +38,31 @@ export function PersonalizedTreesPage({
           </ChatAdminNotice>
         )}
 
+        {notice && (
+          <ChatAdminNotice tone="success" icon={CheckCircle2} role="status">
+            {notice}
+          </ChatAdminNotice>
+        )}
+
+        {actionError && (
+          <ChatAdminNotice
+            tone="danger"
+            icon={AlertTriangle}
+            role="alert"
+            title="No se pudo completar la acción"
+          >
+            {actionError}
+          </ChatAdminNotice>
+        )}
+
         <PersonalizedTreesList
           trees={trees}
           isLoading={isLoading}
           error={error}
+          renderActions={renderActions}
         />
+
+        {dialog}
       </div>
     </div>
   );

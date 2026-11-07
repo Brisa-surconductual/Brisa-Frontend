@@ -57,6 +57,7 @@ export function PersonalizedTreesList({
   trees = null,
   isLoading = false,
   error = null,
+  renderActions,
 }) {
   if (isLoading) {
     return (
@@ -92,6 +93,7 @@ export function PersonalizedTreesList({
         role="alert"
       >
         No fue posible consultar los árboles conversacionales.
+        {typeof error === 'string' && ` ${error}`}
       </ChatAdminNotice>
     );
   }
@@ -199,6 +201,8 @@ export function PersonalizedTreesList({
 
                 {nodeCount !== null && <span>{nodeCount} nodos</span>}
               </div>
+
+              {renderActions?.(tree, combination)}
             </li>
           );
         })}

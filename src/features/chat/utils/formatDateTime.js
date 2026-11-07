@@ -1,6 +1,6 @@
-// Fecha legible en hora de Colombia, a partir del ISO del backend.
+// Fecha y hora legibles en hora de Colombia, a partir del ISO del backend.
 // Devuelve null si el valor no es una fecha válida.
-export function formatLastInteraction(isoDate) {
+export function formatDateTime(isoDate) {
   const date = new Date(isoDate);
 
   if (Number.isNaN(date.getTime())) return null;

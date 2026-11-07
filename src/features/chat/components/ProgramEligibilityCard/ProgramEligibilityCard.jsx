@@ -56,6 +56,7 @@ export function ProgramEligibilityCard({
         role="alert"
       >
         No fue posible consultar la elegibilidad del programa.
+        {typeof error === 'string' && ` ${error}`}
       </ChatAdminNotice>
     );
   }
