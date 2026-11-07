@@ -4,6 +4,7 @@ import { ProtectedLayout } from '@/app/layouts/ProtectedLayout/index.js';
 import { StudentLayout } from '@/app/layouts/StudentLayout/index.js';
 import { RegistrationLayout } from '@/app/layouts/RegistrationLayout/index.js';
 import {
+  ChatEntryPage,
   ProgramModalityPage,
   PersonalizedTreesPage,
 } from '@/features/chat/index.js';
@@ -142,6 +143,11 @@ export function AppRouter() {
                 <Route
                   path="estudiante/cronograma/contenido-vigente"
                   element={<CurrentContentPage />}
+                />
+
+                <Route
+                  path="estudiante/chat"
+                  element={<ChatEntryPage />}
                 />
               </Route>
             </Route>
