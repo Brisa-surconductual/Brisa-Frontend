@@ -13,11 +13,12 @@ import { isCohortDemoEnabled } from '../utils/cohortDemoMode.js';
 const NOT_INTEGRATED = 'La gestión de cohortes aún no está integrada.';
 
 /*
- * Único punto que carga la demostración. El import dinámico está
- * dentro de la condición: en producción la rama se elimina y ningún
- * dato, escenario ni almacén de demostración llega al build.
+ * Único punto que carga la demostración (también lo usa la fuente de
+ * participantes). El import dinámico está dentro de la condición: en
+ * producción la rama se elimina y ningún dato, escenario ni almacén de
+ * demostración llega al build.
  */
-async function loadDemoSource() {
+export async function loadDemoSource() {
   if (!(import.meta.env.DEV && import.meta.env.VITE_M08_DEMO === 'true')) {
     throw new Error(NOT_INTEGRATED);
   }

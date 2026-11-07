@@ -1,25 +1,22 @@
 import { Link } from 'react-router-dom';
-import { CalendarRange, ListTree, Pencil } from 'lucide-react';
+import { CalendarRange, ListTree, Pencil, UsersRound } from 'lucide-react';
 
 import { Button } from '@/shared/components/ui/Button/index.js';
 
-import { formatCohortDate } from '../../utils/formatCohortDate.js';
+import { CohortPeriod } from '../CohortPeriod/index.js';
 import { CohortStatusBadge } from '../CohortStatusBadge/index.js';
 
 /*
  * Tarjeta de consulta de una cohorte (RF-124): nombre, estado,
- * periodo del programa y cronograma asociado. Con `editPath` ofrece
- * el acceso a su edición y con `statusAction` el cambio de estado que
- * corresponda ({ label, busyLabel, icon, busy, onClick }); sin ellos es
- * de solo lectura.
+ * periodo del programa y cronograma asociado. Con `detailPath` ofrece
+ * la consulta de sus participantes (RF-125), con `editPath` el acceso a
+ * su edición y con `statusAction` el cambio de estado que corresponda
+ * ({ label, busyLabel, icon, busy, onClick }).
  */
-function ProgramDate({ value }) {
-  const label = formatCohortDate(value);
+const LINK_CLASS =
+  'inline-flex min-h-[44px] w-fit items-center gap-[var(--space-2)] rounded-[var(--radius-md)] px-[var(--space-2)] text-[length:var(--font-size-sm)] font-bold text-[var(--brand-600)] no-underline transition-colors duration-150 hover:bg-[var(--surface-hover)] motion-reduce:transition-none';
 
-  return label ? <time dateTime={value}>{label}</time> : 'Fecha no disponible';
-}
-
-export function CohortCard({ cohort, editPath = null, statusAction = null }) {
+export function CohortCard({ cohort, detailPath = null, editPath = null, statusAction = null }) {
   const name = cohort.name?.trim() || 'Sin nombre';
   const StatusIcon = statusAction?.icon;
 
@@ -40,10 +37,7 @@ export function CohortCard({ cohort, editPath = null, statusAction = null }) {
             Periodo del programa
           </dt>
           <dd className="m-0 font-semibold text-[var(--text-secondary)] tabular-nums">
-            <ProgramDate value={cohort.startDate} />
-            <span aria-hidden="true"> – </span>
-            <span className="sr-only"> hasta </span>
-            <ProgramDate value={cohort.endDate} />
+            <CohortPeriod startDate={cohort.startDate} endDate={cohort.endDate} />
           </dd>
         </div>
 
@@ -59,17 +53,26 @@ export function CohortCard({ cohort, editPath = null, statusAction = null }) {
         </div>
       </dl>
 
-      {(editPath || statusAction) && (
+      {(detailPath || editPath || statusAction) && (
         <div className="mt-auto flex flex-wrap items-center justify-between gap-[var(--space-2)] border-t border-[var(--surface-border)] pt-[var(--space-3)]">
-          {editPath && (
-            <Link
-              to={editPath}
-              className="inline-flex min-h-[44px] w-fit items-center gap-[var(--space-2)] rounded-[var(--radius-md)] px-[var(--space-2)] -ml-[var(--space-2)] text-[length:var(--font-size-sm)] font-bold text-[var(--brand-600)] no-underline transition-colors duration-150 hover:bg-[var(--surface-hover)] motion-reduce:transition-none"
-            >
-              <Pencil size={16} strokeWidth={1.8} aria-hidden="true" />
-              Editar
-              <span className="sr-only"> {name}</span>
-            </Link>
+          {(detailPath || editPath) && (
+            <div className="-ml-[var(--space-2)] flex flex-wrap items-center gap-x-[var(--space-1)]">
+              {detailPath && (
+                <Link to={detailPath} className={LINK_CLASS}>
+                  <UsersRound size={16} strokeWidth={1.8} aria-hidden="true" />
+                  Ver participantes
+                  <span className="sr-only"> de {name}</span>
+                </Link>
+              )}
+
+              {editPath && (
+                <Link to={editPath} className={LINK_CLASS}>
+                  <Pencil size={16} strokeWidth={1.8} aria-hidden="true" />
+                  Editar
+                  <span className="sr-only"> {name}</span>
+                </Link>
+              )}
+            </div>
           )}
 
           {statusAction && (

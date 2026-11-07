@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createRoutesFromChildren, matchRoutes } from 'react-router-dom';
 
 import { SchedulePanelPage, CreateTemporalUnitPage, ScheduleManagementPage } from '@/features/cronograma/index.js';
-import { CohortFormPage, CohortListPage } from '@/features/administracion/index.js';
+import { CohortDetailPage, CohortFormPage, CohortListPage } from '@/features/administracion/index.js';
 import { USER_ROLE } from '@/features/users/types/authTypes.js';
 import { DASHBOARD_SHORTCUTS } from '@/features/users/pages/PsychologyHomePage/data/psychologyStats.js';
 
@@ -73,6 +73,7 @@ const ADMIN_PATHS = Object.freeze([
   '/app/administrativo/cronograma/s-1/crear-unidad',
   '/app/administrativo/cohortes',
   '/app/administrativo/cohortes/nueva',
+  '/app/administrativo/cohortes/co-1',
   '/app/administrativo/cohortes/co-1/editar',
   '/app/administrativo/chat/modalidad',
   '/app/administrativo/chat/arboles',
@@ -144,6 +145,17 @@ describe('Rutas administrativas protegidas', () => {
     expect(edit.route.element.type).toBe(CohortFormPage);
     expect(edit.route.element.props.mode).toBe('edit');
     expect(edit.params).toEqual({ idCohorte: 'demo-temporal-1' });
+  });
+
+  it('el detalle de cohorte (RF-125) monta su página con idCohorte, sin capturar «nueva»', () => {
+    const detail = match('/app/administrativo/cohortes/demo-temporal-1').at(-1);
+
+    expect(detail.route.element.type).toBe(CohortDetailPage);
+    expect(detail.params).toEqual({ idCohorte: 'demo-temporal-1' });
+    expect(match('/app/administrativo/cohortes/nueva').at(-1).route.element.type).toBe(CohortFormPage);
+    expect(
+      match('/app/administrativo/cohortes/demo-temporal-1/editar').at(-1).route.element.type,
+    ).toBe(CohortFormPage);
   });
 
   it('ninguna ruta se declara dos veces', () => {
@@ -306,7 +318,7 @@ describe('Rutas sin cambios', () => {
         '/app/estudiante/cronograma/contenido-vigente',
         ...ADMIN_PATHS.map((path) =>
           path
-            .replace('/cohortes/co-1/', '/cohortes/:idCohorte/')
+            .replace(/\/cohortes\/co-1(?=\/|$)/, '/cohortes/:idCohorte')
             .replace('/u-1/informacion', '/:participantId/informacion')
             .replace('/c-1/', '/:contentId/')
             .replace('/s-1/unidades/u-1', '/:scheduleId/unidades/:unitId')

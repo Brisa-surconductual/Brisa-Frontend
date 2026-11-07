@@ -11,12 +11,15 @@
  *   VITE_M08_DEMO=true
  *   VITE_M08_DEMO_SCENARIO=lista | vacio | carga | error
  *                          | sin-cronogramas | error-guardado
- *                          | activacion-bloqueada   (opcional)
+ *                          | activacion-bloqueada | carga-participantes
+ *                          | error-participantes    (opcional)
  *
  * - vacio: no hay cohortes; carga: las consultas no terminan;
  * - error: las consultas fallan; error-guardado: guardar falla;
  * - sin-cronogramas: ningún cronograma está activo;
- * - activacion-bloqueada: activar una cohorte inicial se rechaza.
+ * - activacion-bloqueada: activar una cohorte inicial se rechaza;
+ * - carga-participantes / error-participantes: solo la consulta de
+ *   participantes no termina o falla.
  */
 export function isCohortDemoEnabled(env = import.meta.env) {
   return Boolean(env.DEV) && env.VITE_M08_DEMO === 'true';

@@ -156,3 +156,27 @@ describe('Botón de estado en la tarjeta', () => {
     expect(html).toContain('min-h-[44px]');
   });
 });
+
+describe('Acceso a los participantes desde el listado (RF-125)', () => {
+  it('cada tarjeta enlaza a su detalle sin quitar Editar ni la acción de estado', () => {
+    const html = render();
+
+    for (const { id, name } of DEMO_COHORTS) {
+      const card = cardOf(html, name);
+
+      expect(card).toContain(`href="/app/administrativo/cohortes/${id}"`);
+      expect(card).toContain(`Ver participantes<span class="sr-only"> de ${name}</span>`);
+      expect(card).toContain(`href="/app/administrativo/cohortes/${id}/editar"`);
+    }
+    expect(cardOf(html, 'Cohorte Piloto A')).toContain('Activar<span class="sr-only">');
+    expect(cardOf(html, 'Cohorte Piloto B')).toContain('Inactivar<span class="sr-only">');
+    expect(textOf(html)).toContain('3 cohortes · 1 activa · 1 en borrador · 1 inactiva');
+  });
+
+  it('el enlace codifica el identificador de una cohorte temporal', () => {
+    const temporary = { ...DEMO_COHORTS[0], id: 'demo-temporal-1', name: 'Cohorte temporal' };
+    const html = render({ listChanges: { cohorts: [temporary], statusCounts: countCohortsByStatus([temporary]) } });
+
+    expect(cardOf(html, 'Cohorte temporal')).toContain('href="/app/administrativo/cohortes/demo-temporal-1"');
+  });
+});

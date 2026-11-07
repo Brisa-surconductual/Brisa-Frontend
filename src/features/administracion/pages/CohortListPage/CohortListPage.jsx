@@ -25,8 +25,12 @@ import { useCohortStatusActions } from './hooks/useCohortStatusActions.js';
 
 const COHORT_LIST_PATH = '/app/administrativo/cohortes';
 
+function getDetailPath(cohort) {
+  return `${COHORT_LIST_PATH}/${encodeURIComponent(cohort.id)}`;
+}
+
 function getEditPath(cohort) {
-  return `${COHORT_LIST_PATH}/${encodeURIComponent(cohort.id)}/editar`;
+  return `${getDetailPath(cohort)}/editar`;
 }
 
 // Sin la palabra «guardada»: en la demostración nada llega al servidor.
@@ -256,6 +260,7 @@ export function CohortListPage() {
                 <li key={cohort.id ?? index}>
                   <CohortCard
                     cohort={cohort}
+                    detailPath={cohort.id ? getDetailPath(cohort) : null}
                     editPath={canManage && cohort.id ? getEditPath(cohort) : null}
                     statusAction={getStatusAction(cohort)}
                   />

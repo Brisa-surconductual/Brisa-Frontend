@@ -8,7 +8,9 @@
  * - error-guardado: guardar o cambiar de estado falla;
  * - sin-cronogramas: ninguno activo;
  * - activacion-bloqueada: los cronogramas de las cohortes iniciales
- *   ya no están activos, y activarlas se rechaza.
+ *   ya no están activos, y activarlas se rechaza;
+ * - carga-participantes / error-participantes: solo la consulta de
+ *   participantes de una cohorte no termina o falla.
  */
 export const DEMO_SCENARIO = Object.freeze({
   LIST: 'lista',
@@ -18,6 +20,8 @@ export const DEMO_SCENARIO = Object.freeze({
   NO_ACTIVE_SCHEDULES: 'sin-cronogramas',
   SAVE_ERROR: 'error-guardado',
   ACTIVATION_BLOCKED: 'activacion-bloqueada',
+  PARTICIPANTS_LOADING: 'carga-participantes',
+  PARTICIPANTS_ERROR: 'error-participantes',
 });
 
 // Escenario de la demostración; un valor desconocido muestra la lista.

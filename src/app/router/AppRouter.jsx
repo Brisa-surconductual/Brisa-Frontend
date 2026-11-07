@@ -41,6 +41,7 @@ import {
   AssignSchedulePage,
 } from '@/features/cronograma/index.js';
 import {
+  CohortDetailPage,
   CohortFormPage,
   CohortListPage,
 } from '@/features/administracion/index.js';
@@ -257,6 +258,11 @@ export function AppRouter() {
               <Route
                 path="administrativo/cohortes/nueva"
                 element={<CohortFormPage />}
+              />
+
+              <Route
+                path="administrativo/cohortes/:idCohorte"
+                element={<CohortDetailPage />}
               />
 
               <Route

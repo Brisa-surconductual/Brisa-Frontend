@@ -2,6 +2,8 @@ import { SCHEDULE_STATUS } from '../types/scheduleStatus.js';
 import { DEMO_SCENARIO, getDemoScenario } from '../utils/cohortDemoScenario.js';
 import { DEMO_COHORTS } from './cohortDemoData.js';
 import { createCohortStore } from './cohortDemoStore.js';
+import { DEMO_PARTICIPANTS } from './participantDemoData.js';
+import { createParticipantStore } from './participantDemoStore.js';
 import { DEMO_SCHEDULES } from './scheduleDemoData.js';
 
 /*
@@ -15,6 +17,7 @@ import { DEMO_SCHEDULES } from './scheduleDemoData.js';
 export const DEMO_DELAY_MS = 400;
 
 let store = null;
+let participantStore = null;
 
 function getStore() {
   if (!store) {
@@ -27,6 +30,14 @@ function getStore() {
   }
 
   return store;
+}
+
+function getParticipantStore() {
+  if (!participantStore) {
+    participantStore = createParticipantStore({ participants: DEMO_PARTICIPANTS });
+  }
+
+  return participantStore;
 }
 
 /*
@@ -84,7 +95,28 @@ export const updateCohort = (id, values) => write((demo) => demo.updateCohort(id
 export const changeCohortStatus = (id, transition) =>
   write((demo) => demo.changeCohortStatus(id, transition));
 
+/*
+ * Participantes de una cohorte (RF-125), o null si la cohorte no existe
+ * en el almacén de cohortes (el mismo del listado, así una cohorte
+ * creada o cambiada temporalmente se reconoce). Sus escenarios propios
+ * permiten ver la carga y el error solo en esta consulta.
+ */
+export async function listCohortParticipants(cohortId) {
+  const scenario = getDemoScenario();
+
+  if (scenario === DEMO_SCENARIO.PARTICIPANTS_LOADING) return new Promise(() => {});
+
+  return read((demo) => {
+    if (scenario === DEMO_SCENARIO.PARTICIPANTS_ERROR) {
+      throw new Error('Error simulado al consultar participantes en el modo de demostración.');
+    }
+
+    return demo.findCohort(cohortId) ? getParticipantStore().listByCohort(cohortId) : null;
+  });
+}
+
 // Solo para pruebas automatizadas: simula una recarga de la aplicación.
 export function resetDemoSource() {
   store = null;
+  participantStore = null;
 }

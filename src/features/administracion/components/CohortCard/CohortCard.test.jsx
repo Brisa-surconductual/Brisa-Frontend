@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { MemoryRouter } from 'react-router-dom';
 
 import { CohortStatusBadge } from '../CohortStatusBadge/index.js';
 import { CohortCard } from './CohortCard.jsx';
@@ -62,5 +63,20 @@ describe('Tarjeta de cohorte', () => {
 
   it('es de solo lectura: sin botones, enlaces ni formularios', () => {
     expect(card(COHORT)).not.toMatch(/<button|<a |<form|<input/);
+  });
+
+  it('con detailPath ofrece «Ver participantes» hacia el detalle, identificando la cohorte', () => {
+    const html = clean(
+      renderToStaticMarkup(
+        <MemoryRouter>
+          <CohortCard cohort={COHORT} detailPath="/app/administrativo/cohortes/c-1" />
+        </MemoryRouter>,
+      ),
+    );
+
+    expect(html).toMatch(
+      /<a [^>]*href="\/app\/administrativo\/cohortes\/c-1"[^>]*>.*Ver participantes<span class="sr-only"> de Cohorte de prueba<\/span><\/a>/,
+    );
+    expect(html).not.toContain('<button');
   });
 });

@@ -9,3 +9,5 @@ export { validateCohortForm } from './services/cohortValidation.js';
 export { CohortListPage } from './pages/CohortListPage/index.js';
 
 export { CohortFormPage } from './pages/CohortFormPage/index.js';
+
+export { CohortDetailPage } from './pages/CohortDetailPage/index.js';
