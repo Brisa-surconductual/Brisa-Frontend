@@ -68,6 +68,20 @@ export const CHAT_ERROR_CODE = Object.freeze({
   INTERACCION_NO_ALMACENADA: error(500, FLUJO),
   PERFIL_CLINICO_NO_ALMACENADO: error(500, FLUJO),
 
+  // Etapa 2 (Taiga #250): POST /chat/sesiones/:id/respuestas (RF-27 a
+  // RF-29). Los de la Etapa 1 se conservan (D14): el catálogo se consulta
+  // por clave y un grep de imports no detecta esos usos.
+  FORMATO_INCORRECTO: error(400, VALIDACION),
+  VALOR_NO_PERMITIDO: error(400, VALIDACION),
+  TIPO_ENTRADA_NO_PERMITIDO: error(400, FLUJO),
+  NODO_TERMINAL: error(409, FLUJO),
+  NODO_DESACTUALIZADO: error(409, FLUJO),
+  SESION_NO_ACTIVA: error(409, FLUJO),
+  CAPTURA_FUERA_DE_GRUPAL: error(409, FLUJO),
+  SIN_TRANSICION: error(500, FLUJO),
+  DESTINO_INVALIDO: error(500, FLUJO),
+  ERROR_PERFIL: error(500, FLUJO),
+
   // Contrato 6.1: precarga
   SESION_NO_INICIALIZADA: error(422, PRECARGA),
   UNIDAD_TEMPORAL_NO_DETERMINADA: error(422, PRECARGA),

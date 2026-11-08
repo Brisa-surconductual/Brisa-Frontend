@@ -26,8 +26,6 @@ const CATALOGOS = [
   'RESULTADO_SINCRONIZACION_EXITOSO',
   'ESTADO_PRECARGA',
   'ESTADO_CONECTIVIDAD',
-  'EMISOR',
-  'TIPO_RECURSO',
   'CATEGORIA_ERROR_CHAT',
   'CHAT_ERROR_CODE',
 ];
@@ -59,8 +57,8 @@ describe('fidelidad al contrato', () => {
     );
   });
 
-  it('TIPO_NODO tiene exactamente 3 valores', () => {
-    expect(Object.values(TIPO_NODO)).toHaveLength(3);
+  it('TIPO_NODO tiene exactamente 2 valores', () => {
+    expect(Object.values(TIPO_NODO)).toHaveLength(2);
   });
 
   it('DUPLICADO cuenta como sincronización exitosa', () => {
