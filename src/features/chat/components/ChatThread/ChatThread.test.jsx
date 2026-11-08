@@ -25,6 +25,20 @@ it('pinta los items en el orden recibido', () => {
   expect(html).toContain('Tú: </span>Mi respuesta');
 });
 
+it('conserva role="log" y solo el último item es enfocable', () => {
+  const html = render([
+    nodo('n1', [texto('Primero')]),
+    { tipo: 'respuesta', id: 'r1', texto: 'Mi respuesta' },
+    { ...nodo('n2', [texto('Tercero')]), actual: true },
+  ]);
+
+  expect(html).toContain('role="log"');
+  expect(html.match(/tabindex="-1"/g)).toHaveLength(1);
+  expect(html.indexOf('tabindex="-1"')).toBeGreaterThan(
+    html.indexOf('Mi respuesta'),
+  );
+});
+
 it('no genera emojis', () => {
   const html = render([
     nodo('n1', [
