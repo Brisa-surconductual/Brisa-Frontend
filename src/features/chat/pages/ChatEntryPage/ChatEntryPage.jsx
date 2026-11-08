@@ -1,4 +1,10 @@
-import { AlertTriangle, ArrowLeft, LogIn, RefreshCw } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowLeft,
+  ArrowRight,
+  LogIn,
+  RefreshCw,
+} from 'lucide-react';
 
 import { Button } from '@/shared/components/ui/Button/index.js';
 
@@ -41,7 +47,8 @@ function SessionDetails({ sesion }) {
 }
 
 export function ChatEntryPage() {
-  const { estado, sesion, error, retry, goHome, goLogin } = useChatEntryPage();
+  const { estado, sesion, error, retry, goHome, goLogin, goConversation } =
+    useChatEntryPage();
 
   return (
     <div className="mx-auto flex min-h-[60vh] w-full max-w-[480px] flex-col justify-center py-[var(--space-6)]">
@@ -63,6 +70,12 @@ export function ChatEntryPage() {
           titleId={TITLE_ID}
           title="Retomamos donde quedaste"
           visual={<BrisaMark />}
+          actions={
+            <Button onClick={goConversation} size="large">
+              Continuar
+              <ArrowRight size={20} strokeWidth={1.8} aria-hidden="true" />
+            </Button>
+          }
         >
           <p className="m-0">
             Tu conversación sigue en el punto donde la dejaste.
@@ -76,6 +89,12 @@ export function ChatEntryPage() {
           titleId={TITLE_ID}
           title="Tu sesión está lista"
           visual={<BrisaMark />}
+          actions={
+            <Button onClick={goConversation} size="large">
+              Comenzar
+              <ArrowRight size={20} strokeWidth={1.8} aria-hidden="true" />
+            </Button>
+          }
         >
           <p className="m-0">
             Empezamos desde el principio de tu intervención.
