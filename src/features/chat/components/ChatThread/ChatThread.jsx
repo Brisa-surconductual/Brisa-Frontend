@@ -3,7 +3,7 @@ import { UserAnswerBubble } from '../UserAnswerBubble/index.js';
 
 // Pinta los items en el orden recibido: no ordena, no filtra, no deduplica.
 // Item: { tipo: 'nodo', id, nodo } o { tipo: 'respuesta', id, texto }.
-export function ChatThread({ items }) {
+export function ChatThread({ items, onRecursoError }) {
   return (
     <div
       role="log"
@@ -15,7 +15,11 @@ export function ChatThread({ items }) {
         item.tipo === 'respuesta' ? (
           <UserAnswerBubble key={item.id} texto={item.texto} />
         ) : (
-          <ChatNodeMessage key={item.id} nodo={item.nodo} />
+          <ChatNodeMessage
+            key={item.id}
+            nodo={item.nodo}
+            onRecursoError={onRecursoError}
+          />
         ),
       )}
     </div>
