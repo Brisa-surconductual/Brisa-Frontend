@@ -42,7 +42,7 @@ describe('NodeInputForm (D9)', () => {
     expect(render({ nodo: nodo(null, { esTerminal: true }) })).toBe('');
   });
 
-  it.each([TIPO_ENTRADA.FECHA_HORA, TIPO_ENTRADA.TEXTO_LIBRE, 'constructor'])(
+  it.each(['DESCONOCIDO', TIPO_ENTRADA.TEXTO_LIBRE, 'constructor'])(
     '%s no registrado muestra el aviso y no ofrece enviar',
     (tipo) => {
       const html = render({ nodo: nodo({ tipo }) });

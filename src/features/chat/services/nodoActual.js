@@ -1,4 +1,4 @@
-import { ALIAS_TIPO_ENTRADA } from '../types/tipoEntrada.js';
+import { ALIAS_TIPO_ENTRADA, TIPO_ENTRADA } from '../types/tipoEntrada.js';
 
 // D14: los bloques sin `orden` van al final; `sort` es estable, así que
 // conservan el orden de llegada.
@@ -30,6 +30,10 @@ function aNumero(valor) {
   return Number.isFinite(numero) ? numero : null;
 }
 
+// D5 (FE-M03-04b): en FECHA_HORA los límites son texto con el formato
+// de la fecha; convertirlos a número los perdería.
+const aTexto = (valor) => (typeof valor === 'string' ? valor : null);
+
 const esObjeto = (valor) => valor !== null && typeof valor === 'object';
 
 // D4: solo las claves de la Etapa 2; los campos del contrato viejo no
@@ -37,11 +41,14 @@ const esObjeto = (valor) => valor !== null && typeof valor === 'object';
 function mapEntrada(entrada) {
   if (!esObjeto(entrada)) return null;
 
+  const tipo = tipoCanonico(entrada.tipo);
+  const limite = tipo === TIPO_ENTRADA.FECHA_HORA ? aTexto : aNumero;
+
   return Object.freeze({
-    tipo: tipoCanonico(entrada.tipo),
+    tipo,
     obligatorio: entrada.obligatorio === true,
-    min: aNumero(entrada.min),
-    max: aNumero(entrada.max),
+    min: limite(entrada.min),
+    max: limite(entrada.max),
     paso: aNumero(entrada.paso),
     opciones: Array.isArray(entrada.opciones)
       ? Object.freeze(entrada.opciones.filter(esObjeto))
