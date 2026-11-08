@@ -121,6 +121,7 @@ export function useChatConversationPage() {
     if (hayHistorial) ultimoRef.current?.focus();
   }, [idUltimo, hayHistorial, state.paso]);
 
+  // `enviar` atrapa sus propios errores: quien la llama no espera nada.
   async function enviar(envio, accion) {
     if (enVueloRef.current) return;
 
@@ -147,14 +148,14 @@ export function useChatConversationPage() {
       cuerpo: crearCuerpo(state.conversacion.nodo, valor),
       textoRespuesta,
     };
-    enviar(envio, { type: 'ENVIAR', envio });
+    void enviar(envio, { type: 'ENVIAR', envio });
   }
 
   // D7: el reintento reenvía el mismo cuerpo, con el mismo idRespuesta.
   function reintentarEnvio() {
     if (state.estado !== ERROR_ENVIO || !state.envio) return;
 
-    enviar(state.envio, { type: 'REINTENTAR_ENVIO' });
+    void enviar(state.envio, { type: 'REINTENTAR_ENVIO' });
   }
 
   const accionErrorEnvio = state.errorEnvio
