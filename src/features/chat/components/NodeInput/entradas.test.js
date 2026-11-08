@@ -8,9 +8,17 @@ import { ayudaFechaHora, fechaHora } from './fechaHora.js';
 import { alternarSeleccion, textoAyuda } from './multiseleccion.js';
 import { ayudaNumerico, modoTeclado, numerico } from './numerico.js';
 import { REGISTRO_ENTRADAS } from './registroEntradas.js';
+import { contador } from './textoLibre.js';
 
-const { OPCION_UNICA, MULTISELECCION, BOOLEANO, ESCALA, NUMERICO, FECHA_HORA } =
-  TIPO_ENTRADA;
+const {
+  OPCION_UNICA,
+  MULTISELECCION,
+  BOOLEANO,
+  ESCALA,
+  NUMERICO,
+  TEXTO_LIBRE,
+  CONTINUAR,
+} = TIPO_ENTRADA;
 
 // D15: los casos de fecha suponen Bogotá (UTC−5, sin horario de verano);
 // se restaura la zona original para no afectar otras pruebas.
@@ -32,16 +40,11 @@ const opciones = [
 ];
 
 describe('registro', () => {
-  it('tiene los tipos de esta parte, con claves de TIPO_ENTRADA', () => {
+  it('tiene una entrada por cada tipo de RF-27 (CONTINUAR va aparte)', () => {
     expect(Object.keys(REGISTRO_ENTRADAS).sort()).toEqual(
-      [
-        BOOLEANO,
-        ESCALA,
-        NUMERICO,
-        MULTISELECCION,
-        OPCION_UNICA,
-        FECHA_HORA,
-      ].sort(),
+      Object.values(TIPO_ENTRADA)
+        .filter((tipo) => tipo !== CONTINUAR)
+        .sort(),
     );
   });
 
@@ -176,6 +179,42 @@ describe('fechaHora (D3 a D6)', () => {
       }),
     ).toBe('Entre el 1 de octubre de 2026 y el 31 de octubre de 2026');
     expect(ayudaFechaHora({ formato: 'FECHA', min: null })).toBeNull();
+  });
+});
+
+describe('textoLibre (D7, D8, D14)', () => {
+  const tipo = () => REGISTRO_ENTRADAS[TEXTO_LIBRE];
+
+  it('envía y muestra el texto idéntico, con saltos de línea', () => {
+    const texto = '  Hola,\nayer fue difícil.\n\n';
+    expect(resolverRespuesta({}, tipo(), texto)).toEqual({
+      valor: texto,
+      textoRespuesta: texto,
+    });
+  });
+
+  it('solo espacios viaja como null', () => {
+    expect(resolverRespuesta({}, tipo(), ' \n\t ')).toEqual({
+      valor: null,
+      textoRespuesta: null,
+    });
+  });
+
+  it('520 caracteres con máximo 500 se envían completos', () => {
+    const texto = 'a'.repeat(520);
+    expect(resolverRespuesta({ maxCaracteres: 500 }, tipo(), texto).valor).toBe(
+      texto,
+    );
+  });
+
+  it.each([
+    [{ maxCaracteres: 500 }, 'x'.repeat(12), '12 de 500 caracteres'],
+    [{ maxCaracteres: 500 }, 'x', '1 de 500 caracteres'],
+    [{ maxCaracteres: null }, 'x'.repeat(12), '12 caracteres'],
+    [{ maxCaracteres: null }, 'x', '1 carácter'],
+    [{ maxCaracteres: null }, null, '0 caracteres'],
+  ])('contador con %j y %j → %s', (entrada, valor, texto) => {
+    expect(contador(entrada, valor)).toBe(texto);
   });
 });
 

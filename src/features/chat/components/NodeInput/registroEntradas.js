@@ -9,6 +9,8 @@ import { NumericoInput } from './NumericoInput.jsx';
 import { numerico } from './numerico.js';
 import { MultiseleccionInput } from './MultiseleccionInput.jsx';
 import { multiseleccion } from './multiseleccion.js';
+import { TextoLibreInput } from './TextoLibreInput.jsx';
+import { textoLibre } from './textoLibre.js';
 import { OpcionUnicaInput } from './OpcionUnicaInput.jsx';
 import { opcionUnica } from './opcionUnica.js';
 
@@ -44,5 +46,9 @@ export const REGISTRO_ENTRADAS = Object.freeze({
   [TIPO_ENTRADA.FECHA_HORA]: Object.freeze({
     Componente: FechaHoraInput,
     ...fechaHora,
+  }),
+  [TIPO_ENTRADA.TEXTO_LIBRE]: Object.freeze({
+    Componente: TextoLibreInput,
+    ...textoLibre,
   }),
 });
