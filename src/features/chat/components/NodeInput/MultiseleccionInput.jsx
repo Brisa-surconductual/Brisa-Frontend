@@ -14,9 +14,7 @@ export function MultiseleccionInput({
 }) {
   const idAyuda = useId();
   const seleccion = valor ?? [];
-  const { max_selecciones: max } = entrada;
-  const lleno = seleccion.length >= (max ?? Infinity);
-  const ayuda = textoAyuda(entrada.min_selecciones, max);
+  const ayuda = textoAyuda(entrada.min, entrada.max);
 
   return (
     <div
@@ -25,6 +23,7 @@ export function MultiseleccionInput({
       aria-describedby={
         [ayuda && idAyuda, idDescripcion].filter(Boolean).join(' ') || undefined
       }
+      aria-invalid={idDescripcion ? true : undefined}
       className="flex flex-col gap-[var(--space-2)]"
     >
       {ayuda && (
@@ -36,7 +35,7 @@ export function MultiseleccionInput({
         </p>
       )}
 
-      {entrada.opciones.map((opcion) => {
+      {(entrada.opciones ?? []).map((opcion) => {
         const elegida = seleccion.includes(opcion.valor);
         const Casilla = elegida ? SquareCheck : Square;
         return (
@@ -45,9 +44,9 @@ export function MultiseleccionInput({
             role="checkbox"
             aria-checked={elegida}
             elegida={elegida}
-            disabled={deshabilitado || (lleno && !elegida)}
+            disabled={deshabilitado}
             onClick={() =>
-              onCambiar(alternarSeleccion(seleccion, opcion.valor, max))
+              onCambiar(alternarSeleccion(seleccion, opcion.valor))
             }
           >
             <Casilla

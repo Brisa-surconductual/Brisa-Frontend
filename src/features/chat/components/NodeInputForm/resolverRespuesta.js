@@ -1,17 +1,18 @@
-import { validarRespuesta } from '../../services/validacionRespuesta.js';
+const esVacia = (valor) =>
+  valor == null ||
+  (typeof valor === 'string' && valor.trim() === '') ||
+  (Array.isArray(valor) && valor.length === 0);
 
-// Lo que hace el formulario al confirmar: normaliza (si el tipo lo pide),
-// valida y arma el texto para la burbuja del estudiante.
-export function resolverRespuesta(entrada, tipo, valor) {
-  const candidata = tipo.normalizar ? tipo.normalizar(entrada, valor) : valor;
-  const resultado = validarRespuesta(entrada, candidata, tipo.validar);
-  if (!resultado.valido) return resultado;
+// Lo que hace el formulario al confirmar: convierte (si el tipo lo pide) y
+// arma el texto de la burbuja. No valida (D2): una respuesta vacía viaja
+// como null y, si era obligatoria, el backend responde
+// RESPUESTA_OBLIGATORIA.
+export function resolverRespuesta(entrada, tipo, crudo) {
+  const convertido = tipo.normalizar ? tipo.normalizar(entrada, crudo) : crudo;
+  const valor = esVacia(convertido) ? null : convertido;
 
-  const { respuesta } = resultado;
   return {
-    valido: true,
-    respuesta,
-    textoRespuesta:
-      respuesta === null ? null : tipo.textoRespuesta(entrada, respuesta),
+    valor,
+    textoRespuesta: valor === null ? null : tipo.textoRespuesta(entrada, valor),
   };
 }

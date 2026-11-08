@@ -20,10 +20,36 @@ function tipoCanonico(tipo) {
     : tipo;
 }
 
-function mapEntrada(entrada) {
-  if (entrada === null || typeof entrada !== 'object') return null;
+// D4: `min`, `max` y `paso` pueden llegar como texto (A-041). Un texto
+// numérico pasa a número; lo demás queda en null. Ojo: Number('') es 0.
+function aNumero(valor) {
+  if (typeof valor === 'number') return Number.isFinite(valor) ? valor : null;
+  if (typeof valor !== 'string' || valor.trim() === '') return null;
 
-  return Object.freeze({ ...entrada, tipo: tipoCanonico(entrada.tipo) });
+  const numero = Number(valor);
+  return Number.isFinite(numero) ? numero : null;
+}
+
+const esObjeto = (valor) => valor !== null && typeof valor === 'object';
+
+// D4: solo las claves de la Etapa 2; los campos del contrato viejo no
+// pasan.
+function mapEntrada(entrada) {
+  if (!esObjeto(entrada)) return null;
+
+  return Object.freeze({
+    tipo: tipoCanonico(entrada.tipo),
+    obligatorio: entrada.obligatorio === true,
+    min: aNumero(entrada.min),
+    max: aNumero(entrada.max),
+    paso: aNumero(entrada.paso),
+    opciones: Array.isArray(entrada.opciones)
+      ? Object.freeze(entrada.opciones.filter(esObjeto))
+      : null,
+    etiquetas: esObjeto(entrada.etiquetas) ? entrada.etiquetas : null,
+    maxCaracteres: aNumero(entrada.maxCaracteres),
+    formato: entrada.formato ?? null,
+  });
 }
 
 // RF-26: respuesta del backend → modelo de la interfaz. Solo las claves
