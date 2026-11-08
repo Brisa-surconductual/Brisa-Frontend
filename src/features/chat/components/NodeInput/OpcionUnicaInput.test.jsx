@@ -1,11 +1,11 @@
 import { expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 
-import { SeleccionUnicaInput } from './SeleccionUnicaInput.jsx';
+import { OpcionUnicaInput } from './OpcionUnicaInput.jsx';
 
 it('la opción elegida lleva un ícono, no solo color', () => {
   const html = renderToStaticMarkup(
-    <SeleccionUnicaInput
+    <OpcionUnicaInput
       entrada={{
         opciones: [
           { valor: 'a', etiqueta: 'Uno' },

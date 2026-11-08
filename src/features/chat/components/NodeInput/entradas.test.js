@@ -4,9 +4,9 @@ import { TIPO_ENTRADA } from '../../types/index.js';
 import { resolverRespuesta } from '../NodeInputForm/resolverRespuesta.js';
 import { ayudaNumerico, numerico } from './numerico.js';
 import { REGISTRO_ENTRADAS } from './registroEntradas.js';
-import { alternarSeleccion, textoAyuda } from './seleccionMultiple.js';
+import { alternarSeleccion, textoAyuda } from './multiseleccion.js';
 
-const { SELECCION_UNICA, SELECCION_MULTIPLE, BOOLEANO, ESCALA, NUMERICO } =
+const { OPCION_UNICA, MULTISELECCION, BOOLEANO, ESCALA, NUMERICO } =
   TIPO_ENTRADA;
 
 const opciones = [
@@ -30,18 +30,18 @@ describe('registro', () => {
 
 describe('validar', () => {
   it.each([
-    [SELECCION_UNICA, { opciones }, 'si', null],
-    [SELECCION_UNICA, { opciones }, 'tal vez', 'OPCION_NO_VALIDA'],
-    [SELECCION_MULTIPLE, multiple, ['no'], null],
-    [SELECCION_MULTIPLE, multiple, ['otra'], 'OPCION_NO_VALIDA'],
-    [SELECCION_MULTIPLE, { opciones }, ['si', 'si'], 'OPCION_NO_VALIDA'],
+    [OPCION_UNICA, { opciones }, 'si', null],
+    [OPCION_UNICA, { opciones }, 'tal vez', 'OPCION_NO_VALIDA'],
+    [MULTISELECCION, multiple, ['no'], null],
+    [MULTISELECCION, multiple, ['otra'], 'OPCION_NO_VALIDA'],
+    [MULTISELECCION, { opciones }, ['si', 'si'], 'OPCION_NO_VALIDA'],
     [
-      SELECCION_MULTIPLE,
+      MULTISELECCION,
       { ...multiple, min_selecciones: 2 },
       ['si'],
       'FUERA_DE_RANGO',
     ],
-    [SELECCION_MULTIPLE, multiple, ['si', 'no'], 'FUERA_DE_RANGO'],
+    [MULTISELECCION, multiple, ['si', 'no'], 'FUERA_DE_RANGO'],
     [ESCALA, escala, 7, null],
     [ESCALA, escala, 11, 'FUERA_DE_RANGO'],
     [ESCALA, escala, -1, 'FUERA_DE_RANGO'],
@@ -66,8 +66,8 @@ describe('validar', () => {
 
 describe('textoRespuesta usa la etiqueta, no el valor', () => {
   it.each([
-    [SELECCION_UNICA, { opciones }, 'si', 'Sí, claro'],
-    [SELECCION_MULTIPLE, { opciones }, ['no', 'si'], 'Sí, claro, No'],
+    [OPCION_UNICA, { opciones }, 'si', 'Sí, claro'],
+    [MULTISELECCION, { opciones }, ['no', 'si'], 'Sí, claro, No'],
     [BOOLEANO, booleano, false, 'Todavía no'],
   ])('%s', (tipo, entrada, respuesta, texto) => {
     expect(REGISTRO_ENTRADAS[tipo].textoRespuesta(entrada, respuesta)).toBe(
@@ -156,6 +156,6 @@ it('ayudaNumerico combina rango y separador decimal', () => {
 
 it('el registro tiene los 5 tipos de esta parte', () => {
   expect(Object.keys(REGISTRO_ENTRADAS).sort()).toEqual(
-    [BOOLEANO, ESCALA, NUMERICO, SELECCION_MULTIPLE, SELECCION_UNICA].sort(),
+    [BOOLEANO, ESCALA, NUMERICO, MULTISELECCION, OPCION_UNICA].sort(),
   );
 });

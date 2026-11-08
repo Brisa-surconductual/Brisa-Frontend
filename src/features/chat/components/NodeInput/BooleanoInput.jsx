@@ -1,4 +1,4 @@
-import { SeleccionUnicaInput } from './SeleccionUnicaInput.jsx';
+import { OpcionUnicaInput } from './OpcionUnicaInput.jsx';
 
 export function BooleanoInput({ entrada, ...props }) {
   const opciones = [
@@ -6,5 +6,5 @@ export function BooleanoInput({ entrada, ...props }) {
     { valor: false, etiqueta: entrada.etiqueta_falso },
   ];
 
-  return <SeleccionUnicaInput entrada={{ ...entrada, opciones }} {...props} />;
+  return <OpcionUnicaInput entrada={{ ...entrada, opciones }} {...props} />;
 }

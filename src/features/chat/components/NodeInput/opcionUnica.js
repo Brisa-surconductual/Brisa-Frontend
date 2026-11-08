@@ -1,7 +1,7 @@
 const opcionDe = (entrada, valor) =>
   entrada.opciones.find((opcion) => opcion.valor === valor);
 
-export const seleccionUnica = Object.freeze({
+export const opcionUnica = Object.freeze({
   validar: (entrada, respuesta) =>
     typeof respuesta === 'string' && opcionDe(entrada, respuesta)
       ? null

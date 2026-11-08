@@ -74,6 +74,30 @@ describe('mapNodoActual (RF-26)', () => {
   });
 });
 
+describe('mapNodoActual: entrada (A-014)', () => {
+  const conEntrada = (entrada) => ({
+    ...respuesta([]),
+    nodo: { ...respuesta([]).nodo, entrada },
+  });
+
+  it.each([
+    ['SELECCION_UNICA', 'OPCION_UNICA'],
+    ['SELECCION_MULTIPLE', 'MULTISELECCION'],
+    ['ESCALA', 'ESCALA'],
+    ['FECHA_HORA', 'FECHA_HORA'],
+    ['DESCONOCIDO', 'DESCONOCIDO'],
+    ['constructor', 'constructor'],
+  ])('%s queda como %s (CA-27-11)', (recibido, esperado) => {
+    const { nodo } = mapNodoActual(conEntrada({ tipo: recibido }));
+
+    expect(nodo.entrada.tipo).toBe(esperado);
+  });
+
+  it('entrada null sigue null', () => {
+    expect(mapNodoActual(conEntrada(null)).nodo.entrada).toBeNull();
+  });
+});
+
 describe('esIdSesionValido (D13)', () => {
   it('acepta un UUID y rechaza lo demás', () => {
     expect(esIdSesionValido('26000000-0000-4000-8000-000000000001')).toBe(true);

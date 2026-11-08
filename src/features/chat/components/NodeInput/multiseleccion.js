@@ -3,7 +3,7 @@ const limites = ({ min_selecciones, max_selecciones }) => ({
   max: max_selecciones ?? Infinity,
 });
 
-export const seleccionMultiple = Object.freeze({
+export const multiseleccion = Object.freeze({
   validar: (entrada, respuesta) => {
     const valida =
       Array.isArray(respuesta) &&

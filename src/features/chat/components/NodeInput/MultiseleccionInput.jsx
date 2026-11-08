@@ -2,9 +2,9 @@ import { useId } from 'react';
 import { Square, SquareCheck } from 'lucide-react';
 
 import { BotonOpcion } from './BotonOpcion.jsx';
-import { alternarSeleccion, textoAyuda } from './seleccionMultiple.js';
+import { alternarSeleccion, textoAyuda } from './multiseleccion.js';
 
-export function SeleccionMultipleInput({
+export function MultiseleccionInput({
   entrada,
   valor,
   onCambiar,

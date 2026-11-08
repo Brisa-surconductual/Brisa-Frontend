@@ -5,7 +5,7 @@ import { BotonOpcion } from './BotonOpcion.jsx';
 // Botones normales: tocar una opción la elige y el formulario la envía.
 // La elegida lleva un ícono además del color (el color nunca es la única
 // señal de estado).
-export function SeleccionUnicaInput({
+export function OpcionUnicaInput({
   entrada,
   valor,
   onCambiar,

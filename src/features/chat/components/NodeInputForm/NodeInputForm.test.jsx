@@ -13,7 +13,7 @@ const pregunta = (entrada) => ({
 });
 
 const unica = pregunta({
-  tipo_entrada: TIPO_ENTRADA.SELECCION_UNICA,
+  tipo_entrada: TIPO_ENTRADA.OPCION_UNICA,
   opciones: [{ valor: 'bien', etiqueta: 'Bien' }],
 });
 
@@ -44,7 +44,7 @@ describe('NodeInputForm', () => {
   });
 
   it.each([
-    ['SELECCION_UNICA', unica, 'Bien'],
+    ['OPCION_UNICA', unica, 'Bien'],
     [
       'BOOLEANO',
       pregunta({
@@ -61,10 +61,10 @@ describe('NodeInputForm', () => {
     expect(html).not.toContain('Continuar');
   });
 
-  it('SELECCION_MULTIPLE pinta casillas, ayuda y "Continuar"', () => {
+  it('MULTISELECCION pinta casillas, ayuda y "Continuar"', () => {
     const html = render({
       nodo: pregunta({
-        tipo_entrada: TIPO_ENTRADA.SELECCION_MULTIPLE,
+        tipo_entrada: TIPO_ENTRADA.MULTISELECCION,
         opciones: [{ valor: 'a', etiqueta: 'Calma' }],
         min_selecciones: 1,
         max_selecciones: 2,

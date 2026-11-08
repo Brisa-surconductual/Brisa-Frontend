@@ -14,6 +14,7 @@ const {
 const CATALOGOS = [
   'TIPO_NODO',
   'TIPO_ENTRADA',
+  'ALIAS_TIPO_ENTRADA',
   'FORMATO_FECHA',
   'PRESENTACION',
   'PRESENTACION_COMPATIBLE',
@@ -43,16 +44,17 @@ describe('barril de features/chat', () => {
 });
 
 describe('fidelidad al contrato', () => {
-  it('TIPO_ENTRADA son los 7 tipos del contrato 2.3', () => {
+  it('TIPO_ENTRADA son los nombres canónicos de A-014', () => {
     expect(Object.values(TIPO_ENTRADA).sort()).toEqual(
       [
-        'SELECCION_UNICA',
-        'SELECCION_MULTIPLE',
+        'OPCION_UNICA',
+        'MULTISELECCION',
         'ESCALA',
         'NUMERICO',
         'FECHA_HORA',
         'BOOLEANO',
         'TEXTO_LIBRE',
+        'CONTINUAR',
       ].sort(),
     );
   });
@@ -69,15 +71,15 @@ describe('fidelidad al contrato', () => {
 });
 
 describe('PRESENTACION_COMPATIBLE', () => {
-  it('SILUETA solo admite SELECCION_MULTIPLE', () => {
+  it('SILUETA solo admite MULTISELECCION', () => {
     expect(PRESENTACION_COMPATIBLE[PRESENTACION.SILUETA]).toEqual([
-      TIPO_ENTRADA.SELECCION_MULTIPLE,
+      TIPO_ENTRADA.MULTISELECCION,
     ]);
   });
 
   it('TARJETAS admite selección única y múltiple', () => {
     expect([...PRESENTACION_COMPATIBLE[PRESENTACION.TARJETAS]].sort()).toEqual(
-      [TIPO_ENTRADA.SELECCION_MULTIPLE, TIPO_ENTRADA.SELECCION_UNICA].sort(),
+      [TIPO_ENTRADA.MULTISELECCION, TIPO_ENTRADA.OPCION_UNICA].sort(),
     );
   });
 
