@@ -74,6 +74,74 @@ describe('mapNodoActual (RF-26)', () => {
   });
 });
 
+describe('mapNodoActual: entrada (A-014)', () => {
+  const conEntrada = (entrada) => ({
+    ...respuesta([]),
+    nodo: { ...respuesta([]).nodo, entrada },
+  });
+
+  it.each([
+    ['SELECCION_UNICA', 'OPCION_UNICA'],
+    ['SELECCION_MULTIPLE', 'MULTISELECCION'],
+    ['ESCALA', 'ESCALA'],
+    ['FECHA_HORA', 'FECHA_HORA'],
+    ['DESCONOCIDO', 'DESCONOCIDO'],
+    ['constructor', 'constructor'],
+  ])('%s queda como %s (CA-27-11)', (recibido, esperado) => {
+    const { nodo } = mapNodoActual(conEntrada({ tipo: recibido }));
+
+    expect(nodo.entrada.tipo).toBe(esperado);
+  });
+
+  it('min y max en texto numérico pasan a número (D4, A-041)', () => {
+    const { nodo } = mapNodoActual(
+      conEntrada({ tipo: 'ESCALA', min: '0', max: '10', paso: 1 }),
+    );
+
+    expect(nodo.entrada).toMatchObject({ min: 0, max: 10, paso: 1 });
+  });
+
+  it.each(['abc', '', '  ', null, undefined, '2026-11-08'])(
+    'min %j no numérico queda en null',
+    (min) => {
+      expect(
+        mapNodoActual(conEntrada({ tipo: 'NUMERICO', min })).nodo.entrada.min,
+      ).toBeNull();
+    },
+  );
+
+  it('solo deja las claves de D4', () => {
+    const { nodo } = mapNodoActual(
+      conEntrada({
+        tipo: 'BOOLEANO',
+        obligatorio: true,
+        etiqueta_verdadero: 'Sí',
+        mensaje_error: 'x',
+        min_selecciones: 1,
+      }),
+    );
+
+    expect(Object.keys(nodo.entrada).sort()).toEqual(
+      [
+        'etiquetas',
+        'formato',
+        'max',
+        'maxCaracteres',
+        'min',
+        'obligatorio',
+        'opciones',
+        'paso',
+        'tipo',
+      ].sort(),
+    );
+    expect(nodo.entrada.opciones).toBeNull();
+  });
+
+  it('entrada null sigue null', () => {
+    expect(mapNodoActual(conEntrada(null)).nodo.entrada).toBeNull();
+  });
+});
+
 describe('esIdSesionValido (D13)', () => {
   it('acepta un UUID y rechaza lo demás', () => {
     expect(esIdSesionValido('26000000-0000-4000-8000-000000000001')).toBe(true);

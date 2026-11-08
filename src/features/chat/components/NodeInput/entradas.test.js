@@ -2,160 +2,135 @@ import { describe, expect, it } from 'vitest';
 
 import { TIPO_ENTRADA } from '../../types/index.js';
 import { resolverRespuesta } from '../NodeInputForm/resolverRespuesta.js';
-import { ayudaNumerico, numerico } from './numerico.js';
+import { opcionesBooleano } from './booleano.js';
+import { alternarSeleccion, textoAyuda } from './multiseleccion.js';
+import { ayudaNumerico, modoTeclado, numerico } from './numerico.js';
 import { REGISTRO_ENTRADAS } from './registroEntradas.js';
-import { alternarSeleccion, textoAyuda } from './seleccionMultiple.js';
 
-const { SELECCION_UNICA, SELECCION_MULTIPLE, BOOLEANO, ESCALA, NUMERICO } =
+const { OPCION_UNICA, MULTISELECCION, BOOLEANO, ESCALA, NUMERICO } =
   TIPO_ENTRADA;
 
 const opciones = [
   { valor: 'si', etiqueta: 'Sí, claro' },
   { valor: 'no', etiqueta: 'No' },
 ];
-const multiple = { opciones, min_selecciones: 1, max_selecciones: 1 };
-const escala = { min: 0, max: 10, paso: 1 };
-const medios = { min: 0, max: 5, paso: 0.5 };
-const num = { min: 0, max: 50, decimales: 1 };
-const booleano = { etiqueta_verdadero: 'Sí', etiqueta_falso: 'Todavía no' };
 
 describe('registro', () => {
-  it.each(Object.entries(REGISTRO_ENTRADAS))('%s', (tipo, entrada) => {
-    expect(Object.values(TIPO_ENTRADA)).toContain(tipo);
-    expect(entrada.Componente).toBeTypeOf('function');
-    expect(entrada.validar).toBeTypeOf('function');
-    expect(entrada.textoRespuesta).toBeTypeOf('function');
+  it('tiene los 5 tipos de esta parte, con claves de TIPO_ENTRADA', () => {
+    expect(Object.keys(REGISTRO_ENTRADAS).sort()).toEqual(
+      [BOOLEANO, ESCALA, NUMERICO, MULTISELECCION, OPCION_UNICA].sort(),
+    );
   });
-});
 
-describe('validar', () => {
-  it.each([
-    [SELECCION_UNICA, { opciones }, 'si', null],
-    [SELECCION_UNICA, { opciones }, 'tal vez', 'OPCION_NO_VALIDA'],
-    [SELECCION_MULTIPLE, multiple, ['no'], null],
-    [SELECCION_MULTIPLE, multiple, ['otra'], 'OPCION_NO_VALIDA'],
-    [SELECCION_MULTIPLE, { opciones }, ['si', 'si'], 'OPCION_NO_VALIDA'],
-    [
-      SELECCION_MULTIPLE,
-      { ...multiple, min_selecciones: 2 },
-      ['si'],
-      'FUERA_DE_RANGO',
-    ],
-    [SELECCION_MULTIPLE, multiple, ['si', 'no'], 'FUERA_DE_RANGO'],
-    [ESCALA, escala, 7, null],
-    [ESCALA, escala, 11, 'FUERA_DE_RANGO'],
-    [ESCALA, escala, -1, 'FUERA_DE_RANGO'],
-    [ESCALA, escala, 7.5, 'FORMATO_INVALIDO'],
-    [ESCALA, escala, '7', 'TIPO_DATO_INVALIDO'],
-    [ESCALA, escala, NaN, 'TIPO_DATO_INVALIDO'],
-    [ESCALA, medios, 2.5, null],
-    [ESCALA, medios, 2.25, 'FORMATO_INVALIDO'],
-    [ESCALA, { min: 0, max: 1, paso: 0.1 }, 0.1 + 0.2, null],
-    [NUMERICO, num, 3.5, null],
-    [NUMERICO, num, 3.55, 'FORMATO_INVALIDO'],
-    [NUMERICO, num, 51, 'FUERA_DE_RANGO'],
-    [NUMERICO, { decimales: 0 }, 2.5, 'FORMATO_INVALIDO'],
-    [NUMERICO, { decimales: 0 }, -2, null],
-    [NUMERICO, { decimales: 2 }, 1e-7, 'FORMATO_INVALIDO'],
-    [BOOLEANO, booleano, false, null],
-    [BOOLEANO, booleano, 'false', 'TIPO_DATO_INVALIDO'],
-  ])('%s con %j → %s', (tipo, entrada, respuesta, codigo) => {
-    expect(REGISTRO_ENTRADAS[tipo].validar(entrada, respuesta)).toBe(codigo);
+  it.each(Object.entries(REGISTRO_ENTRADAS))('%s sin validar', (_t, e) => {
+    expect(e.Componente).toBeTypeOf('function');
+    expect(e.textoRespuesta).toBeTypeOf('function');
+    expect(e).not.toHaveProperty('validar');
   });
 });
 
 describe('textoRespuesta usa la etiqueta, no el valor', () => {
   it.each([
-    [SELECCION_UNICA, { opciones }, 'si', 'Sí, claro'],
-    [SELECCION_MULTIPLE, { opciones }, ['no', 'si'], 'Sí, claro, No'],
-    [BOOLEANO, booleano, false, 'Todavía no'],
-  ])('%s', (tipo, entrada, respuesta, texto) => {
-    expect(REGISTRO_ENTRADAS[tipo].textoRespuesta(entrada, respuesta)).toBe(
-      texto,
-    );
+    [OPCION_UNICA, { opciones }, 'si', 'Sí, claro'],
+    [MULTISELECCION, { opciones }, ['no', 'si'], 'Sí, claro, No'],
+    [BOOLEANO, { opciones: null }, false, 'No'],
+    [
+      BOOLEANO,
+      {
+        opciones: [
+          { valor: true, etiqueta: 'Ya lo hice' },
+          { valor: false, etiqueta: 'Todavía no' },
+        ],
+      },
+      false,
+      'Todavía no',
+    ],
+    [ESCALA, { max: 10 }, 7, '7/10'],
+    [ESCALA, { max: 5 }, 2.5, '2,5/5'],
+    [ESCALA, { max: null }, 3, '3'],
+    [NUMERICO, {}, 3.5, '3,5'],
+  ])('%s con %j', (tipo, entrada, valor, texto) => {
+    expect(REGISTRO_ENTRADAS[tipo].textoRespuesta(entrada, valor)).toBe(texto);
   });
 });
 
-it('alternarSeleccion agrega, quita y respeta el máximo', () => {
-  expect(alternarSeleccion([], 'a', 2)).toEqual(['a']);
-  expect(alternarSeleccion(['a', 'b'], 'a', 2)).toEqual(['b']);
-  expect(alternarSeleccion(['a', 'b'], 'c', 2)).toEqual(['a', 'b']);
-  expect(alternarSeleccion(['a', 'b'], 'c', undefined)).toEqual([
-    'a',
-    'b',
-    'c',
+it('booleano sin opciones usa «Sí» y «No» (D5)', () => {
+  expect(opcionesBooleano({ opciones: null }).map((o) => o.etiqueta)).toEqual([
+    'Sí',
+    'No',
   ]);
+  expect(opcionesBooleano({ opciones })).toBe(opciones);
 });
 
-it('textoAyuda se arma desde la configuración', () => {
-  expect(textoAyuda(3, 5)).toBe('Elige entre 3 y 5');
-  expect(textoAyuda(2, null)).toBe('Elige al menos 2');
-  expect(textoAyuda(undefined, 4)).toBe('Elige hasta 4');
+it('alternarSeleccion agrega y quita sin repetidos (CA-27-5)', () => {
+  expect(alternarSeleccion([], 'a')).toEqual(['a']);
+  expect(alternarSeleccion(['a', 'b'], 'a')).toEqual(['b']);
+  expect(alternarSeleccion(['a', 'b'], 'c')).toEqual(['a', 'b', 'c']);
+});
+
+it('textoAyuda solo con min y max (D5)', () => {
+  expect(textoAyuda(1, 3)).toBe('Elige entre 1 y 3 opciones');
+  expect(textoAyuda(2, null)).toBeNull();
   expect(textoAyuda()).toBeNull();
 });
 
-it.each([
-  [ESCALA, escala, 7, '7/10'],
-  [ESCALA, medios, 2.5, '2,5/5'],
-  [NUMERICO, { unidad: 'horas' }, 3.5, '3,5 horas'],
-  [NUMERICO, {}, 3.5, '3,5'],
-])('textoRespuesta de %s', (tipo, entrada, respuesta, texto) => {
-  expect(REGISTRO_ENTRADAS[tipo].textoRespuesta(entrada, respuesta)).toBe(
-    texto,
+describe('numerico.normalizar (D2)', () => {
+  it.each([
+    ['12', 12],
+    ['7,5', 7.5],
+    [' 7 ', 7],
+    ['-2', -2],
+    ['', null],
+    ['   ', null],
+    [null, null],
+  ])('%j → %j', (texto, numero) => {
+    expect(numerico.normalizar({}, texto)).toBe(numero);
+  });
+
+  it('150 con max 100 se envía como 150 (CA-28-6)', () => {
+    expect(numerico.normalizar({ max: 100 }, '150')).toBe(150);
+  });
+
+  it.each(['1.000', '3.5', '1e3', '12abc', '9'.repeat(400)])(
+    '%j no se puede convertir y viaja tal cual',
+    (texto) => {
+      expect(numerico.normalizar({}, texto)).toBe(texto);
+    },
   );
 });
 
-it('una escala obligatoria sin tocar no tiene valor por defecto', () => {
-  expect(
-    resolverRespuesta(
-      { obligatorio: true, ...escala },
-      REGISTRO_ENTRADAS[ESCALA],
-      null,
-    ),
-  ).toMatchObject({ valido: false, codigo: 'RESPUESTA_OBLIGATORIA' });
-});
-
-describe('numerico.normalizar', () => {
-  const entero = { decimales: 0 };
-  const decimal = { decimales: 1 };
-
-  it.each([
-    [entero, '12', 12],
-    [decimal, '3,5', 3.5],
-    [entero, ' 7 ', 7],
-    [entero, '-2', -2],
-    [entero, '', null],
-    [entero, '   ', null],
-    [entero, null, null],
-  ])('%j: %j → %j', (entrada, texto, numero) => {
-    expect(numerico.normalizar(entrada, texto)).toBe(numero);
-  });
-
-  it.each([
-    [entero, '1.000'],
-    [entero, '1,000'],
-    [decimal, '3.5'],
-    [decimal, '1e3'],
-    [decimal, '12abc'],
-    [decimal, '1.000,5'],
-    [decimal, '.'],
-  ])('%j: %j no es un número válido', (entrada, texto) => {
-    const valor = numerico.normalizar(entrada, texto);
-    expect(numerico.validar(entrada, valor)).toBe('TIPO_DATO_INVALIDO');
-  });
-});
-
-it('ayudaNumerico combina rango y separador decimal', () => {
-  expect(ayudaNumerico({ min: 0, max: 50, decimales: 0 })).toBe('Entre 0 y 50');
-  expect(ayudaNumerico({ min: 0, decimales: 1 })).toBe(
+it('ayudaNumerico y modoTeclado leen la configuración', () => {
+  expect(ayudaNumerico({ min: 0, max: 50, paso: 1 })).toBe('Entre 0 y 50');
+  expect(ayudaNumerico({ min: 0, paso: 0.5 })).toBe(
     'Mínimo 0. Usa coma para los decimales',
   );
   expect(ayudaNumerico({ max: 5 })).toBe('Máximo 5');
   expect(ayudaNumerico({})).toBeNull();
+  expect(modoTeclado({ paso: 1 })).toBe('numeric');
+  expect(modoTeclado({ paso: null })).toBe('decimal');
 });
 
-it('el registro tiene los 5 tipos de esta parte', () => {
-  expect(Object.keys(REGISTRO_ENTRADAS).sort()).toEqual(
-    [BOOLEANO, ESCALA, NUMERICO, SELECCION_MULTIPLE, SELECCION_UNICA].sort(),
-  );
+describe('resolverRespuesta', () => {
+  it('convierte con `normalizar` y arma el texto', () => {
+    expect(resolverRespuesta({}, REGISTRO_ENTRADAS[NUMERICO], '7,5')).toEqual({
+      valor: 7.5,
+      textoRespuesta: '7,5',
+    });
+  });
+
+  it.each([null, '', '  ', []])('%j viaja como null (D2)', (vacia) => {
+    expect(
+      resolverRespuesta({ opciones }, REGISTRO_ENTRADAS[MULTISELECCION], vacia),
+    ).toEqual({ valor: null, textoRespuesta: null });
+  });
+
+  it('una escala sin tocar no tiene valor por defecto (A-034)', () => {
+    expect(
+      resolverRespuesta(
+        { min: 0, max: 10, paso: 1 },
+        REGISTRO_ENTRADAS[ESCALA],
+        null,
+      ).valor,
+    ).toBeNull();
+  });
 });

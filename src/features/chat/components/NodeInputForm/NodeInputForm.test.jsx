@@ -1,101 +1,133 @@
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 
-import { TIPO_ENTRADA, TIPO_NODO } from '../../types/index.js';
+import { TIPO_ENTRADA } from '../../types/index.js';
 import { NodeInputForm } from './NodeInputForm.jsx';
-import { resolverRespuesta } from './resolverRespuesta.js';
 
-const pregunta = (entrada) => ({
-  id_nodo: 'n1',
-  tipo_nodo: TIPO_NODO.PREGUNTA,
-  contenido: { texto: '¿Cómo te sientes?' },
-  entrada: { obligatorio: true, ...entrada },
+const AVISO = 'Esta pregunta todavía no se puede responder en la aplicación.';
+
+const nodo = (entrada, extra = {}) => ({
+  idNodo: 'n1',
+  tipoNodo: 'PREGUNTA',
+  esTerminal: false,
+  bloques: [
+    { orden: 1, tipo: 'INSTRUCCION', texto: 'Elige una' },
+    { orden: 2, tipo: 'TEXTO', texto: '¿Cómo te sientes?' },
+  ],
+  entrada,
+  ...extra,
 });
 
-const unica = pregunta({
-  tipo_entrada: TIPO_ENTRADA.SELECCION_UNICA,
+const unica = nodo({
+  tipo: TIPO_ENTRADA.OPCION_UNICA,
+  obligatorio: true,
   opciones: [{ valor: 'bien', etiqueta: 'Bien' }],
 });
 
 const render = (props) =>
   renderToStaticMarkup(<NodeInputForm onResponder={() => {}} {...props} />);
 
-describe('resolverRespuesta', () => {
-  it('aplica `normalizar` antes de validar si el tipo lo define', () => {
-    const tipo = {
-      normalizar: (_entrada, v) => v.toUpperCase(),
-      validar: (_entrada, v) => (v === 'A' ? null : 'OPCION_NO_VALIDA'),
-      textoRespuesta: (_entrada, v) => `Texto ${v}`,
-    };
-    expect(resolverRespuesta({}, tipo, 'a')).toEqual({
-      valido: true,
-      respuesta: 'A',
-      textoRespuesta: 'Texto A',
-    });
-  });
-});
-
-describe('NodeInputForm', () => {
-  it('un nodo sin entrada pinta solo "Continuar"', () => {
-    const html = render({ nodo: { tipo_nodo: TIPO_NODO.MENSAJE } });
+describe('NodeInputForm (D9)', () => {
+  it.each([
+    ['entrada null', nodo(null)],
+    ['tipo CONTINUAR', nodo({ tipo: TIPO_ENTRADA.CONTINUAR })],
+  ])('%s en nodo no terminal pinta solo "Continuar"', (_caso, n) => {
+    const html = render({ nodo: n });
     expect(html).toContain('Continuar');
     expect(html).not.toContain('Tu respuesta');
     expect(html.match(/<button/g)).toHaveLength(1);
   });
 
-  it.each([
-    ['SELECCION_UNICA', unica, 'Bien'],
-    [
-      'BOOLEANO',
-      pregunta({
-        tipo_entrada: TIPO_ENTRADA.BOOLEANO,
-        etiqueta_verdadero: 'Sí',
-        etiqueta_falso: 'No',
-      }),
-      'No',
-    ],
-  ])('%s pinta sus opciones en un grupo', (_tipo, nodo, etiqueta) => {
-    const html = render({ nodo });
+  it('un nodo terminal no pinta nada', () => {
+    expect(render({ nodo: nodo(null, { esTerminal: true }) })).toBe('');
+  });
+
+  it.each([TIPO_ENTRADA.FECHA_HORA, TIPO_ENTRADA.TEXTO_LIBRE, 'constructor'])(
+    '%s no registrado muestra el aviso y no ofrece enviar',
+    (tipo) => {
+      const html = render({ nodo: nodo({ tipo }) });
+      expect(html).toContain(AVISO);
+      expect(html).not.toContain('<button');
+      expect(html).not.toContain('<form');
+    },
+  );
+
+  it('OPCION_UNICA obligatoria: un grupo, sin "Continuar" ni texto libre', () => {
+    const html = render({ nodo: unica });
     expect(html).toContain('role="group"');
-    expect(html).toContain(`>${etiqueta}</button>`);
+    expect(html).toContain('>Bien</button>');
     expect(html).not.toContain('Continuar');
+    expect(html).not.toContain('<input');
+    expect(html).not.toContain('<textarea');
   });
 
-  it('SELECCION_MULTIPLE pinta casillas, ayuda y "Continuar"', () => {
-    const html = render({
-      nodo: pregunta({
-        tipo_entrada: TIPO_ENTRADA.SELECCION_MULTIPLE,
-        opciones: [{ valor: 'a', etiqueta: 'Calma' }],
-        min_selecciones: 1,
-        max_selecciones: 2,
-      }),
-    });
-    expect(html).toContain('role="checkbox"');
-    expect(html).toContain('aria-checked="false"');
-    expect(html).toContain('Elige entre 1 y 2');
-    expect(html).toContain('Calma');
-    expect(html).toContain('Continuar');
-  });
-
-  it('un tipo no registrado no pinta nada', () => {
-    expect(render({ nodo: pregunta({ tipo_entrada: 'constructor' }) })).toBe(
-      '',
+  it('el nombre accesible es el primer bloque TEXTO', () => {
+    expect(render({ nodo: unica })).toMatch(
+      /class="sr-only">¿Cómo te sientes\?</,
     );
   });
 
-  it('muestra el error externo y el campo lo referencia', () => {
+  it('BOOLEANO usa sus opciones o «Sí» y «No»', () => {
+    const propio = render({
+      nodo: nodo({
+        tipo: TIPO_ENTRADA.BOOLEANO,
+        obligatorio: true,
+        opciones: [
+          { valor: true, etiqueta: 'Ya lo hice' },
+          { valor: false, etiqueta: 'Todavía no' },
+        ],
+      }),
+    });
+    const porDefecto = render({
+      nodo: nodo({ tipo: TIPO_ENTRADA.BOOLEANO, opciones: null }),
+    });
+    expect(propio).toContain('>Todavía no</button>');
+    expect(porDefecto).toContain('>Sí</button>');
+    expect(porDefecto).toContain('>No</button>');
+  });
+
+  it('MULTISELECCION pinta casillas, ayuda y "Continuar"', () => {
+    const html = render({
+      nodo: nodo({
+        tipo: TIPO_ENTRADA.MULTISELECCION,
+        opciones: [{ valor: 'a', etiqueta: 'Calma' }],
+        min: 1,
+        max: 2,
+      }),
+    });
+    expect(html).toContain('role="checkbox"');
+    expect(html).toContain('Elige entre 1 y 2 opciones');
+    expect(html).toContain('Continuar');
+  });
+
+  it('la región del error existe aunque no haya error (D10)', () => {
+    const html = render({ nodo: unica });
+    expect(html).toMatch(
+      /<div id="[^"]+-error" aria-live="polite" aria-atomic="true"><\/div>/,
+    );
+    expect(html).not.toContain('aria-describedby');
+  });
+
+  it('muestra el mensaje del backend y el componente lo referencia', () => {
     const html = render({
       nodo: unica,
-      errorExterno: { codigo: 'OPCION_NO_VALIDA', message: 'Mensaje backend' },
+      errorExterno: {
+        status: 400,
+        codigo: 'VALOR_NO_PERMITIDO',
+        mensaje: 'Mensaje backend',
+      },
     });
-    const [, idError] = html.match(/<p id="([^"]+)" role="alert"/);
+    const [, idError] = html.match(
+      /<div id="([^"]+)" aria-live="polite" aria-atomic="true">/,
+    );
     expect(html).toContain('Mensaje backend');
     expect(html).toContain(`aria-describedby="${idError}"`);
+    expect(html).toContain('aria-invalid="true"');
   });
 
   it('con `enviando` todos los botones salen deshabilitados', () => {
     const html = render({
-      nodo: { ...unica, entrada: { ...unica.entrada, obligatorio: false } },
+      nodo: nodo({ ...unica.entrada, obligatorio: false }),
       enviando: true,
     });
     expect(html.match(/<button/g).length).toBe(
