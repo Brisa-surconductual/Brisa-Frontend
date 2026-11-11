@@ -6,3 +6,4 @@ export * from './chatErrorCodes.js';
 export * from './estadoPantallaEntrada.js';
 export * from './estadoFlujo.js';
 export * from './operadorCondicion.js';
+export * from './tipoBloque.js';

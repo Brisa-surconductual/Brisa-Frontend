@@ -25,6 +25,7 @@ function render(state) {
     retry: () => {},
     goHome: () => {},
     goLogin: () => {},
+    goConversation: () => {},
     ...state,
   };
 
@@ -58,6 +59,22 @@ describe('ChatEntryPage (RF-24)', () => {
     });
 
     expect(html).toContain('Tu sesión está lista');
+  });
+
+  it('lista muestra «Comenzar» y reanudando «Continuar» (D2)', () => {
+    const lista = render({
+      estado: ESTADO_PANTALLA_ENTRADA.LISTA,
+      sesion: { ...sesion, reanudada: false },
+    });
+    const reanudando = render({
+      estado: ESTADO_PANTALLA_ENTRADA.REANUDANDO,
+      sesion,
+    });
+
+    expect(lista).toContain('Comenzar');
+    expect(lista).not.toContain('Continuar');
+    expect(reanudando).toContain('Continuar');
+    expect(reanudando).not.toContain('Comenzar');
   });
 
   it('error reintentable: mensaje del backend tal cual, con Reintentar', () => {

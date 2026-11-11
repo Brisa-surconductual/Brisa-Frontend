@@ -4,6 +4,7 @@ import { ProtectedLayout } from '@/app/layouts/ProtectedLayout/index.js';
 import { StudentLayout } from '@/app/layouts/StudentLayout/index.js';
 import { RegistrationLayout } from '@/app/layouts/RegistrationLayout/index.js';
 import {
+  ChatConversationPage,
   ChatEntryPage,
   GroupTreeDetailPage,
   GroupTreesPage,
@@ -150,6 +151,11 @@ export function AppRouter() {
                 <Route
                   path="estudiante/chat"
                   element={<ChatEntryPage />}
+                />
+
+                <Route
+                  path="estudiante/chat/sesion/:idSesion"
+                  element={<ChatConversationPage />}
                 />
               </Route>
             </Route>

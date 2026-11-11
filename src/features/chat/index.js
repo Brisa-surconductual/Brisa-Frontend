@@ -2,7 +2,6 @@ export * from './types/index.js';
 
 export { ChatMessageBubble } from './components/ChatMessageBubble/index.js';
 export { UserAnswerBubble } from './components/UserAnswerBubble/index.js';
-export { ChatSummaryCard } from './components/ChatSummaryCard/index.js';
 export { ChatNodeMessage } from './components/ChatNodeMessage/index.js';
 export { ChatThread } from './components/ChatThread/index.js';
 export { NodeInputForm } from './components/NodeInputForm/index.js';
@@ -17,3 +16,4 @@ export {
   PersonalizedTreesScreen,
 } from './pages/PersonalizedTreesPage/index.js';
 export { ChatEntryPage } from './pages/ChatEntryPage/index.js';
+export { ChatConversationPage } from './pages/ChatConversationPage/index.js';

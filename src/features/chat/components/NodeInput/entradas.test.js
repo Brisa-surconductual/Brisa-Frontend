@@ -1,161 +1,244 @@
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import process from 'node:process';
 
 import { TIPO_ENTRADA } from '../../types/index.js';
 import { resolverRespuesta } from '../NodeInputForm/resolverRespuesta.js';
-import { ayudaNumerico, numerico } from './numerico.js';
+import { opcionesBooleano } from './booleano.js';
+import { ayudaFechaHora, fechaHora } from './fechaHora.js';
+import { alternarSeleccion, textoAyuda } from './multiseleccion.js';
+import { ayudaNumerico, modoTeclado, numerico } from './numerico.js';
 import { REGISTRO_ENTRADAS } from './registroEntradas.js';
-import { alternarSeleccion, textoAyuda } from './seleccionMultiple.js';
+import { contador } from './textoLibre.js';
 
-const { SELECCION_UNICA, SELECCION_MULTIPLE, BOOLEANO, ESCALA, NUMERICO } =
-  TIPO_ENTRADA;
+const {
+  OPCION_UNICA,
+  MULTISELECCION,
+  BOOLEANO,
+  ESCALA,
+  NUMERICO,
+  TEXTO_LIBRE,
+  CONTINUAR,
+} = TIPO_ENTRADA;
+
+// D15: los casos de fecha suponen Bogotá (UTC−5, sin horario de verano);
+// se restaura la zona original para no afectar otras pruebas.
+const TZ_ORIGINAL = process.env.TZ;
+beforeAll(() => {
+  process.env.TZ = 'America/Bogota';
+});
+afterAll(() => {
+  if (TZ_ORIGINAL === undefined) delete process.env.TZ;
+  else process.env.TZ = TZ_ORIGINAL;
+});
+
+// Intl separa "p. m." con espacios especiales según la versión de ICU.
+const espacios = (texto) => texto.replace(/\s/g, ' ');
 
 const opciones = [
   { valor: 'si', etiqueta: 'Sí, claro' },
   { valor: 'no', etiqueta: 'No' },
 ];
-const multiple = { opciones, min_selecciones: 1, max_selecciones: 1 };
-const escala = { min: 0, max: 10, paso: 1 };
-const medios = { min: 0, max: 5, paso: 0.5 };
-const num = { min: 0, max: 50, decimales: 1 };
-const booleano = { etiqueta_verdadero: 'Sí', etiqueta_falso: 'Todavía no' };
 
 describe('registro', () => {
-  it.each(Object.entries(REGISTRO_ENTRADAS))('%s', (tipo, entrada) => {
-    expect(Object.values(TIPO_ENTRADA)).toContain(tipo);
-    expect(entrada.Componente).toBeTypeOf('function');
-    expect(entrada.validar).toBeTypeOf('function');
-    expect(entrada.textoRespuesta).toBeTypeOf('function');
+  it('tiene una entrada por cada tipo de RF-27 (CONTINUAR va aparte)', () => {
+    expect(Object.keys(REGISTRO_ENTRADAS).sort()).toEqual(
+      Object.values(TIPO_ENTRADA)
+        .filter((tipo) => tipo !== CONTINUAR)
+        .sort(),
+    );
   });
-});
 
-describe('validar', () => {
-  it.each([
-    [SELECCION_UNICA, { opciones }, 'si', null],
-    [SELECCION_UNICA, { opciones }, 'tal vez', 'OPCION_NO_VALIDA'],
-    [SELECCION_MULTIPLE, multiple, ['no'], null],
-    [SELECCION_MULTIPLE, multiple, ['otra'], 'OPCION_NO_VALIDA'],
-    [SELECCION_MULTIPLE, { opciones }, ['si', 'si'], 'OPCION_NO_VALIDA'],
-    [
-      SELECCION_MULTIPLE,
-      { ...multiple, min_selecciones: 2 },
-      ['si'],
-      'FUERA_DE_RANGO',
-    ],
-    [SELECCION_MULTIPLE, multiple, ['si', 'no'], 'FUERA_DE_RANGO'],
-    [ESCALA, escala, 7, null],
-    [ESCALA, escala, 11, 'FUERA_DE_RANGO'],
-    [ESCALA, escala, -1, 'FUERA_DE_RANGO'],
-    [ESCALA, escala, 7.5, 'FORMATO_INVALIDO'],
-    [ESCALA, escala, '7', 'TIPO_DATO_INVALIDO'],
-    [ESCALA, escala, NaN, 'TIPO_DATO_INVALIDO'],
-    [ESCALA, medios, 2.5, null],
-    [ESCALA, medios, 2.25, 'FORMATO_INVALIDO'],
-    [ESCALA, { min: 0, max: 1, paso: 0.1 }, 0.1 + 0.2, null],
-    [NUMERICO, num, 3.5, null],
-    [NUMERICO, num, 3.55, 'FORMATO_INVALIDO'],
-    [NUMERICO, num, 51, 'FUERA_DE_RANGO'],
-    [NUMERICO, { decimales: 0 }, 2.5, 'FORMATO_INVALIDO'],
-    [NUMERICO, { decimales: 0 }, -2, null],
-    [NUMERICO, { decimales: 2 }, 1e-7, 'FORMATO_INVALIDO'],
-    [BOOLEANO, booleano, false, null],
-    [BOOLEANO, booleano, 'false', 'TIPO_DATO_INVALIDO'],
-  ])('%s con %j → %s', (tipo, entrada, respuesta, codigo) => {
-    expect(REGISTRO_ENTRADAS[tipo].validar(entrada, respuesta)).toBe(codigo);
+  it.each(Object.entries(REGISTRO_ENTRADAS))('%s sin validar', (_t, e) => {
+    expect(e.Componente).toBeTypeOf('function');
+    expect(e.textoRespuesta).toBeTypeOf('function');
+    expect(e).not.toHaveProperty('validar');
   });
 });
 
 describe('textoRespuesta usa la etiqueta, no el valor', () => {
   it.each([
-    [SELECCION_UNICA, { opciones }, 'si', 'Sí, claro'],
-    [SELECCION_MULTIPLE, { opciones }, ['no', 'si'], 'Sí, claro, No'],
-    [BOOLEANO, booleano, false, 'Todavía no'],
-  ])('%s', (tipo, entrada, respuesta, texto) => {
-    expect(REGISTRO_ENTRADAS[tipo].textoRespuesta(entrada, respuesta)).toBe(
-      texto,
-    );
+    [OPCION_UNICA, { opciones }, 'si', 'Sí, claro'],
+    [MULTISELECCION, { opciones }, ['no', 'si'], 'Sí, claro, No'],
+    [BOOLEANO, { opciones: null }, false, 'No'],
+    [
+      BOOLEANO,
+      {
+        opciones: [
+          { valor: true, etiqueta: 'Ya lo hice' },
+          { valor: false, etiqueta: 'Todavía no' },
+        ],
+      },
+      false,
+      'Todavía no',
+    ],
+    [ESCALA, { max: 10 }, 7, '7/10'],
+    [ESCALA, { max: 5 }, 2.5, '2,5/5'],
+    [ESCALA, { max: null }, 3, '3'],
+    [NUMERICO, {}, 3.5, '3,5'],
+  ])('%s con %j', (tipo, entrada, valor, texto) => {
+    expect(REGISTRO_ENTRADAS[tipo].textoRespuesta(entrada, valor)).toBe(texto);
   });
 });
 
-it('alternarSeleccion agrega, quita y respeta el máximo', () => {
-  expect(alternarSeleccion([], 'a', 2)).toEqual(['a']);
-  expect(alternarSeleccion(['a', 'b'], 'a', 2)).toEqual(['b']);
-  expect(alternarSeleccion(['a', 'b'], 'c', 2)).toEqual(['a', 'b']);
-  expect(alternarSeleccion(['a', 'b'], 'c', undefined)).toEqual([
-    'a',
-    'b',
-    'c',
+it('booleano sin opciones usa «Sí» y «No» (D5)', () => {
+  expect(opcionesBooleano({ opciones: null }).map((o) => o.etiqueta)).toEqual([
+    'Sí',
+    'No',
   ]);
+  expect(opcionesBooleano({ opciones })).toBe(opciones);
 });
 
-it('textoAyuda se arma desde la configuración', () => {
-  expect(textoAyuda(3, 5)).toBe('Elige entre 3 y 5');
-  expect(textoAyuda(2, null)).toBe('Elige al menos 2');
-  expect(textoAyuda(undefined, 4)).toBe('Elige hasta 4');
+it('alternarSeleccion agrega y quita sin repetidos (CA-27-5)', () => {
+  expect(alternarSeleccion([], 'a')).toEqual(['a']);
+  expect(alternarSeleccion(['a', 'b'], 'a')).toEqual(['b']);
+  expect(alternarSeleccion(['a', 'b'], 'c')).toEqual(['a', 'b', 'c']);
+});
+
+it('textoAyuda solo con min y max (D5)', () => {
+  expect(textoAyuda(1, 3)).toBe('Elige entre 1 y 3 opciones');
+  expect(textoAyuda(2, null)).toBeNull();
   expect(textoAyuda()).toBeNull();
 });
 
-it.each([
-  [ESCALA, escala, 7, '7/10'],
-  [ESCALA, medios, 2.5, '2,5/5'],
-  [NUMERICO, { unidad: 'horas' }, 3.5, '3,5 horas'],
-  [NUMERICO, {}, 3.5, '3,5'],
-])('textoRespuesta de %s', (tipo, entrada, respuesta, texto) => {
-  expect(REGISTRO_ENTRADAS[tipo].textoRespuesta(entrada, respuesta)).toBe(
-    texto,
+describe('numerico.normalizar (D2)', () => {
+  it.each([
+    ['12', 12],
+    ['7,5', 7.5],
+    [' 7 ', 7],
+    ['-2', -2],
+    ['', null],
+    ['   ', null],
+    [null, null],
+  ])('%j → %j', (texto, numero) => {
+    expect(numerico.normalizar({}, texto)).toBe(numero);
+  });
+
+  it('150 con max 100 se envía como 150 (CA-28-6)', () => {
+    expect(numerico.normalizar({ max: 100 }, '150')).toBe(150);
+  });
+
+  it.each(['1.000', '3.5', '1e3', '12abc', '9'.repeat(400)])(
+    '%j no se puede convertir y viaja tal cual',
+    (texto) => {
+      expect(numerico.normalizar({}, texto)).toBe(texto);
+    },
   );
 });
 
-it('una escala obligatoria sin tocar no tiene valor por defecto', () => {
-  expect(
-    resolverRespuesta(
-      { obligatorio: true, ...escala },
-      REGISTRO_ENTRADAS[ESCALA],
-      null,
-    ),
-  ).toMatchObject({ valido: false, codigo: 'RESPUESTA_OBLIGATORIA' });
-});
-
-describe('numerico.normalizar', () => {
-  const entero = { decimales: 0 };
-  const decimal = { decimales: 1 };
-
-  it.each([
-    [entero, '12', 12],
-    [decimal, '3,5', 3.5],
-    [entero, ' 7 ', 7],
-    [entero, '-2', -2],
-    [entero, '', null],
-    [entero, '   ', null],
-    [entero, null, null],
-  ])('%j: %j → %j', (entrada, texto, numero) => {
-    expect(numerico.normalizar(entrada, texto)).toBe(numero);
-  });
-
-  it.each([
-    [entero, '1.000'],
-    [entero, '1,000'],
-    [decimal, '3.5'],
-    [decimal, '1e3'],
-    [decimal, '12abc'],
-    [decimal, '1.000,5'],
-    [decimal, '.'],
-  ])('%j: %j no es un número válido', (entrada, texto) => {
-    const valor = numerico.normalizar(entrada, texto);
-    expect(numerico.validar(entrada, valor)).toBe('TIPO_DATO_INVALIDO');
-  });
-});
-
-it('ayudaNumerico combina rango y separador decimal', () => {
-  expect(ayudaNumerico({ min: 0, max: 50, decimales: 0 })).toBe('Entre 0 y 50');
-  expect(ayudaNumerico({ min: 0, decimales: 1 })).toBe(
+it('ayudaNumerico y modoTeclado leen la configuración', () => {
+  expect(ayudaNumerico({ min: 0, max: 50, paso: 1 })).toBe('Entre 0 y 50');
+  expect(ayudaNumerico({ min: 0, paso: 0.5 })).toBe(
     'Mínimo 0. Usa coma para los decimales',
   );
   expect(ayudaNumerico({ max: 5 })).toBe('Máximo 5');
   expect(ayudaNumerico({})).toBeNull();
+  expect(modoTeclado({ paso: 1 })).toBe('numeric');
+  expect(modoTeclado({ paso: null })).toBe('decimal');
 });
 
-it('el registro tiene los 5 tipos de esta parte', () => {
-  expect(Object.keys(REGISTRO_ENTRADAS).sort()).toEqual(
-    [BOOLEANO, ESCALA, NUMERICO, SELECCION_MULTIPLE, SELECCION_UNICA].sort(),
-  );
+describe('fechaHora (D3 a D6)', () => {
+  it.each([
+    ['FECHA_HORA', '2026-11-08T14:30', '2026-11-08T14:30:00-05:00'],
+    ['FECHA_HORA', '2026-11-08T14:30:15', '2026-11-08T14:30:15-05:00'],
+    [null, '2026-11-08T14:30', '2026-11-08T14:30:00-05:00'],
+    ['FECHA', '2026-11-08', '2026-11-08'],
+    ['HORA', '14:30', '14:30'],
+    ['FECHA', '', null],
+    ['HORA', null, null],
+  ])('normalizar %s %j → %j (D4)', (formato, valor, esperado) => {
+    expect(fechaHora.normalizar({ formato }, valor)).toBe(esperado);
+  });
+
+  it('la burbuja de 2026-10-07 dice el 7, no el 6 (D6)', () => {
+    const texto = fechaHora.textoRespuesta({ formato: 'FECHA' }, '2026-10-07');
+    expect(texto).toBe('7 de octubre de 2026');
+  });
+
+  it('la burbuja de HORA y FECHA_HORA usa la hora escrita', () => {
+    expect(
+      espacios(fechaHora.textoRespuesta({ formato: 'HORA' }, '14:30')),
+    ).toBe('2:30 p. m.');
+    expect(
+      espacios(fechaHora.textoRespuesta({}, '2026-11-08T14:30:00-05:00')),
+    ).toMatch(/^8 de noviembre de 2026.*2:30 p\. m\.$/);
+  });
+
+  it('un valor que no se puede leer se muestra tal cual', () => {
+    expect(fechaHora.textoRespuesta({ formato: 'FECHA' }, 'ayer')).toBe('ayer');
+  });
+
+  it('ayudaFechaHora pinta min y max de texto (D5)', () => {
+    expect(ayudaFechaHora({ formato: 'FECHA', min: '2026-10-01' })).toBe(
+      'Desde el 1 de octubre de 2026',
+    );
+    expect(
+      ayudaFechaHora({
+        formato: 'FECHA',
+        min: '2026-10-01',
+        max: '2026-10-31',
+      }),
+    ).toBe('Entre el 1 de octubre de 2026 y el 31 de octubre de 2026');
+    expect(ayudaFechaHora({ formato: 'FECHA', min: null })).toBeNull();
+  });
+});
+
+describe('textoLibre (D7, D8, D14)', () => {
+  const tipo = () => REGISTRO_ENTRADAS[TEXTO_LIBRE];
+
+  it('envía y muestra el texto idéntico, con saltos de línea', () => {
+    const texto = '  Hola,\nayer fue difícil.\n\n';
+    expect(resolverRespuesta({}, tipo(), texto)).toEqual({
+      valor: texto,
+      textoRespuesta: texto,
+    });
+  });
+
+  it('solo espacios viaja como null', () => {
+    expect(resolverRespuesta({}, tipo(), ' \n\t ')).toEqual({
+      valor: null,
+      textoRespuesta: null,
+    });
+  });
+
+  it('520 caracteres con máximo 500 se envían completos', () => {
+    const texto = 'a'.repeat(520);
+    expect(resolverRespuesta({ maxCaracteres: 500 }, tipo(), texto).valor).toBe(
+      texto,
+    );
+  });
+
+  it.each([
+    [{ maxCaracteres: 500 }, 'x'.repeat(12), '12 de 500 caracteres'],
+    [{ maxCaracteres: 500 }, 'x', '1 de 500 caracteres'],
+    [{ maxCaracteres: null }, 'x'.repeat(12), '12 caracteres'],
+    [{ maxCaracteres: null }, 'x', '1 carácter'],
+    [{ maxCaracteres: null }, null, '0 caracteres'],
+  ])('contador con %j y %j → %s', (entrada, valor, texto) => {
+    expect(contador(entrada, valor)).toBe(texto);
+  });
+});
+
+describe('resolverRespuesta', () => {
+  it('convierte con `normalizar` y arma el texto', () => {
+    expect(resolverRespuesta({}, REGISTRO_ENTRADAS[NUMERICO], '7,5')).toEqual({
+      valor: 7.5,
+      textoRespuesta: '7,5',
+    });
+  });
+
+  it.each([null, '', '  ', []])('%j viaja como null (D2)', (vacia) => {
+    expect(
+      resolverRespuesta({ opciones }, REGISTRO_ENTRADAS[MULTISELECCION], vacia),
+    ).toEqual({ valor: null, textoRespuesta: null });
+  });
+
+  it('una escala sin tocar no tiene valor por defecto (A-034)', () => {
+    expect(
+      resolverRespuesta(
+        { min: 0, max: 10, paso: 1 },
+        REGISTRO_ENTRADAS[ESCALA],
+        null,
+      ).valor,
+    ).toBeNull();
+  });
 });

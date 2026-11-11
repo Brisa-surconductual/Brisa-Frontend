@@ -38,14 +38,3 @@ export const ESTADO_CONECTIVIDAD = Object.freeze({
   ONLINE: 'ONLINE',
   OFFLINE: 'OFFLINE',
 });
-
-export const EMISOR = Object.freeze({
-  AVATAR: 'AVATAR',
-  SISTEMA: 'SISTEMA',
-});
-
-export const TIPO_RECURSO = Object.freeze({
-  IMAGEN: 'IMAGEN',
-  VIDEO: 'VIDEO',
-  GIF: 'GIF',
-});

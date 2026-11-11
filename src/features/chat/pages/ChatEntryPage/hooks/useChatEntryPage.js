@@ -55,5 +55,8 @@ export function useChatEntryPage() {
     retry,
     goHome: () => navigate(STUDENT_HOME_PATH),
     goLogin: () => navigate(LOGIN_PATH, { replace: true }),
+    // D2: RF-24 entrega el idSesion con el que RF-26 pide el nodo actual.
+    goConversation: () =>
+      navigate(`/app/estudiante/chat/sesion/${state.sesion.sesion.idSesion}`),
   };
 }
