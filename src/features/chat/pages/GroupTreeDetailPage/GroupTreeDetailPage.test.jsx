@@ -129,7 +129,13 @@ describe('GroupTreeDetailPage (RF-25, vista del árbol)', () => {
       editor: {
         mode: 'create',
         nodo: null,
-        values: { idTipoNodo: '', texto: '', esNodoInicial: false, orden: '' },
+        values: {
+          idTipoNodo: '',
+          texto: '',
+          esNodoInicial: false,
+          orden: '',
+          idContenidoCronograma: '',
+        },
         errors: { texto: 'Escribe el texto del nodo.' },
         saving: false,
         saveError: 'Ya existe un nodo inicial.',
@@ -141,6 +147,66 @@ describe('GroupTreeDetailPage (RF-25, vista del árbol)', () => {
     expect(html).toContain('Escribe el texto del nodo.');
     expect(html).toContain('Ya existe un nodo inicial.');
     expect(html).not.toContain('Agregar nodo');
+  });
+
+  it('el formulario ofrece elegir un contenido ya programado en un cronograma', () => {
+    const html = render({
+      status: 'ready',
+      arbol,
+      canEdit: true,
+      contenidosCronograma: [
+        {
+          id_contenido_cronograma: 'cc-1',
+          id_contenido: 'c-1',
+          nombre_contenido: 'Video 1',
+          id_unidad_temporal: 'ut-1',
+          nombre_unidad: 'Semana 1',
+          orden_unidad: 1,
+        },
+      ],
+      editor: {
+        mode: 'create',
+        nodo: null,
+        values: {
+          idTipoNodo: '',
+          texto: '',
+          esNodoInicial: false,
+          orden: '',
+          idContenidoCronograma: '',
+        },
+        errors: {},
+        saving: false,
+        saveError: '',
+      },
+    });
+
+    expect(html).toContain('Contenido asociado');
+    expect(html).toContain('Video 1 · Semana 1');
+  });
+
+  it('un nodo con contenido asociado lo muestra en la lista de solo lectura', () => {
+    const html = render({
+      status: 'ready',
+      arbol: {
+        ...arbol,
+        nodos: [
+          { ...arbol.nodos[0], idContenidoCronograma: 'cc-1' },
+          arbol.nodos[1],
+        ],
+      },
+      contenidosCronograma: [
+        {
+          id_contenido_cronograma: 'cc-1',
+          id_contenido: 'c-1',
+          nombre_contenido: 'Video 1',
+          id_unidad_temporal: 'ut-1',
+          nombre_unidad: 'Semana 1',
+          orden_unidad: 1,
+        },
+      ],
+    });
+
+    expect(html).toContain('Video 1 · Semana 1');
   });
 
   it('muestra el aviso de éxito tras guardar', () => {

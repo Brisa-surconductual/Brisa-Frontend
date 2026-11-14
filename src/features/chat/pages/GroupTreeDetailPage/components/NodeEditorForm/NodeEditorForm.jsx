@@ -9,8 +9,10 @@ import { ChatAdminNotice } from '../../../../components/ChatAdminNotice/index.js
 
 /*
  * Crear o editar un nodo de un flujo en borrador (RF-25). Edita el tipo,
- * el texto, si es el nodo inicial y el orden. Los errores van en texto,
- * junto a cada campo.
+ * el texto, si es el nodo inicial, el orden y, opcionalmente, el
+ * contenido asociado (solo contenido ya programado en un cronograma,
+ * vía `contenidos_cronograma`). Los errores van en texto, junto a cada
+ * campo.
  */
 export function NodeEditorForm({
   mode,
@@ -19,6 +21,7 @@ export function NodeEditorForm({
   saving,
   saveError,
   tiposNodo,
+  contenidosCronograma,
   onChange,
   onSubmit,
   onCancel,
@@ -106,6 +109,20 @@ export function NodeEditorForm({
           error={errors.orden}
           hint="Opcional. Número entero desde 1."
           onChange={(event) => onChange('orden', event.target.value)}
+        />
+
+        <SelectField
+          id="nodo-contenido-cronograma"
+          label="Contenido asociado"
+          disabled={saving}
+          value={values.idContenidoCronograma}
+          options={contenidosCronograma}
+          placeholder="Sin contenido asociado"
+          hint="Solo contenido ya programado en una unidad temporal de un cronograma."
+          error={errors.idContenidoCronograma}
+          onChange={(event) =>
+            onChange('idContenidoCronograma', event.target.value)
+          }
         />
 
         <Checkbox
