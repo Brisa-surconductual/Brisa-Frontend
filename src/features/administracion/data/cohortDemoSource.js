@@ -168,6 +168,21 @@ export const removeCohortParticipant = (cohortId, participantId) =>
     getParticipantStore().remove(cohortId, participantId, { findCohort: demo.findCohort }),
   );
 
+/*
+ * Asociaciones actuales de una cohorte, solo { id, code }, o null si la
+ * cohorte no existe. Lectura síncrona y sin escenarios: la usa la fuente
+ * de seguimiento de demostración para cruzar sus indicadores con las
+ * mismas asociaciones en memoria (el backend hará ese cruce). No expone
+ * estados de elegibilidad.
+ */
+export function getDemoCohortMembers(cohortId) {
+  if (!getStore().findCohort(cohortId)) return null;
+
+  return getParticipantStore()
+    .listByCohort(cohortId)
+    .map(({ id, code }) => Object.freeze({ id, code }));
+}
+
 // Solo para pruebas automatizadas: simula una recarga de la aplicación.
 export function resetDemoSource() {
   store = null;

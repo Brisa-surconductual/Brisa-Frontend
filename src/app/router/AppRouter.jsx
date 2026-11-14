@@ -45,6 +45,7 @@ import {
   CohortDetailPage,
   CohortFormPage,
   CohortListPage,
+  ParticipantTrackingPage,
 } from '@/features/administracion/index.js';
 
 import { RequireAuth } from './RequireAuth.jsx';
@@ -264,6 +265,11 @@ export function AppRouter() {
               <Route
                 path="administrativo/cohortes/:idCohorte"
                 element={<CohortDetailPage />}
+              />
+
+              <Route
+                path="administrativo/cohortes/:idCohorte/seguimiento"
+                element={<ParticipantTrackingPage />}
               />
 
               <Route

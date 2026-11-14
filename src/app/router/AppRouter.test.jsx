@@ -2,12 +2,22 @@ import { describe, expect, it } from 'vitest';
 import { createRoutesFromChildren, matchRoutes } from 'react-router-dom';
 
 import { SchedulePanelPage, CreateTemporalUnitPage, ScheduleManagementPage } from '@/features/cronograma/index.js';
-import { AuditLogPage, CohortDetailPage, CohortFormPage, CohortListPage } from '@/features/administracion/index.js';
+import {
+  AuditLogPage,
+  CohortDetailPage,
+  CohortFormPage,
+  CohortListPage,
+  ParticipantTrackingPage,
+} from '@/features/administracion/index.js';
 import { USER_ROLE } from '@/features/users/types/authTypes.js';
 import { DASHBOARD_SHORTCUTS } from '@/features/users/pages/PsychologyHomePage/data/psychologyStats.js';
 
 import { AdminLayout } from '../layouts/AdminLayout/index.js';
-import { ADMIN_NAV_ITEMS } from '../layouts/AdminLayout/adminNavigation.js';
+import {
+  ADMIN_NAV_ITEMS,
+  ADMIN_SECTION,
+  getActiveAdminSection,
+} from '../layouts/AdminLayout/adminNavigation.js';
 import { ProtectedLayout } from '../layouts/ProtectedLayout/index.js';
 import { StudentLayout } from '../layouts/StudentLayout/index.js';
 import { STUDENT_NAV_ITEMS } from '../layouts/StudentLayout/studentNavigation.js';
@@ -75,6 +85,7 @@ const ADMIN_PATHS = Object.freeze([
   '/app/administrativo/cohortes/nueva',
   '/app/administrativo/cohortes/co-1',
   '/app/administrativo/cohortes/co-1/editar',
+  '/app/administrativo/cohortes/co-1/seguimiento',
   '/app/administrativo/auditoria',
   '/app/administrativo/chat/modalidad',
   '/app/administrativo/chat/arboles',
@@ -157,6 +168,17 @@ describe('Rutas administrativas protegidas', () => {
     expect(
       match('/app/administrativo/cohortes/demo-temporal-1/editar').at(-1).route.element.type,
     ).toBe(CohortFormPage);
+  });
+
+  it('el seguimiento por cohorte (RF-142) monta su página con idCohorte y mantiene Cohortes activa', () => {
+    const leaf = match('/app/administrativo/cohortes/demo-cohorte-b/seguimiento').at(-1);
+
+    expect(leaf.route.element.type).toBe(ParticipantTrackingPage);
+    expect(leaf.params).toEqual({ idCohorte: 'demo-cohorte-b' });
+    expect(getActiveAdminSection('/app/administrativo/cohortes/demo-cohorte-b/seguimiento')).toBe(
+      ADMIN_SECTION.COHORTES,
+    );
+    expect(ADMIN_NAV_ITEMS.map(({ label }) => label)).not.toContain('Seguimiento');
   });
 
   it('la auditoría (RF-123) se declara una sola vez y monta su página', () => {
