@@ -18,6 +18,9 @@ export const initialTreeDetailState = Object.freeze({
   error: '',
   reloadKey: 0,
   tiposNodo: [],
+  // Catálogo crudo de `contenidos_cronograma` (RF-25): contenido ya
+  // asociado a una unidad temporal, disponible para vincular a un nodo.
+  contenidosCronograma: [],
   editor: EDITOR_CERRADO,
   notice: '',
   // Cambio de estado del flujo (publicar/archivar): confirmación pendiente,
@@ -39,7 +42,11 @@ export function treeDetailReducer(state, action) {
       return { ...state, status: 'loading', reloadKey: state.reloadKey + 1 };
 
     case 'CATALOG':
-      return { ...state, tiposNodo: action.tiposNodo };
+      return {
+        ...state,
+        tiposNodo: action.tiposNodo,
+        contenidosCronograma: action.contenidosCronograma,
+      };
 
     case 'EDITOR_OPEN_CREATE':
       return {

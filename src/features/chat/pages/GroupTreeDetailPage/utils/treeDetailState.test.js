@@ -45,6 +45,26 @@ describe('treeDetailReducer · carga', () => {
   });
 });
 
+describe('treeDetailReducer · catálogos', () => {
+  it('arranca sin tipos de nodo ni contenidos de cronograma', () => {
+    expect(initialTreeDetailState.tiposNodo).toEqual([]);
+    expect(initialTreeDetailState.contenidosCronograma).toEqual([]);
+  });
+
+  it('guarda los tipos de nodo y los contenidos de cronograma del catálogo', () => {
+    const next = reduce(initialTreeDetailState, {
+      type: 'CATALOG',
+      tiposNodo: [{ value: 't-1', label: 'MENSAJE' }],
+      contenidosCronograma: [{ id_contenido_cronograma: 'cc-1' }],
+    });
+
+    expect(next.tiposNodo).toEqual([{ value: 't-1', label: 'MENSAJE' }]);
+    expect(next.contenidosCronograma).toEqual([
+      { id_contenido_cronograma: 'cc-1' },
+    ]);
+  });
+});
+
 describe('treeDetailReducer · editor de nodos', () => {
   it('abrir para crear parte de valores vacíos', () => {
     const next = reduce(initialTreeDetailState, { type: 'EDITOR_OPEN_CREATE' });
@@ -65,6 +85,7 @@ describe('treeDetailReducer · editor de nodos', () => {
       texto: 'Hola',
       esNodoInicial: false,
       orden: '3',
+      idContenidoCronograma: '',
     });
   });
 

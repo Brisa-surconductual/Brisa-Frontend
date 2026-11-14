@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  nombreContenidoCronograma,
+  opcionesContenidoCronograma,
   opcionesTipoNodo,
   payloadActualizarNodo,
   payloadCrearNodo,
@@ -17,7 +19,19 @@ const nodo = {
   contenido: { texto: 'Hola', otra: 'clave' },
   esNodoInicial: true,
   orden: 2,
+  idContenidoCronograma: null,
 };
+
+const catalogoContenidos = [
+  {
+    id_contenido_cronograma: 'cc-1',
+    id_contenido: 'c-1',
+    nombre_contenido: 'Video 1',
+    id_unidad_temporal: 'ut-1',
+    nombre_unidad: 'Semana 1',
+    orden_unidad: 1,
+  },
+];
 
 describe('validarNodo', () => {
   it('exige tipo y texto', () => {
@@ -85,6 +99,47 @@ describe('payloads', () => {
     });
     expect(payloadActualizarNodo(nodo, valoresDesdeNodo(nodo))).toBeNull();
   });
+
+  it('crear: envía id_contenido_cronograma solo si se eligió', () => {
+    const valores = {
+      idTipoNodo: 't-1',
+      texto: 'Hola',
+      esNodoInicial: false,
+      orden: '',
+      idContenidoCronograma: '',
+    };
+
+    expect(payloadCrearNodo(valores)).not.toHaveProperty(
+      'id_contenido_cronograma',
+    );
+    expect(
+      payloadCrearNodo({ ...valores, idContenidoCronograma: 'cc-1' })
+        .id_contenido_cronograma,
+    ).toBe('cc-1');
+  });
+
+  it('editar: elegir un contenido asociado nuevo envía el cambio', () => {
+    const valores = {
+      ...valoresDesdeNodo(nodo),
+      idContenidoCronograma: 'cc-1',
+    };
+
+    expect(payloadActualizarNodo(nodo, valores)).toEqual({
+      id_contenido_cronograma: 'cc-1',
+    });
+  });
+
+  it('editar: limpiar el contenido asociado envía null', () => {
+    const conContenido = { ...nodo, idContenidoCronograma: 'cc-1' };
+    const valores = {
+      ...valoresDesdeNodo(conContenido),
+      idContenidoCronograma: '',
+    };
+
+    expect(payloadActualizarNodo(conContenido, valores)).toEqual({
+      id_contenido_cronograma: null,
+    });
+  });
 });
 
 describe('opcionesTipoNodo', () => {
@@ -93,5 +148,28 @@ describe('opcionesTipoNodo', () => {
       opcionesTipoNodo([{ id_tipo_nodo: 'a', nombre: 'MENSAJE' }]),
     ).toEqual([{ value: 'a', label: 'MENSAJE' }]);
     expect(opcionesTipoNodo(undefined)).toEqual([]);
+  });
+});
+
+describe('opcionesContenidoCronograma', () => {
+  it('convierte el catálogo en opciones con contenido y unidad', () => {
+    expect(opcionesContenidoCronograma(catalogoContenidos)).toEqual([
+      { value: 'cc-1', label: 'Video 1 · Semana 1' },
+    ]);
+    expect(opcionesContenidoCronograma(undefined)).toEqual([]);
+  });
+});
+
+describe('nombreContenidoCronograma', () => {
+  it('resuelve el nombre y la unidad de un contenido asociado', () => {
+    expect(nombreContenidoCronograma(catalogoContenidos, 'cc-1')).toBe(
+      'Video 1 · Semana 1',
+    );
+  });
+
+  it('devuelve vacío sin id o sin coincidencia en el catálogo', () => {
+    expect(nombreContenidoCronograma(catalogoContenidos, null)).toBe('');
+    expect(nombreContenidoCronograma(catalogoContenidos, 'cc-x')).toBe('');
+    expect(nombreContenidoCronograma(undefined, 'cc-1')).toBe('');
   });
 });

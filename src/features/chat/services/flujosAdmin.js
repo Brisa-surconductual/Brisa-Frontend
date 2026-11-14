@@ -130,6 +130,7 @@ export function mapNodo(nodo) {
     texto: textoDelNodo(nodo.contenido),
     esNodoInicial: nodo.es_nodo_inicial === true,
     orden: nodo.orden ?? null,
+    idContenidoCronograma: nodo.id_contenido_cronograma ?? null,
     fechaCreacion: nodo.fecha_creacion,
   });
 }

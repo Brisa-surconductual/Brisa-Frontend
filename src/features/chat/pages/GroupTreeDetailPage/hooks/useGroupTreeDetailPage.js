@@ -67,7 +67,8 @@ export function useGroupTreeDetailPage() {
     };
   }, [flowId, reloadKey]);
 
-  // Tipos de nodo del catálogo del backend, para el selector del formulario.
+  // Catálogos del backend para el selector de tipo de nodo y de contenido
+  // asociado (RF-25): solo contenido ya programado en un cronograma.
   useEffect(() => {
     let cancelado = false;
 
@@ -77,6 +78,7 @@ export function useGroupTreeDetailPage() {
           dispatch({
             type: 'CATALOG',
             tiposNodo: opcionesTipoNodo(catalogos.tipos_nodo),
+            contenidosCronograma: catalogos.contenidos_cronograma ?? [],
           });
         }
       })

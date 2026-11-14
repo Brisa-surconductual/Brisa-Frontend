@@ -8,7 +8,9 @@ import {
 } from '../chatApiUtils.js';
 
 // RF-25: GET /chat/admin/catalogos. Responde `{ data: { tipos_nodo,
-// tipos_entrada, reglas_validacion, enums } }`.
+// tipos_entrada, reglas_validacion, contenidos_cronograma, enums } }`.
+// `contenidos_cronograma`: contenido ya asociado a una unidad temporal de
+// un cronograma, disponible para vincular a un nodo.
 export async function obtenerCatalogos() {
   try {
     const response = await apiClient.get(`${CHAT}/admin/catalogos`);
