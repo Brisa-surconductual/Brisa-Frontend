@@ -3,10 +3,14 @@ import { BooleanoInput } from './BooleanoInput.jsx';
 import { booleano } from './booleano.js';
 import { EscalaInput } from './EscalaInput.jsx';
 import { escala } from './escala.js';
+import { FechaHoraInput } from './FechaHoraInput.jsx';
+import { fechaHora } from './fechaHora.js';
 import { NumericoInput } from './NumericoInput.jsx';
 import { numerico } from './numerico.js';
 import { MultiseleccionInput } from './MultiseleccionInput.jsx';
 import { multiseleccion } from './multiseleccion.js';
+import { TextoLibreInput } from './TextoLibreInput.jsx';
+import { textoLibre } from './textoLibre.js';
 import { OpcionUnicaInput } from './OpcionUnicaInput.jsx';
 import { opcionUnica } from './opcionUnica.js';
 
@@ -38,5 +42,13 @@ export const REGISTRO_ENTRADAS = Object.freeze({
   [TIPO_ENTRADA.NUMERICO]: Object.freeze({
     Componente: NumericoInput,
     ...numerico,
+  }),
+  [TIPO_ENTRADA.FECHA_HORA]: Object.freeze({
+    Componente: FechaHoraInput,
+    ...fechaHora,
+  }),
+  [TIPO_ENTRADA.TEXTO_LIBRE]: Object.freeze({
+    Componente: TextoLibreInput,
+    ...textoLibre,
   }),
 });

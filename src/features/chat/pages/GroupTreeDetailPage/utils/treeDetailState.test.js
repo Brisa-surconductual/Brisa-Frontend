@@ -118,3 +118,62 @@ describe('treeDetailReducer · editor de nodos', () => {
     expect(next.editor.mode).toBe('closed');
   });
 });
+
+describe('treeDetailReducer · cambio de estado del flujo', () => {
+  it('arranca sin confirmación pendiente ni error', () => {
+    expect(initialTreeDetailState).toMatchObject({
+      confirmEstado: null,
+      cambiandoEstado: false,
+      errorEstado: '',
+    });
+  });
+
+  it('abrir y cerrar la confirmación', () => {
+    const abierta = reduce(initialTreeDetailState, {
+      type: 'ESTADO_CONFIRM_OPEN',
+      accion: 'PUBLICAR',
+    });
+
+    expect(abierta.confirmEstado).toBe('PUBLICAR');
+    expect(
+      reduce(abierta, { type: 'ESTADO_CONFIRM_CLOSE' }).confirmEstado,
+    ).toBeNull();
+  });
+
+  it('una acción exitosa cierra la confirmación, avisa y recarga el árbol', () => {
+    const next = reduce(
+      {
+        ...initialTreeDetailState,
+        cambiandoEstado: true,
+        confirmEstado: 'PUBLICAR',
+      },
+      { type: 'ESTADO_ACCION_OK', message: 'Flujo publicado.' },
+    );
+
+    expect(next).toMatchObject({
+      cambiandoEstado: false,
+      confirmEstado: null,
+      notice: 'Flujo publicado.',
+      status: 'loading',
+      reloadKey: 1,
+    });
+  });
+
+  it('una acción fallida muestra el mensaje y no recarga', () => {
+    const next = reduce(
+      {
+        ...initialTreeDetailState,
+        cambiandoEstado: true,
+        confirmEstado: 'ARCHIVAR',
+      },
+      { type: 'ESTADO_ACCION_ERROR', message: 'El estado no lo permite.' },
+    );
+
+    expect(next).toMatchObject({
+      cambiandoEstado: false,
+      confirmEstado: null,
+      errorEstado: 'El estado no lo permite.',
+      reloadKey: 0,
+    });
+  });
+});

@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { CHAT_CLIENT_ERROR, createChatApiError } from '../api/chatApiUtils.js';
 
 import {
+  ACCION_FLUJO,
+  accionesEstadoDisponibles,
   describirCondicion,
   describirErrorAdmin,
   mapArbol,
@@ -96,6 +98,25 @@ describe('describirErrorAdmin', () => {
     expect(
       describirErrorAdmin(createChatApiError({ code: 'X', status: 500 })),
     ).toMatch(/No fue posible/);
+  });
+});
+
+describe('accionesEstadoDisponibles', () => {
+  it('un borrador puede publicarse o archivarse', () => {
+    expect(accionesEstadoDisponibles('BORRADOR')).toEqual([
+      ACCION_FLUJO.PUBLICAR,
+      ACCION_FLUJO.ARCHIVAR,
+    ]);
+  });
+
+  it('un publicado solo puede archivarse (no hay despublicar)', () => {
+    expect(accionesEstadoDisponibles('PUBLICADO')).toEqual([
+      ACCION_FLUJO.ARCHIVAR,
+    ]);
+  });
+
+  it('un archivado no ofrece ninguna acción: es un estado sin retorno', () => {
+    expect(accionesEstadoDisponibles('ARCHIVADO')).toEqual([]);
   });
 });
 

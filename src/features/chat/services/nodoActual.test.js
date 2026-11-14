@@ -101,6 +101,14 @@ describe('mapNodoActual: entrada (A-014)', () => {
     expect(nodo.entrada).toMatchObject({ min: 0, max: 10, paso: 1 });
   });
 
+  it('en FECHA_HORA min y max conservan el texto (D5)', () => {
+    const { nodo } = mapNodoActual(
+      conEntrada({ tipo: 'FECHA_HORA', min: '2026-10-01', max: 5 }),
+    );
+
+    expect(nodo.entrada).toMatchObject({ min: '2026-10-01', max: null });
+  });
+
   it.each(['abc', '', '  ', null, undefined, '2026-11-08'])(
     'min %j no numérico queda en null',
     (min) => {

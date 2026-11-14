@@ -2,12 +2,17 @@ import { useEffect, useReducer } from 'react';
 import { useParams } from 'react-router-dom';
 
 import { actualizarNodo } from '../../../api/arbol/actualizarNodo.js';
+import { archivarFlujo } from '../../../api/arbol/archivarFlujo.js';
 import { crearNodo } from '../../../api/arbol/crearNodo.js';
 import { obtenerArbolFlujo } from '../../../api/arbol/obtenerArbolFlujo.js';
 import { obtenerCatalogos } from '../../../api/arbol/obtenerCatalogos.js';
+import { publicarFlujo } from '../../../api/arbol/publicarFlujo.js';
 import {
+  ACCION_FLUJO,
+  accionesEstadoDisponibles,
   describirErrorAdmin,
   mapArbol,
+  MENSAJE_ACCION_FLUJO,
 } from '../../../services/flujosAdmin.js';
 import {
   opcionesTipoNodo,
@@ -20,6 +25,17 @@ import {
   initialTreeDetailState,
   treeDetailReducer,
 } from '../utils/treeDetailState.js';
+
+function ejecutarAccionEstado(accion, idFlujo) {
+  switch (accion) {
+    case ACCION_FLUJO.PUBLICAR:
+      return publicarFlujo(idFlujo);
+    case ACCION_FLUJO.ARCHIVAR:
+      return archivarFlujo(idFlujo);
+    default:
+      throw new Error(`Acción desconocida: ${accion}`);
+  }
+}
 
 async function cargarArbol(dispatch, idFlujo, estaCancelado) {
   try {
@@ -113,10 +129,29 @@ export function useGroupTreeDetailPage() {
     }
   }
 
+  // Publicar y archivar piden confirmación antes de ejecutarse.
+  async function cambiarEstado(accion) {
+    dispatch({ type: 'ESTADO_ACCION_START' });
+
+    try {
+      await ejecutarAccionEstado(accion, flowId);
+      dispatch({
+        type: 'ESTADO_ACCION_OK',
+        message: MENSAJE_ACCION_FLUJO[accion],
+      });
+    } catch (error) {
+      dispatch({
+        type: 'ESTADO_ACCION_ERROR',
+        message: describirErrorAdmin(error),
+      });
+    }
+  }
+
   return {
     ...state,
     // Solo un borrador se puede editar (el backend rechaza el resto).
     canEdit: arbol?.flujo.estado === ESTADO_FLUJO.BORRADOR,
+    accionesEstado: arbol ? accionesEstadoDisponibles(arbol.flujo.estado) : [],
     retry: () => dispatch({ type: 'RELOAD' }),
     openCreate: () => dispatch({ type: 'EDITOR_OPEN_CREATE' }),
     openEdit: (nodo) => dispatch({ type: 'EDITOR_OPEN_EDIT', nodo }),
@@ -124,5 +159,9 @@ export function useGroupTreeDetailPage() {
     changeField: (field, value) =>
       dispatch({ type: 'EDITOR_CHANGE', field, value }),
     submitEditor,
+    solicitarCambioEstado: (accion) =>
+      dispatch({ type: 'ESTADO_CONFIRM_OPEN', accion }),
+    cancelarCambioEstado: () => dispatch({ type: 'ESTADO_CONFIRM_CLOSE' }),
+    confirmarCambioEstado: () => cambiarEstado(state.confirmEstado),
   };
 }

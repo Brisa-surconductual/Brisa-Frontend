@@ -9,9 +9,14 @@ import { REGISTRO_ENTRADAS } from '../NodeInput/registroEntradas.js';
 
 import { resolverRespuesta } from './resolverRespuesta.js';
 
-// D9: texto de interfaz, no un error de API. Se va con FE-M03-04b.
+// D9: texto de interfaz, no un error de API. Se queda para tipos que la
+// aplicación no conoce: un tipo nuevo del backend no rompe la pantalla.
 const AVISO_NO_DISPONIBLE =
   'Esta pregunta todavía no se puede responder en la aplicación.';
+
+// Controles que pueden recibir el foco tras un 400 si no hay opción
+// elegida.
+export const SELECTOR_FOCO = 'input, textarea, button';
 
 // Quien lo usa debe montarlo con una `key` por nodo: al cambiar de nodo,
 // React reinicia el valor sin efectos. Tras un 400 la `key` no cambia y la
@@ -36,7 +41,7 @@ export function NodeInputForm({
     const form = formRef.current;
     (
       form?.querySelector('[data-elegida]') ??
-      form?.querySelector('input, button')
+      form?.querySelector(SELECTOR_FOCO)
     )?.focus();
   }, [errorExterno, enviando]);
 

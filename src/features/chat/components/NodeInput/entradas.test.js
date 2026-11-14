@@ -1,14 +1,38 @@
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import process from 'node:process';
 
 import { TIPO_ENTRADA } from '../../types/index.js';
 import { resolverRespuesta } from '../NodeInputForm/resolverRespuesta.js';
 import { opcionesBooleano } from './booleano.js';
+import { ayudaFechaHora, fechaHora } from './fechaHora.js';
 import { alternarSeleccion, textoAyuda } from './multiseleccion.js';
 import { ayudaNumerico, modoTeclado, numerico } from './numerico.js';
 import { REGISTRO_ENTRADAS } from './registroEntradas.js';
+import { contador } from './textoLibre.js';
 
-const { OPCION_UNICA, MULTISELECCION, BOOLEANO, ESCALA, NUMERICO } =
-  TIPO_ENTRADA;
+const {
+  OPCION_UNICA,
+  MULTISELECCION,
+  BOOLEANO,
+  ESCALA,
+  NUMERICO,
+  TEXTO_LIBRE,
+  CONTINUAR,
+} = TIPO_ENTRADA;
+
+// D15: los casos de fecha suponen Bogotá (UTC−5, sin horario de verano);
+// se restaura la zona original para no afectar otras pruebas.
+const TZ_ORIGINAL = process.env.TZ;
+beforeAll(() => {
+  process.env.TZ = 'America/Bogota';
+});
+afterAll(() => {
+  if (TZ_ORIGINAL === undefined) delete process.env.TZ;
+  else process.env.TZ = TZ_ORIGINAL;
+});
+
+// Intl separa "p. m." con espacios especiales según la versión de ICU.
+const espacios = (texto) => texto.replace(/\s/g, ' ');
 
 const opciones = [
   { valor: 'si', etiqueta: 'Sí, claro' },
@@ -16,9 +40,11 @@ const opciones = [
 ];
 
 describe('registro', () => {
-  it('tiene los 5 tipos de esta parte, con claves de TIPO_ENTRADA', () => {
+  it('tiene una entrada por cada tipo de RF-27 (CONTINUAR va aparte)', () => {
     expect(Object.keys(REGISTRO_ENTRADAS).sort()).toEqual(
-      [BOOLEANO, ESCALA, NUMERICO, MULTISELECCION, OPCION_UNICA].sort(),
+      Object.values(TIPO_ENTRADA)
+        .filter((tipo) => tipo !== CONTINUAR)
+        .sort(),
     );
   });
 
@@ -108,6 +134,88 @@ it('ayudaNumerico y modoTeclado leen la configuración', () => {
   expect(ayudaNumerico({})).toBeNull();
   expect(modoTeclado({ paso: 1 })).toBe('numeric');
   expect(modoTeclado({ paso: null })).toBe('decimal');
+});
+
+describe('fechaHora (D3 a D6)', () => {
+  it.each([
+    ['FECHA_HORA', '2026-11-08T14:30', '2026-11-08T14:30:00-05:00'],
+    ['FECHA_HORA', '2026-11-08T14:30:15', '2026-11-08T14:30:15-05:00'],
+    [null, '2026-11-08T14:30', '2026-11-08T14:30:00-05:00'],
+    ['FECHA', '2026-11-08', '2026-11-08'],
+    ['HORA', '14:30', '14:30'],
+    ['FECHA', '', null],
+    ['HORA', null, null],
+  ])('normalizar %s %j → %j (D4)', (formato, valor, esperado) => {
+    expect(fechaHora.normalizar({ formato }, valor)).toBe(esperado);
+  });
+
+  it('la burbuja de 2026-10-07 dice el 7, no el 6 (D6)', () => {
+    const texto = fechaHora.textoRespuesta({ formato: 'FECHA' }, '2026-10-07');
+    expect(texto).toBe('7 de octubre de 2026');
+  });
+
+  it('la burbuja de HORA y FECHA_HORA usa la hora escrita', () => {
+    expect(
+      espacios(fechaHora.textoRespuesta({ formato: 'HORA' }, '14:30')),
+    ).toBe('2:30 p. m.');
+    expect(
+      espacios(fechaHora.textoRespuesta({}, '2026-11-08T14:30:00-05:00')),
+    ).toMatch(/^8 de noviembre de 2026.*2:30 p\. m\.$/);
+  });
+
+  it('un valor que no se puede leer se muestra tal cual', () => {
+    expect(fechaHora.textoRespuesta({ formato: 'FECHA' }, 'ayer')).toBe('ayer');
+  });
+
+  it('ayudaFechaHora pinta min y max de texto (D5)', () => {
+    expect(ayudaFechaHora({ formato: 'FECHA', min: '2026-10-01' })).toBe(
+      'Desde el 1 de octubre de 2026',
+    );
+    expect(
+      ayudaFechaHora({
+        formato: 'FECHA',
+        min: '2026-10-01',
+        max: '2026-10-31',
+      }),
+    ).toBe('Entre el 1 de octubre de 2026 y el 31 de octubre de 2026');
+    expect(ayudaFechaHora({ formato: 'FECHA', min: null })).toBeNull();
+  });
+});
+
+describe('textoLibre (D7, D8, D14)', () => {
+  const tipo = () => REGISTRO_ENTRADAS[TEXTO_LIBRE];
+
+  it('envía y muestra el texto idéntico, con saltos de línea', () => {
+    const texto = '  Hola,\nayer fue difícil.\n\n';
+    expect(resolverRespuesta({}, tipo(), texto)).toEqual({
+      valor: texto,
+      textoRespuesta: texto,
+    });
+  });
+
+  it('solo espacios viaja como null', () => {
+    expect(resolverRespuesta({}, tipo(), ' \n\t ')).toEqual({
+      valor: null,
+      textoRespuesta: null,
+    });
+  });
+
+  it('520 caracteres con máximo 500 se envían completos', () => {
+    const texto = 'a'.repeat(520);
+    expect(resolverRespuesta({ maxCaracteres: 500 }, tipo(), texto).valor).toBe(
+      texto,
+    );
+  });
+
+  it.each([
+    [{ maxCaracteres: 500 }, 'x'.repeat(12), '12 de 500 caracteres'],
+    [{ maxCaracteres: 500 }, 'x', '1 de 500 caracteres'],
+    [{ maxCaracteres: null }, 'x'.repeat(12), '12 caracteres'],
+    [{ maxCaracteres: null }, 'x', '1 carácter'],
+    [{ maxCaracteres: null }, null, '0 caracteres'],
+  ])('contador con %j y %j → %s', (entrada, valor, texto) => {
+    expect(contador(entrada, valor)).toBe(texto);
+  });
 });
 
 describe('resolverRespuesta', () => {

@@ -20,6 +20,11 @@ export const initialTreeDetailState = Object.freeze({
   tiposNodo: [],
   editor: EDITOR_CERRADO,
   notice: '',
+  // Cambio de estado del flujo (publicar/archivar): confirmación pendiente,
+  // acción en curso y error propio, independientes del editor de nodos.
+  confirmEstado: null, // 'PUBLICAR' | 'ARCHIVAR' | null
+  cambiandoEstado: false,
+  errorEstado: '',
 });
 
 export function treeDetailReducer(state, action) {
@@ -92,6 +97,39 @@ export function treeDetailReducer(state, action) {
         notice: action.message,
         status: 'loading',
         reloadKey: state.reloadKey + 1,
+      };
+
+    case 'ESTADO_CONFIRM_OPEN':
+      return {
+        ...state,
+        confirmEstado: action.accion,
+        notice: '',
+        errorEstado: '',
+      };
+
+    case 'ESTADO_CONFIRM_CLOSE':
+      return { ...state, confirmEstado: null };
+
+    case 'ESTADO_ACCION_START':
+      return { ...state, cambiandoEstado: true, errorEstado: '' };
+
+    case 'ESTADO_ACCION_OK':
+      // Cierra la confirmación y vuelve a consultar el árbol (nuevo estado).
+      return {
+        ...state,
+        cambiandoEstado: false,
+        confirmEstado: null,
+        notice: action.message,
+        status: 'loading',
+        reloadKey: state.reloadKey + 1,
+      };
+
+    case 'ESTADO_ACCION_ERROR':
+      return {
+        ...state,
+        cambiandoEstado: false,
+        confirmEstado: null,
+        errorEstado: action.message,
       };
 
     default:

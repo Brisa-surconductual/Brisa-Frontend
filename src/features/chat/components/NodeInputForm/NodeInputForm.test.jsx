@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { TIPO_ENTRADA } from '../../types/index.js';
-import { NodeInputForm } from './NodeInputForm.jsx';
+import { NodeInputForm, SELECTOR_FOCO } from './NodeInputForm.jsx';
 
 const AVISO = 'Esta pregunta todavía no se puede responder en la aplicación.';
 
@@ -42,7 +42,7 @@ describe('NodeInputForm (D9)', () => {
     expect(render({ nodo: nodo(null, { esTerminal: true }) })).toBe('');
   });
 
-  it.each([TIPO_ENTRADA.FECHA_HORA, TIPO_ENTRADA.TEXTO_LIBRE, 'constructor'])(
+  it.each(['DESCONOCIDO', 'constructor'])(
     '%s no registrado muestra el aviso y no ofrece enviar',
     (tipo) => {
       const html = render({ nodo: nodo({ tipo }) });
@@ -123,6 +123,19 @@ describe('NodeInputForm (D9)', () => {
     expect(html).toContain('Mensaje backend');
     expect(html).toContain(`aria-describedby="${idError}"`);
     expect(html).toContain('aria-invalid="true"');
+  });
+
+  it('tras un 400 el foco puede volver al texto libre (D13)', () => {
+    const html = render({
+      nodo: nodo({ tipo: TIPO_ENTRADA.TEXTO_LIBRE, maxCaracteres: 500 }),
+      errorExterno: { status: 400, codigo: 'FUERA_DE_RANGO', mensaje: 'M' },
+    });
+    // Sin DOM en las pruebas: el <textarea> es el primer control del
+    // formulario y el selector del foco lo incluye.
+    expect(html.search(/<(input|textarea|button)/)).toBe(
+      html.indexOf('<textarea'),
+    );
+    expect(SELECTOR_FOCO.split(', ')).toContain('textarea');
   });
 
   it('con `enviando` todos los botones salen deshabilitados', () => {
