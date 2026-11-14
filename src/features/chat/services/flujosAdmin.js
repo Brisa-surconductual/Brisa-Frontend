@@ -1,5 +1,5 @@
 import { CHAT_CLIENT_ERROR } from '../api/chatApiUtils.js';
-import { NOMBRE_FLUJO_MAX } from '../types/estadoFlujo.js';
+import { ESTADO_FLUJO, NOMBRE_FLUJO_MAX } from '../types/estadoFlujo.js';
 
 const MENSAJE_SIN_CONEXION =
   'No pudimos conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.';
@@ -91,6 +91,33 @@ export function describirCondicion(valor) {
     )
     .join(' · ');
 }
+
+// RF-25: cambio de estado de un flujo grupal. Publicar y archivar piden
+// confirmación en la interfaz (son visibles o irreversibles).
+export const ACCION_FLUJO = Object.freeze({
+  PUBLICAR: 'PUBLICAR',
+  ARCHIVAR: 'ARCHIVAR',
+});
+
+// Qué cambio de estado se puede pedir sobre un flujo grupal:
+// - borrador: publicarlo o archivarlo directamente.
+// - publicado: solo archivarlo (no hay "despublicar").
+// - archivado: ninguna; es un estado sin retorno (03-D/HU-05).
+export function accionesEstadoDisponibles(estado) {
+  switch (estado) {
+    case ESTADO_FLUJO.BORRADOR:
+      return [ACCION_FLUJO.PUBLICAR, ACCION_FLUJO.ARCHIVAR];
+    case ESTADO_FLUJO.PUBLICADO:
+      return [ACCION_FLUJO.ARCHIVAR];
+    default:
+      return [];
+  }
+}
+
+export const MENSAJE_ACCION_FLUJO = Object.freeze({
+  [ACCION_FLUJO.PUBLICAR]: 'Flujo publicado.',
+  [ACCION_FLUJO.ARCHIVAR]: 'Flujo archivado.',
+});
 
 export function mapNodo(nodo) {
   return Object.freeze({

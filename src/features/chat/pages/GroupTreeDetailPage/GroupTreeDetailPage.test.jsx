@@ -49,7 +49,15 @@ const arbol = {
 };
 
 function render(state) {
-  pageState = { ...initialTreeDetailState, retry: () => {}, ...state };
+  pageState = {
+    ...initialTreeDetailState,
+    retry: () => {},
+    accionesEstado: [],
+    solicitarCambioEstado: () => {},
+    cancelarCambioEstado: () => {},
+    confirmarCambioEstado: () => {},
+    ...state,
+  };
 
   return renderToStaticMarkup(
     <MemoryRouter>
@@ -139,5 +147,63 @@ describe('GroupTreeDetailPage (RF-25, vista del árbol)', () => {
     expect(
       render({ status: 'ready', arbol, notice: 'Nodo creado.' }),
     ).toContain('Nodo creado.');
+  });
+});
+
+describe('GroupTreeDetailPage · cambio de estado del flujo', () => {
+  it('un borrador ofrece publicar y archivar', () => {
+    const html = render({
+      status: 'ready',
+      arbol,
+      accionesEstado: ['PUBLICAR', 'ARCHIVAR'],
+    });
+
+    expect(html).toContain('Publicar');
+    expect(html).toContain('Archivar');
+  });
+
+  it('un publicado solo ofrece archivar, nunca despublicar', () => {
+    const html = render({
+      status: 'ready',
+      arbol: { ...arbol, flujo: { ...arbol.flujo, estado: 'PUBLICADO' } },
+      accionesEstado: ['ARCHIVAR'],
+    });
+
+    expect(html).toContain('Archivar');
+    expect(html).not.toContain('Publicar');
+  });
+
+  it('un archivado no ofrece ninguna acción de estado', () => {
+    const html = render({
+      status: 'ready',
+      arbol: { ...arbol, flujo: { ...arbol.flujo, estado: 'ARCHIVADO' } },
+      accionesEstado: [],
+    });
+
+    expect(html).not.toContain('Publicar');
+    expect(html).not.toContain('>Archivar<');
+  });
+
+  it('con una acción pendiente muestra el diálogo de confirmación', () => {
+    const html = render({
+      status: 'ready',
+      arbol,
+      accionesEstado: ['PUBLICAR', 'ARCHIVAR'],
+      confirmEstado: 'PUBLICAR',
+    });
+
+    expect(html).toContain('¿Publicar este flujo?');
+  });
+
+  it('muestra el error propio del cambio de estado', () => {
+    const html = render({
+      status: 'ready',
+      arbol,
+      accionesEstado: ['PUBLICAR', 'ARCHIVAR'],
+      errorEstado: 'El árbol no cumple las condiciones de integridad.',
+    });
+
+    expect(html).toContain('role="alert"');
+    expect(html).toContain('El árbol no cumple las condiciones de integridad.');
   });
 });

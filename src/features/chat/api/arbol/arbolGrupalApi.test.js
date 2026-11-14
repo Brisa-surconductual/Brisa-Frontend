@@ -3,11 +3,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { apiClient } from '@/shared/utils/apiClient.jsx';
 
 import { actualizarNodo } from './actualizarNodo.js';
+import { archivarFlujo } from './archivarFlujo.js';
 import { crearFlujoGrupal } from './crearFlujoGrupal.js';
 import { crearNodo } from './crearNodo.js';
 import { listarFlujos } from './listarFlujos.js';
 import { obtenerArbolFlujo } from './obtenerArbolFlujo.js';
 import { obtenerCatalogos } from './obtenerCatalogos.js';
+import { publicarFlujo } from './publicarFlujo.js';
 
 vi.mock('@/shared/utils/apiClient.jsx', () => ({
   apiClient: { get: vi.fn(), post: vi.fn(), patch: vi.fn() },
@@ -226,6 +228,77 @@ describe('crearNodo y actualizarNodo (RF-25)', () => {
     apiClient.patch.mockResolvedValue({ status: 200, data: { data: {} } });
 
     await expect(actualizarNodo('n-1', { orden: 1 })).rejects.toMatchObject({
+      code: 'RESPUESTA_INVALIDA',
+    });
+  });
+});
+
+describe('publicarFlujo y archivarFlujo (RF-25)', () => {
+  it('publicarFlujo hace POST con cuerpo vacío y devuelve el flujo', async () => {
+    const flujo = { id_flujo: 'f-1', estado: 'PUBLICADO', version: 1 };
+    apiClient.post.mockResolvedValue({ status: 200, data: { data: flujo } });
+
+    await expect(publicarFlujo('f-1')).resolves.toEqual(flujo);
+    expect(apiClient.post).toHaveBeenCalledWith(
+      expect.stringMatching(/\/chat\/admin\/flujos\/f-1\/publicar$/),
+      {},
+    );
+  });
+
+  it('publicarFlujo propaga el 422 de un árbol inválido', async () => {
+    apiClient.post.mockRejectedValue({
+      response: {
+        status: 422,
+        data: {
+          codigo: 'GRAFO_INVALIDO',
+          message: 'El árbol no cumple las condiciones de integridad.',
+          detalles: { sin_nodo_inicial: true, nodos_huerfanos: [], ciclos: [] },
+        },
+      },
+    });
+
+    await expect(publicarFlujo('f-1')).rejects.toMatchObject({
+      status: 422,
+      code: 'GRAFO_INVALIDO',
+      backendMessage: 'El árbol no cumple las condiciones de integridad.',
+    });
+  });
+
+  it('archivarFlujo hace POST con cuerpo vacío y devuelve el flujo', async () => {
+    const flujo = { id_flujo: 'f-1', estado: 'ARCHIVADO' };
+    apiClient.post.mockResolvedValue({ status: 200, data: { data: flujo } });
+
+    await expect(archivarFlujo('f-1')).resolves.toEqual(flujo);
+    expect(apiClient.post).toHaveBeenCalledWith(
+      expect.stringMatching(/\/chat\/admin\/flujos\/f-1\/archivar$/),
+      {},
+    );
+  });
+
+  it('archivarFlujo propaga el 409 de un flujo ya archivado', async () => {
+    apiClient.post.mockRejectedValue({
+      response: {
+        status: 409,
+        data: {
+          codigo: 'ESTADO_INVALIDO',
+          message: 'El estado actual del flujo no permite esta operación.',
+        },
+      },
+    });
+
+    await expect(archivarFlujo('f-1')).rejects.toMatchObject({
+      status: 409,
+      backendMessage: 'El estado actual del flujo no permite esta operación.',
+    });
+  });
+
+  it('rechaza una respuesta sin id_flujo', async () => {
+    apiClient.post.mockResolvedValue({ status: 200, data: { data: {} } });
+
+    await expect(publicarFlujo('f-1')).rejects.toMatchObject({
+      code: 'RESPUESTA_INVALIDA',
+    });
+    await expect(archivarFlujo('f-1')).rejects.toMatchObject({
       code: 'RESPUESTA_INVALIDA',
     });
   });
