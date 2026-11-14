@@ -79,7 +79,7 @@ describe('Lista explícita de campos', () => {
       'c-1',
     );
 
-    expect(result.entries).toEqual([{ code: 'X-1', progress: 40, adherence: 70, activeAlertCount: 1 }]);
+    expect(result.entries).toEqual([{ code: 'X-1', reference: null, progress: 40, adherence: 70, activeAlertCount: 1 }]);
     expect(Object.isFrozen(result.entries[0])).toBe(true);
   });
 
@@ -89,12 +89,26 @@ describe('Lista explícita de campos', () => {
       'c-1',
     ).entries;
 
-    expect(entry).toEqual({ code: '', progress: null, adherence: null, activeAlertCount: null });
+    expect(entry).toEqual({ code: '', reference: null, progress: null, adherence: null, activeAlertCount: null });
   });
 
   it('total y offset inválidos se sustituyen por valores seguros', () => {
     const result = interpretTrackingResponse(response({ total: 'muchos', offset: -1 }), 'c-1');
 
     expect(result).toMatchObject({ total: 1, offset: 0 });
+  });
+});
+
+describe('Referencia opaca de la ficha (RF-128)', () => {
+  it('conserva la referencia recibida como texto, sin derivarla de otros campos', () => {
+    const [entry] = interpretTrackingResponse(response({ items: [item({ reference: ' seg-abc123 ', participantId: 'uuid-interno' })] }), 'c-1').entries;
+
+    expect(entry.reference).toBe('seg-abc123');
+  });
+
+  it.each([[undefined], [''], ['   '], [42], [{ id: 'x' }]])('una referencia ausente o inválida (%s) queda como null', (reference) => {
+    const [entry] = interpretTrackingResponse(response({ items: [item({ reference })] }), 'c-1').entries;
+
+    expect(entry.reference).toBeNull();
   });
 });

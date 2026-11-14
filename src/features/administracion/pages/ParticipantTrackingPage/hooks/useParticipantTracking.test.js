@@ -102,7 +102,7 @@ describe('useParticipantTracking: fuente', () => {
   it('con autorización explícita conserva solo los campos permitidos', async () => {
     await loadWith(source());
 
-    expect(lastValue(PAGE).entries).toEqual([{ code: 'X-1', progress: 40, adherence: 60, activeAlertCount: 2 }]);
+    expect(lastValue(PAGE).entries).toEqual([{ code: 'X-1', reference: null, progress: 40, adherence: 60, activeAlertCount: 2 }]);
     expect(react.setters[PROBLEM]).toHaveBeenLastCalledWith(null);
   });
 });

@@ -8,6 +8,7 @@ import {
   CohortFormPage,
   CohortListPage,
   ParticipantTrackingPage,
+  ParticipantTrackingProfilePage,
 } from '@/features/administracion/index.js';
 import { USER_ROLE } from '@/features/users/types/authTypes.js';
 import { DASHBOARD_SHORTCUTS } from '@/features/users/pages/PsychologyHomePage/data/psychologyStats.js';
@@ -86,6 +87,7 @@ const ADMIN_PATHS = Object.freeze([
   '/app/administrativo/cohortes/co-1',
   '/app/administrativo/cohortes/co-1/editar',
   '/app/administrativo/cohortes/co-1/seguimiento',
+  '/app/administrativo/cohortes/co-1/seguimiento/ref-1',
   '/app/administrativo/auditoria',
   '/app/administrativo/chat/modalidad',
   '/app/administrativo/chat/arboles',
@@ -179,6 +181,19 @@ describe('Rutas administrativas protegidas', () => {
       ADMIN_SECTION.COHORTES,
     );
     expect(ADMIN_NAV_ITEMS.map(({ label }) => label)).not.toContain('Seguimiento');
+  });
+
+  it('la ficha individual (RF-128) monta su página con idCohorte y referencia, y mantiene Cohortes activa', () => {
+    const leaf = match('/app/administrativo/cohortes/demo-cohorte-b/seguimiento/seg-k7m2q9').at(-1);
+
+    expect(leaf.route.element.type).toBe(ParticipantTrackingProfilePage);
+    expect(leaf.params).toEqual({ idCohorte: 'demo-cohorte-b', referencia: 'seg-k7m2q9' });
+    expect(getActiveAdminSection('/app/administrativo/cohortes/demo-cohorte-b/seguimiento/seg-k7m2q9')).toBe(
+      ADMIN_SECTION.COHORTES,
+    );
+    expect(match('/app/administrativo/cohortes/demo-cohorte-b/seguimiento').at(-1).route.element.type).toBe(
+      ParticipantTrackingPage,
+    );
   });
 
   it('la auditoría (RF-123) se declara una sola vez y monta su página', () => {
@@ -351,6 +366,7 @@ describe('Rutas sin cambios', () => {
         ...ADMIN_PATHS.map((path) =>
           path
             .replace(/\/cohortes\/co-1(?=\/|$)/, '/cohortes/:idCohorte')
+            .replace('/seguimiento/ref-1', '/seguimiento/:referencia')
             .replace('/u-1/informacion', '/:participantId/informacion')
             .replace('/c-1/', '/:contentId/')
             .replace('/s-1/unidades/u-1', '/:scheduleId/unidades/:unitId')

@@ -1,7 +1,8 @@
 import { TRACKING_ACCESS, TRACKING_QUERY_ERROR } from '../types/participantTracking.js';
+import { PROFILE_DEMO_SCENARIO, getProfileDemoScenario } from '../utils/profileDemoScenario.js';
 import { TRACKING_DEMO_SCENARIO, getTrackingDemoScenario } from '../utils/trackingDemoScenario.js';
 import { getDemoCohortMembers } from './cohortDemoSource.js';
-import { DEMO_TRACKING_INDICATORS } from './trackingDemoData.js';
+import { DEMO_TRACKING_PROFILES, DEMO_TRACKING_REFERENCES } from './trackingDemoData.js';
 import { applyTrackingQuery } from './trackingDemoQuery.js';
 
 /*
@@ -9,14 +10,16 @@ import { applyTrackingQuery } from './trackingDemoQuery.js';
  * trackingSource.js mediante import() dinámico cuando el modo demo está
  * activo; en producción este módulo no llega al build.
  *
- * Simula al backend de RF-142: cruza las asociaciones actuales de la
- * cohorte (las mismas de E5–E7, en memoria) con indicadores ficticios
- * propios, aplica filtros, orden y paginación, y declara de forma
- * explícita si la consulta está autorizada. Las respuestas de
- * autorización son ficticias: no constituyen seguridad real.
+ * Simula al backend de RF-142 (listado) y RF-128 (ficha): cruza las
+ * asociaciones actuales de la cohorte (las mismas de E5–E7, en memoria)
+ * con un único conjunto de perfiles ficticios, aplica filtros, orden y
+ * paginación, y declara de forma explícita si la consulta está
+ * autorizada. Las respuestas de autorización son ficticias: no
+ * constituyen seguridad real.
  *
- * Los registros incluyen campos adicionales (identificador interno y
- * estado de elegibilidad) para comprobar que la interfaz los descarta.
+ * Las respuestas incluyen campos adicionales (identificador interno,
+ * estado de elegibilidad, datos personales ficticios) para comprobar
+ * que la interfaz los descarta.
  */
 export const TRACKING_DEMO_DELAY_MS = 400;
 
@@ -26,17 +29,23 @@ function codedError(code, message) {
   return Object.assign(new Error(message), { code });
 }
 
+// Valores del listado derivados del perfil: misma fuente que la ficha.
 function rowsFor(cohortId, members) {
-  return members.map((member) => ({
-    cohortId,
-    code: member.code,
-    progress: DEMO_TRACKING_INDICATORS[member.id]?.progress ?? null,
-    adherence: DEMO_TRACKING_INDICATORS[member.id]?.adherence ?? null,
-    activeAlertCount: DEMO_TRACKING_INDICATORS[member.id]?.activeAlertCount ?? null,
-    // Campos que la interfaz debe descartar.
-    participantId: member.id,
-    participationStatus: 'NO_ES_UN_INDICADOR',
-  }));
+  return members.map((member) => {
+    const profile = DEMO_TRACKING_PROFILES[member.id];
+
+    return {
+      cohortId,
+      code: member.code,
+      reference: DEMO_TRACKING_REFERENCES[member.id] ?? null,
+      progress: profile?.progress ?? null,
+      adherence: profile?.adherence ?? null,
+      activeAlertCount: profile ? profile.activeAlerts.length : null,
+      // Campos que la interfaz debe descartar.
+      participantId: member.id,
+      participationStatus: 'NO_ES_UN_INDICADOR',
+    };
+  });
 }
 
 export async function listCohortTracking(cohortId, query) {
@@ -73,4 +82,71 @@ export async function listCohortTracking(cohortId, query) {
   }
 
   return { ...page, access: TRACKING_ACCESS.GRANTED };
+}
+
+function participantFor(reference) {
+  return Object.keys(DEMO_TRACKING_REFERENCES).find((id) => DEMO_TRACKING_REFERENCES[id] === reference) ?? null;
+}
+
+/*
+ * Ficha individual (RF-128). Valida en este orden, como lo haría el
+ * backend: cohorte existente, referencia existente, pertenencia actual a
+ * la cohorte y, por último, existencia de perfil.
+ */
+export async function getParticipantTrackingProfile(cohortId, reference) {
+  const scenario = getProfileDemoScenario();
+
+  if (scenario === PROFILE_DEMO_SCENARIO.LOADING) return new Promise(() => {});
+
+  await pause();
+
+  if (scenario === PROFILE_DEMO_SCENARIO.ERROR) {
+    throw new Error('Error simulado al cargar la ficha de demostración.');
+  }
+
+  if (scenario === PROFILE_DEMO_SCENARIO.UNAVAILABLE) {
+    throw codedError(TRACKING_QUERY_ERROR.MODULE_UNAVAILABLE, 'M05 no disponible en la demostración.');
+  }
+
+  const members = getDemoCohortMembers(cohortId);
+
+  if (!members) {
+    throw codedError(TRACKING_QUERY_ERROR.COHORT_NOT_FOUND, 'Cohorte inexistente en la demostración.');
+  }
+
+  const participantId = participantFor(reference);
+
+  if (!participantId || scenario === PROFILE_DEMO_SCENARIO.NOT_FOUND) {
+    throw codedError(TRACKING_QUERY_ERROR.PARTICIPANT_NOT_FOUND, 'Referencia inexistente en la demostración.');
+  }
+
+  const member = members.find(({ id }) => id === participantId);
+
+  if (!member || scenario === PROFILE_DEMO_SCENARIO.OUTSIDE_COHORT) {
+    throw codedError(TRACKING_QUERY_ERROR.OUTSIDE_COHORT, 'El participante no pertenece a la cohorte en la demostración.');
+  }
+
+  const profile = scenario === PROFILE_DEMO_SCENARIO.NO_PROFILE ? null : DEMO_TRACKING_PROFILES[participantId] ?? null;
+  const response = {
+    access: TRACKING_ACCESS.GRANTED,
+    cohortId,
+    reference,
+    code: member.code,
+    profile: profile && {
+      ...profile,
+      // Campos que la interfaz debe descartar.
+      cravingLevel: 5,
+      diaryText: 'Texto ficticio que nunca debe mostrarse.',
+    },
+    // Campos que la interfaz debe descartar.
+    participantId,
+    email: 'participante.ficticio@example.com',
+    participationStatus: 'NO_ES_UN_INDICADOR',
+  };
+
+  if (scenario === PROFILE_DEMO_SCENARIO.DENIED) return { ...response, access: TRACKING_ACCESS.DENIED };
+  if (scenario === PROFILE_DEMO_SCENARIO.INCONSISTENT) return { ...response, reference: 'seg-otro000' };
+  if (scenario === PROFILE_DEMO_SCENARIO.OTHER_COHORT) return { ...response, cohortId: 'otra-cohorte-ficticia' };
+
+  return response;
 }

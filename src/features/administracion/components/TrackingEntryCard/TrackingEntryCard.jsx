@@ -1,4 +1,5 @@
-import { BellRing, CircleCheck, CircleHelp } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { BellRing, ChevronRight, CircleCheck, CircleHelp } from 'lucide-react';
 
 /*
  * Indicadores de seguimiento de un participante (RF-142), solo consulta.
@@ -6,7 +7,8 @@ import { BellRing, CircleCheck, CircleHelp } from 'lucide-react';
  * (services/trackingResponse.js) y muestra EXCLUSIVAMENTE el código
  * seudonimizado, el nivel de progreso, la tasa de adherencia y las
  * alertas activas. Un indicador ausente se indica como no disponible,
- * sin estimarlo. No ofrece editar ni abrir una ficha individual.
+ * sin estimarlo. No ofrece editar. Con `detailPath` (construido con la
+ * referencia opaca) enlaza a la ficha individual de RF-128.
  */
 function formatPercentage(value) {
   return `${Math.round(value)} %`;
@@ -69,7 +71,7 @@ function AlertsIndicator({ count }) {
   );
 }
 
-export function TrackingEntryCard({ entry }) {
+export function TrackingEntryCard({ entry, detailPath = null }) {
   return (
     <article className="flex h-full flex-col gap-[var(--space-4)] rounded-[var(--radius-xl)] border border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-5)] shadow-[var(--shadow-sm)]">
       <h3 className="m-0 text-[length:var(--font-size-lg)] font-bold [overflow-wrap:anywhere] text-[var(--text-primary)]">
@@ -86,6 +88,19 @@ export function TrackingEntryCard({ entry }) {
         <PercentageIndicator label="Tasa de adherencia" value={entry.adherence} />
         <AlertsIndicator count={entry.activeAlertCount} />
       </dl>
+
+      {detailPath && (
+        <div className="mt-auto border-t border-[var(--surface-border)] pt-[var(--space-3)]">
+          <Link
+            to={detailPath}
+            className="-ml-[var(--space-2)] inline-flex min-h-[44px] w-fit items-center gap-[var(--space-2)] rounded-[var(--radius-md)] px-[var(--space-2)] text-[length:var(--font-size-sm)] font-bold text-[var(--brand-600)] no-underline transition-colors duration-150 hover:bg-[var(--surface-hover)] motion-reduce:transition-none"
+          >
+            Ver ficha
+            <span className="sr-only"> de {entry.code || 'participante sin código'}</span>
+            <ChevronRight size={16} strokeWidth={2} aria-hidden="true" />
+          </Link>
+        </div>
+      )}
     </article>
   );
 }

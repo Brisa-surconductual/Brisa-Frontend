@@ -45,3 +45,15 @@ export function getTrackingSourceMode() {
 export async function listCohortTracking(cohortId, query) {
   return (await loadTrackingDemoSource()).listCohortTracking(cohortId, query);
 }
+
+/*
+ * Ficha individual de seguimiento (RF-128). Devuelve el perfil con su
+ * autorización explícita, su cohorte y su referencia (para comprobar el
+ * aislamiento), o rechaza con `error.code` (TRACKING_QUERY_ERROR).
+ * PENDIENTE de confirmar con el backend: ruta, forma de la respuesta y
+ * de cada indicador, y cómo se traduce el 204 (sin cuerpo) a un
+ * resultado sin perfil.
+ */
+export async function getParticipantTrackingProfile(cohortId, reference) {
+  return (await loadTrackingDemoSource()).getParticipantTrackingProfile(cohortId, reference);
+}

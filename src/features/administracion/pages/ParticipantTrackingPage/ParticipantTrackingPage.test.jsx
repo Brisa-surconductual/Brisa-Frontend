@@ -121,12 +121,23 @@ describe('Seguimiento por cohorte (RF-142): presentación', () => {
     expect(cardOf(withList(), 'X-4')).toMatch(/<svg[^>]*aria-hidden="true"[\s\S]*3 alertas activas/);
   });
 
-  it('no ofrece escritura ni fichas individuales: sin enlaces por participante ni campos de edición', () => {
+  it('no ofrece escritura: sin botones ni campos de edición; sin referencia no hay enlace a la ficha', () => {
     const html = withList();
     const list = html.slice(html.indexOf('<ol'), html.indexOf('</ol>'));
 
     expect(list).not.toMatch(/<a |<button|<input|<textarea|<form/);
     expect(textOf(html)).not.toMatch(/Editar|Eliminar|Exportar|Ver ficha|Marcar como atendida/);
+  });
+
+  it('con referencia opaca, cada tarjeta enlaza a su ficha (RF-128) y solo a ella', () => {
+    const entries = ENTRIES.map((entry, index) => ({ ...entry, reference: index === 2 ? null : `seg-ref${index}` }));
+    const html = withList({ entries });
+    const list = html.slice(html.indexOf('<ol'), html.indexOf('</ol>'));
+
+    expect(list.match(/<a /g)).toHaveLength(3);
+    expect(list).toMatch(/href="\/app\/administrativo\/cohortes\/c-1\/seguimiento\/seg-ref0"[^>]*>Ver ficha<span class="sr-only"> de X-1<\/span>/);
+    expect(cardOf(html, 'X-3')).not.toContain('Ver ficha');
+    expect(list).not.toMatch(/<button|<input|<textarea|<form/);
   });
 });
 

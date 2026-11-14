@@ -10,3 +10,9 @@ export function getCohortDetailPath(cohortId) {
 export function getCohortTrackingPath(cohortId) {
   return `${getCohortDetailPath(cohortId)}/seguimiento`;
 }
+
+// Ficha individual (RF-128). `reference` es la referencia OPACA que da la
+// fuente: nunca un correo, documento, nombre ni UUID interno.
+export function getParticipantTrackingPath(cohortId, reference) {
+  return `${getCohortTrackingPath(cohortId)}/${encodeURIComponent(reference)}`;
+}

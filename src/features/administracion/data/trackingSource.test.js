@@ -5,7 +5,7 @@ import { interpretTrackingResponse } from '../services/trackingResponse.js';
 import { TRACKING_ACCESS, TRACKING_QUERY_ERROR, TRACKING_SOURCE_MODE } from '../types/participantTracking.js';
 import { resetDemoSource } from './cohortDemoSource.js';
 import { createCohort } from './cohortSource.js';
-import { DEMO_TRACKING_INDICATORS } from './trackingDemoData.js';
+import { DEMO_TRACKING_PROFILES } from './trackingDemoData.js';
 import { assignParticipants, removeCohortParticipant } from './participantSource.js';
 import { getTrackingSourceMode, listCohortTracking } from './trackingSource.js';
 
@@ -87,7 +87,7 @@ describe('Relación con la cohorte (demostración)', () => {
     await assignParticipants(created.id, ['demo-candidato-11']);
 
     const [row] = (await listCohortTracking(created.id, all())).items;
-    expect(DEMO_TRACKING_INDICATORS['demo-candidato-11']).toBeUndefined();
+    expect(DEMO_TRACKING_PROFILES['demo-candidato-11']).toBeUndefined();
     expect(row).toMatchObject({ code: 'PART-0011', progress: null, adherence: null, activeAlertCount: null });
   });
 
@@ -97,7 +97,7 @@ describe('Relación con la cohorte (demostración)', () => {
 
     expect(Object.keys(response.items[0])).toEqual(expect.arrayContaining(['participantId', 'participationStatus']));
     expect(interpretTrackingResponse(response, 'demo-cohorte-b').entries[0]).toEqual({
-      code: 'PART-0001', progress: 82, adherence: 91, activeAlertCount: 0,
+      code: 'PART-0001', reference: 'seg-k7m2q9', progress: 82, adherence: 91, activeAlertCount: 0,
     });
   });
 });

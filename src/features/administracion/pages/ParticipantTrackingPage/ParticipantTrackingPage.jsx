@@ -19,16 +19,16 @@ import { ReadOnlyNotice } from '../../components/ReadOnlyNotice/index.js';
 import { TrackingControls } from '../../components/TrackingControls/index.js';
 import { TrackingEntryCard } from '../../components/TrackingEntryCard/index.js';
 import { TrackingPagination } from '../../components/TrackingPagination/index.js';
-import { getCohortDetailPath } from '../../utils/cohortRoutes.js';
+import { getCohortDetailPath, getParticipantTrackingPath } from '../../utils/cohortRoutes.js';
 
 import { TRACKING_PROBLEM, useParticipantTracking } from './hooks/useParticipantTracking.js';
 
 /*
  * Seguimiento de los participantes de una cohorte
  * (/cohortes/:idCohorte/seguimiento, RF-142). Solo consulta: no ofrece
- * editar indicadores ni abrir fichas individuales (RF-128 llegará
- * después). La página solo compone; el estado vive en
- * useParticipantTracking.
+ * editar indicadores. Cada participante con referencia opaca enlaza a
+ * su ficha individual (RF-128). La página solo compone; el estado vive
+ * en useParticipantTracking.
  */
 export function ParticipantTrackingPage() {
   const { idCohorte } = useParams();
@@ -232,7 +232,10 @@ export function ParticipantTrackingPage() {
               <ol className="m-0 grid list-none grid-cols-1 gap-[var(--space-4)] p-0 md:grid-cols-2 xl:grid-cols-3">
                 {entries.map((entry, index) => (
                   <li key={entry.code || `sin-codigo-${index}`}>
-                    <TrackingEntryCard entry={entry} />
+                    <TrackingEntryCard
+                      entry={entry}
+                      detailPath={cohortId && entry.reference ? getParticipantTrackingPath(cohortId, entry.reference) : null}
+                    />
                   </li>
                 ))}
               </ol>

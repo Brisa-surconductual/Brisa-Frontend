@@ -15,3 +15,5 @@ export { CohortDetailPage } from './pages/CohortDetailPage/index.js';
 export { AuditLogPage } from './pages/AuditLogPage/index.js';
 
 export { ParticipantTrackingPage } from './pages/ParticipantTrackingPage/index.js';
+
+export { ParticipantTrackingProfilePage } from './pages/ParticipantTrackingProfilePage/index.js';
