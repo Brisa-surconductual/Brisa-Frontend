@@ -10,6 +10,7 @@ import { ParticipantTrackingProfilePage } from './ParticipantTrackingProfilePage
 import { PROFILE_STATUS } from './hooks/useParticipantTrackingProfile.js';
 
 const hook = vi.hoisted(() => ({ value: null, args: null }));
+const historyHook = vi.hoisted(() => ({ value: null, args: null }));
 
 // Por defecto usa el hook real; cada prueba puede fijar un estado.
 vi.mock('./hooks/useParticipantTrackingProfile.js', async (importOriginal) => {
@@ -19,6 +20,18 @@ vi.mock('./hooks/useParticipantTrackingProfile.js', async (importOriginal) => {
     useParticipantTrackingProfile: (args) => {
       hook.args = args;
       return hook.value ?? actual.useParticipantTrackingProfile(args);
+    },
+  };
+});
+
+// El historial (RF-129) también usa su hook real salvo que la prueba fije un estado.
+vi.mock('./hooks/useAlertHistory.js', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    useAlertHistory: (args) => {
+      historyHook.args = args;
+      return historyHook.value ?? actual.useAlertHistory(args);
     },
   };
 });
@@ -65,6 +78,8 @@ function render(changes, entry = '/app/administrativo/cohortes/c-1/seguimiento/r
 afterEach(() => {
   hook.value = null;
   hook.args = null;
+  historyHook.value = null;
+  historyHook.args = null;
   vi.unstubAllEnvs();
 });
 
@@ -121,7 +136,7 @@ describe('Ficha individual (RF-128): presentación', () => {
 
     expect(html).not.toMatch(/<form|<input|<select|<textarea|<button/);
     expect(html.match(/<a /g)).toHaveLength(1);
-    expect(textOf(html)).not.toMatch(/Editar|Eliminar|Exportar|Marcar como atendida|Historial/);
+    expect(textOf(html)).not.toMatch(/Editar|Eliminar|Exportar|Marcar como atendida|Resolver|Descartar\b|Atender/);
   });
 
   it('no muestra datos personales, internos ni contenido de diario o chat', () => {

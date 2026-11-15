@@ -1,13 +1,20 @@
 import { describe, expect, it } from 'vitest';
 
-import { NOT_CALCULABLE, TRACKING_ALERT_TYPE, TRACKING_TREND } from '../types/participantTracking.js';
+import {
+  ALERT_RESOLUTION_STATUS,
+  NOT_CALCULABLE,
+  TRACKING_ALERT_SOURCE,
+  TRACKING_ALERT_TYPE,
+  TRACKING_TREND,
+} from '../types/participantTracking.js';
 import {
   TRACKING_DEMO_SCENARIO,
   getTrackingDemoScenario,
 } from '../utils/trackingDemoScenario.js';
 import { PROFILE_DEMO_SCENARIO, getProfileDemoScenario } from '../utils/profileDemoScenario.js';
+import { ALERT_HISTORY_DEMO_SCENARIO, getAlertHistoryDemoScenario } from '../utils/alertHistoryDemoScenario.js';
 import { DEMO_PARTICIPANTS } from './participantDemoData.js';
-import { DEMO_TRACKING_PROFILES, DEMO_TRACKING_REFERENCES } from './trackingDemoData.js';
+import { DEMO_ALERT_HISTORY, DEMO_TRACKING_PROFILES, DEMO_TRACKING_REFERENCES } from './trackingDemoData.js';
 
 const PROFILE_FIELDS = ['activeAlerts', 'adherence', 'progress', 'trend', 'updatedAt'];
 
@@ -82,5 +89,58 @@ describe('Escenarios propios del listado y de la ficha', () => {
     expect(getProfileDemoScenario({ VITE_M08_PROFILE_SCENARIO: 'no-disponible' })).toBe(PROFILE_DEMO_SCENARIO.UNAVAILABLE);
     expect(getProfileDemoScenario({ VITE_M08_PROFILE_SCENARIO: 'otro' })).toBe(PROFILE_DEMO_SCENARIO.PROFILE);
     expect(getProfileDemoScenario({ VITE_M08_TRACKING_SCENARIO: 'error' })).toBe(PROFILE_DEMO_SCENARIO.PROFILE);
+  });
+});
+
+describe('Historial de alertas ficticio (RF-129)', () => {
+  const all = Object.values(DEMO_ALERT_HISTORY).flat();
+
+  it('solo tiene los campos de RF-129 y pertenece a participantes con referencia', () => {
+    for (const [id, alerts] of Object.entries(DEMO_ALERT_HISTORY)) {
+      expect(DEMO_TRACKING_REFERENCES[id]).toBeDefined();
+      for (const alert of alerts) expect(Object.keys(alert).sort()).toEqual(['generatedAt', 'resolvedAt', 'source', 'status', 'type']);
+    }
+  });
+
+  it('cubre los cuatro estados, ambos tipos y fuentes, una resuelta sin fecha, valores desconocidos y fechas inválidas', () => {
+    const statuses = new Set(all.map(({ status }) => status));
+
+    for (const status of Object.values(ALERT_RESOLUTION_STATUS)) expect(statuses.has(status)).toBe(true);
+    for (const type of Object.values(TRACKING_ALERT_TYPE)) expect(all.some((alert) => alert.type === type)).toBe(true);
+    for (const source of Object.values(TRACKING_ALERT_SOURCE)) expect(all.some((alert) => alert.source === source)).toBe(true);
+    expect(all.some(({ status, resolvedAt }) => status === ALERT_RESOLUTION_STATUS.RESOLVED && resolvedAt === null)).toBe(true);
+    expect(all.some(({ type }) => !Object.values(TRACKING_ALERT_TYPE).includes(type))).toBe(true);
+    expect(all.some(({ status }) => !Object.values(ALERT_RESOLUTION_STATUS).includes(status))).toBe(true);
+    expect(all.some(({ generatedAt }) => !/(Z|[+-]\d{2}:\d{2})$/.test(generatedAt))).toBe(true);
+    expect(DEMO_ALERT_HISTORY['demo-participante-1']).toEqual([]);
+  });
+
+  it('las alertas activas de cada perfil son exactamente las ACTIVA de su historial', () => {
+    for (const [id, profile] of Object.entries(DEMO_TRACKING_PROFILES)) {
+      const active = DEMO_ALERT_HISTORY[id]
+        .filter(({ status }) => status === ALERT_RESOLUTION_STATUS.ACTIVE)
+        .map(({ type, generatedAt }) => ({ type, generatedAt }));
+      expect(profile.activeAlerts).toEqual(active);
+    }
+  });
+
+  it('no contiene datos personales, identificadores, textos ni datos clínicos', () => {
+    expect(JSON.stringify(DEMO_ALERT_HISTORY)).not.toMatch(/@|correo|nombre|documento|diario|chat|craving_?level|nota|uuid|id"/i);
+  });
+
+  it('es inmutable', () => {
+    expect(Object.isFrozen(DEMO_ALERT_HISTORY)).toBe(true);
+    for (const alerts of Object.values(DEMO_ALERT_HISTORY)) {
+      expect(Object.isFrozen(alerts)).toBe(true);
+      for (const alert of alerts) expect(Object.isFrozen(alert)).toBe(true);
+    }
+  });
+
+  it('el historial lee su propia variable, independiente de la ficha y del listado', () => {
+    expect(getAlertHistoryDemoScenario({ VITE_M08_ALERT_HISTORY_SCENARIO: 'otro-participante' })).toBe(ALERT_HISTORY_DEMO_SCENARIO.OTHER_PARTICIPANT);
+    expect(getAlertHistoryDemoScenario({ VITE_M08_ALERT_HISTORY_SCENARIO: 'otro' })).toBe(ALERT_HISTORY_DEMO_SCENARIO.HISTORY);
+    expect(getAlertHistoryDemoScenario({ VITE_M08_PROFILE_SCENARIO: 'error', VITE_M08_TRACKING_SCENARIO: 'error' })).toBe(ALERT_HISTORY_DEMO_SCENARIO.HISTORY);
+    expect(getProfileDemoScenario({ VITE_M08_ALERT_HISTORY_SCENARIO: 'error' })).toBe(PROFILE_DEMO_SCENARIO.PROFILE);
+    expect(getTrackingDemoScenario({ VITE_M08_ALERT_HISTORY_SCENARIO: 'error' })).toBe(TRACKING_DEMO_SCENARIO.LIST);
   });
 });

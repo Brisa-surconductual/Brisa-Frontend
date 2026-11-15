@@ -22,10 +22,17 @@ const FORMATTER = new Intl.DateTimeFormat('es-CO', {
   hourCycle: 'h23',
 });
 
-export function formatAuditTimestamp(value) {
+// Instante (ms) de una marca con zona explícita; null si no es interpretable.
+export function parseAuditTimestamp(value) {
   if (typeof value !== 'string' || !ISO_WITH_ZONE.test(value)) return null;
 
   const timestamp = Date.parse(value);
 
-  return Number.isNaN(timestamp) ? null : FORMATTER.format(timestamp);
+  return Number.isNaN(timestamp) ? null : timestamp;
+}
+
+export function formatAuditTimestamp(value) {
+  const timestamp = parseAuditTimestamp(value);
+
+  return timestamp === null ? null : FORMATTER.format(timestamp);
 }

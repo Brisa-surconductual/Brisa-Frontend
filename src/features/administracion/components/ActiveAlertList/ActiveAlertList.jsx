@@ -1,25 +1,15 @@
 import { BellRing, CircleCheck, CircleHelp } from 'lucide-react';
 
-import { TRACKING_ALERT_TYPE } from '../../types/participantTracking.js';
+import { alertTypeLabel } from '../../utils/alertLabels.js';
 import { formatAuditTimestamp } from '../../utils/formatAuditTimestamp.js';
 
 /*
  * Alertas activas del participante (RF-128). Solo consulta: muestra el
  * tipo y, si llega con zona horaria, la fecha de generación. No muestra
- * niveles de craving ni otros datos clínicos, ni permite atenderlas
- * (RF-147) ni ver su historial (RF-129). Un tipo desconocido se muestra
- * tal cual.
+ * niveles de craving ni otros datos clínicos ni permite atenderlas
+ * (RF-147); el historial completo (RF-129) es otra sección de la ficha.
+ * Un tipo desconocido se muestra tal cual.
  */
-const ALERT_LABEL = Object.freeze({
-  [TRACKING_ALERT_TYPE.HIGH_CRAVING]: 'Craving elevado',
-  [TRACKING_ALERT_TYPE.INACTIVITY]: 'Inactividad',
-});
-
-function alertLabel(type) {
-  if (ALERT_LABEL[type]) return ALERT_LABEL[type];
-
-  return type ? `Tipo no reconocido: ${type}` : 'Tipo no disponible';
-}
 
 export function ActiveAlertList({ alerts }) {
   if (alerts === null || alerts === undefined) {
@@ -52,7 +42,7 @@ export function ActiveAlertList({ alerts }) {
           >
             <span className="inline-flex items-center gap-[var(--space-2)] font-bold [overflow-wrap:anywhere]">
               <BellRing size={16} strokeWidth={2} className="shrink-0" aria-hidden="true" />
-              {alertLabel(alert.type)}
+              {alertTypeLabel(alert.type)}
             </span>
             <span className="tabular-nums">
               {generatedLabel ? (

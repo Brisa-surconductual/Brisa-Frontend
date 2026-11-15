@@ -1,8 +1,15 @@
-import { TRACKING_ACCESS, TRACKING_QUERY_ERROR } from '../types/participantTracking.js';
+import {
+  ALERT_RESOLUTION_STATUS,
+  TRACKING_ACCESS,
+  TRACKING_ALERT_SOURCE,
+  TRACKING_ALERT_TYPE,
+  TRACKING_QUERY_ERROR,
+} from '../types/participantTracking.js';
+import { ALERT_HISTORY_DEMO_SCENARIO, getAlertHistoryDemoScenario } from '../utils/alertHistoryDemoScenario.js';
 import { PROFILE_DEMO_SCENARIO, getProfileDemoScenario } from '../utils/profileDemoScenario.js';
 import { TRACKING_DEMO_SCENARIO, getTrackingDemoScenario } from '../utils/trackingDemoScenario.js';
 import { getDemoCohortMembers } from './cohortDemoSource.js';
-import { DEMO_TRACKING_PROFILES, DEMO_TRACKING_REFERENCES } from './trackingDemoData.js';
+import { DEMO_ALERT_HISTORY, DEMO_TRACKING_PROFILES, DEMO_TRACKING_REFERENCES } from './trackingDemoData.js';
 import { applyTrackingQuery } from './trackingDemoQuery.js';
 
 /*
@@ -10,7 +17,8 @@ import { applyTrackingQuery } from './trackingDemoQuery.js';
  * trackingSource.js mediante import() dinámico cuando el modo demo está
  * activo; en producción este módulo no llega al build.
  *
- * Simula al backend de RF-142 (listado) y RF-128 (ficha): cruza las
+ * Simula al backend de RF-142 (listado), RF-128 (ficha) y RF-129
+ * (historial de alertas): cruza las
  * asociaciones actuales de la cohorte (las mismas de E5–E7, en memoria)
  * con un único conjunto de perfiles ficticios, aplica filtros, orden y
  * paginación, y declara de forma explícita si la consulta está
@@ -147,6 +155,94 @@ export async function getParticipantTrackingProfile(cohortId, reference) {
   if (scenario === PROFILE_DEMO_SCENARIO.DENIED) return { ...response, access: TRACKING_ACCESS.DENIED };
   if (scenario === PROFILE_DEMO_SCENARIO.INCONSISTENT) return { ...response, reference: 'seg-otro000' };
   if (scenario === PROFILE_DEMO_SCENARIO.OTHER_COHORT) return { ...response, cohortId: 'otra-cohorte-ficticia' };
+
+  return response;
+}
+
+// Alerta tal como la enviaría M05, con campos que la interfaz descarta.
+function rawAlert(alert, reference, index) {
+  return {
+    ...alert,
+    reference,
+    alertId: `00000000-0000-4000-8000-${String(index).padStart(12, '0')}`,
+    cravingLevel: 8,
+    notes: 'Nota ficticia que nunca debe mostrarse.',
+  };
+}
+
+/*
+ * Historial de alertas (RF-129). Mismas validaciones y orden que la
+ * ficha: cohorte existente, referencia existente y pertenencia actual.
+ * Las alertas ACTIVA son las mismas que el perfil expone como activas.
+ */
+export async function getParticipantAlertHistory(cohortId, reference) {
+  const scenario = getAlertHistoryDemoScenario();
+
+  if (scenario === ALERT_HISTORY_DEMO_SCENARIO.LOADING) return new Promise(() => {});
+
+  await pause();
+
+  if (scenario === ALERT_HISTORY_DEMO_SCENARIO.ERROR) {
+    throw new Error('Error simulado al cargar el historial de alertas de demostración.');
+  }
+
+  if (scenario === ALERT_HISTORY_DEMO_SCENARIO.UNAVAILABLE) {
+    throw codedError(TRACKING_QUERY_ERROR.MODULE_UNAVAILABLE, 'M05 no disponible en la demostración.');
+  }
+
+  const members = getDemoCohortMembers(cohortId);
+
+  if (!members) {
+    throw codedError(TRACKING_QUERY_ERROR.COHORT_NOT_FOUND, 'Cohorte inexistente en la demostración.');
+  }
+
+  const participantId = participantFor(reference);
+
+  if (!participantId || scenario === ALERT_HISTORY_DEMO_SCENARIO.NOT_FOUND) {
+    throw codedError(TRACKING_QUERY_ERROR.PARTICIPANT_NOT_FOUND, 'Referencia inexistente en la demostración.');
+  }
+
+  if (!members.some(({ id }) => id === participantId)) {
+    throw codedError(TRACKING_QUERY_ERROR.OUTSIDE_COHORT, 'El participante no pertenece a la cohorte en la demostración.');
+  }
+
+  const stored = scenario === ALERT_HISTORY_DEMO_SCENARIO.EMPTY ? [] : DEMO_ALERT_HISTORY[participantId] ?? [];
+  const alerts = stored.map((alert, index) => rawAlert(alert, reference, index));
+  const response = {
+    access: TRACKING_ACCESS.GRANTED,
+    cohortId,
+    reference,
+    alerts,
+    // Campos que la interfaz debe descartar.
+    participantId,
+    email: 'participante.ficticio@example.com',
+  };
+
+  if (scenario === ALERT_HISTORY_DEMO_SCENARIO.DENIED) {
+    return { ...response, access: TRACKING_ACCESS.DENIED };
+  }
+
+  if (scenario === ALERT_HISTORY_DEMO_SCENARIO.OTHER_COHORT) {
+    return { ...response, cohortId: 'otra-cohorte-ficticia' };
+  }
+
+  if (scenario === ALERT_HISTORY_DEMO_SCENARIO.OTHER_PARTICIPANT) {
+    const foreign = rawAlert(
+      { type: TRACKING_ALERT_TYPE.HIGH_CRAVING, source: TRACKING_ALERT_SOURCE.HIGH_CRAVING, generatedAt: '2026-03-04T20:00:00-05:00', status: ALERT_RESOLUTION_STATUS.ACTIVE, resolvedAt: null },
+      'seg-otro000',
+      alerts.length,
+    );
+    return { ...response, alerts: [...alerts, foreign] };
+  }
+
+  if (scenario === ALERT_HISTORY_DEMO_SCENARIO.OUT_OF_SYNC) {
+    const extra = rawAlert(
+      { type: TRACKING_ALERT_TYPE.INACTIVITY, source: TRACKING_ALERT_SOURCE.INACTIVITY, generatedAt: '2026-03-09T07:30:00-05:00', status: ALERT_RESOLUTION_STATUS.ACTIVE, resolvedAt: null },
+      reference,
+      alerts.length,
+    );
+    return { ...response, alerts: [...alerts, extra] };
+  }
 
   return response;
 }

@@ -57,3 +57,16 @@ export async function listCohortTracking(cohortId, query) {
 export async function getParticipantTrackingProfile(cohortId, reference) {
   return (await loadTrackingDemoSource()).getParticipantTrackingProfile(cohortId, reference);
 }
+
+/*
+ * Historial de alertas del participante (RF-129). Consulta propia, con
+ * su propia autorización explícita: la de la ficha no la implica.
+ * Devuelve { access, cohortId, reference, alerts } o rechaza con
+ * `error.code` (TRACKING_QUERY_ERROR). PENDIENTE de confirmar con el
+ * backend: ruta, si llega en la misma respuesta que la ficha o aparte,
+ * la forma de cada alerta (¿declara el participante?), el permiso que
+ * exige, el sentido del orden y cómo se traduce el 204 (sin cuerpo).
+ */
+export async function getParticipantAlertHistory(cohortId, reference) {
+  return (await loadTrackingDemoSource()).getParticipantAlertHistory(cohortId, reference);
+}
