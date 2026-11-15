@@ -10,7 +10,6 @@ vi.mock('@/shared/utils/apiClient.jsx', () => ({
 }));
 
 const elegibilidad = {
-  id_programa: 1,
   modalidad_actual: 'GRUPAL',
   total_usuarios_activos: 10,
   con_perfil_completo: 10,
@@ -21,22 +20,19 @@ const elegibilidad = {
 beforeEach(() => vi.resetAllMocks());
 
 describe('obtenerElegibilidadModalidad (RF-25B)', () => {
-  it('consulta la elegibilidad del programa (respuesta sin `data`)', async () => {
+  it('consulta la elegibilidad (respuesta sin `data`)', async () => {
     apiClient.get.mockResolvedValue({ status: 200, data: elegibilidad });
 
-    await expect(obtenerElegibilidadModalidad(1)).resolves.toEqual(
-      elegibilidad,
-    );
+    await expect(obtenerElegibilidadModalidad()).resolves.toEqual(elegibilidad);
     expect(apiClient.get).toHaveBeenCalledWith(
       expect.stringMatching(/\/chat\/admin\/modalidad\/elegibilidad$/),
-      { params: { id_programa: 1 } },
     );
   });
 
   it('rechaza una respuesta incompleta', async () => {
-    apiClient.get.mockResolvedValue({ status: 200, data: { id_programa: 1 } });
+    apiClient.get.mockResolvedValue({ status: 200, data: {} });
 
-    await expect(obtenerElegibilidadModalidad(1)).rejects.toMatchObject({
+    await expect(obtenerElegibilidadModalidad()).rejects.toMatchObject({
       code: 'RESPUESTA_INVALIDA',
     });
   });
@@ -44,35 +40,32 @@ describe('obtenerElegibilidadModalidad (RF-25B)', () => {
   it('lanza el error tipado del backend', async () => {
     apiClient.get.mockRejectedValue({
       response: {
-        status: 400,
-        data: { message: 'El identificador del programa es invalido.' },
+        status: 403,
+        data: { message: 'No autorizado.' },
       },
     });
 
-    await expect(obtenerElegibilidadModalidad(0)).rejects.toMatchObject({
-      status: 400,
-      backendMessage: 'El identificador del programa es invalido.',
+    await expect(obtenerElegibilidadModalidad()).rejects.toMatchObject({
+      status: 403,
+      backendMessage: 'No autorizado.',
     });
   });
 });
 
 describe('habilitarModalidadPersonalizada (RF-25B)', () => {
-  it('envía el programa y la confirmación explícita', async () => {
+  it('envía la confirmación explícita', async () => {
     const respuesta = {
-      id_programa: 1,
       modalidad: 'PERSONALIZADA',
       usuarios_actualizados: 10,
     };
     apiClient.post.mockResolvedValue({ status: 200, data: respuesta });
 
-    await expect(habilitarModalidadPersonalizada(1)).resolves.toEqual(
-      respuesta,
-    );
+    await expect(habilitarModalidadPersonalizada()).resolves.toEqual(respuesta);
     expect(apiClient.post).toHaveBeenCalledWith(
       expect.stringMatching(
         /\/chat\/admin\/modalidad\/habilitar-personalizada$/,
       ),
-      { id_programa: 1, confirmacion_transicion: true },
+      { confirmacion_transicion: true },
     );
   });
 
@@ -87,7 +80,7 @@ describe('habilitarModalidadPersonalizada (RF-25B)', () => {
       },
     });
 
-    await expect(habilitarModalidadPersonalizada(1)).rejects.toMatchObject({
+    await expect(habilitarModalidadPersonalizada()).rejects.toMatchObject({
       code: 'PERFILES_INCOMPLETOS',
       status: 409,
       backendMessage:
@@ -98,7 +91,7 @@ describe('habilitarModalidadPersonalizada (RF-25B)', () => {
   it('rechaza una respuesta sin modalidad', async () => {
     apiClient.post.mockResolvedValue({ status: 200, data: {} });
 
-    await expect(habilitarModalidadPersonalizada(1)).rejects.toMatchObject({
+    await expect(habilitarModalidadPersonalizada()).rejects.toMatchObject({
       code: 'RESPUESTA_INVALIDA',
     });
   });

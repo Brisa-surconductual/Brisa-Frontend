@@ -10,13 +10,13 @@ import {
 // RF-25B: POST /chat/admin/modalidad/habilitar-personalizada. El backend
 // exige `confirmacion_transicion: true`: la confirmación del administrador
 // ya se pidió en la interfaz antes de llamar a esta función.
-// Responde (sin `{ data }`): { id_programa, modalidad, usuarios_actualizados,
+// Responde (sin `{ data }`): { modalidad, usuarios_actualizados,
 // fecha_vigencia_desde, administrador_responsable }
-export async function habilitarModalidadPersonalizada(idPrograma) {
+export async function habilitarModalidadPersonalizada() {
   try {
     const response = await apiClient.post(
       `${CHAT}/admin/modalidad/habilitar-personalizada`,
-      { id_programa: idPrograma, confirmacion_transicion: true },
+      { confirmacion_transicion: true },
     );
 
     if (!response.data?.modalidad) {

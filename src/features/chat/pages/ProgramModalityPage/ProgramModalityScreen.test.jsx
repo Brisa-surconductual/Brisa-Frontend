@@ -16,7 +16,6 @@ vi.mock('@/app/providers/index.js', () => ({
 }));
 
 const elegibilidad = {
-  id_programa: 1,
   modalidad_actual: 'GRUPAL',
   total_usuarios_activos: 10,
   con_perfil_completo: 10,

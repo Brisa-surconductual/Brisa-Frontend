@@ -7,17 +7,14 @@ import {
   toChatApiError,
 } from '../chatApiUtils.js';
 
-// RF-25B: GET /chat/admin/modalidad/elegibilidad?id_programa=N. La
-// respuesta NO viene envuelta en `{ data }`:
-// { id_programa, modalidad_actual, total_usuarios_activos,
-//   con_perfil_completo, sin_perfil_completo, elegible }
-export async function obtenerElegibilidadModalidad(idPrograma) {
+// RF-25B: GET /chat/admin/modalidad/elegibilidad. La respuesta NO viene
+// envuelta en `{ data }`:
+// { modalidad_actual, total_usuarios_activos, con_perfil_completo,
+//   sin_perfil_completo, elegible }
+export async function obtenerElegibilidadModalidad() {
   try {
     const response = await apiClient.get(
       `${CHAT}/admin/modalidad/elegibilidad`,
-      {
-        params: { id_programa: idPrograma },
-      },
     );
     const elegibilidad = response.data;
 

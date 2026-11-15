@@ -64,7 +64,7 @@ export function useProgramModalityPage({ eligibility, onEnableModality }) {
     setFeedback(null);
 
     try {
-      await onEnableModality(eligibility.id_programa);
+      await onEnableModality();
 
       setFeedback({
         type: 'success',
