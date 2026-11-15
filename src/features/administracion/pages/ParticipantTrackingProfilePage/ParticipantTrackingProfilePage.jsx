@@ -24,22 +24,28 @@ import { ActiveAlertList } from '../../components/ActiveAlertList/index.js';
 import { AlertHistorySection } from '../../components/AlertHistorySection/index.js';
 import { CohortNotice } from '../../components/CohortNotice/index.js';
 import { ConsumptionTrendBadge } from '../../components/ConsumptionTrendBadge/index.js';
+import { NarrativeProgressSection } from '../../components/NarrativeProgressSection/index.js';
+import { NotificationInteractionSection } from '../../components/NotificationInteractionSection/index.js';
 import { ProfileIndicator } from '../../components/ProfileIndicator/index.js';
 import { ReadOnlyNotice } from '../../components/ReadOnlyNotice/index.js';
 import { getCohortTrackingPath } from '../../utils/cohortRoutes.js';
 import { formatAuditTimestamp } from '../../utils/formatAuditTimestamp.js';
 
 import { useAlertHistory } from './hooks/useAlertHistory.js';
+import { useNarrativeProgress } from './hooks/useNarrativeProgress.js';
+import { useNotificationInteraction } from './hooks/useNotificationInteraction.js';
 import { PROFILE_STATUS, useParticipantTrackingProfile } from './hooks/useParticipantTrackingProfile.js';
 
 /*
  * Ficha individual de seguimiento
  * (/cohortes/:idCohorte/seguimiento/:referencia, RF-128). Solo consulta:
- * no ofrece crear, editar ni eliminar indicadores ni alertas. Fuera de
- * alcance: gestión o resolución de alertas (RF-147), gamificación
- * (RF-130), notificaciones (RF-131), modo degradado (RF-149) y
- * cronograma (M04). Incluye el historial de alertas (RF-129) como
- * sección propia, con su propia autorización y sus propios errores.
+ * no ofrece crear, editar ni eliminar indicadores, alertas, progresión
+ * ni notificaciones. Fuera de alcance: gestión o resolución de alertas
+ * (RF-147), modo degradado (RF-149) y cronograma (M04). Incluye como
+ * secciones propias, cada una con su propia autorización y sus propios
+ * errores, el historial de alertas (RF-129), la progresión narrativa
+ * (RF-130, M06) y la interacción con notificaciones (RF-131, M07); solo
+ * se consultan cuando la ficha confirmó el acceso al participante.
  * La página solo compone; el estado vive en los hooks.
  */
 const RETRY_STATUSES = Object.freeze([PROFILE_STATUS.UNAVAILABLE, PROFILE_STATUS.ERROR, PROFILE_STATUS.INCONSISTENT]);
@@ -107,6 +113,9 @@ function ParticipantTrackingProfile({ cohortId, reference }) {
     enabled: participantConfirmed,
     activeAlerts: showProfile ? profile.activeAlerts : null,
   });
+  // M06 y M07: misma condición, cada una con su propia autorización.
+  const narrative = useNarrativeProgress({ cohortId, reference, enabled: participantConfirmed });
+  const notifications = useNotificationInteraction({ cohortId, reference, enabled: participantConfirmed });
 
   return (
     <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-[var(--space-6)] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]">
@@ -147,9 +156,11 @@ function ParticipantTrackingProfile({ cohortId, reference }) {
 
       {!isIntegrationPending && (
         <ReadOnlyNotice>
-          Consulta de solo lectura: los indicadores, las alertas y su historial
-          provienen del módulo de seguimiento y no pueden modificarse desde
-          aquí. Solo se muestra el código seudonimizado del participante.
+          Consulta de solo lectura: los indicadores, las alertas, su historial,
+          la progresión narrativa y la interacción con notificaciones provienen
+          de los módulos de seguimiento, gamificación y notificaciones, y no
+          pueden modificarse desde aquí. Solo se muestra el código
+          seudonimizado del participante.
         </ReadOnlyNotice>
       )}
 
@@ -273,6 +284,26 @@ function ParticipantTrackingProfile({ cohortId, reference }) {
           hasSummaryMismatch={history.hasSummaryMismatch}
           isDemo={isDemo}
           retry={history.retry}
+        />
+      )}
+
+      {participantConfirmed && (
+        <NarrativeProgressSection
+          narrative={narrative.narrative}
+          status={narrative.status}
+          isLoading={narrative.isLoading}
+          isDemo={isDemo}
+          retry={narrative.retry}
+        />
+      )}
+
+      {participantConfirmed && (
+        <NotificationInteractionSection
+          interaction={notifications.interaction}
+          status={notifications.status}
+          isLoading={notifications.isLoading}
+          isDemo={isDemo}
+          retry={notifications.retry}
         />
       )}
     </div>

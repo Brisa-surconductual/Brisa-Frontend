@@ -97,6 +97,32 @@ function participantFor(reference) {
 }
 
 /*
+ * Validaciones comunes de una consulta individual de demostración, en el
+ * orden del backend: cohorte existente, referencia existente y
+ * pertenencia actual. Devuelve el identificador interno (que nunca sale
+ * de la demo) o rechaza con su código. Lo usa engagementDemoSource.
+ */
+export function resolveDemoParticipant(cohortId, reference, { forceNotFound = false } = {}) {
+  const members = getDemoCohortMembers(cohortId);
+
+  if (!members) {
+    throw codedError(TRACKING_QUERY_ERROR.COHORT_NOT_FOUND, 'Cohorte inexistente en la demostración.');
+  }
+
+  const participantId = participantFor(reference);
+
+  if (!participantId || forceNotFound) {
+    throw codedError(TRACKING_QUERY_ERROR.PARTICIPANT_NOT_FOUND, 'Referencia inexistente en la demostración.');
+  }
+
+  if (!members.some(({ id }) => id === participantId)) {
+    throw codedError(TRACKING_QUERY_ERROR.OUTSIDE_COHORT, 'El participante no pertenece a la cohorte en la demostración.');
+  }
+
+  return participantId;
+}
+
+/*
  * Ficha individual (RF-128). Valida en este orden, como lo haría el
  * backend: cohorte existente, referencia existente, pertenencia actual a
  * la cohorte y, por último, existencia de perfil.
