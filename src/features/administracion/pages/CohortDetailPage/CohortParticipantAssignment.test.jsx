@@ -9,6 +9,7 @@ import { CohortDetailPage } from './CohortDetailPage.jsx';
 
 const detail = vi.hoisted(() => ({ value: null }));
 const assignment = vi.hoisted(() => ({ value: null, args: null }));
+const removal = vi.hoisted(() => ({ dismissNotice: vi.fn() }));
 
 vi.mock('./hooks/useCohortDetail.js', async (importOriginal) => {
   const actual = await importOriginal();
@@ -23,6 +24,15 @@ vi.mock('./hooks/useParticipantAssignment.js', async (importOriginal) => {
       assignment.args = args;
       return assignment.value ?? actual.useParticipantAssignment(args);
     },
+  };
+});
+
+// El retiro real, con su descarte de avisos observable.
+vi.mock('./hooks/useParticipantRemoval.js', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    useParticipantRemoval: (args) => ({ ...actual.useParticipantRemoval(args), dismissNotice: removal.dismissNotice }),
   };
 });
 
@@ -104,7 +114,17 @@ describe('Acceso a la asignación (RF-125)', () => {
     const html = render();
 
     expect(html).toMatch(/<button[^>]*>.*Asignar participantes<\/button>/);
-    expect(assignment.args).toMatchObject({ cohortId: COHORT_B.id, enabled: true, onAssigned: DETAIL.addParticipants });
+    expect(assignment.args).toMatchObject({ cohortId: COHORT_B.id, enabled: true });
+  });
+
+  // E10: un aviso de retiro anterior no convive con el resultado nuevo.
+  it('al asignar refleja a los asignados y retira el aviso de un retiro anterior', () => {
+    const assigned = [{ id: 'demo-candidato-9', code: 'PART-0009' }];
+    render();
+    assignment.args.onAssigned(assigned);
+
+    expect(DETAIL.addParticipants).toHaveBeenCalledWith(assigned);
+    expect(removal.dismissNotice).toHaveBeenCalledTimes(1);
   });
 
   it.each([

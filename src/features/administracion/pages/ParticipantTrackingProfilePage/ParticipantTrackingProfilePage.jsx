@@ -114,7 +114,7 @@ export function ParticipantTrackingProfilePage() {
   const cohortId = idCohorte ?? null;
   const reference = referencia ?? null;
 
-  return <ParticipantTrackingProfile key={`${cohortId}|${reference}`}cohortId={cohortId} reference={reference} />;
+  return <ParticipantTrackingProfile key={`${cohortId}|${reference}`} cohortId={cohortId} reference={reference} />;
 }
 
 function ParticipantTrackingProfile({ cohortId, reference }) {

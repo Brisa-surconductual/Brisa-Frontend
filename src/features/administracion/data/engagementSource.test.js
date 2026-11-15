@@ -5,6 +5,7 @@ import { interpretNotificationInteractionResponse } from '../services/notificati
 import { SECTION_OUTCOME } from '../types/participantEngagement.js';
 import { INDICATOR_STATE, TRACKING_ACCESS, TRACKING_QUERY_ERROR } from '../types/participantTracking.js';
 import { resetDemoSource } from './cohortDemoSource.js';
+import { resetDemoScenarios } from './demoScenarioTestEnv.js';
 import { getParticipantNarrativeProgress, getParticipantNotificationInteraction } from './engagementSource.js';
 import { removeCohortParticipant } from './participantSource.js';
 import { DEMO_TRACKING_REFERENCES } from './trackingDemoData.js';
@@ -31,6 +32,7 @@ let fetchSpy;
 
 beforeEach(() => {
   resetDemoSource();
+  resetDemoScenarios(vi);
   fetchSpy = vi.fn(() => Promise.reject(new Error('Sin red en las pruebas')));
   vi.stubGlobal('fetch', fetchSpy);
 });

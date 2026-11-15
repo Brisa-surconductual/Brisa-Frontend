@@ -5,6 +5,7 @@ import { interpretProfileResponse } from '../services/trackingProfileResponse.js
 import { interpretTrackingResponse } from '../services/trackingResponse.js';
 import { INDICATOR_STATE, PROFILE_OUTCOME, TRACKING_ACCESS, TRACKING_QUERY_ERROR } from '../types/participantTracking.js';
 import { resetDemoSource } from './cohortDemoSource.js';
+import { resetDemoScenarios } from './demoScenarioTestEnv.js';
 import { removeCohortParticipant } from './participantSource.js';
 import { DEMO_TRACKING_REFERENCES } from './trackingDemoData.js';
 import { getParticipantTrackingProfile, listCohortTracking } from './trackingSource.js';
@@ -31,6 +32,7 @@ let fetchSpy;
 
 beforeEach(() => {
   resetDemoSource();
+  resetDemoScenarios(vi);
   fetchSpy = vi.fn(() => Promise.reject(new Error('Sin red en las pruebas')));
   vi.stubGlobal('fetch', fetchSpy);
 });

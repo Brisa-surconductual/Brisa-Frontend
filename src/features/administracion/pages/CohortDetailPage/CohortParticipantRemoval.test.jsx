@@ -9,6 +9,7 @@ import { CohortDetailPage } from './CohortDetailPage.jsx';
 
 const detail = vi.hoisted(() => ({ value: null }));
 const removal = vi.hoisted(() => ({ value: null, args: null }));
+const assignment = vi.hoisted(() => ({ dismissResult: vi.fn() }));
 
 vi.mock('./hooks/useCohortDetail.js', async (importOriginal) => {
   const actual = await importOriginal();
@@ -23,6 +24,15 @@ vi.mock('./hooks/useParticipantRemoval.js', async (importOriginal) => {
       removal.args = args;
       return removal.value ?? actual.useParticipantRemoval(args);
     },
+  };
+});
+
+// La asignación real, con su descarte del resultado observable.
+vi.mock('./hooks/useParticipantAssignment.js', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    useParticipantAssignment: (args) => ({ ...actual.useParticipantAssignment(args), dismissResult: assignment.dismissResult }),
   };
 });
 
@@ -54,6 +64,7 @@ const REMOVAL = Object.freeze({
   requestRemoval: vi.fn(),
   cancelRemoval: vi.fn(),
   confirmRemoval: vi.fn(),
+  dismissNotice: vi.fn(),
 });
 
 function render({ detailChanges = {}, removalChanges = {}, realRemoval = false } = {}) {
@@ -102,6 +113,8 @@ describe('Acción «Retirar» (RF-125)', () => {
     });
     removal.args.onRemoved('demo-participante-1');
     expect(DETAIL.removeParticipant).toHaveBeenCalledWith('demo-participante-1');
+    // E10: el resultado de una asignación anterior deja de mostrarse.
+    expect(assignment.dismissResult).toHaveBeenCalledTimes(1);
   });
 
   it.each([

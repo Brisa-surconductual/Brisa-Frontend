@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { resetDemoSource } from '../../../data/cohortDemoSource.js';
+import { resetDemoScenarios } from '../../../data/demoScenarioTestEnv.js';
 import { listCohorts } from '../../../data/cohortSource.js';
 import { COHORT_SOURCE_MODE } from '../../../types/cohortSourceMode.js';
 import {
@@ -273,6 +274,7 @@ describe('Sin integración', () => {
 describe('Flujo con la fuente de demostración real', () => {
   beforeEach(() => {
     resetDemoSource();
+    resetDemoScenarios(vi);
     vi.stubEnv('DEV', true);
     vi.stubEnv('VITE_M08_DEMO', 'true');
   });

@@ -61,13 +61,22 @@ function SummaryItem({ icon: Icon, label, children }) {
   );
 }
 
+// El detalle de cada cohorte se monta de nuevo al cambiar la ruta: ni sus
+// participantes, ni el panel de asignación, ni los avisos de otra cohorte
+// quedan visibles en la nueva.
+export function CohortDetailPage() {
+  const { idCohorte } = useParams();
+
+  return <CohortDetail key={idCohorte ?? ''} />;
+}
+
 /*
  * Detalle de una cohorte con la consulta, la asignación y el retiro de
  * sus participantes (/cohortes/:idCohorte, RF-125). La página solo
  * compone; el estado vive en useCohortDetail, useParticipantAssignment
  * y useParticipantRemoval.
  */
-export function CohortDetailPage() {
+function CohortDetail() {
   const { idCohorte } = useParams();
   const {
     cohort,
@@ -116,7 +125,11 @@ export function CohortDetailPage() {
   } = useParticipantAssignment({
     cohortId: idCohorte ?? null,
     enabled: canManageParticipants,
-    onAssigned: addParticipants,
+    onAssigned: (assigned) => {
+      addParticipants(assigned);
+      // El aviso de un retiro anterior ya no describe la situación actual.
+      dismissRemovalNotice();
+    },
   });
 
   const {
@@ -128,12 +141,15 @@ export function CohortDetailPage() {
     requestRemoval,
     cancelRemoval,
     confirmRemoval,
+    dismissNotice: dismissRemovalNotice,
   } = useParticipantRemoval({
     cohortId: idCohorte ?? null,
     cohortName: title,
     enabled: canManageParticipants,
     onRemoved: (participantId) => {
       removeParticipant(participantId);
+      // El resultado de una asignación anterior ya no está vigente.
+      dismissResult();
       // El catálogo abierto ya no refleja la nueva situación.
       if (isAssigning) retryCatalog();
     },

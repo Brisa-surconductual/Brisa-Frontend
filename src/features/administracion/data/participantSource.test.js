@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { COHORT_TRANSITION } from '../services/cohortTransitions.js';
 import { DEMO_PARTICIPANTS } from './participantDemoData.js';
 import { resetDemoSource } from './cohortDemoSource.js';
+import { resetDemoScenarios } from './demoScenarioTestEnv.js';
 import { changeCohortStatus, createCohort, listCohorts, updateCohort } from './cohortSource.js';
 import { ASSIGNMENT_ERROR, ASSIGNMENT_ISSUE } from '../types/participantAssignment.js';
 import {
@@ -33,6 +34,7 @@ let fetchSpy;
 
 beforeEach(() => {
   resetDemoSource();
+  resetDemoScenarios(vi);
   fetchSpy = vi.fn(() => Promise.reject(new Error('Sin red en las pruebas')));
   vi.stubGlobal('fetch', fetchSpy);
 });

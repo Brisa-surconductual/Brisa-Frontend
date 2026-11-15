@@ -95,6 +95,18 @@ describe('useParticipantRemoval: confirmación', () => {
   });
 });
 
+describe('useParticipantRemoval: aviso de una operación anterior (E10)', () => {
+  it('dismissNotice retira el aviso sin tocar la fuente', () => {
+    const source = removeWith({ ok: true });
+    const result = renderHookWith(useParticipantRemoval, { source }, { [NOTICE]: { tone: 'success', title: 't', message: 'm' } });
+
+    result.dismissNotice();
+
+    expect(lastNotice()).toBeNull();
+    expect(source.remove).not.toHaveBeenCalled();
+  });
+});
+
 describe('useParticipantRemoval: resultado', () => {
   it('éxito: retira por identificador, refleja el cambio y enfoca un aviso temporal', async () => {
     const source = removeWith({ ok: true, removed: PARTICIPANT });

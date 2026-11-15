@@ -10,10 +10,13 @@ import { DATA_STATE } from '../types/dataFreshness.js';
  * almacenamiento: se marcan los mismos datos ficticios. No demuestra
  * resiliencia real.
  */
-export const DEMO_LAST_AVAILABLE_AT = '2026-03-08T14:30:00-05:00';
+// Posterior a todas las fechas de los datos ficticios de M05, M06 y M07
+// (la más reciente es del 9 de marzo a las 06:00): un último dato
+// disponible no puede ser anterior a los datos que acompaña.
+export const DEMO_LAST_AVAILABLE_AT = '2026-03-09T14:30:00-05:00';
 
 // Fecha sin zona horaria: no es confiable y la interfaz no la interpreta.
-const UNRELIABLE_LAST_AVAILABLE_AT = '2026-03-08 14:30';
+const UNRELIABLE_LAST_AVAILABLE_AT = '2026-03-09 14:30';
 
 export const asStale = (response) => ({
   ...response,

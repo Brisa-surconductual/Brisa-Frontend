@@ -23,6 +23,15 @@ import { getCohortDetailPath, getParticipantTrackingPath } from '../../utils/coh
 
 import { TRACKING_PROBLEM, useParticipantTracking } from './hooks/useParticipantTracking.js';
 
+// El seguimiento de cada cohorte se monta de nuevo al cambiar la ruta, como
+// la ficha: ni el encabezado, ni los registros, ni los filtros, el orden
+// o la página de otra cohorte quedan visibles ni se aplican a la nueva.
+export function ParticipantTrackingPage() {
+  const { idCohorte } = useParams();
+
+  return <ParticipantTracking key={idCohorte ?? ''} />;
+}
+
 /*
  * Seguimiento de los participantes de una cohorte
  * (/cohortes/:idCohorte/seguimiento, RF-142). Solo consulta: no ofrece
@@ -30,7 +39,7 @@ import { TRACKING_PROBLEM, useParticipantTracking } from './hooks/useParticipant
  * su ficha individual (RF-128). La página solo compone; el estado vive
  * en useParticipantTracking.
  */
-export function ParticipantTrackingPage() {
+function ParticipantTracking() {
   const { idCohorte } = useParams();
   const cohortId = idCohorte ?? null;
   const {

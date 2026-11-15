@@ -89,6 +89,8 @@ export function useParticipantRemoval({
     },
     // Cancelar (o Escape) no envía nada.
     cancelRemoval: () => setPendingRemoval(null),
+    // Otra operación posterior (una asignación) deja el aviso obsoleto.
+    dismissNotice: () => setNotice(null),
     confirmRemoval: () => {
       const participant = pendingRemoval;
       setPendingRemoval(null);

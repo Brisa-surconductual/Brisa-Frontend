@@ -5,6 +5,7 @@ import { COHORT_STATUS } from '../types/cohortStatus.js';
 import { SCHEDULE_STATUS } from '../types/scheduleStatus.js';
 import { DEMO_COHORTS } from './cohortDemoData.js';
 import { DEMO_DELAY_MS, resetDemoSource } from './cohortDemoSource.js';
+import { resetDemoScenarios } from './demoScenarioTestEnv.js';
 import { COHORT_TRANSITION } from '../services/cohortTransitions.js';
 import {
   changeCohortStatus,
@@ -31,7 +32,10 @@ const NEW_COHORT = Object.freeze({
   scheduleId: 'demo-cronograma-3',
 });
 
-beforeEach(() => resetDemoSource());
+beforeEach(() => {
+  resetDemoSource();
+  resetDemoScenarios(vi);
+});
 
 afterEach(() => vi.unstubAllEnvs());
 

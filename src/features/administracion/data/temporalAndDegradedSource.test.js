@@ -7,12 +7,14 @@ import { SECTION_OUTCOME } from '../types/participantEngagement.js';
 import { TRACKING_ACCESS, TRACKING_QUERY_ERROR } from '../types/participantTracking.js';
 import { getTemporalDemoScenario } from '../utils/temporalLocationDemoScenario.js';
 import { resetDemoSource } from './cohortDemoSource.js';
+import { resetDemoScenarios } from './demoScenarioTestEnv.js';
 import { DEMO_LAST_AVAILABLE_AT } from './degradedDemo.js';
+import { DEMO_NARRATIVE_PROGRESS, DEMO_NOTIFICATION_INTERACTION } from './engagementDemoData.js';
 import { getParticipantNarrativeProgress, getParticipantNotificationInteraction } from './engagementSource.js';
 import { removeCohortParticipant } from './participantSource.js';
 import { DEMO_TEMPORAL_LOCATION } from './temporalLocationDemoData.js';
 import { getParticipantTemporalLocation } from './temporalLocationSource.js';
-import { DEMO_TRACKING_REFERENCES } from './trackingDemoData.js';
+import { DEMO_ALERT_HISTORY, DEMO_TRACKING_PROFILES, DEMO_TRACKING_REFERENCES } from './trackingDemoData.js';
 import { getParticipantAlertHistory, getParticipantTrackingProfile } from './trackingSource.js';
 
 function enableDemo(variables = {}) {
@@ -31,6 +33,7 @@ let fetchSpy;
 
 beforeEach(() => {
   resetDemoSource();
+  resetDemoScenarios(vi);
   fetchSpy = vi.fn(() => Promise.reject(new Error('Sin red en las pruebas')));
   vi.stubGlobal('fetch', fetchSpy);
 });
@@ -143,6 +146,15 @@ describe('Modo degradado simulado (RF-149) en M05, M06 y M07', () => {
     enableDemo();
 
     expect(interpretFreshness(await query()).state).toBe(FRESHNESS_STATE.CURRENT);
+  });
+
+  // E10: el último dato disponible no puede ser anterior a los datos que acompaña.
+  it('la fecha simulada del último dato es posterior a todas las fechas de M05, M06 y M07', () => {
+    const data = JSON.stringify([DEMO_TRACKING_PROFILES, DEMO_ALERT_HISTORY, DEMO_NARRATIVE_PROGRESS, DEMO_NOTIFICATION_INTERACTION]);
+    const instants = [...data.matchAll(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})/g)].map(([value]) => Date.parse(value));
+
+    expect(instants.length).toBeGreaterThan(10);
+    expect(Math.max(...instants)).toBeLessThan(Date.parse(DEMO_LAST_AVAILABLE_AT));
   });
 
   it('dos fuentes caídas a la vez no afectan a las demás', async () => {

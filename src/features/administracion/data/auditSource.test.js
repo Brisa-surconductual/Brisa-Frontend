@@ -6,6 +6,7 @@ import { DEMO_AUDIT_RECORDS } from './auditDemoData.js';
 import { AUDIT_DEMO_DELAY_MS } from './auditDemoSource.js';
 import { getAuditSourceMode, listAuditRecords } from './auditSource.js';
 import { resetDemoSource } from './cohortDemoSource.js';
+import { resetDemoScenarios } from './demoScenarioTestEnv.js';
 import { changeCohortStatus, createCohort } from './cohortSource.js';
 import { assignParticipants, removeCohortParticipant } from './participantSource.js';
 
@@ -20,6 +21,7 @@ let fetchSpy;
 
 beforeEach(() => {
   resetDemoSource();
+  resetDemoScenarios(vi);
   fetchSpy = vi.fn(() => Promise.reject(new Error('Sin red en las pruebas')));
   vi.stubGlobal('fetch', fetchSpy);
 });
