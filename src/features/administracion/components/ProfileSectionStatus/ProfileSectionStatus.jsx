@@ -1,5 +1,6 @@
 import {
   AlertTriangle,
+  ClockAlert,
   CloudOff,
   Inbox,
   KeyRound,
@@ -22,7 +23,12 @@ import { CohortNotice } from '../CohortNotice/index.js';
  * ícono y título propios, nunca solo con color. Solo «Reintentar» en los
  * estados que pueden resolverse reintentando.
  */
-const RETRY_STATUSES = Object.freeze([SECTION_STATUS.UNAVAILABLE, SECTION_STATUS.ERROR, SECTION_STATUS.INCONSISTENT]);
+const RETRY_STATUSES = Object.freeze([
+  SECTION_STATUS.UNAVAILABLE,
+  SECTION_STATUS.ERROR,
+  SECTION_STATUS.INCONSISTENT,
+  SECTION_STATUS.STALE_UNDATED,
+]);
 
 const PRESENTATION = Object.freeze({
   [SECTION_STATUS.EMPTY]: Object.freeze({ tone: 'neutral', icon: Inbox, role: 'status' }),
@@ -33,6 +39,7 @@ const PRESENTATION = Object.freeze({
   [SECTION_STATUS.OUTSIDE_COHORT]: Object.freeze({ tone: 'neutral', icon: UserX, role: 'alert' }),
   [SECTION_STATUS.INCONSISTENT]: Object.freeze({ tone: 'danger', icon: ShieldAlert, role: 'alert' }),
   [SECTION_STATUS.UNAVAILABLE]: Object.freeze({ tone: 'warning', icon: CloudOff, role: 'alert' }),
+  [SECTION_STATUS.STALE_UNDATED]: Object.freeze({ tone: 'warning', icon: ClockAlert, role: 'alert' }),
   [SECTION_STATUS.ERROR]: Object.freeze({ tone: 'danger', icon: AlertTriangle, role: 'alert' }),
 });
 

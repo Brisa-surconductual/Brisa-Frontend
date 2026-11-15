@@ -6,6 +6,7 @@ import {
   BellRing,
   CalendarClock,
   ChartLine,
+  ClockAlert,
   CloudOff,
   FileQuestion,
   FlaskConical,
@@ -28,6 +29,11 @@ import { NarrativeProgressSection } from '../../components/NarrativeProgressSect
 import { NotificationInteractionSection } from '../../components/NotificationInteractionSection/index.js';
 import { ProfileIndicator } from '../../components/ProfileIndicator/index.js';
 import { ReadOnlyNotice } from '../../components/ReadOnlyNotice/index.js';
+import { SectionErrorBoundary } from '../../components/SectionErrorBoundary/index.js';
+import { StaleBadge, StaleDataNotice } from '../../components/StaleDataNotice/index.js';
+import { TemporalLocationSection } from '../../components/TemporalLocationSection/index.js';
+import { isStale } from '../../services/dataFreshness.js';
+import { allowsDependentSections } from '../../services/profileSectionGate.js';
 import { getCohortTrackingPath } from '../../utils/cohortRoutes.js';
 import { formatAuditTimestamp } from '../../utils/formatAuditTimestamp.js';
 
@@ -35,20 +41,31 @@ import { useAlertHistory } from './hooks/useAlertHistory.js';
 import { useNarrativeProgress } from './hooks/useNarrativeProgress.js';
 import { useNotificationInteraction } from './hooks/useNotificationInteraction.js';
 import { PROFILE_STATUS, useParticipantTrackingProfile } from './hooks/useParticipantTrackingProfile.js';
+import { useTemporalLocation } from './hooks/useTemporalLocation.js';
 
 /*
  * Ficha individual de seguimiento
  * (/cohortes/:idCohorte/seguimiento/:referencia, RF-128). Solo consulta:
- * no ofrece crear, editar ni eliminar indicadores, alertas, progresión
- * ni notificaciones. Fuera de alcance: gestión o resolución de alertas
- * (RF-147), modo degradado (RF-149) y cronograma (M04). Incluye como
- * secciones propias, cada una con su propia autorización y sus propios
- * errores, el historial de alertas (RF-129), la progresión narrativa
- * (RF-130, M06) y la interacción con notificaciones (RF-131, M07); solo
- * se consultan cuando la ficha confirmó el acceso al participante.
+ * no ofrece crear, editar ni eliminar indicadores, alertas, progresión,
+ * notificaciones, cronogramas ni pausas. Fuera de alcance: gestión o
+ * resolución de alertas (RF-147). Incluye como secciones propias, cada
+ * una con su propia autorización, sus propios errores y su propio límite
+ * de error, el historial de alertas (RF-129), la progresión narrativa
+ * (RF-130, M06), la interacción con notificaciones (RF-131, M07) y la
+ * ubicación temporal (M04, RF-22 y RF-22B).
+ *
+ * Modo degradado (RF-149): cada sección muestra, junto a sus datos, la
+ * advertencia de desactualización que marque el backend. La caída de
+ * M05 no impide consultar las demás secciones; una denegación o un
+ * problema de identidad de la ficha sí (services/profileSectionGate).
  * La página solo compone; el estado vive en los hooks.
  */
-const RETRY_STATUSES = Object.freeze([PROFILE_STATUS.UNAVAILABLE, PROFILE_STATUS.ERROR, PROFILE_STATUS.INCONSISTENT]);
+const RETRY_STATUSES = Object.freeze([
+  PROFILE_STATUS.UNAVAILABLE,
+  PROFILE_STATUS.ERROR,
+  PROFILE_STATUS.INCONSISTENT,
+  PROFILE_STATUS.STALE_UNDATED,
+]);
 
 // Avisos de los estados sin datos. Textos de RF-128 cuando los define.
 const STATUS_NOTICE = Object.freeze({
@@ -78,7 +95,11 @@ const STATUS_NOTICE = Object.freeze({
   }),
   [PROFILE_STATUS.UNAVAILABLE]: Object.freeze({
     tone: 'warning', icon: CloudOff, role: 'alert', title: 'Módulo no disponible',
-    message: 'El módulo de seguimiento no se encuentra disponible en este momento.',
+    message: 'El módulo de seguimiento no se encuentra disponible en este momento. No hay datos anteriores disponibles para mostrar; las demás secciones se consultan por separado.',
+  }),
+  [PROFILE_STATUS.STALE_UNDATED]: Object.freeze({
+    tone: 'warning', icon: ClockAlert, role: 'alert', title: 'Datos desactualizados sin fecha confiable',
+    message: 'El módulo de seguimiento no responde en tiempo real y la fecha del último dato disponible no es confiable. Por seguridad no se muestran datos desactualizados.',
   }),
   [PROFILE_STATUS.ERROR]: Object.freeze({
     tone: 'danger', icon: AlertTriangle, role: 'alert', title: 'Ficha no disponible',
@@ -97,25 +118,29 @@ export function ParticipantTrackingProfilePage() {
 }
 
 function ParticipantTrackingProfile({ cohortId, reference }) {
-  const { cohort, code, profile, status, isLoading, isDemo, isIntegrationPending, headingRef, retry } =
+  const { cohort, code, profile, status, freshness, isLoading, isDemo, isIntegrationPending, headingRef, retry } =
     useParticipantTrackingProfile({ cohortId, reference });
 
   const cohortName = cohort?.name?.trim();
   const notice = !isLoading ? STATUS_NOTICE[status] : null;
   const showProfile = !isLoading && status === PROFILE_STATUS.READY && profile;
   const updatedLabel = showProfile ? formatAuditTimestamp(profile.updatedAt) : null;
-  // El historial solo se consulta cuando la ficha confirmó el acceso al participante.
   const participantConfirmed = !isLoading && (status === PROFILE_STATUS.READY || status === PROFILE_STATUS.NO_PROFILE);
   const showCode = participantConfirmed && code;
+  // RF-149: la ficha degradada se muestra con su advertencia.
+  const profileStale = participantConfirmed && isStale(freshness);
+  // Las demás secciones se consultan salvo denegación o problema de identidad.
+  const sectionsEnabled = allowsDependentSections({ status, isLoading });
   const history = useAlertHistory({
     cohortId,
     reference,
-    enabled: participantConfirmed,
+    enabled: sectionsEnabled,
     activeAlerts: showProfile ? profile.activeAlerts : null,
   });
-  // M06 y M07: misma condición, cada una con su propia autorización.
-  const narrative = useNarrativeProgress({ cohortId, reference, enabled: participantConfirmed });
-  const notifications = useNotificationInteraction({ cohortId, reference, enabled: participantConfirmed });
+  // Cada sección con su propia autorización explícita.
+  const narrative = useNarrativeProgress({ cohortId, reference, enabled: sectionsEnabled });
+  const notifications = useNotificationInteraction({ cohortId, reference, enabled: sectionsEnabled });
+  const temporal = useTemporalLocation({ cohortId, reference, enabled: sectionsEnabled });
 
   return (
     <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-[var(--space-6)] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]">
@@ -216,12 +241,15 @@ function ParticipantTrackingProfile({ cohortId, reference }) {
         </CohortNotice>
       )}
 
+      {profileStale && <StaleDataNotice moduleLabel="seguimiento" lastAvailableAt={freshness.lastAvailableAt} />}
+
       {showProfile && (
         <>
           <section aria-labelledby="indicadores-principales" className="flex flex-col gap-[var(--space-4)]">
             <div className="flex flex-wrap items-baseline justify-between gap-[var(--space-2)]">
-              <h2 id="indicadores-principales" className="m-0 text-[length:var(--font-size-lg)] font-extrabold text-[var(--text-primary)]">
+              <h2 id="indicadores-principales" className="m-0 inline-flex flex-wrap items-center gap-[var(--space-2)] text-[length:var(--font-size-lg)] font-extrabold text-[var(--text-primary)]">
                 Indicadores principales
+                {profileStale && <StaleBadge />}
               </h2>
               <p className="m-0 inline-flex items-center gap-[var(--space-2)] text-[length:var(--font-size-sm)] text-[var(--text-muted)]">
                 <CalendarClock size={16} strokeWidth={1.8} aria-hidden="true" />
@@ -270,41 +298,64 @@ function ParticipantTrackingProfile({ cohortId, reference }) {
                   ({profile.activeAlerts.length})
                 </span>
               )}
+              {profileStale && <StaleBadge />}
             </h2>
             <ActiveAlertList alerts={profile.activeAlerts} />
           </section>
         </>
       )}
 
-      {participantConfirmed && (
-        <AlertHistorySection
-          alerts={history.alerts}
-          status={history.status}
-          isLoading={history.isLoading}
-          hasSummaryMismatch={history.hasSummaryMismatch}
-          isDemo={isDemo}
-          retry={history.retry}
-        />
+      {sectionsEnabled && (
+        <SectionErrorBoundary label="Historial de alertas">
+          <AlertHistorySection
+            alerts={history.alerts}
+            status={history.status}
+            freshness={history.freshness}
+            isLoading={history.isLoading}
+            hasSummaryMismatch={history.hasSummaryMismatch}
+            isDemo={isDemo}
+            retry={history.retry}
+          />
+        </SectionErrorBoundary>
       )}
 
-      {participantConfirmed && (
-        <NarrativeProgressSection
-          narrative={narrative.narrative}
-          status={narrative.status}
-          isLoading={narrative.isLoading}
-          isDemo={isDemo}
-          retry={narrative.retry}
-        />
+      {sectionsEnabled && (
+        <SectionErrorBoundary label="Progresión narrativa">
+          <NarrativeProgressSection
+            narrative={narrative.narrative}
+            status={narrative.status}
+            freshness={narrative.freshness}
+            isLoading={narrative.isLoading}
+            isDemo={isDemo}
+            retry={narrative.retry}
+          />
+        </SectionErrorBoundary>
       )}
 
-      {participantConfirmed && (
-        <NotificationInteractionSection
-          interaction={notifications.interaction}
-          status={notifications.status}
-          isLoading={notifications.isLoading}
-          isDemo={isDemo}
-          retry={notifications.retry}
-        />
+      {sectionsEnabled && (
+        <SectionErrorBoundary label="Interacción con notificaciones">
+          <NotificationInteractionSection
+            interaction={notifications.interaction}
+            status={notifications.status}
+            freshness={notifications.freshness}
+            isLoading={notifications.isLoading}
+            isDemo={isDemo}
+            retry={notifications.retry}
+          />
+        </SectionErrorBoundary>
+      )}
+
+      {sectionsEnabled && (
+        <SectionErrorBoundary label="Ubicación temporal en el programa">
+          <TemporalLocationSection
+            temporal={temporal.temporal}
+            status={temporal.status}
+            freshness={temporal.freshness}
+            isLoading={temporal.isLoading}
+            isDemo={isDemo}
+            retry={temporal.retry}
+          />
+        </SectionErrorBoundary>
       )}
     </div>
   );

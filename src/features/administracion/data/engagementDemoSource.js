@@ -5,6 +5,7 @@ import {
   getNarrativeDemoScenario,
   getNotificationsDemoScenario,
 } from '../utils/engagementDemoScenario.js';
+import { applyDegradedScenario } from './degradedDemo.js';
 import { DEMO_NARRATIVE_PROGRESS, DEMO_NOTIFICATION_INTERACTION } from './engagementDemoData.js';
 import { TRACKING_DEMO_DELAY_MS, resolveDemoParticipant } from './trackingDemoSource.js';
 
@@ -29,7 +30,7 @@ function codedError(code, message) {
  * Pasos comunes: carga, error y no disponible antes de validar; después
  * la cohorte, la referencia y la pertenencia (resolveDemoParticipant).
  */
-async function begin(scenario, catalog, unavailableMessage) {
+export async function begin(scenario, catalog, unavailableMessage) {
   if (scenario === catalog.LOADING) await new Promise(() => {});
 
   await pause();
@@ -41,12 +42,13 @@ async function begin(scenario, catalog, unavailableMessage) {
   }
 }
 
-function applyIsolationScenario(response, scenario, catalog) {
+// Aislamiento y, en las fuentes que RF-149 cubre, modo degradado.
+export function applyIsolationScenario(response, scenario, catalog) {
   if (scenario === catalog.DENIED) return { ...response, access: TRACKING_ACCESS.DENIED };
   if (scenario === catalog.OTHER_PARTICIPANT) return { ...response, reference: 'seg-otro000' };
   if (scenario === catalog.OTHER_COHORT) return { ...response, cohortId: 'otra-cohorte-ficticia' };
 
-  return response;
+  return applyDegradedScenario(response, scenario);
 }
 
 export async function getParticipantNarrativeProgress(cohortId, reference) {

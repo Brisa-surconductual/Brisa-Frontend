@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import { getCohort } from '../../../data/cohortSource.js';
 import { getParticipantTrackingProfile, getTrackingSourceMode } from '../../../data/trackingSource.js';
+import { CURRENT_FRESHNESS, freshnessBlockingStatus, interpretFreshness } from '../../../services/dataFreshness.js';
 import { interpretProfileResponse } from '../../../services/trackingProfileResponse.js';
 import {
   PROFILE_OUTCOME,
@@ -31,6 +32,8 @@ export const PROFILE_STATUS = Object.freeze({
   OUTSIDE_COHORT: 'OUTSIDE_COHORT',
   INCONSISTENT: 'INCONSISTENT',
   UNAVAILABLE: 'UNAVAILABLE',
+  // RF-149: degradado sin fecha confiable del último dato.
+  STALE_UNDATED: 'STALE_UNDATED',
   ERROR: 'ERROR',
 });
 
@@ -67,6 +70,8 @@ export function useParticipantTrackingProfile({ cohortId, reference, source = DE
   const [status, setStatus] = useState(null);
   const [isLoading, setIsLoading] = useState(!isIntegrationPending);
   const [attempt, setAttempt] = useState(0);
+  // RF-149: marca de modo degradado de la respuesta mostrada.
+  const [freshness, setFreshness] = useState(CURRENT_FRESHNESS);
   const headingRef = useRef(null);
 
   useEffect(() => {
@@ -97,20 +102,28 @@ export function useParticipantTrackingProfile({ cohortId, reference, source = DE
     async function load() {
       setIsLoading(true);
       setStatus(null);
+      setFreshness(CURRENT_FRESHNESS);
 
       try {
-        const result = interpretProfileResponse(await source.getProfile(cohortId, reference), { cohortId, reference });
+        const response = await source.getProfile(cohortId, reference);
+        const result = interpretProfileResponse(response, { cohortId, reference });
         if (!active) return;
 
         const visible = result.outcome === PROFILE_OUTCOME.OK || result.outcome === PROFILE_OUTCOME.NO_PROFILE;
-        setCode(visible ? result.code : null);
-        setProfile(result.outcome === PROFILE_OUTCOME.OK ? result.profile : null);
-        setStatus(STATUS_BY_OUTCOME[result.outcome]);
+        // La marca solo cuenta tras autorizar y aislar la respuesta (RF-149).
+        const freshnessOf = visible ? interpretFreshness(response) : CURRENT_FRESHNESS;
+        const blocked = freshnessBlockingStatus(freshnessOf);
+
+        setCode(visible && !blocked ? result.code : null);
+        setProfile(result.outcome === PROFILE_OUTCOME.OK && !blocked ? result.profile : null);
+        setFreshness(blocked ? CURRENT_FRESHNESS : freshnessOf);
+        setStatus(blocked ?? STATUS_BY_OUTCOME[result.outcome]);
       } catch (error) {
         if (!active) return;
 
         setCode(null);
         setProfile(null);
+        setFreshness(CURRENT_FRESHNESS);
         setStatus(STATUS_BY_CODE[error?.code] ?? PROFILE_STATUS.ERROR);
       } finally {
         if (active) setIsLoading(false);
@@ -129,6 +142,7 @@ export function useParticipantTrackingProfile({ cohortId, reference, source = DE
     code,
     profile,
     status,
+    freshness,
     isLoading,
     isDemo: mode === TRACKING_SOURCE_MODE.DEMO,
     isIntegrationPending,

@@ -16,7 +16,10 @@
  * - otra-cohorte: la respuesta declara otra cohorte;
  * - no-disponible: M05 no disponible (503 de RF-129);
  * - desfase: el historial trae una alerta activa que el resumen de la
- *   ficha no tiene, para comprobar el aviso de diferencia.
+ *   ficha no tiene, para comprobar el aviso de diferencia;
+ * - desactualizado: último estado conocido marcado como DEGRADADO con su
+ *   fecha exacta (RF-149);
+ * - desactualizado-sin-fecha: DEGRADADO sin fecha confiable.
  */
 export const ALERT_HISTORY_DEMO_SCENARIO = Object.freeze({
   HISTORY: 'historial',
@@ -29,6 +32,8 @@ export const ALERT_HISTORY_DEMO_SCENARIO = Object.freeze({
   OTHER_COHORT: 'otra-cohorte',
   UNAVAILABLE: 'no-disponible',
   OUT_OF_SYNC: 'desfase',
+  STALE: 'desactualizado',
+  STALE_UNDATED: 'desactualizado-sin-fecha',
 });
 
 // Escenario de la demostración; un valor desconocido usa los datos.

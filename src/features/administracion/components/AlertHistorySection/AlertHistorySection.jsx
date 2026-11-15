@@ -1,5 +1,6 @@
 import {
   AlertTriangle,
+  ClockAlert,
   CloudOff,
   GitCompareArrows,
   History,
@@ -13,9 +14,11 @@ import {
 
 import { Button } from '@/shared/components/ui/Button/index.js';
 
+import { isStale } from '../../services/dataFreshness.js';
 import { ALERT_HISTORY_STATUS } from '../../types/participantTracking.js';
 import { AlertHistoryList } from '../AlertHistoryList/index.js';
 import { CohortNotice } from '../CohortNotice/index.js';
+import { StaleBadge, StaleDataNotice } from '../StaleDataNotice/index.js';
 
 /*
  * Sección «Historial de alertas» de la ficha (RF-129). Solo presenta el
@@ -25,7 +28,7 @@ import { CohortNotice } from '../CohortNotice/index.js';
  */
 const STATUS = ALERT_HISTORY_STATUS;
 
-const RETRY_STATUSES = Object.freeze([STATUS.UNAVAILABLE, STATUS.ERROR, STATUS.INCONSISTENT]);
+const RETRY_STATUSES = Object.freeze([STATUS.UNAVAILABLE, STATUS.ERROR, STATUS.INCONSISTENT, STATUS.STALE_UNDATED]);
 
 const STATUS_NOTICE = Object.freeze({
   [STATUS.EMPTY]: Object.freeze({
@@ -54,7 +57,11 @@ const STATUS_NOTICE = Object.freeze({
   }),
   [STATUS.UNAVAILABLE]: Object.freeze({
     tone: 'warning', icon: CloudOff, role: 'alert', title: 'Módulo no disponible',
-    message: 'El módulo de seguimiento no se encuentra disponible en este momento.',
+    message: 'El módulo de seguimiento no se encuentra disponible en este momento. No hay datos anteriores disponibles para mostrar; las demás secciones se consultan por separado.',
+  }),
+  [STATUS.STALE_UNDATED]: Object.freeze({
+    tone: 'warning', icon: ClockAlert, role: 'alert', title: 'Datos desactualizados sin fecha confiable',
+    message: 'El módulo de seguimiento no responde en tiempo real y la fecha del último dato disponible no es confiable. Por seguridad no se muestran datos desactualizados.',
   }),
   [STATUS.ERROR]: Object.freeze({
     tone: 'danger', icon: AlertTriangle, role: 'alert', title: 'Historial no disponible',
@@ -62,8 +69,9 @@ const STATUS_NOTICE = Object.freeze({
   }),
 });
 
-export function AlertHistorySection({ alerts, status, isLoading, hasSummaryMismatch, isDemo, retry }) {
+export function AlertHistorySection({ alerts, status, freshness, isLoading, hasSummaryMismatch, isDemo, retry }) {
   const notice = !isLoading ? STATUS_NOTICE[status] : null;
+  const stale = !isLoading && (status === STATUS.READY || status === STATUS.EMPTY) && isStale(freshness);
   const showList = !isLoading && status === STATUS.READY && Array.isArray(alerts) && alerts.length > 0;
 
   return (
@@ -72,6 +80,7 @@ export function AlertHistorySection({ alerts, status, isLoading, hasSummaryMisma
         <h2 id="historial-alertas" className="m-0 inline-flex items-center gap-[var(--space-2)] text-[length:var(--font-size-lg)] font-extrabold text-[var(--text-primary)]">
           <History size={20} strokeWidth={1.8} aria-hidden="true" />
           Historial de alertas
+          {stale && <StaleBadge />}
           {showList && (
             <span className="text-[length:var(--font-size-sm)] font-semibold text-[var(--text-muted)]">
               ({alerts.length})
@@ -85,6 +94,8 @@ export function AlertHistorySection({ alerts, status, isLoading, hasSummaryMisma
           resumen de alertas activas.
         </p>
       </div>
+
+      {stale && <StaleDataNotice moduleLabel="seguimiento" lastAvailableAt={freshness.lastAvailableAt} />}
 
       {isLoading && (
         <div aria-busy="true" className="flex flex-col gap-[var(--space-3)]">

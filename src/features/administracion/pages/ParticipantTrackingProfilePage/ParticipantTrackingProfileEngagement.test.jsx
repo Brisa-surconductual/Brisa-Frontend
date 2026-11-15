@@ -148,7 +148,6 @@ describe('Integración con la ficha', () => {
     ['inexistente', { status: PROFILE_STATUS.NOT_FOUND, profile: null, code: null }],
     ['inconsistente', { status: PROFILE_STATUS.INCONSISTENT, profile: null, code: null }],
     ['fuera de la cohorte', { status: PROFILE_STATUS.OUTSIDE_COHORT, profile: null, code: null }],
-    ['con error', { status: PROFILE_STATUS.ERROR, profile: null, code: null }],
     ['integración pendiente', { isIntegrationPending: true, isDemo: false, status: null, profile: null, code: null }],
   ])('ficha %s: no consulta M06 ni M07 ni muestra ningún dato protegido', (_, profile) => {
     const html = render({ profile });

@@ -1,9 +1,12 @@
 import { CircleDashed, Info, MailOpen } from 'lucide-react';
 
+import { isStale } from '../../services/dataFreshness.js';
 import { SECTION_STATUS } from '../../types/participantEngagement.js';
 import { INDICATOR_STATE } from '../../types/participantTracking.js';
+import { staleUndatedMessage } from '../../utils/staleSectionMessage.js';
 import { CohortNotice } from '../CohortNotice/index.js';
 import { ProfileSectionStatus } from '../ProfileSectionStatus/index.js';
+import { StaleBadge, StaleDataNotice } from '../StaleDataNotice/index.js';
 
 /*
  * Sección «Interacción con notificaciones» de la ficha (RF-131, métricas
@@ -32,8 +35,9 @@ const MESSAGES = Object.freeze({
   }),
   [SECTION_STATUS.UNAVAILABLE]: Object.freeze({
     title: 'Módulo no disponible',
-    message: 'El módulo de notificaciones no se encuentra disponible en este momento.',
+    message: 'El módulo de notificaciones no se encuentra disponible en este momento. No hay datos anteriores disponibles para mostrar; las demás secciones se consultan por separado.',
   }),
+  [SECTION_STATUS.STALE_UNDATED]: staleUndatedMessage('notificaciones'),
   [SECTION_STATUS.ERROR]: Object.freeze({
     title: 'Interacción no disponible',
     message: 'No fue posible cargar el historial de interacción con notificaciones del participante.',
@@ -80,8 +84,9 @@ function Metric({ label, metric, format }) {
   );
 }
 
-export function NotificationInteractionSection({ interaction, status, isLoading, isDemo, retry }) {
+export function NotificationInteractionSection({ interaction, status, freshness, isLoading, isDemo, retry }) {
   const showData = !isLoading && status === SECTION_STATUS.READY && interaction;
+  const stale = !isLoading && (status === SECTION_STATUS.READY || status === SECTION_STATUS.EMPTY) && isStale(freshness);
 
   return (
     <section aria-labelledby="interaccion-notificaciones" className="flex flex-col gap-[var(--space-3)]">
@@ -89,12 +94,15 @@ export function NotificationInteractionSection({ interaction, status, isLoading,
         <h2 id="interaccion-notificaciones" className="m-0 inline-flex items-center gap-[var(--space-2)] text-[length:var(--font-size-lg)] font-extrabold text-[var(--text-primary)]">
           <MailOpen size={20} strokeWidth={1.8} aria-hidden="true" />
           Interacción con notificaciones
+          {stale && <StaleBadge />}
         </h2>
         <p className="m-0 max-w-[680px] text-[length:var(--font-size-sm)] leading-[var(--line-height-normal)] text-[var(--text-secondary)]">
           Métricas expuestas por el módulo de notificaciones. No incluyen el
           contenido de los mensajes ni se recalculan desde aquí.
         </p>
       </div>
+
+      {stale && <StaleDataNotice moduleLabel="notificaciones" lastAvailableAt={freshness.lastAvailableAt} />}
 
       <ProfileSectionStatus
         status={status}

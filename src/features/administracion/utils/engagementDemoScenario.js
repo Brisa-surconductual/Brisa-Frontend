@@ -15,7 +15,11 @@
  * - inexistente: la referencia no existe (404);
  * - otro-participante: la respuesta es de otro participante (409);
  * - otra-cohorte: la respuesta declara otra cohorte (409);
- * - no-disponible: M06 o M07 no disponible (503).
+ * - no-disponible: M06 o M07 no disponible y sin datos anteriores (503;
+ *   FA2 de RF-149);
+ * - desactualizado: el backend entrega el último estado conocido marcado
+ *   como DEGRADADO con su fecha exacta (RF-149);
+ * - desactualizado-sin-fecha: DEGRADADO sin fecha confiable.
  * Propios:
  * - narrativa: sin-permiso-explicito (segundo 403 de RF-130) y
  *   sin-logros (progresión con la lista de logros vacía);
@@ -31,6 +35,8 @@ const COMMON = Object.freeze({
   OTHER_PARTICIPANT: 'otro-participante',
   OTHER_COHORT: 'otra-cohorte',
   UNAVAILABLE: 'no-disponible',
+  STALE: 'desactualizado',
+  STALE_UNDATED: 'desactualizado-sin-fecha',
 });
 
 export const NARRATIVE_DEMO_SCENARIO = Object.freeze({

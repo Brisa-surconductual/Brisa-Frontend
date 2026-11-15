@@ -9,6 +9,7 @@ import { ALERT_HISTORY_DEMO_SCENARIO, getAlertHistoryDemoScenario } from '../uti
 import { PROFILE_DEMO_SCENARIO, getProfileDemoScenario } from '../utils/profileDemoScenario.js';
 import { TRACKING_DEMO_SCENARIO, getTrackingDemoScenario } from '../utils/trackingDemoScenario.js';
 import { getDemoCohortMembers } from './cohortDemoSource.js';
+import { applyDegradedScenario } from './degradedDemo.js';
 import { DEMO_ALERT_HISTORY, DEMO_TRACKING_PROFILES, DEMO_TRACKING_REFERENCES } from './trackingDemoData.js';
 import { applyTrackingQuery } from './trackingDemoQuery.js';
 
@@ -182,7 +183,7 @@ export async function getParticipantTrackingProfile(cohortId, reference) {
   if (scenario === PROFILE_DEMO_SCENARIO.INCONSISTENT) return { ...response, reference: 'seg-otro000' };
   if (scenario === PROFILE_DEMO_SCENARIO.OTHER_COHORT) return { ...response, cohortId: 'otra-cohorte-ficticia' };
 
-  return response;
+  return applyDegradedScenario(response, scenario);
 }
 
 // Alerta tal como la enviaría M05, con campos que la interfaz descarta.
@@ -270,5 +271,5 @@ export async function getParticipantAlertHistory(cohortId, reference) {
     return { ...response, alerts: [...alerts, extra] };
   }
 
-  return response;
+  return applyDegradedScenario(response, scenario);
 }

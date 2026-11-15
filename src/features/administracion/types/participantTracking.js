@@ -101,6 +101,8 @@ export const ALERT_HISTORY_STATUS = Object.freeze({
   OUTSIDE_COHORT: 'OUTSIDE_COHORT',
   INCONSISTENT: 'INCONSISTENT',
   UNAVAILABLE: 'UNAVAILABLE',
+  // RF-149: degradado sin fecha confiable del último dato.
+  STALE_UNDATED: 'STALE_UNDATED',
   ERROR: 'ERROR',
 });
 

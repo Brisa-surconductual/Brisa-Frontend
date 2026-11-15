@@ -1,8 +1,11 @@
 import { Award, BookMarked, BookOpen, CircleHelp, Milestone } from 'lucide-react';
 
+import { isStale } from '../../services/dataFreshness.js';
 import { SECTION_STATUS } from '../../types/participantEngagement.js';
 import { formatAuditTimestamp } from '../../utils/formatAuditTimestamp.js';
+import { staleUndatedMessage } from '../../utils/staleSectionMessage.js';
 import { ProfileSectionStatus } from '../ProfileSectionStatus/index.js';
+import { StaleBadge, StaleDataNotice } from '../StaleDataNotice/index.js';
 
 /*
  * Sección «Progresión narrativa» de la ficha (RF-130, datos de M06).
@@ -30,8 +33,9 @@ const MESSAGES = Object.freeze({
   }),
   [SECTION_STATUS.UNAVAILABLE]: Object.freeze({
     title: 'Módulo no disponible',
-    message: 'El módulo de gamificación no se encuentra disponible en este momento.',
+    message: 'El módulo de gamificación no se encuentra disponible en este momento. No hay datos anteriores disponibles para mostrar; las demás secciones se consultan por separado.',
   }),
+  [SECTION_STATUS.STALE_UNDATED]: staleUndatedMessage('gamificación'),
   [SECTION_STATUS.ERROR]: Object.freeze({
     title: 'Progresión narrativa no disponible',
     message: 'No fue posible cargar la progresión narrativa individual del participante.',
@@ -107,8 +111,9 @@ function Achievements({ achievements }) {
   );
 }
 
-export function NarrativeProgressSection({ narrative, status, isLoading, isDemo, retry }) {
+export function NarrativeProgressSection({ narrative, status, freshness, isLoading, isDemo, retry }) {
   const showData = !isLoading && status === SECTION_STATUS.READY && narrative;
+  const stale = !isLoading && (status === SECTION_STATUS.READY || status === SECTION_STATUS.EMPTY) && isStale(freshness);
 
   return (
     <section aria-labelledby="progresion-narrativa" className="flex flex-col gap-[var(--space-3)]">
@@ -116,12 +121,15 @@ export function NarrativeProgressSection({ narrative, status, isLoading, isDemo,
         <h2 id="progresion-narrativa" className="m-0 inline-flex items-center gap-[var(--space-2)] text-[length:var(--font-size-lg)] font-extrabold text-[var(--text-primary)]">
           <BookOpen size={20} strokeWidth={1.8} aria-hidden="true" />
           Progresión narrativa
+          {stale && <StaleBadge />}
         </h2>
         <p className="m-0 max-w-[680px] text-[length:var(--font-size-sm)] leading-[var(--line-height-normal)] text-[var(--text-secondary)]">
           Estado narrativo expuesto por el módulo de gamificación. Se muestra tal
           como llega: no se calcula ni se modifica desde aquí.
         </p>
       </div>
+
+      {stale && <StaleDataNotice moduleLabel="gamificación" lastAvailableAt={freshness.lastAvailableAt} />}
 
       <ProfileSectionStatus
         status={status}

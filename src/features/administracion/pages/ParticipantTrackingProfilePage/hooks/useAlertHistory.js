@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { getParticipantAlertHistory } from '../../../data/trackingSource.js';
 import { hasActiveSummaryMismatch } from '../../../services/alertHistory.js';
 import { interpretAlertHistoryResponse } from '../../../services/alertHistoryResponse.js';
+import { CURRENT_FRESHNESS, freshnessBlockingStatus, interpretFreshness } from '../../../services/dataFreshness.js';
 import {
   ALERT_HISTORY_OUTCOME,
   ALERT_HISTORY_STATUS as HISTORY_STATUS,
@@ -45,6 +46,8 @@ export function useAlertHistory({ cohortId, reference, enabled, activeAlerts = n
   const [status, setStatus] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  // RF-149: marca de modo degradado de la respuesta mostrada.
+  const [freshness, setFreshness] = useState(CURRENT_FRESHNESS);
 
   useEffect(() => {
     if (!enabled) return undefined;
@@ -55,17 +58,26 @@ export function useAlertHistory({ cohortId, reference, enabled, activeAlerts = n
       setIsLoading(true);
       setStatus(null);
       setAlerts(null);
+      setFreshness(CURRENT_FRESHNESS);
 
       try {
-        const result = interpretAlertHistoryResponse(await source.getHistory(cohortId, reference), { cohortId, reference });
+        const response = await source.getHistory(cohortId, reference);
+        const result = interpretAlertHistoryResponse(response, { cohortId, reference });
         if (!active) return;
 
-        setAlerts(result.outcome === ALERT_HISTORY_OUTCOME.OK ? result.alerts : null);
-        setStatus(STATUS_BY_OUTCOME[result.outcome] ?? HISTORY_STATUS.ERROR);
+        // La marca solo cuenta tras autorizar y aislar la respuesta (RF-149).
+        const visible = result.outcome === ALERT_HISTORY_OUTCOME.OK || result.outcome === ALERT_HISTORY_OUTCOME.EMPTY;
+        const freshnessOf = visible ? interpretFreshness(response) : CURRENT_FRESHNESS;
+        const blocked = freshnessBlockingStatus(freshnessOf);
+
+        setAlerts(result.outcome === ALERT_HISTORY_OUTCOME.OK && !blocked ? result.alerts : null);
+        setFreshness(blocked ? CURRENT_FRESHNESS : freshnessOf);
+        setStatus(blocked ?? STATUS_BY_OUTCOME[result.outcome] ?? HISTORY_STATUS.ERROR);
       } catch (error) {
         if (!active) return;
 
         setAlerts(null);
+        setFreshness(CURRENT_FRESHNESS);
         setStatus(STATUS_BY_CODE[error?.code] ?? HISTORY_STATUS.ERROR);
       } finally {
         if (active) setIsLoading(false);
@@ -87,6 +99,7 @@ export function useAlertHistory({ cohortId, reference, enabled, activeAlerts = n
   return {
     alerts: visibleAlerts,
     status: enabled ? status : null,
+    freshness: enabled ? freshness : CURRENT_FRESHNESS,
     isLoading: Boolean(enabled) && (isLoading || status === null),
     hasSummaryMismatch: hasActiveSummaryMismatch(activeAlerts, compared),
     retry: () => setAttempt((value) => value + 1),

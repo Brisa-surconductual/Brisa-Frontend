@@ -14,7 +14,11 @@
  * - inconsistente: la respuesta es de otro participante (409 de RF-128);
  * - otra-cohorte: la respuesta declara otra cohorte;
  * - fuera-de-cohorte: el participante ya no pertenece a la cohorte;
- * - no-disponible: M05 no disponible (503 de RF-128).
+ * - no-disponible: M05 no disponible y sin datos anteriores (503 de
+ *   RF-128; FA2 de RF-149);
+ * - desactualizado: último estado conocido marcado como DEGRADADO con su
+ *   fecha exacta (RF-149);
+ * - desactualizado-sin-fecha: DEGRADADO sin fecha confiable.
  */
 export const PROFILE_DEMO_SCENARIO = Object.freeze({
   PROFILE: 'perfil',
@@ -27,6 +31,8 @@ export const PROFILE_DEMO_SCENARIO = Object.freeze({
   OTHER_COHORT: 'otra-cohorte',
   OUTSIDE_COHORT: 'fuera-de-cohorte',
   UNAVAILABLE: 'no-disponible',
+  STALE: 'desactualizado',
+  STALE_UNDATED: 'desactualizado-sin-fecha',
 });
 
 // Escenario de la demostración; un valor desconocido usa los datos.
