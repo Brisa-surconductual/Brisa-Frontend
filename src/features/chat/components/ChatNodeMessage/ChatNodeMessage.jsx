@@ -36,7 +36,8 @@ export function ChatNodeMessage({ nodo, onRecursoError }) {
           <ChatMediaBlock
             key={`${key}-${bloque.url}`}
             bloque={bloque}
-            onError={() => onRecursoError?.(indice)}
+            // Solo el nodo actual recarga; en el historial no hay manejador.
+            onError={onRecursoError && (() => onRecursoError(indice))}
             className={`max-w-[85%] ${SANGRIA}`}
           />
         );

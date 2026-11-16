@@ -41,7 +41,8 @@ describe('ChatNodeMessage (RF-26)', () => {
       { orden: 5, tipo: 'DOCUMENTO', url },
     ]);
 
-    expect(html.match(/alt="Imagen"/g)).toHaveLength(2);
+    expect(html).toContain('alt="Imagen"');
+    expect(html).toContain('alt="Imagen animada"');
     expect(html).toContain('aria-label="Video"');
     expect(html).toContain('aria-label="Audio"');
     expect(html).toContain('>Documento</span>');
@@ -71,7 +72,7 @@ describe('ChatNodeMessage (RF-26)', () => {
   it('un multimedia sin url muestra el aviso directamente (D14)', () => {
     const html = render([{ orden: 1, tipo: 'AUDIO', url: null }]);
 
-    expect(html).toContain('No se pudo cargar este recurso.');
+    expect(html).toContain('El recurso multimedia no está disponible.');
     expect(html).not.toContain('<audio');
   });
 
@@ -80,7 +81,7 @@ describe('ChatNodeMessage (RF-26)', () => {
       { orden: 1, tipo: 'DOCUMENTO', url: 'javascript:alert(1)' },
     ]);
 
-    expect(html).toContain('No se pudo cargar este recurso.');
+    expect(html).toContain('El recurso multimedia no está disponible.');
     expect(html).not.toContain('href=');
   });
 

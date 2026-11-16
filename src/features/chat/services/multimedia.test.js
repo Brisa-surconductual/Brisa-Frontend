@@ -21,6 +21,21 @@ describe('esUrlSegura', () => {
     expect(esUrlSegura('javascript:alert(1)')).toBe(false);
     expect(esUrlSegura(null)).toBe(false);
   });
+
+  it('acepta HTTPS en mayúsculas y rechaza otros esquemas y no-texto', () => {
+    expect(esUrlSegura('HTTPS://x.test/a')).toBe(true);
+
+    for (const url of [
+      'data:image/png;base64,AAAA',
+      'blob:https://x.test/1',
+      '//x.test/a',
+      '',
+      undefined,
+      ['https://x.test/a'],
+    ]) {
+      expect(esUrlSegura(url)).toBe(false);
+    }
+  });
 });
 
 describe('resolverEstadoRender (RF-33)', () => {
@@ -56,10 +71,28 @@ describe('resolverEstadoRender (RF-33)', () => {
     ).toBe(R.NO_SOPORTADO);
   });
 
-  it('mimeType null no bloquea (A-040)', () => {
-    expect(resolverEstadoRender(bloque({ mimeType: null }), R.CARGANDO)).toBe(
-      R.CARGANDO,
-    );
+  it('normaliza espacios alrededor del MIME y antes de los parámetros', () => {
+    for (const mimeType of ['  image/png  ', 'image/png ; q=1']) {
+      expect(resolverEstadoRender(bloque({ mimeType }), R.CARGANDO)).toBe(
+        R.CARGANDO,
+      );
+    }
+  });
+
+  it('mimeType ausente o vacío tras normalizar no bloquea (A-040)', () => {
+    for (const mimeType of [null, undefined, '', '   ', ';charset=x']) {
+      expect(resolverEstadoRender(bloque({ mimeType }), R.CARGANDO)).toBe(
+        R.CARGANDO,
+      );
+    }
+  });
+
+  it('mimeType que no es texto → NO_SOPORTADO, sin lanzar', () => {
+    for (const mimeType of [123, {}, ['image/png']]) {
+      expect(resolverEstadoRender(bloque({ mimeType }), R.CARGANDO)).toBe(
+        R.NO_SOPORTADO,
+      );
+    }
   });
 
   it('noDisponible gana sobre el estado local, también en CARGANDO (D8, CA-33-5)', () => {
@@ -68,6 +101,20 @@ describe('resolverEstadoRender (RF-33)', () => {
         R.ERROR_CARGA,
       );
     }
+
+    // También con MIME no permitido o sin url: ERROR_CARGA va primero.
+    expect(
+      resolverEstadoRender(
+        bloque({ noDisponible: true, mimeType: 'image/tiff' }),
+        R.CARGANDO,
+      ),
+    ).toBe(R.ERROR_CARGA);
+    expect(
+      resolverEstadoRender(
+        bloque({ noDisponible: true, url: null }),
+        R.CARGANDO,
+      ),
+    ).toBe(R.ERROR_CARGA);
   });
 
   it('sin url o con url insegura → ERROR_CARGA, antes que NO_SOPORTADO', () => {

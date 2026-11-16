@@ -36,14 +36,20 @@ describe('ChatMediaBlock (RF-33)', () => {
     expect(html).toContain('alt="Persona respirando profundo"');
     expect(html).toContain('opacity-0');
     expect(html).toContain('aspect-[4/3]');
+    // a11y: mientras carga, la imagen invisible no se anuncia ni se enfoca.
+    expect(html).toContain('inert=""');
+    expect(html).toContain('role="status"');
+    expect(html).toContain('Cargando imagen');
     // D9: nunca `display:none` (la clase `hidden` de Tailwind).
     expect(html).not.toMatch(/class="[^"]*\bhidden\b/);
   });
 
-  it('un GIF permitido se pinta como imagen', () => {
-    const html = render(imagen({ tipo: 'GIF', mimeType: 'image/gif' }));
+  it('un GIF permitido se pinta como imagen animada', () => {
+    const html = render(
+      imagen({ tipo: 'GIF', mimeType: 'image/gif', textoAlternativo: null }),
+    );
 
-    expect(html).toContain('<img');
+    expect(html).toContain('alt="Imagen animada"');
   });
 
   it('el video tiene controles, solo metadatos y no se reproduce solo (CA-33-2)', () => {
@@ -54,6 +60,10 @@ describe('ChatMediaBlock (RF-33)', () => {
     expect(html).toContain('preload="metadata"');
     expect(html).toContain('aspect-video');
     expect(html).not.toContain('autoplay');
+    // Enmienda D14: el video se ve desde el inicio, sin marcador de carga.
+    expect(html).not.toContain('opacity-0');
+    expect(html).not.toContain('aria-busy="true"');
+    expect(html).not.toContain('inert');
   });
 
   it('MIME no permitido: aviso y sin pedir el archivo (CA-33-4)', () => {
@@ -73,10 +83,14 @@ describe('ChatMediaBlock (RF-33)', () => {
     expect(html).not.toContain('<img');
   });
 
-  it('AUDIO conserva el aviso de RF-26', () => {
-    const html = render({ orden: 1, tipo: 'AUDIO', url: null });
+  it('AUDIO y DOCUMENTO usan el mismo aviso normativo (enmienda D15)', () => {
+    for (const tipo of ['AUDIO', 'DOCUMENTO']) {
+      expect(render({ orden: 1, tipo, url: null })).toContain(ERROR_CARGA);
+    }
+  });
 
-    expect(html).toContain('No se pudo cargar este recurso.');
+  it('el aviso se anuncia como estado', () => {
+    expect(render(imagen({ noDisponible: true }))).toContain('role="status"');
   });
 });
 
@@ -85,7 +99,7 @@ describe('ChatMediaBlock (RF-33)', () => {
 describe('RF-33 con la recarga única de A-017', () => {
   const ID = '33000000-0000-4000-8000-000000000001';
 
-  const conversacion = (url) => ({
+  const conversacion = (url, medio) => ({
     idSesion: ID,
     estadoSesion: 'ACTIVA',
     nodo: {
@@ -93,7 +107,7 @@ describe('RF-33 con la recarga única de A-017', () => {
       esTerminal: false,
       bloques: [
         { orden: 1, tipo: 'TEXTO', texto: 'Respira' },
-        imagen({ orden: 2, url }),
+        imagen({ orden: 2, url, ...medio }),
       ],
       entrada: null,
     },
@@ -107,42 +121,53 @@ describe('RF-33 con la recarga única de A-017', () => {
       <ChatNodeMessage nodo={selectItems(estado)[0].nodo} />,
     );
 
-  it('a) la recarga trae la MISMA URL y vuelve a fallar → ERROR_CARGA (CA-33-5)', () => {
-    const estado = recorrer([
-      { type: 'EXITO', conversacion: conversacion(URL_A) },
-      { type: 'RECURSO_ERROR', indice: 1 },
-      { type: 'EXITO', conversacion: conversacion(URL_A) },
-    ]);
+  const MEDIOS = [
+    ['IMAGEN', {}],
+    ['VIDEO', { tipo: 'VIDEO', mimeType: 'video/mp4' }],
+  ];
 
-    expect(estado.recarga).toBe(1);
-    expect(selectItems(estado)[0].nodo.bloques[1].noDisponible).toBe(true);
+  it.each(MEDIOS)(
+    'a) %s: la recarga trae la MISMA URL y vuelve a fallar → ERROR_CARGA (CA-33-5)',
+    (_, medio) => {
+      const estado = recorrer([
+        { type: 'EXITO', conversacion: conversacion(URL_A, medio) },
+        { type: 'RECURSO_ERROR', indice: 1 },
+        { type: 'EXITO', conversacion: conversacion(URL_A, medio) },
+      ]);
 
-    const html = pintar(estado);
-    expect(html).toContain(ERROR_CARGA);
-    expect(html).not.toContain('aria-busy');
-    expect(html).toContain('Respira');
-  });
+      expect(estado.recarga).toBe(1);
+      expect(selectItems(estado)[0].nodo.bloques[1].noDisponible).toBe(true);
 
-  it('b) la recarga trae una URL NUEVA que también falla → ERROR_CARGA sin segunda recarga (CA-33-6)', () => {
-    const tras = recorrer([
-      { type: 'EXITO', conversacion: conversacion(URL_A) },
-      { type: 'RECURSO_ERROR', indice: 1 },
-      { type: 'EXITO', conversacion: conversacion(URL_B) },
-    ]);
+      const html = pintar(estado);
+      expect(html).toContain(ERROR_CARGA);
+      expect(html).not.toContain('aria-busy');
+      expect(html).toContain('Respira');
+    },
+  );
 
-    // Con URL nueva el recurso vuelve a intentarse.
-    expect(pintar(tras)).toContain(`src="${URL_B}"`);
+  it.each(MEDIOS)(
+    'b) %s: la recarga trae una URL NUEVA que también falla → ERROR_CARGA sin segunda recarga (CA-33-6)',
+    (_, medio) => {
+      const tras = recorrer([
+        { type: 'EXITO', conversacion: conversacion(URL_A, medio) },
+        { type: 'RECURSO_ERROR', indice: 1 },
+        { type: 'EXITO', conversacion: conversacion(URL_B, medio) },
+      ]);
 
-    const estado = conversationReducer(tras, {
-      type: 'RECURSO_ERROR',
-      indice: 1,
-    });
+      // Con URL nueva el recurso vuelve a intentarse.
+      expect(pintar(tras)).toContain(`src="${URL_B}"`);
 
-    expect(estado.recarga).toBe(tras.recarga);
-    expect(estado.recargando).toBe(false);
+      const estado = conversationReducer(tras, {
+        type: 'RECURSO_ERROR',
+        indice: 1,
+      });
 
-    const html = pintar(estado);
-    expect(html).toContain(ERROR_CARGA);
-    expect(html).not.toContain('aria-busy');
-  });
+      expect(estado.recarga).toBe(tras.recarga);
+      expect(estado.recargando).toBe(false);
+
+      const html = pintar(estado);
+      expect(html).toContain(ERROR_CARGA);
+      expect(html).not.toContain('aria-busy');
+    },
+  );
 });

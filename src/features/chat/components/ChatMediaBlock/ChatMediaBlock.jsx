@@ -1,23 +1,29 @@
-import { FileText, ImageOff } from 'lucide-react';
+import { CircleAlert, FileText, ImageOff, VideoOff } from 'lucide-react';
 
 import { useRecursoMultimedia } from '../../hooks/useRecursoMultimedia.js';
 import { esUrlSegura } from '../../services/multimedia.js';
 import { ESTADO_RENDER, TIPO_BLOQUE } from '../../types/index.js';
 
-// D7 de FE-M03-03: texto de interfaz para AUDIO y DOCUMENTO (RF-26).
-const AVISO_NO_DISPONIBLE = 'No se pudo cargar este recurso.';
+// RF-33: el texto del 404 es normativo (VERBATIM) y aplica a todo
+// recurso caído, también AUDIO y DOCUMENTO (enmienda D15). El de formato
+// no soportado es provisional (A-058).
+const AVISO_NO_DISPONIBLE = 'El recurso multimedia no está disponible.';
 
-// RF-33: el texto del 404 es normativo (VERBATIM). El de formato no
-// soportado es provisional (A-058).
 const AVISO_POR_ESTADO = Object.freeze({
-  [ESTADO_RENDER.ERROR_CARGA]: 'El recurso multimedia no está disponible.',
+  [ESTADO_RENDER.ERROR_CARGA]: AVISO_NO_DISPONIBLE,
   [ESTADO_RENDER.NO_SOPORTADO]: 'Este formato no se puede mostrar.',
+});
+
+const ICONO_AVISO = Object.freeze({
+  [TIPO_BLOQUE.IMAGEN]: ImageOff,
+  [TIPO_BLOQUE.GIF]: ImageOff,
+  [TIPO_BLOQUE.VIDEO]: VideoOff,
 });
 
 // D18: sin `textoAlternativo`, el nombre accesible es el del tipo.
 const NOMBRE_POR_TIPO = Object.freeze({
   [TIPO_BLOQUE.IMAGEN]: 'Imagen',
-  [TIPO_BLOQUE.GIF]: 'Imagen',
+  [TIPO_BLOQUE.GIF]: 'Imagen animada',
   [TIPO_BLOQUE.VIDEO]: 'Video',
   [TIPO_BLOQUE.AUDIO]: 'Audio',
   [TIPO_BLOQUE.DOCUMENTO]: 'Documento',
@@ -27,36 +33,37 @@ const nombreAccesible = (bloque) =>
   bloque.textoAlternativo || NOMBRE_POR_TIPO[bloque.tipo];
 
 const MEDIA_CLASS =
-  'block w-full rounded-[var(--radius-lg)] border border-[var(--surface-border)] bg-[var(--surface-card)]';
+  'block w-full rounded-[var(--radius-lg)] border border-[var(--surface-border)] bg-[var(--surface-card)] shadow-[var(--shadow-sm)]';
 
-// D9: en carga, el medio sigue montado (el navegador lo descarga) pero
-// invisible, con la altura reservada porque el DTO no trae dimensiones.
-const EN_CARGA = 'opacity-0';
-
+// D9: en carga, la imagen sigue montada (el navegador la descarga) pero
+// invisible e inerte para lectores y foco, con la altura reservada porque
+// el DTO no trae dimensiones.
 function Imagen({ bloque, src, cargando, onLoad, onError }) {
   return (
     <img
       src={src}
       alt={nombreAccesible(bloque)}
       loading="lazy"
+      inert={cargando}
       onLoad={onLoad}
       onError={onError}
-      className={`${MEDIA_CLASS} ${cargando ? `aspect-[4/3] object-cover ${EN_CARGA}` : 'h-auto'}`}
+      className={`${MEDIA_CLASS} ${cargando ? 'aspect-[4/3] object-cover opacity-0' : 'h-auto'}`}
     />
   );
 }
 
 // D10: sin autoplay; solo metadatos hasta que la estudiante lo inicia.
-function Video({ bloque, src, cargando, onLoad, onError }) {
+// Enmienda D14: siempre visible, porque en iOS `loadedmetadata` puede no
+// llegar hasta que se toca el video. Su fallo sigue la recarga de A-017.
+function Video({ bloque, src, onError }) {
   return (
     <video
       controls
       preload="metadata"
       src={src}
       aria-label={nombreAccesible(bloque)}
-      onLoadedMetadata={onLoad}
       onError={onError}
-      className={`aspect-video ${MEDIA_CLASS} ${cargando ? EN_CARGA : ''}`}
+      className={`aspect-video ${MEDIA_CLASS}`}
     />
   );
 }
@@ -98,10 +105,15 @@ function Documento({ bloque }) {
   );
 }
 
-function Aviso({ texto, textoAlternativo }) {
+function Aviso({ texto, tipo, textoAlternativo }) {
+  const Icono = ICONO_AVISO[tipo] ?? CircleAlert;
+
   return (
-    <p className="m-0 flex items-start gap-[var(--space-2)] rounded-[var(--radius-lg)] border border-dashed border-[var(--surface-border)] bg-[var(--surface-hover)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--font-size-sm)] text-[var(--text-secondary)]">
-      <ImageOff
+    <p
+      role="status"
+      className="m-0 flex items-start gap-[var(--space-2)] rounded-[var(--radius-lg)] border border-dashed border-[var(--surface-border)] bg-[var(--surface-hover)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--font-size-sm)] text-[var(--text-secondary)]"
+    >
+      <Icono
         size={16}
         strokeWidth={1.75}
         aria-hidden="true"
@@ -121,18 +133,32 @@ function MedioVisual({ bloque, Medio, onError }) {
   const aviso = AVISO_POR_ESTADO[recurso.estado];
 
   if (aviso) {
-    return <Aviso texto={aviso} textoAlternativo={bloque.textoAlternativo} />;
+    return (
+      <Aviso
+        texto={aviso}
+        tipo={bloque.tipo}
+        textoAlternativo={bloque.textoAlternativo}
+      />
+    );
   }
 
-  const cargando = recurso.estado === ESTADO_RENDER.CARGANDO;
+  // Enmienda D14: el video no muestra marcador de carga.
+  const cargando =
+    recurso.estado === ESTADO_RENDER.CARGANDO &&
+    bloque.tipo !== TIPO_BLOQUE.VIDEO;
 
   return (
     <div aria-busy={cargando} className="relative">
       {cargando && (
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 animate-pulse rounded-[var(--radius-lg)] bg-[var(--surface-hover)] motion-reduce:animate-none"
-        />
+        <>
+          <span role="status" className="sr-only">
+            Cargando imagen
+          </span>
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 animate-pulse rounded-[var(--radius-lg)] bg-[var(--surface-hover)] motion-reduce:animate-none"
+          />
+        </>
       )}
       <Medio
         bloque={bloque}
@@ -151,7 +177,8 @@ const VISUALES = Object.freeze({
   [TIPO_BLOQUE.VIDEO]: Video,
 });
 
-// AUDIO y DOCUMENTO siguen como en RF-26 (D7 de FE-M03-05).
+// AUDIO y DOCUMENTO siguen como en RF-26, salvo el texto del aviso
+// (enmienda D15 de FE-M03-05).
 const OTROS = Object.freeze({
   [TIPO_BLOQUE.AUDIO]: Audio,
   [TIPO_BLOQUE.DOCUMENTO]: Documento,
@@ -179,6 +206,7 @@ export function ChatMediaBlock({ bloque, onError, className = '' }) {
       {bloque.noDisponible || !esUrlSegura(bloque.url) ? (
         <Aviso
           texto={AVISO_NO_DISPONIBLE}
+          tipo={bloque.tipo}
           textoAlternativo={bloque.textoAlternativo}
         />
       ) : (
