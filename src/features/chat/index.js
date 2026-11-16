@@ -17,3 +17,5 @@ export {
 } from './pages/PersonalizedTreesPage/index.js';
 export { ChatEntryPage } from './pages/ChatEntryPage/index.js';
 export { ChatConversationPage } from './pages/ChatConversationPage/index.js';
+export { ChatOfflinePage } from './pages/ChatOfflinePage/index.js';
+export { ChatOfflineDemoPage } from './pages/ChatOfflineDemoPage/index.js';

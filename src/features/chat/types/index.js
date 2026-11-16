@@ -7,3 +7,5 @@ export * from './estadoPantallaEntrada.js';
 export * from './estadoFlujo.js';
 export * from './operadorCondicion.js';
 export * from './tipoBloque.js';
+export * from './operacionOffline.js';
+export * from './sincronizacion.js';

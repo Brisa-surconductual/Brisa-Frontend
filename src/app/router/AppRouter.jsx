@@ -6,6 +6,8 @@ import { RegistrationLayout } from '@/app/layouts/RegistrationLayout/index.js';
 import {
   ChatConversationPage,
   ChatEntryPage,
+  ChatOfflineDemoPage,
+  ChatOfflinePage,
   GroupTreeDetailPage,
   GroupTreesPage,
   ProgramModalityScreen,
@@ -164,6 +166,18 @@ export function AppRouter() {
                 <Route
                   path="estudiante/chat/sesion/:idSesion"
                   element={<ChatConversationPage />}
+                />
+
+                {/* RF-34: conversación con el paquete guardado en el dispositivo. */}
+                <Route
+                  path="estudiante/chat/sin-conexion/:idSesion"
+                  element={<ChatOfflinePage />}
+                />
+
+                {/* Demostración sin conexión: solo opera en desarrollo. */}
+                <Route
+                  path="estudiante/chat/demo-sin-conexion"
+                  element={<ChatOfflineDemoPage />}
                 />
               </Route>
             </Route>
