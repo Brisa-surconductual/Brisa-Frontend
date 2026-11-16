@@ -3,13 +3,16 @@ import { describe, expect, it } from 'vitest';
 import {
   nombreContenidoCronograma,
   opcionesContenidoCronograma,
+  opcionesTipoEntrada,
   opcionesTipoNodo,
   payloadActualizarNodo,
   payloadCrearNodo,
+  resumenEntradaNodo,
   validarNodo,
   valoresDesdeNodo,
   VALORES_NODO_VACIOS,
 } from './nodosAdmin.js';
+import { TIPO_ENTRADA } from '../types/tipoEntrada.js';
 
 const nodo = {
   id: 'n-1',
@@ -34,27 +37,45 @@ const catalogoContenidos = [
 ];
 
 describe('validarNodo', () => {
-  it('exige tipo y texto', () => {
+  it('exige tipo, texto y orden al crear', () => {
     expect(validarNodo(VALORES_NODO_VACIOS)).toEqual({
       idTipoNodo: 'Elige el tipo de nodo.',
       texto: 'Escribe el texto del nodo.',
+      orden: 'Indica el orden del nodo dentro del flujo.',
     });
   });
 
   it('un texto de solo espacios no es válido', () => {
     expect(
-      validarNodo({ ...VALORES_NODO_VACIOS, idTipoNodo: 't', texto: '   ' }),
+      validarNodo(
+        { ...VALORES_NODO_VACIOS, idTipoNodo: 't', texto: '   ' },
+        { esEdicion: true },
+      ),
     ).toHaveProperty('texto');
   });
 
-  it('el orden es opcional, entero y desde 1', () => {
+  it('el orden es obligatorio al crear, entero y desde 1', () => {
     const base = { ...VALORES_NODO_VACIOS, idTipoNodo: 't', texto: 'x' };
 
-    expect(validarNodo({ ...base, orden: '' })).toEqual({});
+    expect(validarNodo({ ...base, orden: '' })).toHaveProperty('orden');
     expect(validarNodo({ ...base, orden: '3' })).toEqual({});
     for (const malo of ['0', '-1', '1.5', 'a']) {
       expect(validarNodo({ ...base, orden: malo })).toHaveProperty('orden');
     }
+  });
+
+  it('el orden es opcional al editar', () => {
+    const base = { ...VALORES_NODO_VACIOS, idTipoNodo: 't', texto: 'x' };
+
+    expect(validarNodo({ ...base, orden: '' }, { esEdicion: true })).toEqual(
+      {},
+    );
+    expect(validarNodo({ ...base, orden: '3' }, { esEdicion: true })).toEqual(
+      {},
+    );
+    expect(
+      validarNodo({ ...base, orden: 'a' }, { esEdicion: true }),
+    ).toHaveProperty('orden');
   });
 });
 
@@ -138,6 +159,273 @@ describe('payloads', () => {
 
     expect(payloadActualizarNodo(conContenido, valores)).toEqual({
       id_contenido_cronograma: null,
+    });
+  });
+});
+
+describe('respuesta del nodo (PR4)', () => {
+  const base = {
+    idTipoNodo: 't-1',
+    texto: 'Hola',
+    esNodoInicial: false,
+    orden: '2',
+    tieneEntrada: true,
+    entradaObligatorio: true,
+  };
+
+  it('sin "tieneEntrada" el nodo queda informativo, sin entrada', () => {
+    const payload = payloadCrearNodo({ ...base, tieneEntrada: false });
+
+    expect(payload.contenido).toEqual({ texto: 'Hola' });
+  });
+
+  it('exige al menos dos opciones para OPCION_UNICA/MULTISELECCION', () => {
+    const valores = {
+      ...VALORES_NODO_VACIOS,
+      idTipoNodo: 't',
+      texto: 'x',
+      orden: '1',
+      tieneEntrada: true,
+      entradaTipo: TIPO_ENTRADA.OPCION_UNICA,
+      entradaOpciones: [{ valor: 'si', etiqueta: '' }],
+    };
+
+    expect(validarNodo(valores)).toHaveProperty('entradaOpciones');
+  });
+
+  it('OPCION_UNICA: construye las opciones desde las filas del editor', () => {
+    const payload = payloadCrearNodo({
+      ...base,
+      entradaTipo: TIPO_ENTRADA.OPCION_UNICA,
+      entradaOpciones: [
+        { valor: 'si', etiqueta: 'Sí' },
+        { valor: 'no', etiqueta: '' },
+      ],
+      entradaObligatorio: true,
+      entradaMinSelecciones: '',
+      entradaMaxSelecciones: '',
+    });
+
+    expect(payload.contenido.entrada).toEqual({
+      tipo: 'SELECCION_UNICA',
+      obligatorio: true,
+      opciones: [
+        { valor: 'si', etiqueta: 'Sí' },
+        { valor: 'no', etiqueta: 'no' },
+      ],
+    });
+  });
+
+  it('descarta las filas de opciones sin valor', () => {
+    const payload = payloadCrearNodo({
+      ...base,
+      entradaTipo: TIPO_ENTRADA.OPCION_UNICA,
+      entradaOpciones: [
+        { valor: 'si', etiqueta: '' },
+        { valor: '  ', etiqueta: '' },
+        { valor: 'no', etiqueta: '' },
+      ],
+    });
+
+    expect(payload.contenido.entrada.opciones).toEqual([
+      { valor: 'si', etiqueta: 'si' },
+      { valor: 'no', etiqueta: 'no' },
+    ]);
+  });
+
+  it('MULTISELECCION: guarda tipo de configuración y límites de selección', () => {
+    const payload = payloadCrearNodo({
+      ...base,
+      entradaTipo: TIPO_ENTRADA.MULTISELECCION,
+      entradaOpciones: [
+        { valor: 'a', etiqueta: '' },
+        { valor: 'b', etiqueta: '' },
+        { valor: 'c', etiqueta: '' },
+      ],
+      entradaMinSelecciones: '1',
+      entradaMaxSelecciones: '2',
+    });
+
+    expect(payload.contenido.entrada).toMatchObject({
+      tipo: 'SELECCION_MULTIPLE',
+      min_selecciones: 1,
+      max_selecciones: 2,
+    });
+  });
+
+  it('rechaza un rango de selecciones invertido', () => {
+    const valores = {
+      ...VALORES_NODO_VACIOS,
+      idTipoNodo: 't',
+      texto: 'x',
+      orden: '1',
+      tieneEntrada: true,
+      entradaTipo: TIPO_ENTRADA.MULTISELECCION,
+      entradaOpciones: [
+        { valor: 'a', etiqueta: '' },
+        { valor: 'b', etiqueta: '' },
+      ],
+      entradaMinSelecciones: '3',
+      entradaMaxSelecciones: '1',
+    };
+
+    expect(validarNodo(valores)).toHaveProperty('entradaMaxSelecciones');
+  });
+
+  it('ESCALA: guarda min, max, paso y etiquetas', () => {
+    const payload = payloadCrearNodo({
+      ...base,
+      entradaTipo: TIPO_ENTRADA.ESCALA,
+      entradaMin: '0',
+      entradaMax: '10',
+      entradaPaso: '1',
+      entradaEtiquetaMin: 'Nada',
+      entradaEtiquetaMax: 'Mucho',
+    });
+
+    expect(payload.contenido.entrada).toEqual({
+      tipo: TIPO_ENTRADA.ESCALA,
+      obligatorio: true,
+      min: 0,
+      max: 10,
+      paso: 1,
+      etiquetas: { min: 'Nada', max: 'Mucho' },
+    });
+  });
+
+  it('NUMERICO: no admite paso ni etiquetas', () => {
+    const payload = payloadCrearNodo({
+      ...base,
+      entradaTipo: TIPO_ENTRADA.NUMERICO,
+      entradaMin: '0',
+      entradaMax: '100',
+      entradaPaso: '5',
+    });
+
+    expect(payload.contenido.entrada).toEqual({
+      tipo: TIPO_ENTRADA.NUMERICO,
+      obligatorio: true,
+      min: 0,
+      max: 100,
+    });
+  });
+
+  it('rechaza un rango numérico invertido', () => {
+    const valores = {
+      ...VALORES_NODO_VACIOS,
+      idTipoNodo: 't',
+      texto: 'x',
+      orden: '1',
+      tieneEntrada: true,
+      entradaTipo: TIPO_ENTRADA.NUMERICO,
+      entradaMin: '10',
+      entradaMax: '1',
+    };
+
+    expect(validarNodo(valores)).toHaveProperty('entradaMax');
+  });
+
+  it('TEXTO_LIBRE: guarda límites de palabras y caracteres', () => {
+    const payload = payloadCrearNodo({
+      ...base,
+      entradaTipo: TIPO_ENTRADA.TEXTO_LIBRE,
+      entradaMinPalabras: '1',
+      entradaMaxPalabras: '50',
+      entradaMaxCaracteres: '280',
+    });
+
+    expect(payload.contenido.entrada).toEqual({
+      tipo: TIPO_ENTRADA.TEXTO_LIBRE,
+      obligatorio: true,
+      min_palabras: 1,
+      max_palabras: 50,
+      max_caracteres: 280,
+    });
+  });
+
+  it('FECHA_HORA: guarda el formato y los límites como texto', () => {
+    const payload = payloadCrearNodo({
+      ...base,
+      entradaTipo: TIPO_ENTRADA.FECHA_HORA,
+      entradaFormato: 'FECHA',
+      entradaMin: '2026-01-01',
+      entradaMax: '2026-12-31',
+    });
+
+    expect(payload.contenido.entrada).toEqual({
+      tipo: TIPO_ENTRADA.FECHA_HORA,
+      obligatorio: true,
+      formato: 'FECHA',
+      min: '2026-01-01',
+      max: '2026-12-31',
+    });
+  });
+
+  it('BOOLEANO: no agrega subcampos', () => {
+    const payload = payloadCrearNodo({
+      ...base,
+      entradaTipo: TIPO_ENTRADA.BOOLEANO,
+    });
+
+    expect(payload.contenido.entrada).toEqual({
+      tipo: TIPO_ENTRADA.BOOLEANO,
+      obligatorio: true,
+    });
+  });
+
+  it('editar: precarga la entrada existente y detecta si cambió', () => {
+    const nodoConEntrada = {
+      idTipoNodo: 't-1',
+      texto: 'Hola',
+      contenido: { texto: 'Hola' },
+      esNodoInicial: false,
+      orden: 1,
+      idContenidoCronograma: null,
+      entrada: {
+        tipo: 'SELECCION_UNICA',
+        obligatorio: true,
+        opciones: [{ valor: 'si', etiqueta: 'Sí' }],
+      },
+    };
+
+    const valores = valoresDesdeNodo(nodoConEntrada);
+    expect(valores).toMatchObject({
+      tieneEntrada: true,
+      entradaTipo: TIPO_ENTRADA.OPCION_UNICA,
+      entradaOpciones: [{ valor: 'si', etiqueta: 'Sí' }],
+    });
+
+    // Sin cambios: no viaja `contenido`.
+    expect(payloadActualizarNodo(nodoConEntrada, valores)).toBeNull();
+
+    // Desactivar la entrada sí viaja como cambio.
+    const sinEntrada = { ...valores, tieneEntrada: false };
+    expect(payloadActualizarNodo(nodoConEntrada, sinEntrada)).toEqual({
+      contenido: { texto: 'Hola' },
+    });
+  });
+});
+
+describe('resumenEntradaNodo', () => {
+  it('describe el tipo de respuesta configurado', () => {
+    expect(
+      resumenEntradaNodo({ tipo: 'SELECCION_UNICA', obligatorio: true }),
+    ).toBe('Selección única');
+    expect(
+      resumenEntradaNodo({ tipo: 'TEXTO_LIBRE', obligatorio: false }),
+    ).toBe('Texto libre (opcional)');
+    expect(resumenEntradaNodo(null)).toBe('');
+  });
+});
+
+describe('opcionesTipoEntrada', () => {
+  it('ofrece todos los tipos salvo CONTINUAR', () => {
+    const opciones = opcionesTipoEntrada();
+
+    expect(opciones.map((o) => o.value)).not.toContain(TIPO_ENTRADA.CONTINUAR);
+    expect(opciones).toContainEqual({
+      value: TIPO_ENTRADA.OPCION_UNICA,
+      label: 'Selección única',
     });
   });
 });

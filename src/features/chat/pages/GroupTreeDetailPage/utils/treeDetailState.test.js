@@ -86,6 +86,24 @@ describe('treeDetailReducer · editor de nodos', () => {
       esNodoInicial: false,
       orden: '3',
       idContenidoCronograma: '',
+      tieneEntrada: false,
+      entradaTipo: 'TEXTO_LIBRE',
+      entradaObligatorio: true,
+      entradaOpciones: [
+        { valor: '', etiqueta: '' },
+        { valor: '', etiqueta: '' },
+      ],
+      entradaMinSelecciones: '',
+      entradaMaxSelecciones: '',
+      entradaMin: '',
+      entradaMax: '',
+      entradaPaso: '',
+      entradaEtiquetaMin: '',
+      entradaEtiquetaMax: '',
+      entradaMinPalabras: '',
+      entradaMaxPalabras: '',
+      entradaMaxCaracteres: '',
+      entradaFormato: 'FECHA_HORA',
     });
   });
 
@@ -137,6 +155,124 @@ describe('treeDetailReducer · editor de nodos', () => {
       reloadKey: 1,
     });
     expect(next.editor.mode).toBe('closed');
+  });
+});
+
+describe('treeDetailReducer · catálogo de reglas de validación (PR4)', () => {
+  it('arranca sin reglas de validación', () => {
+    expect(initialTreeDetailState.reglasValidacion).toEqual([]);
+  });
+
+  it('el catálogo también guarda las reglas de validación', () => {
+    const next = reduce(initialTreeDetailState, {
+      type: 'CATALOG',
+      tiposNodo: [],
+      contenidosCronograma: [],
+      reglasValidacion: [{ id_regla_validacion: 'r-1' }],
+    });
+
+    expect(next.reglasValidacion).toEqual([{ id_regla_validacion: 'r-1' }]);
+  });
+});
+
+describe('treeDetailReducer · editor de transiciones (PR4)', () => {
+  it('arranca con el editor de transiciones cerrado', () => {
+    expect(initialTreeDetailState.transitionEditor.mode).toBe('closed');
+  });
+
+  it('abrir para crear parte de valores vacíos', () => {
+    const next = reduce(initialTreeDetailState, {
+      type: 'TRANSITION_EDITOR_OPEN_CREATE',
+    });
+
+    expect(next.transitionEditor.mode).toBe('create');
+    expect(next.transitionEditor.values.idNodoOrigen).toBe('');
+  });
+
+  it('abrir para editar precarga los valores de la transición', () => {
+    const transicion = {
+      origenId: 'a',
+      destinoId: 'b',
+      operador: 'IGUALDAD',
+      valorCondicion: { valor: 'Sí' },
+      ordenEvaluacion: 1,
+      idReglaValidacion: 'r-1',
+    };
+    const next = reduce(initialTreeDetailState, {
+      type: 'TRANSITION_EDITOR_OPEN_EDIT',
+      transicion,
+    });
+
+    expect(next.transitionEditor).toMatchObject({
+      mode: 'edit',
+      transicion,
+    });
+    expect(next.transitionEditor.values).toMatchObject({
+      idNodoOrigen: 'a',
+      idNodoDestino: 'b',
+      valorIgualdad: 'Sí',
+    });
+  });
+
+  it('escribir un campo limpia solo su error y el error de guardado', () => {
+    const abierto = reduce(initialTreeDetailState, {
+      type: 'TRANSITION_EDITOR_OPEN_CREATE',
+    });
+    const conErrores = reduce(abierto, {
+      type: 'TRANSITION_EDITOR_INVALID',
+      errors: { idNodoOrigen: 'x', ordenEvaluacion: 'y' },
+    });
+    const next = reduce(conErrores, {
+      type: 'TRANSITION_EDITOR_CHANGE',
+      field: 'idNodoOrigen',
+      value: 'a',
+    });
+
+    expect(next.transitionEditor.values.idNodoOrigen).toBe('a');
+    expect(next.transitionEditor.errors.idNodoOrigen).toBeUndefined();
+    expect(next.transitionEditor.errors.ordenEvaluacion).toBe('y');
+  });
+
+  it('un error al guardar conserva lo escrito y deja de guardar', () => {
+    const guardando = reduce(
+      reduce(initialTreeDetailState, { type: 'TRANSITION_EDITOR_OPEN_CREATE' }),
+      { type: 'TRANSITION_EDITOR_SAVING' },
+    );
+    const next = reduce(guardando, {
+      type: 'TRANSITION_EDITOR_SAVE_ERROR',
+      message: 'El nodo destino definido no es válido.',
+    });
+
+    expect(next.transitionEditor).toMatchObject({
+      saving: false,
+      saveError: 'El nodo destino definido no es válido.',
+    });
+    expect(next.transitionEditor.mode).toBe('create');
+  });
+
+  it('guardar cierra el editor, avisa y recarga el árbol', () => {
+    const next = reduce(
+      reduce(initialTreeDetailState, { type: 'TRANSITION_EDITOR_OPEN_CREATE' }),
+      { type: 'TRANSITION_EDITOR_SAVED', message: 'Transición creada.' },
+    );
+
+    expect(next).toMatchObject({
+      notice: 'Transición creada.',
+      status: 'loading',
+      reloadKey: 1,
+    });
+    expect(next.transitionEditor.mode).toBe('closed');
+  });
+
+  it('cerrar el editor de transición no afecta el editor de nodos', () => {
+    const conAmbos = reduce(
+      reduce(initialTreeDetailState, { type: 'EDITOR_OPEN_CREATE' }),
+      { type: 'TRANSITION_EDITOR_OPEN_CREATE' },
+    );
+    const next = reduce(conAmbos, { type: 'TRANSITION_EDITOR_CLOSE' });
+
+    expect(next.transitionEditor.mode).toBe('closed');
+    expect(next.editor.mode).toBe('create');
   });
 });
 

@@ -1,10 +1,16 @@
-import { ArrowRight, Route } from 'lucide-react';
+import { ArrowRight, Pencil, Route } from 'lucide-react';
+
+import { Button } from '@/shared/components/ui/Button/index.js';
 
 import { ChatAdminNotice } from '../../../../components/ChatAdminNotice/index.js';
 import { OPERADOR_CONDICION_ETIQUETA } from '../../../../types/operadorCondicion.js';
 
-/* Transiciones en el orden en que se evalúan. Solo lectura. */
-export function TreeTransitionList({ transiciones }) {
+/*
+ * Transiciones en el orden en que se evalúan (RF-25). Se pueden editar
+ * mientras el flujo sea un borrador (PR4); crearlas se hace desde "Agregar
+ * transición" en el detalle del flujo.
+ */
+export function TreeTransitionList({ transiciones, canEdit = false, onEdit }) {
   return (
     <section
       aria-labelledby="transiciones-titulo"
@@ -40,6 +46,19 @@ export function TreeTransitionList({ transiciones }) {
                   aria-label="lleva a"
                 />
                 <span>{transicion.destino}</span>
+
+                {canEdit && (
+                  <Button
+                    variant="ghost"
+                    size="small"
+                    className="ml-auto"
+                    aria-label={`Editar transición de ${transicion.origen} a ${transicion.destino}`}
+                    onClick={() => onEdit(transicion)}
+                  >
+                    <Pencil size={14} strokeWidth={1.8} aria-hidden="true" />
+                    Editar
+                  </Button>
+                )}
               </p>
 
               <p className="m-0 text-[length:var(--font-size-sm)] text-[var(--text-secondary)]">

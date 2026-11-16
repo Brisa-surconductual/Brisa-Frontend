@@ -39,6 +39,8 @@ const arbol = {
   transiciones: [
     {
       id: 't1',
+      origenId: 'a',
+      destinoId: 'b',
       origen: '1. Bienvenido a Brisa.',
       destino: '2. (sin texto)',
       operador: 'IGUALDAD',
@@ -271,5 +273,76 @@ describe('GroupTreeDetailPage · cambio de estado del flujo', () => {
 
     expect(html).toContain('role="alert"');
     expect(html).toContain('El árbol no cumple las condiciones de integridad.');
+  });
+});
+
+describe('GroupTreeDetailPage · árbol visual y transiciones (PR4)', () => {
+  it('dibuja el árbol con cada nodo por su etiqueta', () => {
+    const html = render({ status: 'ready', arbol });
+
+    expect(html).toContain('Árbol del flujo');
+    expect(html).toContain('1. Bienvenido a Brisa.');
+    expect(html).toContain('2. (sin texto)');
+  });
+
+  it('un borrador ofrece agregar transición; otros estados no', () => {
+    const editable = render({ status: 'ready', arbol, canEdit: true });
+    expect(editable).toContain('Agregar transición');
+
+    const soloLectura = render({ status: 'ready', arbol, canEdit: false });
+    expect(soloLectura).not.toContain('Agregar transición');
+  });
+
+  it('con el editor de transición abierto muestra su formulario', () => {
+    const html = render({
+      status: 'ready',
+      arbol,
+      canEdit: true,
+      reglasValidacion: [
+        {
+          id_regla_validacion: 'r-1',
+          tipo_dato: 'TEXTO',
+          mensaje_error: 'Respuesta requerida',
+        },
+      ],
+      transitionEditor: {
+        mode: 'create',
+        transicion: null,
+        values: {
+          idNodoOrigen: '',
+          idNodoDestino: '',
+          operadorCondicion: 'IGUALDAD',
+          valorIgualdad: '',
+          valorMin: '',
+          valorMax: '',
+          valorCategoria: '',
+          ordenEvaluacion: '',
+          modoRegla: 'existente',
+          idReglaValidacion: '',
+          reglaTipoDato: 'TEXTO',
+          reglaObligatorio: true,
+          reglaValorMin: '',
+          reglaValorMax: '',
+          reglaFormatoPreset: 'CUALQUIERA',
+          reglaValoresPermitidos: '',
+          reglaMensajeError: '',
+        },
+        errors: {},
+        saving: false,
+        saveError: '',
+      },
+    });
+
+    expect(html).toContain('Nueva transición');
+    expect(html).toContain('Respuesta requerida');
+    expect(html).not.toContain('Agregar transición');
+  });
+
+  it('un borrador ofrece editar cada transición de la lista; otros estados no', () => {
+    const editable = render({ status: 'ready', arbol, canEdit: true });
+    expect(editable).toMatch(/Editar transición/);
+
+    const soloLectura = render({ status: 'ready', arbol, canEdit: false });
+    expect(soloLectura).not.toMatch(/Editar transición/);
   });
 });

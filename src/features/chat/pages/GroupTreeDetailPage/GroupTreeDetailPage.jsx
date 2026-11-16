@@ -16,9 +16,15 @@ import { ChatSectionTabs } from '../../components/ChatSectionTabs/index.js';
 import { FlowStatusBadge } from '../../components/FlowStatusBadge/index.js';
 import { ACCION_FLUJO } from '../../services/flujosAdmin.js';
 import { opcionesContenidoCronograma } from '../../services/nodosAdmin.js';
+import {
+  opcionesNodo,
+  opcionesReglaValidacion,
+} from '../../services/transicionesAdmin.js';
 
 import { FlowStatusActions } from './components/FlowStatusActions/index.js';
+import { FlowTreeDiagram } from './components/FlowTreeDiagram/index.js';
 import { NodeEditorForm } from './components/NodeEditorForm/index.js';
+import { TransitionEditorForm } from './components/TransitionEditorForm/index.js';
 import { TreeNodeList } from './components/TreeNodeList/index.js';
 import { TreeTransitionList } from './components/TreeTransitionList/index.js';
 import { useGroupTreeDetailPage } from './hooks/useGroupTreeDetailPage.js';
@@ -41,15 +47,17 @@ const TEXTO_CONFIRMACION_ESTADO = Object.freeze({
 });
 
 /*
- * RF-25 · Árbol de un flujo grupal: nodos y transiciones. Los nodos se
- * pueden crear y editar mientras el flujo sea un borrador; las transiciones
- * son de solo lectura por ahora. Publicar y archivar cambian el estado del
- * flujo (el backend valida la estructura al publicar); no hay "desarchivar"
- * ni "despublicar".
+ * RF-25 · Árbol de un flujo grupal: nodos y transiciones. El árbol visual
+ * (FlowTreeDiagram) ubica los nodos por sus transiciones reales desde el
+ * nodo inicial, no por `orden`. Nodos y transiciones se pueden crear y
+ * editar mientras el flujo sea un borrador. Publicar y archivar cambian el
+ * estado del flujo (el backend valida la estructura al publicar); no hay
+ * "desarchivar" ni "despublicar".
  */
 export function GroupTreeDetailPage() {
   const page = useGroupTreeDetailPage();
-  const { status, arbol, error, retry, editor, canEdit } = page;
+  const { status, arbol, error, retry, editor, transitionEditor, canEdit } =
+    page;
   const flujo = arbol?.flujo;
   const confirmacionEstado = page.confirmEstado
     ? TEXTO_CONFIRMACION_ESTADO[page.confirmEstado]
@@ -111,14 +119,23 @@ export function GroupTreeDetailPage() {
         )}
 
         {page.errorEstado && (
-          <ChatAdminNotice
-            tone="danger"
-            icon={AlertTriangle}
-            role="alert"
-            title="No se pudo cambiar el estado del flujo"
-          >
-            {page.errorEstado}
-          </ChatAdminNotice>
+          <div role="alert">
+            <ChatAdminNotice
+              tone="danger"
+              icon={AlertTriangle}
+              title="No se pudo cambiar el estado del flujo"
+            >
+              {page.errorEstado}
+            </ChatAdminNotice>
+
+            {page.errorEstadoCondiciones.length > 0 && (
+              <ul className="m-0 mt-[var(--space-2)] list-disc rounded-[var(--radius-lg)] border border-[var(--danger-border)] bg-[var(--danger-bg)] px-[var(--space-5)] py-[var(--space-3)] text-[length:var(--font-size-sm)] text-[var(--danger-text)]">
+                {page.errorEstadoCondiciones.map((condicion) => (
+                  <li key={condicion}>{condicion}</li>
+                ))}
+              </ul>
+            )}
+          </div>
         )}
 
         {status === 'ready' && (
@@ -126,6 +143,14 @@ export function GroupTreeDetailPage() {
             acciones={page.accionesEstado}
             busy={page.cambiandoEstado}
             onAction={page.solicitarCambioEstado}
+          />
+        )}
+
+        {status === 'ready' && (
+          <FlowTreeDiagram
+            nodos={arbol.nodos}
+            transiciones={arbol.transiciones}
+            onSelectNodo={page.selectNodoEnArbol}
           />
         )}
 
@@ -156,15 +181,48 @@ export function GroupTreeDetailPage() {
         )}
 
         {status === 'ready' && (
-          <>
-            <TreeNodeList
-              nodos={arbol.nodos}
-              canEdit={canEdit}
-              onEdit={page.openEdit}
-              contenidosCronograma={page.contenidosCronograma}
+          <TreeNodeList
+            nodos={arbol.nodos}
+            canEdit={canEdit}
+            onEdit={page.openEdit}
+            contenidosCronograma={page.contenidosCronograma}
+          />
+        )}
+
+        {status === 'ready' &&
+          canEdit &&
+          transitionEditor.mode === 'closed' && (
+            <div>
+              <Button onClick={page.openCreateTransition}>
+                <Plus size={20} strokeWidth={1.8} aria-hidden="true" />
+                Agregar transición
+              </Button>
+            </div>
+          )}
+
+        {status === 'ready' &&
+          canEdit &&
+          transitionEditor.mode !== 'closed' && (
+            <TransitionEditorForm
+              mode={transitionEditor.mode}
+              values={transitionEditor.values}
+              errors={transitionEditor.errors}
+              saving={transitionEditor.saving}
+              saveError={transitionEditor.saveError}
+              nodos={opcionesNodo(arbol.nodos)}
+              reglasValidacion={opcionesReglaValidacion(page.reglasValidacion)}
+              onChange={page.changeTransitionField}
+              onSubmit={page.submitTransitionEditor}
+              onCancel={page.closeTransitionEditor}
             />
-            <TreeTransitionList transiciones={arbol.transiciones} />
-          </>
+          )}
+
+        {status === 'ready' && (
+          <TreeTransitionList
+            transiciones={arbol.transiciones}
+            canEdit={canEdit}
+            onEdit={page.openEditTransition}
+          />
         )}
       </div>
 

@@ -1,15 +1,20 @@
-import { Flag, Link2, MessageSquare, Pencil } from 'lucide-react';
+import { Flag, HelpCircle, Link2, MessageSquare, Pencil } from 'lucide-react';
 
 import { Button } from '@/shared/components/ui/Button/index.js';
 
 import { ChatAdminNotice } from '../../../../components/ChatAdminNotice/index.js';
-import { nombreContenidoCronograma } from '../../../../services/nodosAdmin.js';
+import {
+  nombreContenidoCronograma,
+  resumenEntradaNodo,
+} from '../../../../services/nodosAdmin.js';
 
 /*
  * Nodos del flujo, con el inicial al principio. Solo lectura: el texto
  * se muestra tal cual lo definió el equipo de psicología. Cuando un nodo
  * tiene contenido asociado (RF-25), se muestra su nombre y su unidad
- * temporal a partir del catálogo `contenidos_cronograma`.
+ * temporal a partir del catálogo `contenidos_cronograma`. Cuando el nodo
+ * espera una respuesta (PR4), se muestra de qué tipo; sin ese dato, el
+ * nodo es informativo (el estudiante solo confirma "Continuar").
  */
 export function TreeNodeList({
   nodos,
@@ -43,6 +48,7 @@ export function TreeNodeList({
               contenidosCronograma,
               nodo.idContenidoCronograma,
             );
+            const respuesta = resumenEntradaNodo(nodo.entrada);
 
             return (
               <li
@@ -71,6 +77,17 @@ export function TreeNodeList({
                     <span className="inline-flex items-center gap-[var(--space-1)] rounded-[var(--radius-full)] border border-[var(--surface-border)] bg-[var(--surface-bg)] px-[var(--space-2)] py-[2px] text-[length:var(--font-size-xs)] text-[var(--text-secondary)]">
                       <Link2 size={13} strokeWidth={1.8} aria-hidden="true" />
                       {contenidoAsociado}
+                    </span>
+                  )}
+
+                  {respuesta && (
+                    <span className="inline-flex items-center gap-[var(--space-1)] rounded-[var(--radius-full)] border border-[var(--surface-border)] bg-[var(--surface-bg)] px-[var(--space-2)] py-[2px] text-[length:var(--font-size-xs)] text-[var(--text-secondary)]">
+                      <HelpCircle
+                        size={13}
+                        strokeWidth={1.8}
+                        aria-hidden="true"
+                      />
+                      Respuesta: {respuesta}
                     </span>
                   )}
 
