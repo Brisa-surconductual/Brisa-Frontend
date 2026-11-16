@@ -366,6 +366,8 @@ describe('Rutas sin cambios', () => {
         '/app/estudiante',
         '/app/estudiante/chat',
         '/app/estudiante/chat/sesion/:idSesion',
+        '/app/estudiante/chat/sin-conexion/:idSesion',
+        '/app/estudiante/chat/demo-sin-conexion',
         '/app/estudiante/cronograma/contenido-vigente',
         ...ADMIN_PATHS.map((path) =>
           path
