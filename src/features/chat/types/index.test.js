@@ -28,6 +28,8 @@ const CATALOGOS = [
   'ESTADO_CONECTIVIDAD',
   'CATEGORIA_ERROR_CHAT',
   'CHAT_ERROR_CODE',
+  'ESTADO_RENDER',
+  'MIME_PERMITIDOS',
 ];
 
 const isDeepFrozen = (value) =>
