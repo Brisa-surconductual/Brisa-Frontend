@@ -297,3 +297,126 @@ export async function eliminarInteraccionesConfirmadas(
     return borradas;
   });
 }
+
+// Sesiones del usuario con algo en la cola (pendiente o con error).
+export async function listarSesionesEnCola(idUsuario) {
+  exigirUsuario(idUsuario);
+
+  const delUsuario = await ejecutarTransaccion(
+    [COLA_INTERACCIONES],
+    LECTURA,
+    (tx) =>
+      pedir(
+        tx
+          .objectStore(COLA_INTERACCIONES)
+          .index(INDICE_COLA.USUARIO)
+          .getAll(idUsuario),
+      ),
+  );
+
+  return [...new Set(delUsuario.map((i) => i.id_sesion))];
+}
+
+const rechazoValido = (r) =>
+  r !== null &&
+  typeof r === 'object' &&
+  esUuid(r.id_interaccion) &&
+  esTexto(r.codigo) &&
+  (r.mensaje === null || typeof r.mensaje === 'string');
+
+/*
+ * Tarea 4: aplica el resultado de un lote de la sesión en UNA transacción.
+ * - `confirmadas` (SINCRONIZADA o DUPLICADA): se borran.
+ * - `rechazadas` ({ id_interaccion, codigo, mensaje }): pasan a
+ *   ERROR_SINCRONIZACION con su error y un intento más.
+ * - `intentadas`: siguen pendientes con un intento más; con
+ *   `ultimo_error` se registra el fallo (si no, se conserva el anterior).
+ *
+ * Solo toca interacciones PENDIENTES del usuario y de la sesión: una que
+ * ya no está se ignora y cualquier otra discrepancia aborta todo, sin
+ * cambios. La secuencia, la respuesta y `sesiones_locales` no se tocan.
+ */
+export async function aplicarResultadoLote(
+  idUsuario,
+  idSesion,
+  {
+    confirmadas = [],
+    rechazadas = [],
+    intentadas = [],
+    ultimo_error: ultimoError = null,
+  } = {},
+) {
+  exigirUsuario(idUsuario);
+  exigir(esTexto(idSesion));
+  exigir(Array.isArray(confirmadas) && confirmadas.every(esUuid));
+  exigir(Array.isArray(rechazadas) && rechazadas.every(rechazoValido));
+  exigir(Array.isArray(intentadas) && intentadas.every(esUuid));
+  exigir(errorValido(ultimoError));
+
+  const ids = [
+    ...confirmadas,
+    ...rechazadas.map((r) => r.id_interaccion),
+    ...intentadas,
+  ];
+  // Una interacción no puede tener dos destinos en el mismo resultado.
+  exigir(new Set(ids).size === ids.length);
+
+  return ejecutarTransaccion([COLA_INTERACCIONES], ESCRITURA, async (tx) => {
+    const cola = tx.objectStore(COLA_INTERACCIONES);
+    const resumen = { eliminadas: 0, rechazadas: 0, actualizadas: 0 };
+
+    async function leerPendiente(id) {
+      const interaccion = await pedir(cola.get(id));
+
+      if (!interaccion) return null;
+      if (interaccion.id_usuario !== idUsuario) {
+        throw createChatStorageError(CHAT_STORAGE_ERROR.USUARIO_NO_CORRESPONDE);
+      }
+      if (
+        interaccion.id_sesion !== idSesion ||
+        interaccion.estado_sincronizacion !== PENDIENTE_SINCRONIZACION
+      ) {
+        throw createChatStorageError(CHAT_STORAGE_ERROR.DATOS_INVALIDOS);
+      }
+      return interaccion;
+    }
+
+    for (const id of confirmadas) {
+      if (!(await leerPendiente(id))) continue;
+      await pedir(cola.delete(id));
+      resumen.eliminadas += 1;
+    }
+
+    for (const { id_interaccion: id, codigo, mensaje } of rechazadas) {
+      const interaccion = await leerPendiente(id);
+      if (!interaccion) continue;
+      await pedir(
+        cola.put({
+          ...interaccion,
+          estado_sincronizacion: ESTADO_SINCRONIZACION.ERROR_SINCRONIZACION,
+          ultimo_error: { codigo, mensaje },
+          intentos: interaccion.intentos + 1,
+        }),
+      );
+      resumen.rechazadas += 1;
+    }
+
+    for (const id of intentadas) {
+      const interaccion = await leerPendiente(id);
+      if (!interaccion) continue;
+      await pedir(
+        cola.put({
+          ...interaccion,
+          ultimo_error:
+            ultimoError === null
+              ? interaccion.ultimo_error
+              : { codigo: ultimoError.codigo, mensaje: ultimoError.mensaje },
+          intentos: interaccion.intentos + 1,
+        }),
+      );
+      resumen.actualizadas += 1;
+    }
+
+    return resumen;
+  });
+}

@@ -19,8 +19,12 @@ const leerServidor = () => true;
 
 /*
  * Estado de conectividad (regla 6). `marcarFalloDeRed` lo usa quien
- * detecte una petición caída por red; el siguiente evento `online` lo
- * limpia. `simulada` fuerza SIN_CONEXION (solo la demostración).
+ * detecte una petición caída por red; lo limpian el siguiente evento
+ * `online` o `limpiarFalloDeRed` (una respuesta del servidor prueba que
+ * hay red). `simulada` fuerza SIN_CONEXION (solo la demostración).
+ *
+ * `disponible` es la conexión del navegador (o la simulada) sin contar
+ * el fallo de red: la sincronización la usa para decidir si intenta.
  */
 export function useConectividad({ simulada = false } = {}) {
   const navegadorEnLinea = useSyncExternalStore(
@@ -43,6 +47,9 @@ export function useConectividad({ simulada = false } = {}) {
       falloDeRed,
       simulada,
     }),
+    disponible: navegadorEnLinea && !simulada,
+    falloDeRed,
     marcarFalloDeRed: () => setFalloDeRed(true),
+    limpiarFalloDeRed: () => setFalloDeRed(false),
   };
 }

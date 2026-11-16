@@ -5,11 +5,20 @@ import { useAuth } from '@/app/providers/index.js';
 
 import { esDemoOfflineHabilitada } from '../../../demo/demoOffline.js';
 import { useConectividad } from '../../../hooks/useConectividad.js';
+import { useSincronizacionChat } from '../../../hooks/useSincronizacionChat.js';
+import {
+  alternarSimulacionConexion,
+  useSimulacionConexion,
+} from '../../../hooks/useSimulacionConexion.js';
 import {
   DECISION_OFFLINE,
   decidirRespuestaOffline,
 } from '../../../services/offline/motorOffline.js';
-import { CONECTIVIDAD_INTERACCION } from '../../../types/index.js';
+import { listarPendientesSesion } from '../../../storage/index.js';
+import {
+  CONECTIVIDAD_INTERACCION,
+  ESTADO_SINCRONIZACION_SESION,
+} from '../../../types/index.js';
 import {
   BloqueoOffline,
   cargarConversacionOffline,
@@ -32,15 +41,24 @@ const { CARGANDO, LISTO, BLOQUEADO } = ESTADO_OFFLINE;
  * Conversación sin conexión (RF-34): lee el paquete y la sesión local del
  * usuario, valida y elige el destino en el dispositivo y encola cada
  * respuesta. No hace peticiones al servidor: toda respuesta se encola,
- * con o sin conexión (la sincronización es de la tarea 4).
+ * con o sin conexión. La sincronización (tarea 4) solo existe con el
+ * simulador de la demostración.
  */
 export function useChatOfflinePage() {
   const { idSesion } = useParams();
   const { idUsuario } = useAuth();
   const navigate = useNavigate();
   const demo = esDemoOfflineHabilitada();
-  const [simulada, setSimulada] = useState(false);
-  const { conectividad } = useConectividad({ simulada: demo && simulada });
+  const simulada = useSimulacionConexion();
+  const { conectividad, disponible, marcarFalloDeRed, limpiarFalloDeRed } =
+    useConectividad({ simulada: demo && simulada });
+  const sincronizacion = useSincronizacionChat({
+    idUsuario,
+    disponible,
+    marcarFalloDeRed,
+    limpiarFalloDeRed,
+  });
+  const sesionSync = sincronizacion.estado?.sesiones[idSesion];
   const [state, dispatch] = useReducer(offlineReducer, estadoInicialOffline);
   const tituloRef = useRef(null);
   const ultimoRef = useRef(null);
@@ -84,6 +102,33 @@ export function useChatOfflinePage() {
       cancelado = true;
     };
   }, [idSesion, idUsuario, state.recarga]);
+
+  // Tarea 4: cuando la sincronización termina con esta sesión, el conteo
+  // de pendientes se relee de la cola.
+  useEffect(() => {
+    if (
+      !sesionSync ||
+      !idUsuario ||
+      sesionSync.estado === ESTADO_SINCRONIZACION_SESION.SINCRONIZANDO
+    ) {
+      return undefined;
+    }
+
+    let cancelado = false;
+
+    listarPendientesSesion(idSesion, idUsuario)
+      .then((lista) => {
+        if (!cancelado)
+          dispatch({ type: 'PENDIENTES', pendientes: lista.length });
+      })
+      .catch(() => {
+        // Se conserva el conteo anterior.
+      });
+
+    return () => {
+      cancelado = true;
+    };
+  }, [sesionSync, idSesion, idUsuario]);
 
   // Tras la carga el foco va al título; un bloqueo a mitad de la
   // conversación lleva el foco a su aviso.
@@ -180,7 +225,10 @@ export function useChatOfflinePage() {
     restablecida,
     demo,
     simulada,
-    alternarSimulacion: () => setSimulada((valor) => !valor),
+    alternarSimulacion: alternarSimulacionConexion,
+    sincronizacion: sincronizacion.activa
+      ? { sesion: sesionSync, simulada: sincronizacion.simulada }
+      : null,
     tituloRef,
     ultimoRef,
     bloqueoRef,

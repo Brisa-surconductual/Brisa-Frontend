@@ -39,6 +39,7 @@ const BASE = Object.freeze({
   demo: false,
   simulada: false,
   alternarSimulacion: vi.fn(),
+  sincronizacion: null,
   tituloRef: { current: null },
   ultimoRef: { current: null },
   bloqueoRef: { current: null },
@@ -112,6 +113,55 @@ describe('pantalla del chat sin conexión', () => {
     expect(render({ retomada: true, pendientes: 1 })).toContain(
       'La sesión será retomada desde el último punto guardado.',
     );
+  });
+
+  it('sin motor de sincronización no promete sincronizar', () => {
+    const html = render({ restablecida: true, pendientes: 1 });
+
+    expect(html).toContain('La conexión se ha restablecido.');
+    expect(html).not.toContain('serán sincronizadas automáticamente');
+    expect(html).not.toContain('Sincronización simulada');
+  });
+
+  it('con la sincronización simulada: aviso de RF-34 y que no se envía nada', () => {
+    const html = render({
+      restablecida: true,
+      pendientes: 2,
+      sincronizacion: { sesion: { estado: 'PENDIENTE' }, simulada: true },
+    });
+
+    expect(html).toContain(
+      'La conexión se ha restablecido. Las interacciones pendientes serán sincronizadas automáticamente.',
+    );
+    expect(html).not.toContain('todavía no está disponible');
+    expect(html).toContain('no se envía información');
+  });
+
+  it('interrumpida y rechazada: mensajes del contrato y del servidor tal cual', () => {
+    const interrumpida = render({
+      pendientes: 2,
+      sincronizacion: { sesion: { estado: 'INTERRUMPIDA' }, simulada: true },
+    });
+    expect(interrumpida).toContain(
+      'La sincronización fue interrumpida. Los datos pendientes se sincronizarán cuando se restablezca la conexión.',
+    );
+
+    const rechazada = render({
+      sincronizacion: {
+        sesion: {
+          estado: 'PENDIENTE_DE_RESOLUCION',
+          error: {
+            codigo: 'FUERA_DE_RANGO',
+            mensaje: 'Mensaje ficticio del servidor.',
+          },
+          reconciliacion: { coincide: false },
+        },
+        simulada: true,
+      },
+    });
+    expect(rechazada).toContain('queda pendiente de resolución');
+    expect(rechazada).toContain('Mensaje ficticio del servidor.');
+    expect(rechazada).toContain('Se conserva el avance del dispositivo.');
   });
 
   it('el control de simulación solo aparece en la demostración', () => {

@@ -22,11 +22,13 @@ export {
 } from './sesionesLocalesStore.js';
 export {
   actualizarEstadoSincronizacion,
+  aplicarResultadoLote,
   eliminarInteraccionesConfirmadas,
   encolarInteraccion,
   listarColaSesion,
   listarPendientesSesion,
   listarSesionesConPendientes,
+  listarSesionesEnCola,
   tienePendientes,
 } from './colaInteraccionesStore.js';
 

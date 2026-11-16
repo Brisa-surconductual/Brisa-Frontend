@@ -28,6 +28,9 @@ const CATALOGOS = [
   'RESULTADO_SINCRONIZACION_EXITOSO',
   'ESTADO_PRECARGA',
   'ESTADO_CONECTIVIDAD',
+  'ESTADO_SINCRONIZACION_SESION',
+  'MOTIVO_SINCRONIZACION',
+  'CODIGO_SINCRONIZACION',
   'CATEGORIA_ERROR_CHAT',
   'CHAT_ERROR_CODE',
 ];
@@ -63,9 +66,12 @@ describe('fidelidad al contrato', () => {
     expect(Object.values(TIPO_NODO)).toHaveLength(2);
   });
 
-  it('DUPLICADO cuenta como sincronización exitosa', () => {
+  it('DUPLICADA cuenta como sincronización exitosa; RECHAZADA no', () => {
     expect(RESULTADO_SINCRONIZACION_EXITOSO).toContain(
-      RESULTADO_SINCRONIZACION.DUPLICADO,
+      RESULTADO_SINCRONIZACION.DUPLICADA,
+    );
+    expect(RESULTADO_SINCRONIZACION_EXITOSO).not.toContain(
+      RESULTADO_SINCRONIZACION.RECHAZADA,
     );
   });
 });

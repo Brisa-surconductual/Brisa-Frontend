@@ -59,6 +59,7 @@ function ChatOffline() {
     demo,
     simulada,
     alternarSimulacion,
+    sincronizacion,
     tituloRef,
     ultimoRef,
     bloqueoRef,
@@ -109,7 +110,8 @@ function ChatOffline() {
             role="note"
           >
             Modo de desarrollo: la conversación usa un paquete ficticio guardado
-            en este navegador y nada se envía al servidor.
+            en este navegador y nada se envía al servidor. Las confirmaciones de
+            sincronización son simuladas.
           </ChatAdminNotice>
           <Button
             variant="secondary"
@@ -127,6 +129,7 @@ function ChatOffline() {
         conectividad={conectividad}
         pendientes={pendientes}
         restablecida={restablecida}
+        sincronizacion={sincronizacion}
       />
 
       {retomada && (

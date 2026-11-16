@@ -120,6 +120,12 @@ export function offlineReducer(state, action) {
       if (state.estado !== GUARDANDO) return state;
       return { ...state, estado: LISTO, errorRespuesta: ERROR_FALLO_ESCRITURA };
 
+    // Tarea 4: la cola cambió por la sincronización; se relee el conteo.
+    // Durante una escritura se ignora: GUARDADO ya suma la suya.
+    case 'PENDIENTES':
+      if (state.estado === GUARDANDO || state.estado === CARGANDO) return state;
+      return { ...state, pendientes: action.pendientes };
+
     // El nodo sigue a la vista; no se puede responder sin conexión.
     case 'BLOQUEO':
       if (state.estado !== GUARDANDO) return state;

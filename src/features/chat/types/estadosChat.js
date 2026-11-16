@@ -32,18 +32,21 @@ export const CONECTIVIDAD_INTERACCION = Object.freeze({
   SIN_CONEXION: 'SIN_CONEXION',
 });
 
-// Contrato 7.2: estado que devuelve el servidor por cada interacción del lote.
+// Etapa 3, tarea 4: `resultado` que devuelve el servidor por cada
+// interacción del lote (POST .../interacciones/sincronizar). Sustituye a
+// los valores del contrato anterior (SINCRONIZADO, DUPLICADO, ERROR).
 export const RESULTADO_SINCRONIZACION = Object.freeze({
-  SINCRONIZADO: 'SINCRONIZADO',
-  DUPLICADO: 'DUPLICADO',
-  ERROR: 'ERROR',
+  SINCRONIZADA: 'SINCRONIZADA',
+  DUPLICADA: 'DUPLICADA',
+  RECHAZADA: 'RECHAZADA',
   PENDIENTE: 'PENDIENTE',
 });
 
-// Contrato 7.2: DUPLICADO se trata como sincronizado.
+// DUPLICADA también confirma: el servidor ya tenía la interacción y se
+// borra de la cola, igual que una SINCRONIZADA.
 export const RESULTADO_SINCRONIZACION_EXITOSO = Object.freeze([
-  RESULTADO_SINCRONIZACION.SINCRONIZADO,
-  RESULTADO_SINCRONIZACION.DUPLICADO,
+  RESULTADO_SINCRONIZACION.SINCRONIZADA,
+  RESULTADO_SINCRONIZACION.DUPLICADA,
 ]);
 
 export const ESTADO_PRECARGA = Object.freeze({

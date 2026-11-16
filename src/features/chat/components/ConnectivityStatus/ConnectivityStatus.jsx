@@ -1,6 +1,10 @@
 import { CloudOff, HardDrive, Wifi } from 'lucide-react';
 
-import { CONECTIVIDAD_INTERACCION } from '../../types/index.js';
+import {
+  CONECTIVIDAD_INTERACCION,
+  MENSAJE_SINCRONIZACION,
+} from '../../types/index.js';
+import { SyncStatus } from '../SyncStatus/index.js';
 
 const plural = (n) =>
   n === 1 ? '1 respuesta guardada' : `${n} respuestas guardadas`;
@@ -9,11 +13,17 @@ const plural = (n) =>
  * Indicador de conectividad del chat sin conexión (RF-34). El estado se
  * dice con texto e ícono, no solo con color.
  *
- * Mientras no exista la sincronización (tarea 4) no se promete enviar
- * nada: al volver la conexión solo se informa cuántas respuestas siguen
- * en el dispositivo.
+ * `sincronizacion` ({ sesion, simulada }) solo llega cuando hay un
+ * motor de sincronización (hoy, el simulador de la demostración). Sin él
+ * no se promete enviar nada: al volver la conexión solo se informa
+ * cuántas respuestas siguen en el dispositivo.
  */
-export function ConnectivityStatus({ conectividad, pendientes, restablecida }) {
+export function ConnectivityStatus({
+  conectividad,
+  pendientes,
+  restablecida,
+  sincronizacion = null,
+}) {
   const sinConexion = conectividad === CONECTIVIDAD_INTERACCION.SIN_CONEXION;
   const Icono = sinConexion ? CloudOff : Wifi;
 
@@ -21,7 +31,9 @@ export function ConnectivityStatus({ conectividad, pendientes, restablecida }) {
   if (sinConexion) {
     texto = 'Sin conexión. Tus respuestas se guardan en este dispositivo.';
   } else if (restablecida) {
-    texto = 'La conexión se ha restablecido.';
+    texto = sincronizacion
+      ? MENSAJE_SINCRONIZACION.CONEXION_RESTABLECIDA
+      : 'La conexión se ha restablecido.';
   } else {
     texto = 'Con conexión.';
   }
@@ -55,9 +67,17 @@ export function ConnectivityStatus({ conectividad, pendientes, restablecida }) {
           />
           <span>
             {plural(pendientes)} en el dispositivo, pendientes de sincronizar.
-            La sincronización automática todavía no está disponible.
+            {!sincronizacion &&
+              ' La sincronización automática todavía no está disponible.'}
           </span>
         </p>
+      )}
+
+      {sincronizacion && (
+        <SyncStatus
+          sesion={sincronizacion.sesion}
+          simulada={sincronizacion.simulada}
+        />
       )}
     </div>
   );

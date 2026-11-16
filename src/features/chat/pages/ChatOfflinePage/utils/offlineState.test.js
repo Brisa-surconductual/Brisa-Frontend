@@ -103,6 +103,15 @@ describe('estado de la conversación sin conexión', () => {
     expect(selectNodoFormulario(bloqueado)).toBeNull();
   });
 
+  it('PENDIENTES actualiza el conteo tras sincronizar, salvo con una escritura en curso', () => {
+    expect(
+      offlineReducer(cargado, { type: 'PENDIENTES', pendientes: 3 }).pendientes,
+    ).toBe(3);
+    expect(
+      offlineReducer(guardando, { type: 'PENDIENTES', pendientes: 3 }),
+    ).toBe(guardando);
+  });
+
   it('retomar con pendientes lo indica; completada no ofrece formulario', () => {
     const retomada = offlineReducer(estadoInicialOffline, {
       type: 'CARGA_EXITO',

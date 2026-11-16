@@ -19,3 +19,16 @@ export async function cargarDemoOffline() {
 
   return null;
 }
+
+// Simulador de la sincronización (tarea 4). Misma puerta literal: en
+// producción no se carga y no hay transporte, así que nada se sincroniza.
+export async function cargarDemoSincronizacion() {
+  if (
+    import.meta.env.DEV &&
+    import.meta.env.VITE_CHAT_OFFLINE_DEMO === 'true'
+  ) {
+    return import('./simuladorSincronizacion.js');
+  }
+
+  return null;
+}
