@@ -60,7 +60,8 @@ describe('ChatNodeMessage (RF-26)', () => {
       { orden: 3, tipo: 'INSTRUCCION', texto: 'Después' },
     ]);
 
-    expect(html).toContain('No se pudo cargar este recurso.');
+    // RF-33: el aviso de un VIDEO usa el texto normativo del 404.
+    expect(html).toContain('El recurso multimedia no está disponible.');
     expect(html).toContain('Respiración guiada');
     expect(html).not.toContain('<video');
     expect(html).toContain('Antes');
