@@ -1,3 +1,4 @@
+import { anteponerSinDuplicar } from '../../../services/historialInteracciones.js';
 import { esIdSesionValido } from '../../../services/nodoActual.js';
 import { ESTADO_SESION } from '../../../types/index.js';
 
@@ -28,6 +29,13 @@ const {
   COMPLETADA,
 } = ESTADO_CONVERSACION;
 
+// RF-32: estado de la carga del historial, independiente del nodo actual.
+export const ESTADO_HISTORIAL = Object.freeze({
+  CARGANDO: 'CARGANDO',
+  LISTO: 'LISTO',
+  ERROR: 'ERROR',
+});
+
 // Estados en que el formulario del nodo actual sigue montado.
 const CON_FORMULARIO = Object.freeze([LISTO, ENVIANDO, ERROR_ENVIO]);
 
@@ -43,8 +51,19 @@ const BASE = Object.freeze({
   recargando: false,
   // Índices (en `nodo.bloques`) de los recursos que fallaron.
   fallidos: Object.freeze([]),
-  // A-018: los mensajes ya cerrados viven solo en memoria.
+  // RF-32: items ya cerrados. Llegan del servidor (historial) y se suman
+  // en memoria mientras se avanza; una resincronización los reemplaza.
   historial: Object.freeze([]),
+  historialEstado: ESTADO_HISTORIAL.CARGANDO,
+  historialError: null,
+  // Cada incremento dispara una petición del historial.
+  recargaHistorial: 0,
+  hayMas: false,
+  secuenciaMinima: null,
+  cargandoAnteriores: false,
+  errorAnteriores: null,
+  // RF-30: última secuencia confirmada; null hasta saberla.
+  ultimaSecuencia: null,
   // Turno del nodo actual: da `key` estables aunque el flujo repita nodo.
   paso: 0,
   // D7: respuesta pendiente `{ cuerpo, textoRespuesta }`; el reintento
@@ -154,6 +173,7 @@ function alEnviarConExito(state, respuesta) {
 
   return {
     ...state,
+    ultimaSecuencia: masAlta(state.ultimaSecuencia, respuesta?.secuencia),
     estado: completada ? COMPLETADA : AVANZANDO,
     conversacion: null,
     historial,
@@ -168,6 +188,28 @@ function alEnviarConExito(state, respuesta) {
   };
 }
 
+// La secuencia nunca retrocede: una página anterior o una respuesta
+// tardía no la rebajan.
+function masAlta(actual, nueva) {
+  if (!Number.isInteger(nueva)) return actual;
+  return actual === null ? nueva : Math.max(actual, nueva);
+}
+
+// RF-32: la página más reciente reemplaza el hilo cerrado (carga inicial
+// o resincronización). Los items en memoria quedan cubiertos por ella.
+function alCargarHistorial(state, pagina) {
+  return {
+    ...state,
+    historial: pagina.items,
+    historialEstado: ESTADO_HISTORIAL.LISTO,
+    historialError: null,
+    hayMas: pagina.hayMas,
+    secuenciaMinima: pagina.secuenciaMinima,
+    errorAnteriores: null,
+    ultimaSecuencia: masAlta(state.ultimaSecuencia, pagina.ultimaSecuencia),
+  };
+}
+
 function alFallarEnvio(state, error) {
   switch (clasificarErrorEnvio(error)) {
     // CA-28-1 a CA-28-5: mismo nodo, respuesta editable y, al corregir,
@@ -175,14 +217,19 @@ function alFallarEnvio(state, error) {
     case ACCION_ERROR_ENVIO.INLINE:
       return { ...state, estado: LISTO, envio: null, errorEnvio: error };
 
-    // CA-27-9: se descarta la respuesta y se pide el nodo actual.
+    // CA-27-9 y CA-30-4: se descarta la respuesta y se piden el nodo
+    // actual y el historial. El nodo viejo no pasa al hilo: el historial
+    // del servidor dice qué se respondió de verdad.
     case ACCION_ERROR_ENVIO.DESACTUALIZADO:
       return {
         ...state,
         estado: AVANZANDO,
+        conversacion: null,
         envio: null,
         aviso: error,
         recarga: state.recarga + 1,
+        historialEstado: ESTADO_HISTORIAL.CARGANDO,
+        recargaHistorial: state.recargaHistorial + 1,
       };
 
     // CA-27-8: se conserva el cuerpo para reenviarlo igual.
@@ -264,6 +311,50 @@ export function conversationReducer(state, action) {
 
       return alFallarEnvio(state, action.error);
 
+    case 'HISTORIAL_EXITO':
+      return alCargarHistorial(state, action.pagina);
+
+    case 'HISTORIAL_ERROR':
+      return {
+        ...state,
+        historialEstado: ESTADO_HISTORIAL.ERROR,
+        historialError: action.error,
+      };
+
+    case 'REINTENTAR_HISTORIAL':
+      return {
+        ...state,
+        historialEstado: ESTADO_HISTORIAL.CARGANDO,
+        historialError: null,
+        recargaHistorial: state.recargaHistorial + 1,
+      };
+
+    // CA-32-2: una página anterior a la vez.
+    case 'CARGAR_ANTERIORES':
+      if (!state.hayMas || state.cargandoAnteriores) return state;
+
+      return { ...state, cargandoAnteriores: true, errorAnteriores: null };
+
+    case 'ANTERIORES_EXITO':
+      return {
+        ...state,
+        historial: anteponerSinDuplicar(action.pagina.items, state.historial),
+        hayMas: action.pagina.hayMas,
+        secuenciaMinima: action.pagina.secuenciaMinima ?? state.secuenciaMinima,
+        cargandoAnteriores: false,
+        ultimaSecuencia: masAlta(
+          state.ultimaSecuencia,
+          action.pagina.ultimaSecuencia,
+        ),
+      };
+
+    case 'ANTERIORES_ERROR':
+      return {
+        ...state,
+        cargandoAnteriores: false,
+        errorAnteriores: action.error,
+      };
+
     default:
       return state;
   }
@@ -281,4 +372,21 @@ export function selectNodoFormulario(state) {
   return state.conversacion && CON_FORMULARIO.includes(state.estado)
     ? state.conversacion.nodo
     : null;
+}
+
+// RF-30: la secuencia del próximo envío. Sin historial (sesión nueva o
+// historial caído) se parte de 1; si no coincide, el backend responde
+// SECUENCIA_FUERA_DE_ORDEN y se resincroniza.
+export function selectSecuenciaSiguiente(state) {
+  return (state.ultimaSecuencia ?? 0) + 1;
+}
+
+// RF-33 y RF-30: `idRecurso` de los recursos del nodo actual que siguen
+// sin mostrarse después del único reintento.
+export function selectRecursosNoPresentados(state) {
+  if (!state.conversacion) return [];
+
+  return nodoConMarcas(state)
+    .bloques.filter((bloque) => bloque.noDisponible && bloque.idRecurso)
+    .map((bloque) => bloque.idRecurso);
 }

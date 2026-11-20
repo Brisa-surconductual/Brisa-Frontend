@@ -6,6 +6,8 @@ import {
   crearEstadoInicial,
   selectItems,
   selectNodoFormulario,
+  selectRecursosNoPresentados,
+  selectSecuenciaSiguiente,
 } from './conversationState.js';
 import { crearCuerpo } from './envio.js';
 
@@ -37,7 +39,9 @@ const reducir = (acciones, estado = crearEstadoInicial(ID)) =>
 
 const listo = () => reducir([{ type: 'EXITO', conversacion: conversacion() }]);
 
-const envio = (cuerpo = crearCuerpo(conversacion().nodo, 7)) => ({
+const envio = (
+  cuerpo = crearCuerpo(conversacion().nodo, 7, { secuencia: 1 }),
+) => ({
   cuerpo,
   textoRespuesta: '7/10',
 });
@@ -310,8 +314,8 @@ describe('envío y avance (RF-27 a RF-29)', () => {
       envio: corregida,
     });
     expect(otra.errorEnvio).toBeNull();
-    expect(otra.envio.cuerpo.idRespuesta).not.toBe(
-      inicial.envio.cuerpo.idRespuesta,
+    expect(otra.envio.cuerpo.id_interaccion).not.toBe(
+      inicial.envio.cuerpo.id_interaccion,
     );
   });
 
@@ -364,7 +368,7 @@ describe('envío y avance (RF-27 a RF-29)', () => {
     error(400, 'TIPO_ENTRADA_NO_PERMITIDO'),
     error(403, 'DESCONOCIDO'),
     error(404, 'SESION_NO_ENCONTRADA'),
-    error(409, 'NODO_TERMINAL'),
+    error(409, 'CAPTURA_FUERA_DE_GRUPAL'),
   ])('%j: bloque sin reintento', (e) => {
     const estado = conversationReducer(enviando(), {
       type: 'ENVIO_ERROR',
@@ -386,5 +390,229 @@ describe('envío y avance (RF-27 a RF-29)', () => {
     );
 
     expect(estado.estado).toBe(E.ENVIANDO);
+  });
+});
+
+const paginaHistorial = (extra = {}) => ({
+  ultimaSecuencia: 7,
+  hayMas: true,
+  secuenciaMinima: 6,
+  items: [
+    { tipo: 'nodo', id: 'historial-i6-nodo', nodo: { idNodo: 'h6' } },
+    { tipo: 'nodo', id: 'historial-i7-nodo', nodo: { idNodo: 'h7' } },
+    { tipo: 'respuesta', id: 'historial-i7-respuesta', texto: 'Bien' },
+  ],
+  ...extra,
+});
+
+describe('historial y secuencia (RF-30, RF-32)', () => {
+  it('el historial va antes del nodo actual y fija la secuencia (CA-32-1, CA-32-6)', () => {
+    const estado = reducir([
+      { type: 'EXITO', conversacion: conversacion() },
+      { type: 'HISTORIAL_EXITO', pagina: paginaHistorial() },
+    ]);
+
+    expect(selectItems(estado).map((i) => i.id)).toEqual([
+      'historial-i6-nodo',
+      'historial-i7-nodo',
+      'historial-i7-respuesta',
+      'nodo-0',
+    ]);
+    expect(estado.historialEstado).toBe('LISTO');
+    expect(estado.hayMas).toBe(true);
+    expect(selectSecuenciaSiguiente(estado)).toBe(8);
+  });
+
+  it('el orden de llegada de nodo e historial no cambia el hilo', () => {
+    const estado = reducir([
+      { type: 'HISTORIAL_EXITO', pagina: paginaHistorial() },
+      { type: 'EXITO', conversacion: conversacion() },
+    ]);
+
+    expect(selectItems(estado).at(-1).id).toBe('nodo-0');
+    expect(selectItems(estado)).toHaveLength(4);
+  });
+
+  it('sin historial cargado la siguiente secuencia es 1', () => {
+    expect(selectSecuenciaSiguiente(listo())).toBe(1);
+  });
+
+  it('cada envío exitoso adelanta la secuencia a la confirmada (CA-30-2)', () => {
+    const estado = reducir(
+      [
+        {
+          type: 'ENVIO_EXITO',
+          respuesta: { estadoSesion: 'ACTIVA', secuencia: 4 },
+        },
+      ],
+      enviando(),
+    );
+
+    expect(selectSecuenciaSiguiente(estado)).toBe(5);
+  });
+
+  it('un fallo del historial no impide responder el nodo actual (CA-32-5)', () => {
+    const e = error(500, 'CONTENIDO_NO_DISPONIBLE');
+    const estado = reducir([
+      { type: 'EXITO', conversacion: conversacion() },
+      { type: 'HISTORIAL_ERROR', error: e },
+    ]);
+
+    expect(estado.estado).toBe(E.LISTO);
+    expect(estado.historialEstado).toBe('ERROR');
+    expect(estado.historialError).toBe(e);
+    expect(selectNodoFormulario(estado)).not.toBeNull();
+
+    const reintento = conversationReducer(estado, {
+      type: 'REINTENTAR_HISTORIAL',
+    });
+    expect(reintento.historialEstado).toBe('CARGANDO');
+    expect(reintento.recargaHistorial).toBe(estado.recargaHistorial + 1);
+  });
+
+  it('cargar anteriores antepone sin duplicar y actualiza hay_mas (CA-32-2)', () => {
+    const base = reducir([
+      { type: 'EXITO', conversacion: conversacion() },
+      { type: 'HISTORIAL_EXITO', pagina: paginaHistorial() },
+      { type: 'CARGAR_ANTERIORES' },
+    ]);
+    expect(base.cargandoAnteriores).toBe(true);
+
+    const estado = conversationReducer(base, {
+      type: 'ANTERIORES_EXITO',
+      pagina: paginaHistorial({
+        hayMas: false,
+        secuenciaMinima: 5,
+        items: [
+          { tipo: 'nodo', id: 'historial-i5-nodo', nodo: { idNodo: 'h5' } },
+          { tipo: 'nodo', id: 'historial-i6-nodo', nodo: { idNodo: 'h6' } },
+        ],
+      }),
+    });
+
+    expect(selectItems(estado).map((i) => i.id)).toEqual([
+      'historial-i5-nodo',
+      'historial-i6-nodo',
+      'historial-i7-nodo',
+      'historial-i7-respuesta',
+      'nodo-0',
+    ]);
+    expect(estado.hayMas).toBe(false);
+    expect(estado.secuenciaMinima).toBe(5);
+    expect(estado.cargandoAnteriores).toBe(false);
+    // La página anterior no rebaja la secuencia conocida.
+    expect(selectSecuenciaSiguiente(estado)).toBe(8);
+  });
+
+  it('sin más páginas, CARGAR_ANTERIORES no hace nada', () => {
+    const estado = reducir([
+      { type: 'HISTORIAL_EXITO', pagina: paginaHistorial({ hayMas: false }) },
+    ]);
+
+    expect(conversationReducer(estado, { type: 'CARGAR_ANTERIORES' })).toBe(
+      estado,
+    );
+  });
+
+  it('un fallo al cargar anteriores conserva el hilo y deja reintentar', () => {
+    const e = error(null, 'SIN_CONEXION');
+    const estado = reducir([
+      { type: 'HISTORIAL_EXITO', pagina: paginaHistorial() },
+      { type: 'CARGAR_ANTERIORES' },
+      { type: 'ANTERIORES_ERROR', error: e },
+    ]);
+
+    expect(estado.cargandoAnteriores).toBe(false);
+    expect(estado.errorAnteriores).toBe(e);
+    expect(estado.historial).toHaveLength(3);
+  });
+
+  it.each([
+    'NODO_DESACTUALIZADO',
+    'SECUENCIA_FUERA_DE_ORDEN',
+    'NODO_TERMINAL',
+    'SESION_NO_ACTIVA',
+  ])(
+    '%s resincroniza nodo e historial sin dejar el nodo viejo (CA-30-4)',
+    (codigo) => {
+      const inicial = reducir(
+        [{ type: 'HISTORIAL_EXITO', pagina: paginaHistorial() }],
+        enviando(),
+      );
+      const estado = conversationReducer(inicial, {
+        type: 'ENVIO_ERROR',
+        error: error(409, codigo),
+      });
+
+      expect(estado.estado).toBe(E.AVANZANDO);
+      expect(estado.envio).toBeNull();
+      expect(estado.recarga).toBe(inicial.recarga + 1);
+      expect(estado.recargaHistorial).toBe(inicial.recargaHistorial + 1);
+
+      const resincronizado = reducir(
+        [
+          {
+            type: 'HISTORIAL_EXITO',
+            pagina: paginaHistorial({ ultimaSecuencia: 9 }),
+          },
+          { type: 'EXITO', conversacion: nodoN2() },
+        ],
+        estado,
+      );
+      const ids = selectItems(resincronizado).map((i) => i.id);
+
+      expect(ids.slice(0, 3)).toEqual([
+        'historial-i6-nodo',
+        'historial-i7-nodo',
+        'historial-i7-respuesta',
+      ]);
+      expect(ids).toHaveLength(4);
+      expect(selectItems(resincronizado).at(-1).nodo.idNodo).toBe('n2');
+      expect(selectSecuenciaSiguiente(resincronizado)).toBe(10);
+    },
+  );
+});
+
+describe('recursos no presentados (RF-33, RF-30)', () => {
+  const conIdRecurso = () => {
+    const base = conversacion();
+
+    return {
+      ...base,
+      nodo: {
+        ...base.nodo,
+        bloques: [
+          base.nodo.bloques[0],
+          { ...base.nodo.bloques[1], idRecurso: 'r1' },
+        ],
+      },
+    };
+  };
+
+  it('solo cuenta el recurso que sigue caído tras el único reintento (CA-30-5)', () => {
+    const tras1 = reducir([
+      { type: 'EXITO', conversacion: conIdRecurso() },
+      { type: 'RECURSO_ERROR', indice: 1 },
+    ]);
+    // Mientras se recarga todavía no se da por perdido.
+    expect(selectRecursosNoPresentados(tras1)).toEqual([]);
+
+    const recargado = conversationReducer(tras1, {
+      type: 'EXITO',
+      conversacion: conIdRecurso(),
+    });
+    expect(selectRecursosNoPresentados(recargado)).toEqual(['r1']);
+  });
+
+  it('un recurso sin idRecurso no se informa', () => {
+    const estado = reducir(
+      [
+        { type: 'RECURSO_ERROR', indice: 1 },
+        { type: 'EXITO', conversacion: conversacion() },
+      ],
+      listo(),
+    );
+
+    expect(selectRecursosNoPresentados(estado)).toEqual([]);
   });
 });

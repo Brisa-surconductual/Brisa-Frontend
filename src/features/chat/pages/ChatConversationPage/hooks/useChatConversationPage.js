@@ -2,14 +2,21 @@ import { useEffect, useReducer, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { enviarRespuesta } from '../../../api/sesion/enviarRespuesta.js';
+import { obtenerHistorialInteracciones } from '../../../api/sesion/obtenerHistorialInteracciones.js';
 import { obtenerNodoActual } from '../../../api/sesion/obtenerNodoActual.js';
+import { REGISTRO_ENTRADAS } from '../../../components/NodeInput/registroEntradas.js';
+import { mapHistorial } from '../../../services/historialInteracciones.js';
 import { mapNodoActual } from '../../../services/nodoActual.js';
+import { mapResultadoRespuesta } from '../../../services/resultadoRespuesta.js';
 import {
   ESTADO_CONVERSACION,
+  ESTADO_HISTORIAL,
   conversationReducer,
   crearEstadoInicial,
   selectItems,
   selectNodoFormulario,
+  selectRecursosNoPresentados,
+  selectSecuenciaSiguiente,
 } from '../utils/conversationState.js';
 import {
   ACCION_ERROR_ENVIO,
@@ -26,6 +33,11 @@ const CODIGO_SESION_NO_ENCONTRADA = 'SESION_NO_ENCONTRADA';
 
 const { CARGANDO, LISTO, ERROR, AVANZANDO, ERROR_ENVIO, DIRECCION_INVALIDA } =
   ESTADO_CONVERSACION;
+
+// RF-32: el texto de la burbuja del historial se arma igual que al
+// responder (registro de entradas), con la etiqueta y no el valor interno.
+const textoDe = (entrada, tipo, valor) =>
+  REGISTRO_ENTRADAS[tipo]?.textoRespuesta(entrada, valor) ?? null;
 
 export function useChatConversationPage() {
   const { idSesion } = useParams();
@@ -46,7 +58,8 @@ export function useChatConversationPage() {
   const direccionInvalida = state.estado === DIRECCION_INVALIDA;
   const items = selectItems(state);
   const idUltimo = items.at(-1)?.id;
-  const hayHistorial = state.historial.length > 0;
+  // Solo el avance en vivo mueve el foco; cargar el historial no lo roba.
+  const huboAvance = state.paso > 0;
 
   useEffect(() => {
     vivoRef.current = true;
@@ -88,6 +101,38 @@ export function useChatConversationPage() {
     };
   }, [idSesion, state.recarga, direccionInvalida, navigate]);
 
+  // RF-32: historial reciente. Al montar y en cada resincronización o
+  // reintento. Si falla, el nodo actual sigue disponible (CA-32-5).
+  useEffect(() => {
+    if (direccionInvalida) return undefined;
+
+    let cancelado = false;
+
+    obtenerHistorialInteracciones(idSesion)
+      .then((data) => {
+        if (!cancelado) {
+          dispatch({
+            type: 'HISTORIAL_EXITO',
+            pagina: mapHistorial(data, textoDe),
+          });
+        }
+      })
+      .catch((error) => {
+        if (cancelado) return;
+
+        if (error?.status === 401) {
+          navigate(LOGIN_PATH, { replace: true });
+          return;
+        }
+
+        dispatch({ type: 'HISTORIAL_ERROR', error });
+      });
+
+    return () => {
+      cancelado = true;
+    };
+  }, [idSesion, state.recargaHistorial, direccionInvalida, navigate]);
+
   // El candado se abre cuando la página vuelve a admitir una acción.
   // `errorEnvio` cuenta: un 400 vuelve a LISTO sin cambiar `estado`.
   useEffect(() => {
@@ -118,8 +163,8 @@ export function useChatConversationPage() {
   // que completa la sesión: no agrega burbuja y el último item no cambia.
   // No corre tras un 400 ni con la recarga de recursos.
   useEffect(() => {
-    if (hayHistorial) ultimoRef.current?.focus();
-  }, [idUltimo, hayHistorial, state.paso]);
+    if (huboAvance) ultimoRef.current?.focus();
+  }, [idUltimo, huboAvance, state.paso]);
 
   // `enviar` atrapa sus propios errores: quien la llama no espera nada.
   async function enviar(envio, accion) {
@@ -129,8 +174,8 @@ export function useChatConversationPage() {
     dispatch(accion);
 
     try {
-      const respuesta = await enviarRespuesta(idSesion, envio.cuerpo);
-      dispatch({ type: 'ENVIO_EXITO', respuesta });
+      const data = await enviarRespuesta(idSesion, envio.cuerpo);
+      dispatch({ type: 'ENVIO_EXITO', respuesta: mapResultadoRespuesta(data) });
     } catch (error) {
       if (clasificarErrorEnvio(error) !== ACCION_ERROR_ENVIO.LOGIN) {
         dispatch({ type: 'ENVIO_ERROR', error });
@@ -140,18 +185,49 @@ export function useChatConversationPage() {
     }
   }
 
-  // D7: cada confirmación es una respuesta nueva (idRespuesta nuevo).
+  // D7: cada confirmación es una respuesta nueva (id_interaccion nuevo),
+  // con la secuencia siguiente y los recursos no mostrados (RF-30, RF-33).
   function responder({ valor, textoRespuesta }) {
     if (state.estado !== LISTO) return;
 
     const envio = {
-      cuerpo: crearCuerpo(state.conversacion.nodo, valor),
+      cuerpo: crearCuerpo(state.conversacion.nodo, valor, {
+        secuencia: selectSecuenciaSiguiente(state),
+        recursosNoPresentados: selectRecursosNoPresentados(state),
+      }),
       textoRespuesta,
     };
     void enviar(envio, { type: 'ENVIAR', envio });
   }
 
-  // D7: el reintento reenvía el mismo cuerpo, con el mismo idRespuesta.
+  // CA-32-2: la página anterior a la más antigua cargada.
+  async function cargarAnteriores() {
+    if (!state.hayMas || state.cargandoAnteriores) return;
+
+    dispatch({ type: 'CARGAR_ANTERIORES' });
+
+    try {
+      const data = await obtenerHistorialInteracciones(idSesion, {
+        antesDe: state.secuenciaMinima,
+      });
+      if (vivoRef.current) {
+        dispatch({
+          type: 'ANTERIORES_EXITO',
+          pagina: mapHistorial(data, textoDe),
+        });
+      }
+    } catch (error) {
+      if (!vivoRef.current) return;
+      if (error?.status === 401) {
+        navigate(LOGIN_PATH, { replace: true });
+        return;
+      }
+      dispatch({ type: 'ANTERIORES_ERROR', error });
+    }
+  }
+
+  // D7: el reintento reenvía el mismo cuerpo (mismo id_interaccion y
+  // misma secuencia).
   function reintentarEnvio() {
     if (state.estado !== ERROR_ENVIO || !state.envio) return;
 
@@ -162,8 +238,25 @@ export function useChatConversationPage() {
     ? clasificarErrorEnvio(state.errorEnvio)
     : null;
 
+  // Esqueleto inicial hasta tener nodo e historial (o su error).
+  const cargandoInicial =
+    state.estado === CARGANDO ||
+    (state.historialEstado === ESTADO_HISTORIAL.CARGANDO &&
+      !huboAvance &&
+      state.historial.length === 0);
+
   return {
     estado: state.estado,
+    cargandoInicial,
+    historialError:
+      state.historialEstado === ESTADO_HISTORIAL.ERROR
+        ? state.historialError
+        : null,
+    hayMas: state.hayMas,
+    cargandoAnteriores: state.cargandoAnteriores,
+    errorAnteriores: state.errorAnteriores,
+    cargarAnteriores: () => void cargarAnteriores(),
+    reintentarHistorial: () => dispatch({ type: 'REINTENTAR_HISTORIAL' }),
     items,
     error: state.error,
     errorEnvio: state.errorEnvio,
