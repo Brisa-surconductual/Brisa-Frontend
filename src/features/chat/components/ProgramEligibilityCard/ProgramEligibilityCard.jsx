@@ -98,7 +98,6 @@ export function ProgramEligibilityCard({
   }
 
   const {
-    id_programa,
     modalidad_actual,
     total_usuarios_activos: total,
     con_perfil_completo: completos,
@@ -147,10 +146,10 @@ export function ProgramEligibilityCard({
             id="program-modality-title"
             className="m-0 text-[length:var(--font-size-lg)] font-extrabold text-[var(--text-primary)]"
           >
-            Programa #{id_programa}
+            Modalidad conversacional
           </h2>
           <p className="mt-[var(--space-1)] mb-0 text-[length:var(--font-size-xs)] text-[var(--text-secondary)]">
-            Estado de la modalidad conversacional
+            Participantes activos y condiciones para la transición
           </p>
         </div>
 

@@ -11,13 +11,21 @@ import { Button } from '@/shared/components/ui/Button/index.js';
 import { ConfirmationDialog } from '@/shared/components/ui/ConfirmationDialog/index.js';
 
 import { ChatAdminHeader } from '../../components/ChatAdminHeader/index.js';
+import { ChatAdminModal } from '../../components/ChatAdminModal/index.js';
 import { ChatAdminNotice } from '../../components/ChatAdminNotice/index.js';
 import { ChatSectionTabs } from '../../components/ChatSectionTabs/index.js';
 import { FlowStatusBadge } from '../../components/FlowStatusBadge/index.js';
 import { ACCION_FLUJO } from '../../services/flujosAdmin.js';
+import { opcionesContenidoCronograma } from '../../services/nodosAdmin.js';
+import {
+  opcionesNodo,
+  opcionesNodoOrigen,
+} from '../../services/transicionesAdmin.js';
 
 import { FlowStatusActions } from './components/FlowStatusActions/index.js';
+import { FlowTreeDiagram } from './components/FlowTreeDiagram/index.js';
 import { NodeEditorForm } from './components/NodeEditorForm/index.js';
+import { TransitionEditorForm } from './components/TransitionEditorForm/index.js';
 import { TreeNodeList } from './components/TreeNodeList/index.js';
 import { TreeTransitionList } from './components/TreeTransitionList/index.js';
 import { useGroupTreeDetailPage } from './hooks/useGroupTreeDetailPage.js';
@@ -40,15 +48,18 @@ const TEXTO_CONFIRMACION_ESTADO = Object.freeze({
 });
 
 /*
- * RF-25 · Árbol de un flujo grupal: nodos y transiciones. Los nodos se
- * pueden crear y editar mientras el flujo sea un borrador; las transiciones
- * son de solo lectura por ahora. Publicar y archivar cambian el estado del
- * flujo (el backend valida la estructura al publicar); no hay "desarchivar"
- * ni "despublicar".
+ * RF-25 · Árbol de un flujo grupal: nodos y transiciones. El árbol visual
+ * (FlowTreeDiagram) ubica los nodos por sus transiciones reales desde el
+ * nodo inicial, no por `orden`. Nodos y transiciones se pueden crear y
+ * editar mientras el flujo sea un borrador. Publicar y archivar cambian el
+ * estado del flujo (el backend valida la estructura al publicar); no hay
+ * "desarchivar" ni "despublicar". Crear o editar un nodo o una transición
+ * abre un modal; cancelar con cambios pide confirmación.
  */
 export function GroupTreeDetailPage() {
   const page = useGroupTreeDetailPage();
-  const { status, arbol, error, retry, editor, canEdit } = page;
+  const { status, arbol, error, retry, editor, transitionEditor, canEdit } =
+    page;
   const flujo = arbol?.flujo;
   const confirmacionEstado = page.confirmEstado
     ? TEXTO_CONFIRMACION_ESTADO[page.confirmEstado]
@@ -110,14 +121,23 @@ export function GroupTreeDetailPage() {
         )}
 
         {page.errorEstado && (
-          <ChatAdminNotice
-            tone="danger"
-            icon={AlertTriangle}
-            role="alert"
-            title="No se pudo cambiar el estado del flujo"
-          >
-            {page.errorEstado}
-          </ChatAdminNotice>
+          <div role="alert">
+            <ChatAdminNotice
+              tone="danger"
+              icon={AlertTriangle}
+              title="No se pudo cambiar el estado del flujo"
+            >
+              {page.errorEstado}
+            </ChatAdminNotice>
+
+            {page.errorEstadoCondiciones.length > 0 && (
+              <ul className="m-0 mt-[var(--space-2)] list-disc rounded-[var(--radius-lg)] border border-[var(--danger-border)] bg-[var(--danger-bg)] px-[var(--space-5)] py-[var(--space-3)] text-[length:var(--font-size-sm)] text-[var(--danger-text)]">
+                {page.errorEstadoCondiciones.map((condicion) => (
+                  <li key={condicion}>{condicion}</li>
+                ))}
+              </ul>
+            )}
+          </div>
         )}
 
         {status === 'ready' && (
@@ -128,7 +148,15 @@ export function GroupTreeDetailPage() {
           />
         )}
 
-        {status === 'ready' && canEdit && editor.mode === 'closed' && (
+        {status === 'ready' && (
+          <FlowTreeDiagram
+            nodos={arbol.nodos}
+            transiciones={arbol.transiciones}
+            onSelectNodo={page.selectNodoEnArbol}
+          />
+        )}
+
+        {status === 'ready' && canEdit && (
           <div>
             <Button onClick={page.openCreate}>
               <Plus size={20} strokeWidth={1.8} aria-hidden="true" />
@@ -137,31 +165,100 @@ export function GroupTreeDetailPage() {
           </div>
         )}
 
-        {status === 'ready' && canEdit && editor.mode !== 'closed' && (
+        {status === 'ready' && (
+          <TreeNodeList
+            nodos={arbol.nodos}
+            canEdit={canEdit}
+            onEdit={page.openEdit}
+            contenidosCronograma={page.contenidosCronograma}
+          />
+        )}
+
+        {status === 'ready' && canEdit && (
+          <div>
+            <Button onClick={page.openCreateTransition}>
+              <Plus size={20} strokeWidth={1.8} aria-hidden="true" />
+              Agregar transición
+            </Button>
+          </div>
+        )}
+
+        {status === 'ready' && (
+          <TreeTransitionList
+            transiciones={arbol.transiciones}
+            canEdit={canEdit}
+            onEdit={page.openEditTransition}
+          />
+        )}
+      </div>
+
+      {status === 'ready' && canEdit && editor.mode !== 'closed' && (
+        <ChatAdminModal
+          open
+          title={editor.mode === 'edit' ? 'Editar nodo' : 'Nuevo nodo'}
+          formId="editor-nodo"
+          submitText={editor.mode === 'edit' ? 'Guardar cambios' : 'Crear nodo'}
+          saving={editor.saving}
+          onRequestClose={page.closeEditor}
+        >
           <NodeEditorForm
-            mode={editor.mode}
+            formId="editor-nodo"
             values={editor.values}
             errors={editor.errors}
             saving={editor.saving}
             saveError={editor.saveError}
             tiposNodo={page.tiposNodo}
+            contenidosCronograma={opcionesContenidoCronograma(
+              page.contenidosCronograma,
+            )}
             onChange={page.changeField}
             onSubmit={page.submitEditor}
-            onCancel={page.closeEditor}
           />
-        )}
+        </ChatAdminModal>
+      )}
 
-        {status === 'ready' && (
-          <>
-            <TreeNodeList
-              nodos={arbol.nodos}
-              canEdit={canEdit}
-              onEdit={page.openEdit}
-            />
-            <TreeTransitionList transiciones={arbol.transiciones} />
-          </>
-        )}
-      </div>
+      {status === 'ready' && canEdit && transitionEditor.mode !== 'closed' && (
+        <ChatAdminModal
+          open
+          title={
+            transitionEditor.mode === 'edit'
+              ? 'Editar transición'
+              : 'Nueva transición'
+          }
+          formId="editor-transicion"
+          submitText={
+            transitionEditor.mode === 'edit'
+              ? 'Guardar cambios'
+              : 'Crear transición'
+          }
+          saving={transitionEditor.saving}
+          onRequestClose={page.closeTransitionEditor}
+        >
+          <TransitionEditorForm
+            formId="editor-transicion"
+            mode={transitionEditor.mode}
+            values={transitionEditor.values}
+            errors={transitionEditor.errors}
+            saving={transitionEditor.saving}
+            saveError={transitionEditor.saveError}
+            nodosOrigen={opcionesNodoOrigen(arbol.nodos)}
+            nodosDestino={opcionesNodo(arbol.nodos)}
+            config={page.configTransicion}
+            onChange={page.changeTransitionField}
+            onSubmit={page.submitTransitionEditor}
+          />
+        </ChatAdminModal>
+      )}
+
+      <ConfirmationDialog
+        open={Boolean(page.confirmDescarte)}
+        title="¿Descartar los cambios?"
+        description="Lo que escribiste en este formulario se perderá."
+        confirmText="Descartar"
+        cancelText="Seguir editando"
+        onConfirm={page.confirmarDescarte}
+        onCancel={page.cancelarDescarte}
+      />
 
       <ConfirmationDialog
         open={Boolean(page.confirmEstado)}

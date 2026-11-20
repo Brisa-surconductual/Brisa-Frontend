@@ -6,7 +6,7 @@ import {
 } from './programModalityState.js';
 
 const reduce = (state, action) => programModalityReducer(state, action);
-const elegibilidad = { id_programa: 1, elegible: true };
+const elegibilidad = { elegible: true };
 
 describe('programModalityReducer', () => {
   it('arranca cargando y sin datos', () => {

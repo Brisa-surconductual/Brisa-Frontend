@@ -18,7 +18,6 @@ const render = (node, path = MODALITY) =>
   ).replaceAll('<!-- -->', '');
 
 const ELIGIBLE = Object.freeze({
-  id_programa: 7,
   modalidad_actual: 'GRUPAL',
   total_usuarios_activos: 4,
   con_perfil_completo: 4,
@@ -37,7 +36,7 @@ describe('Modalidad del chat', () => {
 
     expect(html).toContain('Integración pendiente');
     expect(html).toContain('Sin información del programa');
-    expect(html).not.toContain('Programa #');
+    expect(html).not.toContain('Modalidad conversacional');
     expect(html).not.toContain('role="progressbar"');
     expect(enableButton(html)).toBeUndefined();
     expect(html).not.toContain('Selecciona un programa');
@@ -77,7 +76,7 @@ describe('Modalidad del chat', () => {
       <ProgramModalityPage eligibility={ELIGIBLE} onEnableModality={vi.fn()} />,
     );
 
-    expect(html).toContain('Programa #7');
+    expect(html).toContain('Modalidad conversacional');
     expect(html).toContain('aria-valuenow="100"');
     expect(html).toContain(
       'El programa tiene participantes activos: <strong>Cumple</strong>',

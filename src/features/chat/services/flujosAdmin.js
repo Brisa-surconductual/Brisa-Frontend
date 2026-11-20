@@ -1,4 +1,5 @@
 import { CHAT_CLIENT_ERROR } from '../api/chatApiUtils.js';
+import { DIMENSION_PERFIL_CLINICO_ETIQUETA } from '../types/dimensionPerfilClinico.js';
 import { ESTADO_FLUJO, NOMBRE_FLUJO_MAX } from '../types/estadoFlujo.js';
 
 const MENSAJE_SIN_CONEXION =
@@ -78,6 +79,122 @@ function compararNodos(a, b) {
   return String(a.fechaCreacion).localeCompare(String(b.fechaCreacion));
 }
 
+// Identifica un nodo de `detalles` (RF-25, GRAFO_INVALIDO) sin asumir que el
+// texto o el orden existan: el backend solo garantiza el id.
+function etiquetaNodoDiagnostico(nodo) {
+  const base =
+    nodo?.orden !== null && nodo?.orden !== undefined
+      ? `nodo con orden ${nodo.orden}`
+      : 'nodo sin orden';
+
+  return typeof nodo?.texto === 'string' && nodo.texto.trim()
+    ? `${base} ("${recortar(nodo.texto.trim())}")`
+    : base;
+}
+
+// RF-25: traduce `detalles` del 422 GRAFO_INVALIDO a frases concretas sobre
+// qué falla y qué nodos involucra, en vez de un mensaje genérico. Devuelve
+// [] si no hay detalle (otro tipo de error).
+export function describirCondicionesGrafoInvalido(detalles) {
+  if (!detalles || typeof detalles !== 'object') return [];
+
+  const condiciones = [];
+
+  if (detalles.sin_nodo_inicial) {
+    condiciones.push(
+      'Falta un nodo inicial: ningún nodo está marcado como punto de partida (o hay más de uno).',
+    );
+  }
+
+  const huerfanos = Array.isArray(detalles.nodos_huerfanos)
+    ? detalles.nodos_huerfanos
+    : [];
+  if (huerfanos.length > 0) {
+    const lista = huerfanos.map(etiquetaNodoDiagnostico).join(', ');
+    condiciones.push(
+      huerfanos.length === 1
+        ? `Hay un nodo sin conexión al flujo: ${lista}.`
+        : `Hay ${huerfanos.length} nodos sin conexión al flujo: ${lista}.`,
+    );
+  }
+
+  const ciclos = Array.isArray(detalles.ciclos) ? detalles.ciclos : [];
+  if (ciclos.length === 1) {
+    condiciones.push(
+      `Hay un ciclo entre nodos: ${ciclos[0].map(etiquetaNodoDiagnostico).join(' → ')}.`,
+    );
+  } else if (ciclos.length > 1) {
+    ciclos.forEach((ciclo, indice) => {
+      condiciones.push(
+        `Ciclo ${indice + 1}: ${ciclo.map(etiquetaNodoDiagnostico).join(' → ')}.`,
+      );
+    });
+  }
+
+  return condiciones;
+}
+
+// RF-25: traduce `detalles` del 422 NODO_CAPTURA_PERFIL_INVALIDO a frases
+// concretas sobre qué dimensión clínica falla y por qué. Devuelve [] si no
+// hay detalle (otro tipo de error).
+export function describirCondicionesCapturaPerfil(detalles) {
+  if (!detalles || typeof detalles !== 'object') return [];
+
+  const etiqueta = (dimension) =>
+    DIMENSION_PERFIL_CLINICO_ETIQUETA[dimension] ?? dimension;
+  const lista = (valor) =>
+    (Array.isArray(valor) ? valor : []).map(etiqueta).join(', ');
+
+  const condiciones = [];
+
+  if (detalles.dimensiones_ausentes?.length > 0) {
+    condiciones.push(
+      `Falta un nodo de captura para: ${lista(detalles.dimensiones_ausentes)}.`,
+    );
+  }
+  if (detalles.dimensiones_duplicadas?.length > 0) {
+    condiciones.push(
+      `Hay más de un nodo de captura para: ${lista(detalles.dimensiones_duplicadas)}.`,
+    );
+  }
+  if (detalles.dimensiones_valores_invalidos?.length > 0) {
+    condiciones.push(
+      `El nodo de captura no tiene una regla con los valores clínicos correctos para: ${lista(detalles.dimensiones_valores_invalidos)}.`,
+    );
+  }
+
+  return condiciones;
+}
+
+// RF-25: traduce `detalles` del 422 COBERTURA_INCOMPLETA (respuestas de
+// selección única o Sí/No sin transición) a frases con las etiquetas que el
+// administrativo reconoce. `nodos` son los del árbol ya mapeado.
+export function describirCondicionesCoberturaIncompleta(detalles, nodos) {
+  const faltantes = Array.isArray(detalles?.nodos_sin_cobertura)
+    ? detalles.nodos_sin_cobertura
+    : [];
+  const porId = new Map(
+    (Array.isArray(nodos) ? nodos : []).map((n) => [n.id, n]),
+  );
+
+  return faltantes.map((faltante) => {
+    const nodo = porId.get(faltante.id_nodo);
+    const etiquetaOpcion = new Map(
+      (Array.isArray(nodo?.entrada?.opciones) ? nodo.entrada.opciones : []).map(
+        (opcion) => [opcion.valor, opcion.etiqueta],
+      ),
+    );
+    const etiqueta = (valor) =>
+      valor === 'true'
+        ? 'Sí'
+        : valor === 'false'
+          ? 'No'
+          : (etiquetaOpcion.get(valor) ?? valor);
+    const valores = (faltante.valores_faltantes ?? []).map(etiqueta).join(', ');
+    return `En ${nodo?.etiqueta ?? etiquetaNodoDiagnostico(faltante)} falta una transición para: ${valores}.`;
+  });
+}
+
 // Valor de la condición: el backend lo envía como objeto libre. Se muestra
 // `clave: valor` sin asumir un formato propio.
 export function describirCondicion(valor) {
@@ -130,17 +247,42 @@ export function mapNodo(nodo) {
     texto: textoDelNodo(nodo.contenido),
     esNodoInicial: nodo.es_nodo_inicial === true,
     orden: nodo.orden ?? null,
+    idContenidoCronograma: nodo.id_contenido_cronograma ?? null,
+    // Objeto crudo (PR4): lo necesita el formulario para precargar la
+    // respuesta configurada. `null` si el nodo no espera respuesta.
+    entrada:
+      nodo.contenido?.entrada && typeof nodo.contenido.entrada === 'object'
+        ? nodo.contenido.entrada
+        : null,
     fechaCreacion: nodo.fecha_creacion,
   });
 }
 
+// RF-25: cada transición trae su regla propia (operador y valor esperado);
+// `null` cuando el nodo origen no espera respuesta (transición automática).
+function mapRegla(regla) {
+  if (!regla) return null;
+  return Object.freeze({
+    id: regla.id_regla_validacion,
+    operador: regla.operador_condicion,
+    // Objeto crudo: lo necesita el formulario para precargar el valor.
+    valorEsperado: regla.valor_esperado,
+    tipoDato: regla.tipo_dato,
+    mensajeError: regla.mensaje_error,
+  });
+}
+
 export function mapTransicion(transicion) {
+  const regla = mapRegla(transicion.regla_validacion);
   return Object.freeze({
     id: transicion.id_regla,
     origenId: transicion.id_nodo_origen,
     destinoId: transicion.id_nodo_destino,
-    operador: transicion.operador_condicion,
-    condicion: describirCondicion(transicion.valor_condicion),
+    operador: regla?.operador ?? null,
+    condicion: regla
+      ? describirCondicion(regla.valorEsperado)
+      : 'Transición automática',
+    regla,
     ordenEvaluacion: transicion.orden_evaluacion,
   });
 }

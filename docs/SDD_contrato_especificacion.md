@@ -189,7 +189,7 @@ Reglas (**C-API**):
 - **C-API-1.** Toda función de `api/` DEBE usar `apiClient` y la constante de su módulo de `constans.jsx`; NO DEBE usar `fetch`, crear otra instancia de `axios` ni escribir `http://localhost…` a mano.
 - **C-API-2.** Un módulo nuevo agrega su constante a `constans.jsx` (``export const CHAT = `${BASE_URL}/chat`;``). Es el único cambio permitido en `shared/` dentro de una rama de feature, y debe ser de una línea; cualquier otro cambio en `shared/` va en PR aparte (C-ORG-3).
 - **C-API-3.** El cuerpo de un `POST`/`PATCH` sin datos se envía como `{}`, **nunca `null`**: con `Content-Type: application/json` axios serializa `null` como el texto `"null"` y el backend responde `400 Bad Request` (`Unexpected token 'n', "null" is not valid JSON`).
-- **C-API-4.** `api/` devuelve el JSON del backend y lanza errores tipados con `code`, `status` y el mensaje del backend (que puede venir en `message` o en `mensaje`). La traducción a modelos de interfaz va en `services/`.
+- **C-API-4.** `api/` devuelve el JSON del backend y lanza errores tipados con `code`, `status` y el mensaje del backend (que puede venir en `message` o en `mensaje`). La traducción a modelos de interfaz va en `services/`. El tratamiento de los errores sigue C-ERR-1 a C-ERR-6.
 - **C-API-5.** Cada endpoint vive en su propio archivo (`api/<tema>/<accion>.js`) y se importa por su ruta, sin barril (C-ORG-9). Es la base para integrar cada módulo; el módulo de chat (M03) se integra con este patrón, empezando por RF-24 (`features/chat/api/sesion/iniciarSesionConversacional.js`).
 
 #### Relación entre carpetas y capas de la especificación
@@ -279,6 +279,37 @@ El repositorio tiene hoy íconos y componentes de instalación (`InstallAppButto
 - **C-PWA-4.** Las actualizaciones del service worker DEBEN avisar al usuario y no recargar en medio de una sesión de chat o de un registro.
 - **C-PWA-5.** Se DEBERÍA medir con Lighthouse (PWA, rendimiento y accesibilidad) en cada corte de sprint.
 
+#### Flujo de ramas y despliegue
+
+Se manejan 3 ramas principales:
+
+| Rama | Rol |
+|---|---|
+| `develop` | Integración de funcionalidades en desarrollo. |
+| `test` | Rama de evaluación/QA antes de promover a `develop`. |
+| `master` | Producción. Al hacer merge aquí se despliega automáticamente: el backend en Render y el frontend en Cloudflare Pages. |
+
+Flujo estándar de un desarrollador:
+
+1. Crea su propia rama `feat/...` desde `develop`.
+2. Envía el PR apuntando a `test`.
+3. Se mergea a `test` y se evalúa ahí.
+4. De `test` pasa a `develop`.
+5. De `develop` pasa finalmente a `master` (dispara el despliegue en Cloudflare Pages).
+
+```
+feat/... ──► PR ──► test ──► develop ──► master ──► despliegue (Cloudflare Pages)
+ (desde develop)   (se evalúa)  (integra)   (producción)
+```
+
+Cláusulas **C-GIT**:
+
+- **C-GIT-1.** Toda funcionalidad nace en una rama `feat/...` creada desde `develop`. NO se trabaja directamente sobre `develop`, `test` ni `master`.
+- **C-GIT-2.** El PR de una funcionalidad apunta a `test`, no a `develop` ni a `master`.
+- **C-GIT-3.** Una funcionalidad solo avanza de `test` a `develop` después de evaluarse en `test`, y solo avanza de `develop` a `master` cuando está lista para producción.
+- **C-GIT-4.** `master` es la única rama que despliega a producción. Un merge a `master` dispara el despliegue; por eso solo recibe lo que ya pasó por `test` y `develop`.
+- **C-GIT-5.** El nombre de la rama sigue `feat/...` y los commits siguen Conventional Commits con la tarea (ver `CLAUDE.md`). Los PR son pequeños (< ~300 líneas) y llevan los RF que implementan (C-RF-4).
+
 #### Despliegue: Cloudflare Pages + GitHub Actions
 
 Flujo previsto (la configuración concreta se documenta en un ADR cuando se cree el workflow):
@@ -287,7 +318,7 @@ Flujo previsto (la configuración concreta se documenta en un ADR cuando se cree
 Pull Request ─► GitHub Actions: install · lint · test · build ─► Preview deployment (Cloudflare Pages)
       │
       ▼ (merge)
-rama principal ─► GitHub Actions: install · lint · test · build ─► Producción (Cloudflare Pages)
+master ─► GitHub Actions: install · lint · test · build ─► Producción (Cloudflare Pages)
 ```
 
 | Aspecto | Decisión / requisito |
@@ -305,7 +336,7 @@ Cláusulas **C-CICD**:
 
 - **C-CICD-1.** Ningún PR DEBE fusionarse si fallan lint de la feature tocada, pruebas o build en CI.
 - **C-CICD-2.** Cada PR DEBERÍA generar una *preview deployment* para que la revisión incluya la verificación visual a 360 px.
-- **C-CICD-3.** El despliegue a producción solo ocurre desde la rama principal, tras un merge aprobado. No se despliega desde máquinas locales.
+- **C-CICD-3.** El despliegue a producción solo ocurre desde `master`, tras un merge aprobado (ver el flujo de ramas). No se despliega desde máquinas locales.
 - **C-CICD-4.** El workflow NO DEBE imprimir secretos ni variables sensibles en los registros.
 - **C-CICD-5.** Una vez creado el workflow, debe documentarse en `docs/decisiones/` y referenciarse desde este contrato.
 
@@ -319,7 +350,7 @@ Con un equipo de 4 el proceso debe ser **ligero pero trazable**; el contrato se 
 | Revisión | Al menos **una** aprobación de otra persona del equipo; nadie fusiona su propio PR sin revisión |
 | Reparto | Una persona dueña por feature/módulo en curso, para evitar conflictos en `shared/` y en el router |
 | Cambios en `shared/` | PR aparte y pequeño, avisado al resto (C-ORG-3) |
-| Rama principal | Protegida: sin *push* directo, con CI obligatorio |
+| Ramas `develop`, `test` y `master` | Protegidas: sin *push* directo, con CI obligatorio; los cambios entran por PR (C-GIT) |
 | Contrato con backend | El JSON real que expone el backend; el frontend se adapta a él y avisa de cualquier diferencia con el RF (C-RF-3) |
 | Sincronización | `git pull --rebase` diario y revisión semanal del Excel de requerimientos (C-CAM-2) |
 | Documentación | Las decisiones técnicas se registran en ADR; un ADR por decisión, sin borrarlos |
@@ -335,7 +366,7 @@ Los nombres y responsabilidades concretas se asignan en la sección 11 al aproba
 | Conviven `package-lock.json` y `pnpm-lock.yaml` | C-STK-4 | Elegir gestor y borrar el otro lockfile |
 | `lint-staged` apunta a `src/features/auth`, `student` y `psychology`, que no existen; las features reales son `users`, `chat` y `cronograma` | Calidad antes de commit | Actualizar `lint-staged` a las carpetas reales o a `src/**` |
 | No hay `public/_redirects` ni `_headers` | Despliegue en Pages | Añadirlos al crear el workflow |
-| `CLAUDE.md` menciona `master` y el repo usa `develop` como rama principal | Consistencia de flujo | Unificar la rama base en `CLAUDE.md` y en el contrato |
+| `CLAUDE.md` indica ramas «desde `master`», pero el flujo vigente es `feat/...` desde `develop` con PR a `test` | C-GIT-1, C-GIT-2 | Actualizar la sección Git de `CLAUDE.md` para que coincida con el flujo de ramas |
 
 ---
 
@@ -503,6 +534,15 @@ Estas reglas ya existen en `CLAUDE.md` y se elevan aquí a cláusulas verificabl
 - **C-SEG-1.** El frontend NO DEBE enviar `id_usuario` (lo toma el backend de la sesión) ni mostrar el perfil clínico (`tipo_dependencia`, `tipo_craving`) al estudiante.
 - **C-SEG-2.** Las peticiones que modifican estado DEBEN llevar `X-CSRF-Token` (lo agrega `apiClient`); la sesión es por cookie.
 - **C-PRI-1.** NO DEBE registrarse en consola ni en almacenamiento no controlado información de salud, consumo, credenciales ni respuestas del estudiante.
+
+> **Aclaración · Manejo de errores.** El frontend **no maneja excepciones propias**: se comporta como presentador de las que maneja el backend. Su responsabilidad es hacerlas **accesibles, claras y específicas** para el usuario. Reglas C-ERR-1 a C-ERR-6.
+
+- **C-ERR-1.** **El frontend no define sus propias excepciones de negocio: presenta las que maneja el backend.** Las reglas, validaciones y rechazos (código, `message` o `mensaje`, `campo`, estado HTTP) los decide el backend; el frontend los hace **accesibles, claros y específicos** para el usuario, sin reinterpretarlos ni sustituirlos por textos inventados.
+- **C-ERR-2.** Se decide por el `codigo` del backend, nunca por el texto. El mensaje del backend se muestra tal cual (puede venir en `message` o en `mensaje`; si es una lista, se unen sus partes).
+- **C-ERR-3.** «Accesibles»: el error se anuncia a lectores de pantalla (`role="alert"`), se asocia a su campo cuando el backend indica `campo`, y nunca se comunica solo con color: lleva texto e ícono. «Claros y específicos»: se muestra el mensaje del caso concreto y, según corresponda, la acción posible (reintentar si el error es reintentable, iniciar sesión si es 401, volver al inicio).
+- **C-ERR-4.** Los únicos textos de error que el frontend escribe son los de situaciones que el backend no puede informar porque no hay respuesta: **falta de conexión** (`SIN_CONEXION`) y **respuesta ilegible o sin mensaje** (texto genérico). No se agregan otros.
+- **C-ERR-5.** Las validaciones previas del frontend (campo vacío, formato) solo ahorran un viaje al backend y siguen su regla; no sustituyen la validación del backend, que siempre prevalece.
+- **C-ERR-6.** El tratamiento común vive en `shared/utils/apiError.js` (`toApiError`) y en el componente de mensaje de error compartido; cada feature lo reutiliza en lugar de repetirlo. Si el backend cambia un mensaje o un código, el frontend lo refleja sin tocar su propio texto.
 - **C-TXT-1.** Los textos normativos (consentimiento informado, nodos de chat) se muestran VERBATIM.
 - **C-UI-1.** Textos visibles en español; nombres de archivos, componentes y hooks en inglés.
 - **C-UI-2.** `--accent-*` queda reservado para gamificación (M06).

@@ -78,7 +78,7 @@ export function NodeInputForm({
   // Sin "Continuar", un tipo de envío inmediato no obligatorio no podría
   // enviar `null`.
   const conContinuar =
-    informativo || !tipo.envioInmediato || !entrada.obligatorio;
+    informativo || !tipo?.envioInmediato || !entrada.obligatorio;
 
   function confirmar(v) {
     if (enviando) return;

@@ -245,14 +245,19 @@ describe('publicarFlujo y archivarFlujo (RF-25)', () => {
     );
   });
 
-  it('publicarFlujo propaga el 422 de un árbol inválido', async () => {
+  it('publicarFlujo propaga el 422 de un árbol inválido, con su detalle', async () => {
+    const detalles = {
+      sin_nodo_inicial: true,
+      nodos_huerfanos: [],
+      ciclos: [],
+    };
     apiClient.post.mockRejectedValue({
       response: {
         status: 422,
         data: {
           codigo: 'GRAFO_INVALIDO',
           message: 'El árbol no cumple las condiciones de integridad.',
-          detalles: { sin_nodo_inicial: true, nodos_huerfanos: [], ciclos: [] },
+          detalles,
         },
       },
     });
@@ -261,6 +266,7 @@ describe('publicarFlujo y archivarFlujo (RF-25)', () => {
       status: 422,
       code: 'GRAFO_INVALIDO',
       backendMessage: 'El árbol no cumple las condiciones de integridad.',
+      detalles,
     });
   });
 
