@@ -6,6 +6,8 @@ import { RegistrationLayout } from '@/app/layouts/RegistrationLayout/index.js';
 import {
   ChatConversationPage,
   ChatEntryPage,
+  ChatOfflineDemoPage,
+  ChatOfflinePage,
   GroupTreeDetailPage,
   GroupTreesPage,
   ProgramModalityScreen,
@@ -44,6 +46,14 @@ import {
   SchedulePanelPage,
   AssignSchedulePage,
 } from '@/features/cronograma/index.js';
+import {
+  AuditLogPage,
+  CohortDetailPage,
+  CohortFormPage,
+  CohortListPage,
+  ParticipantTrackingPage,
+  ParticipantTrackingProfilePage,
+} from '@/features/administracion/index.js';
 
 import { RequireAuth } from './RequireAuth.jsx';
 import { RoleHomeRedirect } from './RoleHomeRedirect.jsx';
@@ -157,6 +167,18 @@ export function AppRouter() {
                   path="estudiante/chat/sesion/:idSesion"
                   element={<ChatConversationPage />}
                 />
+
+                {/* RF-34: conversación con el paquete guardado en el dispositivo. */}
+                <Route
+                  path="estudiante/chat/sin-conexion/:idSesion"
+                  element={<ChatOfflinePage />}
+                />
+
+                {/* Demostración sin conexión: solo opera en desarrollo. */}
+                <Route
+                  path="estudiante/chat/demo-sin-conexion"
+                  element={<ChatOfflineDemoPage />}
+                />
               </Route>
             </Route>
 
@@ -257,6 +279,41 @@ export function AppRouter() {
               <Route
                 path="administrativo/cronograma/:idSchedule/crear-unidad"
                 element={<CreateTemporalUnitPage />}
+              />
+
+              <Route
+                path="administrativo/cohortes"
+                element={<CohortListPage />}
+              />
+
+              <Route
+                path="administrativo/cohortes/nueva"
+                element={<CohortFormPage />}
+              />
+
+              <Route
+                path="administrativo/cohortes/:idCohorte"
+                element={<CohortDetailPage />}
+              />
+
+              <Route
+                path="administrativo/cohortes/:idCohorte/seguimiento"
+                element={<ParticipantTrackingPage />}
+              />
+
+              <Route
+                path="administrativo/cohortes/:idCohorte/seguimiento/:referencia"
+                element={<ParticipantTrackingProfilePage />}
+              />
+
+              <Route
+                path="administrativo/cohortes/:idCohorte/editar"
+                element={<CohortFormPage mode="edit" />}
+              />
+
+              <Route
+                path="administrativo/auditoria"
+                element={<AuditLogPage />}
               />
 
               <Route

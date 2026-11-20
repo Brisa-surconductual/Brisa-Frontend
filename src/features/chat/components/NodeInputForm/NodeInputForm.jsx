@@ -93,6 +93,8 @@ export function NodeInputForm({
 
   function cambiar(nuevo) {
     setValor(nuevo);
+    // `?.`: el React Compiler evalúa esta lectura en el render como
+    // dependencia de memoización, y en un nodo informativo `tipo` es null.
     if (tipo?.envioInmediato) confirmar(nuevo);
   }
 

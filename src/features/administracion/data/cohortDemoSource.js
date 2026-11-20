@@ -1,0 +1,191 @@
+import { SCHEDULE_STATUS } from '../types/scheduleStatus.js';
+import { DEMO_SCENARIO, getDemoScenario } from '../utils/cohortDemoScenario.js';
+import { DEMO_COHORTS } from './cohortDemoData.js';
+import { createCohortStore } from './cohortDemoStore.js';
+import { DEMO_PARTICIPANT_CATALOG } from './participantCatalogDemoData.js';
+import { DEMO_PARTICIPANTS } from './participantDemoData.js';
+import { createParticipantStore } from './participantDemoStore.js';
+import { DEMO_SCHEDULES } from './scheduleDemoData.js';
+
+/*
+ * FUENTE DE DEMOSTRACIÓN (solo desarrollo). Solo la carga
+ * cohortSource.js mediante import() dinámico cuando el modo demo está
+ * activo; en producción este módulo no llega al build.
+ *
+ * Aplica el escenario de VITE_M08_DEMO_SCENARIO y una breve espera
+ * para que la carga y el guardado se vean durante las pruebas.
+ */
+export const DEMO_DELAY_MS = 400;
+
+let store = null;
+let participantStore = null;
+let staleRemovalDone = false;
+
+function getStore() {
+  if (!store) {
+    const scenario = getDemoScenario();
+
+    store = createCohortStore({
+      cohorts: scenario === DEMO_SCENARIO.EMPTY ? [] : DEMO_COHORTS,
+      schedules: schedulesFor(scenario),
+    });
+  }
+
+  return store;
+}
+
+function getParticipantStore() {
+  if (!participantStore) {
+    participantStore = createParticipantStore({
+      participants: DEMO_PARTICIPANTS,
+      catalog: DEMO_PARTICIPANT_CATALOG,
+    });
+
+    // Conflicto preparado: PART-0009 ya pertenece a una cohorte ACTIVA.
+    if (getDemoScenario() === DEMO_SCENARIO.ASSIGNMENT_CONFLICTS) {
+      participantStore.assign('demo-cohorte-b', ['demo-candidato-9'], {
+        findCohort: getStore().findCohort,
+      });
+    }
+  }
+
+  return participantStore;
+}
+
+/*
+ * Catálogo según el escenario: sin cronogramas activos, o con los
+ * usados por las cohortes ya inactivos (para ver una activación
+ * rechazada). Nunca modifica el catálogo original.
+ */
+function schedulesFor(scenario) {
+  if (scenario === DEMO_SCENARIO.NO_ACTIVE_SCHEDULES) {
+    return DEMO_SCHEDULES.filter(({ status }) => status !== SCHEDULE_STATUS.ACTIVE);
+  }
+
+  if (scenario === DEMO_SCENARIO.ACTIVATION_BLOCKED) {
+    const inUse = new Set(DEMO_COHORTS.map(({ scheduleId }) => scheduleId));
+
+    return DEMO_SCHEDULES.map((schedule) =>
+      inUse.has(schedule.id) ? Object.freeze({ ...schedule, status: SCHEDULE_STATUS.INACTIVE }) : schedule,
+    );
+  }
+
+  return DEMO_SCHEDULES;
+}
+
+const pause = () => new Promise((resolve) => setTimeout(resolve, DEMO_DELAY_MS));
+
+async function read(operation) {
+  const scenario = getDemoScenario();
+
+  if (scenario === DEMO_SCENARIO.LOADING) return new Promise(() => {});
+
+  await pause();
+
+  if (scenario === DEMO_SCENARIO.ERROR) {
+    throw new Error('Error simulado del modo de demostración.');
+  }
+
+  return operation(getStore());
+}
+
+async function write(operation) {
+  await pause();
+
+  if (getDemoScenario() === DEMO_SCENARIO.SAVE_ERROR) {
+    throw new Error('Error simulado al guardar en el modo de demostración.');
+  }
+
+  return operation(getStore());
+}
+
+export const listCohorts = () => read((demo) => demo.listCohorts());
+export const getCohort = (id) => read((demo) => demo.findCohort(id));
+export const listSchedules = () => read((demo) => demo.listSchedules());
+export const createCohort = (values) => write((demo) => demo.createCohort(values));
+export const updateCohort = (id, values) => write((demo) => demo.updateCohort(id, values));
+export const changeCohortStatus = (id, transition) =>
+  write((demo) => demo.changeCohortStatus(id, transition));
+
+/*
+ * Participantes de una cohorte (RF-125), o null si la cohorte no existe
+ * en el almacén de cohortes (el mismo del listado, así una cohorte
+ * creada o cambiada temporalmente se reconoce). Sus escenarios propios
+ * permiten ver la carga y el error solo en esta consulta.
+ */
+export async function listCohortParticipants(cohortId) {
+  const scenario = getDemoScenario();
+
+  if (scenario === DEMO_SCENARIO.PARTICIPANTS_LOADING) return new Promise(() => {});
+
+  return read((demo) => {
+    if (scenario === DEMO_SCENARIO.PARTICIPANTS_ERROR) {
+      throw new Error('Error simulado al consultar participantes en el modo de demostración.');
+    }
+
+    if (!demo.findCohort(cohortId)) return null;
+
+    const participants = getParticipantStore().listByCohort(cohortId);
+
+    // Datos desactualizados: otra operación retira a PART-0002 justo
+    // después de esta consulta, una sola vez por carga.
+    if (scenario === DEMO_SCENARIO.STALE_REMOVAL && cohortId === 'demo-cohorte-b' && !staleRemovalDone) {
+      staleRemovalDone = true;
+      getParticipantStore().remove(cohortId, 'demo-participante-2', { findCohort: demo.findCohort });
+    }
+
+    return participants;
+  });
+}
+
+/*
+ * Participantes que pueden proponerse para la cohorte: { id, code,
+ * issue }, o null si la cohorte no existe. `issue` lo decide la fuente.
+ */
+export const listAvailableParticipants = (cohortId) =>
+  read((demo) => {
+    if (getDemoScenario() === DEMO_SCENARIO.CATALOG_ERROR) {
+      throw new Error('Error simulado al consultar participantes disponibles.');
+    }
+
+    if (!demo.findCohort(cohortId)) return null;
+
+    return getParticipantStore().listCandidates(cohortId, {
+      findCohort: demo.findCohort,
+      stale: getDemoScenario() === DEMO_SCENARIO.ASSIGNMENT_CONFLICTS,
+    });
+  });
+
+// Asignación (RF-125): ver el resultado estructurado en participantDemoStore.js.
+export const assignParticipants = (cohortId, participantIds) =>
+  write((demo) =>
+    getParticipantStore().assign(cohortId, participantIds, { findCohort: demo.findCohort }),
+  );
+
+// Retiro (RF-125): ver el resultado estructurado en participantDemoStore.js.
+export const removeCohortParticipant = (cohortId, participantId) =>
+  write((demo) =>
+    getParticipantStore().remove(cohortId, participantId, { findCohort: demo.findCohort }),
+  );
+
+/*
+ * Asociaciones actuales de una cohorte, solo { id, code }, o null si la
+ * cohorte no existe. Lectura síncrona y sin escenarios: la usa la fuente
+ * de seguimiento de demostración para cruzar sus indicadores con las
+ * mismas asociaciones en memoria (el backend hará ese cruce). No expone
+ * estados de elegibilidad.
+ */
+export function getDemoCohortMembers(cohortId) {
+  if (!getStore().findCohort(cohortId)) return null;
+
+  return getParticipantStore()
+    .listByCohort(cohortId)
+    .map(({ id, code }) => Object.freeze({ id, code }));
+}
+
+// Solo para pruebas automatizadas: simula una recarga de la aplicación.
+export function resetDemoSource() {
+  store = null;
+  participantStore = null;
+  staleRemovalDone = false;
+}

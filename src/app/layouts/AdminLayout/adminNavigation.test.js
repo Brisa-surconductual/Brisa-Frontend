@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { ScrollText } from 'lucide-react';
 
 import {
   ADMIN_NAV_ITEMS,
@@ -43,19 +44,43 @@ describe('Sección administrativa activa', () => {
   ])('%s pertenece a Chat', (pathname) =>
     expect(getActiveAdminSection(pathname)).toBe(ADMIN_SECTION.CHAT));
 
+  it.each([
+    '/app/administrativo/cohortes',
+    '/app/administrativo/cohortes/',
+    '/app/administrativo/cohortes/nueva',
+    '/app/administrativo/cohortes/c-1',
+    '/app/administrativo/cohortes/c-1/editar',
+  ])('%s pertenece a Cohortes', (pathname) =>
+    expect(getActiveAdminSection(pathname)).toBe(ADMIN_SECTION.COHORTES));
+
+  it.each([
+    '/app/administrativo/auditoria',
+    '/app/administrativo/auditoria/',
+  ])('%s pertenece a Auditoría', (pathname) =>
+    expect(getActiveAdminSection(pathname)).toBe(ADMIN_SECTION.AUDITORIA));
+
   it('fuera del área administrativa no marca ninguna sección', () =>
     expect(getActiveAdminSection('/app/estudiante')).toBeNull());
 });
 
 describe('Elementos de navegación', () => {
-  it('ofrece las cinco secciones reales en orden', () =>
+  it('ofrece las siete secciones reales en orden', () =>
     expect(ADMIN_NAV_ITEMS.map(({ label }) => label)).toEqual([
       'Dashboard',
       'Población',
       'Cronogramas',
+      'Cohortes',
       'Chat',
+      'Auditoría',
       'Ajustes',
     ]));
+
+  it('Auditoría usa el ícono ScrollText y su propia ruta', () => {
+    const item = ADMIN_NAV_ITEMS.find(({ id }) => id === ADMIN_SECTION.AUDITORIA);
+
+    expect(item.Icon).toBe(ScrollText);
+    expect(item.to).toEqual({ pathname: '/app/administrativo/auditoria' });
+  });
 
   it('cada enlace marca activa su propia sección', () => {
     for (const { id, to } of ADMIN_NAV_ITEMS) {
@@ -65,6 +90,8 @@ describe('Elementos de navegación', () => {
 
   it('expone la etiqueta de cada sección', () => {
     expect(getAdminSectionLabel(ADMIN_SECTION.CRONOGRAMA)).toBe('Cronogramas');
+    expect(getAdminSectionLabel(ADMIN_SECTION.COHORTES)).toBe('Cohortes');
+    expect(getAdminSectionLabel(ADMIN_SECTION.AUDITORIA)).toBe('Auditoría');
     expect(getAdminSectionLabel(null)).toBe('');
   });
 });
