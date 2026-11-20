@@ -11,9 +11,9 @@ export const TIPO_ENTRADA = Object.freeze({
   CONTINUAR: 'CONTINUAR',
 });
 
-// A-014 (provisional): el GET de nodo actual aún entrega los nombres de
-// configuración. Es la misma tabla que usa el backend; se retira cuando
-// el GET devuelva los canónicos.
+// A-014 (resuelta 2026-11-20): el GET de nodo actual ya devuelve los
+// nombres canónicos. La tabla queda como defensa ante contenido viejo; es
+// la misma que usa el backend (`tipoEntradaConfigurado`).
 export const ALIAS_TIPO_ENTRADA = Object.freeze({
   SELECCION_UNICA: TIPO_ENTRADA.OPCION_UNICA,
   SELECCION_MULTIPLE: TIPO_ENTRADA.MULTISELECCION,

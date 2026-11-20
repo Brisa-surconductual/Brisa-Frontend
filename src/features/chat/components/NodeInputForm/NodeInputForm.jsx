@@ -5,6 +5,7 @@ import { ApiErrorMessage } from '@/shared/components/ui/ApiErrorMessage/index.js
 import { Button } from '@/shared/components/ui/Button/index.js';
 
 import { TIPO_BLOQUE, TIPO_ENTRADA } from '../../types/index.js';
+import { GLASS } from '../../utils/glass.js';
 import { REGISTRO_ENTRADAS } from '../NodeInput/registroEntradas.js';
 
 import { resolverRespuesta } from './resolverRespuesta.js';
@@ -57,7 +58,9 @@ export function NodeInputForm({
 
   if (!informativo && !tipo) {
     return (
-      <p className="m-0 flex items-start gap-[var(--space-2)] border-t border-[var(--surface-border)] px-[var(--space-4)] pt-[var(--space-3)] text-[length:var(--font-size-sm)] text-[var(--text-secondary)]">
+      <p
+        className={`m-0 flex items-start gap-[var(--space-2)] rounded-[var(--radius-2xl)] px-[var(--space-4)] py-[var(--space-3)] text-[length:var(--font-size-sm)] text-[var(--text-secondary)] ${GLASS.panelTexto}`}
+      >
         <Info
           size={20}
           strokeWidth={1.75}
@@ -108,7 +111,7 @@ export function NodeInputForm({
         evento.preventDefault();
         confirmar(valor);
       }}
-      className="flex flex-col gap-[var(--space-2)] border-t border-[var(--surface-border)] bg-[var(--surface-card)] px-[var(--space-4)] pt-[var(--space-3)] pb-[var(--space-4)]"
+      className={`flex flex-col gap-[var(--space-2)] rounded-[var(--radius-2xl)] px-[var(--space-4)] pt-[var(--space-3)] pb-[var(--space-4)] ${GLASS.panel}`}
     >
       {Componente && (
         <>

@@ -152,6 +152,40 @@
   /* Contenedores de composición */
   --container-auth: 1080px;
   --container-form: 420px;
+
+  /* Glassmorphism (chat M03 y pantallas nuevas). El texto largo va sobre
+     --glass-bg-strong o --glass-brand-bg para conservar AA 4.5:1. */
+  --glass-blur: 16px;
+  --glass-blur-strong: 24px;
+  --glass-bg: color-mix(in srgb, var(--surface-card) 72%, transparent);
+  --glass-bg-strong: color-mix(in srgb, var(--surface-card) 88%, transparent);
+  --glass-border: color-mix(in srgb, var(--brand-200) 55%, transparent);
+  --glass-shadow:
+    0 8px 32px rgb(12 60 55 / 10%),
+    inset 0 1px 0 color-mix(in srgb, var(--neutral-0) 70%, transparent);
+  --glass-brand-bg: color-mix(in srgb, var(--brand-600) 94%, transparent);
+  --glass-brand-border: color-mix(in srgb, var(--brand-300) 55%, transparent);
+  --glass-brand-text: var(--neutral-0);
+  --glass-glow:
+    0 0 0 3px color-mix(in srgb, var(--brand-400) 28%, transparent),
+    0 0 24px color-mix(in srgb, var(--brand-400) 30%, transparent);
+  --chat-backdrop:
+    radial-gradient(
+      120% 60% at 0% 0%,
+      color-mix(in srgb, var(--brand-100) 85%, transparent) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      90% 50% at 100% 35%,
+      color-mix(in srgb, var(--brand-200) 40%, transparent) 0%,
+      transparent 65%
+    ),
+    radial-gradient(
+      100% 55% at 50% 100%,
+      color-mix(in srgb, var(--brand-50) 95%, transparent) 0%,
+      transparent 70%
+    ),
+    var(--surface-bg);
 }
 
 [data-theme="dark"] {
@@ -211,4 +245,38 @@
   --surface-brand-line: color-mix(in srgb, #eaf6f5 14%, transparent);
   --text-on-brand: #eaf6f5;
   --text-on-brand-muted: #9ed9d2;
+
+  /* Glassmorphism oscuro: vidrio verde-negro con borde claro tenue */
+  --glass-bg: color-mix(
+    in srgb,
+    color-mix(in srgb, var(--surface-card) 70%, var(--brand-50)) 66%,
+    transparent
+  );
+  --glass-bg-strong: color-mix(
+    in srgb,
+    color-mix(in srgb, var(--surface-card) 70%, var(--brand-50)) 86%,
+    transparent
+  );
+  --glass-border: color-mix(in srgb, var(--brand-900) 12%, transparent);
+  --glass-shadow:
+    0 8px 32px rgb(0 0 0 / 45%),
+    inset 0 1px 0 color-mix(in srgb, var(--brand-900) 8%, transparent);
+  --glass-brand-bg: color-mix(in srgb, var(--brand-200) 92%, transparent);
+  --glass-brand-border: color-mix(in srgb, var(--brand-500) 45%, transparent);
+  --glass-brand-text: var(--text-on-brand);
+  --glass-glow:
+    0 0 0 3px color-mix(in srgb, var(--brand-500) 30%, transparent),
+    0 0 24px color-mix(in srgb, var(--brand-500) 35%, transparent);
+  --chat-backdrop:
+    radial-gradient(
+      110% 55% at 0% 0%,
+      color-mix(in srgb, var(--brand-100) 70%, transparent) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      80% 45% at 100% 40%,
+      color-mix(in srgb, var(--brand-200) 35%, transparent) 0%,
+      transparent 65%
+    ),
+    var(--surface-bg);
 }

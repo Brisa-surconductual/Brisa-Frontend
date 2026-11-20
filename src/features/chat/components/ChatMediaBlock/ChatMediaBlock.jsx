@@ -38,8 +38,10 @@ const NOMBRE_POR_TIPO = Object.freeze({
 const nombreAccesible = (bloque) =>
   bloque.textoAlternativo || NOMBRE_POR_TIPO[bloque.tipo];
 
+// Marco de vidrio (RF-33, rediseño del chat): mismo borde y sombra que
+// las burbujas de Brisa.
 const MEDIA_CLASS =
-  'block w-full rounded-[var(--radius-lg)] border border-[var(--surface-border)] bg-[var(--surface-card)] shadow-[var(--shadow-sm)]';
+  'block w-full overflow-clip rounded-[var(--radius-xl)] border border-[var(--glass-border)] bg-[var(--glass-bg)] shadow-[var(--glass-shadow)] backdrop-blur-[var(--glass-blur)]';
 
 // D9: en carga, la imagen sigue montada (el navegador la descarga) pero
 // invisible e inerte para lectores y foco, con la altura reservada porque
@@ -162,7 +164,7 @@ function MedioVisual({ bloque, Medio, onError }) {
           </span>
           <div
             aria-hidden="true"
-            className="absolute inset-0 animate-pulse rounded-[var(--radius-lg)] bg-[var(--surface-hover)] motion-reduce:animate-none"
+            className="absolute inset-0 animate-pulse rounded-[var(--radius-xl)] bg-[var(--glass-bg-strong)] motion-reduce:animate-none"
           />
         </>
       )}
