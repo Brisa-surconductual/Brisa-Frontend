@@ -41,7 +41,8 @@ describe('ChatNodeMessage (RF-26)', () => {
       { orden: 5, tipo: 'DOCUMENTO', url },
     ]);
 
-    expect(html.match(/alt="Imagen"/g)).toHaveLength(2);
+    expect(html).toContain('alt="Imagen"');
+    expect(html).toContain('alt="Imagen animada"');
     expect(html).toContain('aria-label="Video"');
     expect(html).toContain('aria-label="Audio"');
     expect(html).toContain('>Documento</span>');
@@ -60,7 +61,8 @@ describe('ChatNodeMessage (RF-26)', () => {
       { orden: 3, tipo: 'INSTRUCCION', texto: 'Después' },
     ]);
 
-    expect(html).toContain('No se pudo cargar este recurso.');
+    // RF-33 v1.1 (D16): el aviso de un VIDEO usa el texto de fallo de carga.
+    expect(html).toContain('No fue posible cargar el contenido multimedia.');
     expect(html).toContain('Respiración guiada');
     expect(html).not.toContain('<video');
     expect(html).toContain('Antes');
@@ -70,7 +72,7 @@ describe('ChatNodeMessage (RF-26)', () => {
   it('un multimedia sin url muestra el aviso directamente (D14)', () => {
     const html = render([{ orden: 1, tipo: 'AUDIO', url: null }]);
 
-    expect(html).toContain('No se pudo cargar este recurso.');
+    expect(html).toContain('No fue posible cargar el contenido multimedia.');
     expect(html).not.toContain('<audio');
   });
 
@@ -79,7 +81,7 @@ describe('ChatNodeMessage (RF-26)', () => {
       { orden: 1, tipo: 'DOCUMENTO', url: 'javascript:alert(1)' },
     ]);
 
-    expect(html).toContain('No se pudo cargar este recurso.');
+    expect(html).toContain('No fue posible cargar el contenido multimedia.');
     expect(html).not.toContain('href=');
   });
 

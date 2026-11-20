@@ -33,6 +33,9 @@ const CATALOGOS = [
   'CODIGO_SINCRONIZACION',
   'CATEGORIA_ERROR_CHAT',
   'CHAT_ERROR_CODE',
+  'ESTADO_RENDER',
+  'MIME_PERMITIDOS',
+  'AVISO_MULTIMEDIA',
 ];
 
 const isDeepFrozen = (value) =>
@@ -97,5 +100,28 @@ describe('PRESENTACION_COMPATIBLE', () => {
     TIPO_ENTRADA.TEXTO_LIBRE,
   ])('ninguna presentación admite %s', (tipo) => {
     expect(Object.values(PRESENTACION_COMPATIBLE).flat()).not.toContain(tipo);
+  });
+});
+
+describe('estadoRender (RF-33 v1.1)', () => {
+  it('no tiene estado sin conexión (A-062)', () => {
+    expect(Object.keys(chat.ESTADO_RENDER)).not.toContain(
+      'NO_DISPONIBLE_OFFLINE',
+    );
+  });
+
+  it('los textos del flujo alterno son VERBATIM', () => {
+    const { AVISO_MULTIMEDIA: A, ESTADO_RENDER: R } = chat;
+
+    expect(A[R.ERROR_CARGA]).toBe(
+      'No fue posible cargar el contenido multimedia.',
+    );
+    expect(A[R.NO_SOPORTADO]).toBe(
+      'El formato del contenido multimedia no es soportado.',
+    );
+    expect(A[R.CORRUPTO]).toBe(
+      'El recurso multimedia está dañado o incompleto.',
+    );
+    expect(A.NO_ENCONTRADO).toBe('El recurso multimedia no está disponible.');
   });
 });

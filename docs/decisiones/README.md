@@ -32,3 +32,4 @@ con guiones. Ejemplo: `ADR-0001-imports-entre-features.md`.
 | [ADR-0002](ADR-0002-pruebas-sin-jsdom-ni-testing-library.md) | Pruebas de diálogos sin jsdom ni Testing Library | Propuesta | 2026-10-16 | FE-M01-HOME (D12) |
 | [ADR-0003](ADR-0003-version-1-0-0-en-package-json.md) | Versión 1.0.0 en package.json y package-lock.json | Propuesta | 2026-10-16 | FE-M01-HOME (D13) |
 | [ADR-0004](ADR-0004-errores-backend-decide-interfaz-presenta.md) | Errores: el backend decide, la interfaz presenta | Propuesta | 2026-11-07 | FE-SH-01 (D1) |
+| [ADR-0005](ADR-0005-sin-operacion-offline.md) | Sin operación offline en la app | Aceptada | 2026-11-19 | FE-M03-05 (D17) |
