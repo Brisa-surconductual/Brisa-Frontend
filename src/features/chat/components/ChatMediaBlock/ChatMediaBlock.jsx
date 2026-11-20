@@ -25,7 +25,8 @@ const ICONO_AVISO = Object.freeze({
   [TIPO_BLOQUE.VIDEO]: VideoOff,
 });
 
-// D18: sin `textoAlternativo`, el nombre accesible es el del tipo.
+// D18 de FE-M03-03: sin `textoAlternativo`, el nombre accesible es el
+// del tipo.
 const NOMBRE_POR_TIPO = Object.freeze({
   [TIPO_BLOQUE.IMAGEN]: 'Imagen',
   [TIPO_BLOQUE.GIF]: 'Imagen animada',
