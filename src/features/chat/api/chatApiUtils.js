@@ -5,12 +5,18 @@ export const CHAT_CLIENT_ERROR = Object.freeze({
   DESCONOCIDO: 'DESCONOCIDO',
 });
 
-export function createChatApiError({ code, status = null, message = '' }) {
+export function createChatApiError({
+  code,
+  status = null,
+  message = '',
+  detalles = null,
+}) {
   const error = new Error(message || code);
   error.name = 'ChatApiError';
   error.code = code;
   error.status = status;
   error.backendMessage = message;
+  error.detalles = detalles;
   return error;
 }
 
@@ -41,5 +47,6 @@ export function toChatApiError(error) {
         : CHAT_CLIENT_ERROR.DESCONOCIDO,
     status,
     message: leerMensaje(data),
+    detalles: data?.detalles ?? null,
   });
 }

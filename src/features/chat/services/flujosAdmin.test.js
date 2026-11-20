@@ -6,6 +6,8 @@ import {
   ACCION_FLUJO,
   accionesEstadoDisponibles,
   describirCondicion,
+  describirCondicionesCapturaPerfil,
+  describirCondicionesCoberturaIncompleta,
   describirErrorAdmin,
   mapArbol,
   mapFlujo,
@@ -143,16 +145,20 @@ describe('mapArbol', () => {
         id_regla: 't2',
         id_nodo_origen: 'b',
         id_nodo_destino: 'zzz',
-        operador_condicion: 'IGUALDAD',
-        valor_condicion: { valor: 'Sí' },
+        regla_validacion: null,
         orden_evaluacion: 2,
       },
       {
         id_regla: 't1',
         id_nodo_origen: 'a',
         id_nodo_destino: 'b',
-        operador_condicion: 'RANGO',
-        valor_condicion: { min: 1, max: 5 },
+        regla_validacion: {
+          id_regla_validacion: 'r-1',
+          operador_condicion: 'RANGO',
+          valor_esperado: { min: 1, max: 5 },
+          tipo_dato: 'NUMERICO',
+          mensaje_error: 'Fuera de rango',
+        },
         orden_evaluacion: 1,
       },
     ],
@@ -180,6 +186,26 @@ describe('mapArbol', () => {
     expect(t2.destino).toBe('Nodo desconocido');
   });
 
+  it('toma operador y valor esperado de la regla propia de la transición (RF-25)', () => {
+    const [t1, t2] = mapArbol(arbol).transiciones;
+
+    expect(t1).toMatchObject({
+      operador: 'RANGO',
+      condicion: 'min: 1 · max: 5',
+      regla: {
+        id: 'r-1',
+        operador: 'RANGO',
+        valorEsperado: { min: 1, max: 5 },
+        mensajeError: 'Fuera de rango',
+      },
+    });
+    expect(t2).toMatchObject({
+      operador: null,
+      condicion: 'Transición automática',
+      regla: null,
+    });
+  });
+
   it('describe la condición sin inventar un formato', () => {
     expect(describirCondicion({ min: 1, max: 5 })).toBe('min: 1 · max: 5');
     expect(describirCondicion('Sí')).toBe('Sí');
@@ -194,5 +220,94 @@ describe('mapArbol', () => {
     });
 
     expect(sinTexto.nodos[0].etiqueta).toBe('1. (sin texto)');
+  });
+});
+
+describe('describirCondicionesCoberturaIncompleta (RF-25)', () => {
+  const nodos = [
+    {
+      id: 'n1',
+      etiqueta: '2. ¿Fumas?',
+      entrada: {
+        tipo: 'SELECCION_UNICA',
+        opciones: [
+          { valor: 'a', etiqueta: 'A diario' },
+          { valor: 'b', etiqueta: 'A veces' },
+        ],
+      },
+    },
+    { id: 'n2', etiqueta: '3. ¿Seguimos?', entrada: { tipo: 'BOOLEANO' } },
+  ];
+
+  it('sin detalles no describe nada', () => {
+    expect(describirCondicionesCoberturaIncompleta(null, nodos)).toEqual([]);
+  });
+
+  it('nombra el nodo y las respuestas sin camino con sus etiquetas', () => {
+    expect(
+      describirCondicionesCoberturaIncompleta(
+        {
+          nodos_sin_cobertura: [
+            {
+              id_nodo: 'n1',
+              orden: 2,
+              texto: '¿Fumas?',
+              valores_faltantes: ['b'],
+            },
+            {
+              id_nodo: 'n2',
+              orden: 3,
+              texto: '¿Seguimos?',
+              valores_faltantes: ['true', 'false'],
+            },
+          ],
+        },
+        nodos,
+      ),
+    ).toEqual([
+      'En 2. ¿Fumas? falta una transición para: A veces.',
+      'En 3. ¿Seguimos? falta una transición para: Sí, No.',
+    ]);
+  });
+});
+
+describe('describirCondicionesCapturaPerfil (RF-25)', () => {
+  it('sin detalles no describe nada', () => {
+    expect(describirCondicionesCapturaPerfil(null)).toEqual([]);
+    expect(describirCondicionesCapturaPerfil({})).toEqual([]);
+  });
+
+  it('describe las dimensiones ausentes', () => {
+    expect(
+      describirCondicionesCapturaPerfil({
+        dimensiones_ausentes: ['TIPO_DEPENDENCIA', 'TIPO_CRAVING'],
+        dimensiones_duplicadas: [],
+        dimensiones_valores_invalidos: [],
+      }),
+    ).toEqual([
+      'Falta un nodo de captura para: Tipo de dependencia, Tipo de craving.',
+    ]);
+  });
+
+  it('describe las dimensiones duplicadas', () => {
+    expect(
+      describirCondicionesCapturaPerfil({
+        dimensiones_ausentes: [],
+        dimensiones_duplicadas: ['TIPO_DEPENDENCIA'],
+        dimensiones_valores_invalidos: [],
+      }),
+    ).toEqual(['Hay más de un nodo de captura para: Tipo de dependencia.']);
+  });
+
+  it('describe las dimensiones con valores inválidos', () => {
+    expect(
+      describirCondicionesCapturaPerfil({
+        dimensiones_ausentes: [],
+        dimensiones_duplicadas: [],
+        dimensiones_valores_invalidos: ['TIPO_CRAVING'],
+      }),
+    ).toEqual([
+      'El nodo de captura no tiene una regla con los valores clínicos correctos para: Tipo de craving.',
+    ]);
   });
 });

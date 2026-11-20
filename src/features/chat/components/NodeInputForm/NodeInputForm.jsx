@@ -78,7 +78,7 @@ export function NodeInputForm({
   // Sin "Continuar", un tipo de envío inmediato no obligatorio no podría
   // enviar `null`.
   const conContinuar =
-    informativo || !tipo.envioInmediato || !entrada.obligatorio;
+    informativo || !tipo?.envioInmediato || !entrada.obligatorio;
 
   function confirmar(v) {
     if (enviando) return;
@@ -93,7 +93,9 @@ export function NodeInputForm({
 
   function cambiar(nuevo) {
     setValor(nuevo);
-    if (tipo.envioInmediato) confirmar(nuevo);
+    // `?.`: el React Compiler evalúa esta lectura en el render como
+    // dependencia de memoización, y en un nodo informativo `tipo` es null.
+    if (tipo?.envioInmediato) confirmar(nuevo);
   }
 
   const Componente = tipo?.Componente;

@@ -1,5 +1,6 @@
 import { TIPO_ENTRADA } from '../../../types/index.js';
 import { capturadaEn as capturadaEnAhora } from '../../../utils/capturadaEn.js';
+import { nuevoUuid } from '../../../utils/nuevoUuid.js';
 
 // Tabla 2.5 del brief: qué hace la página con cada error del envío. El
 // texto siempre es el `mensaje` del backend (ADR-0004).
@@ -45,19 +46,9 @@ export function clasificarErrorEnvio(error) {
 export const esNodoInformativo = (nodo) =>
   !nodo.entrada || nodo.entrada.tipo === TIPO_ENTRADA.CONTINUAR;
 
-// D19: `crypto.randomUUID` solo existe en contexto seguro (HTTPS o
-// localhost). Al probar por la IP de la red local se arma un UUID v4 con
-// `getRandomValues`, que sí está en cualquier contexto.
-export function nuevoIdRespuesta(c = globalThis.crypto) {
-  if (typeof c.randomUUID === 'function') return c.randomUUID();
-
-  const b = c.getRandomValues(new Uint8Array(16));
-  b[6] = (b[6] & 0x0f) | 0x40;
-  b[8] = (b[8] & 0x3f) | 0x80;
-  const h = Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('');
-
-  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
-}
+// D19: el generador vive en utils/nuevoUuid.js (lo comparte la cola sin
+// conexión). El comportamiento del envío en línea no cambia.
+export const nuevoIdRespuesta = nuevoUuid;
 
 // D6 y D7: cada respuesta distinta lleva un idRespuesta nuevo; el
 // reintento reusa este mismo objeto. CA-27-6: el nodo informativo envía

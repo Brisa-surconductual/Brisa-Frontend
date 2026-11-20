@@ -2,14 +2,19 @@ import { useEffect, useReducer } from 'react';
 import { useParams } from 'react-router-dom';
 
 import { actualizarNodo } from '../../../api/arbol/actualizarNodo.js';
+import { actualizarTransicion } from '../../../api/arbol/actualizarTransicion.js';
 import { archivarFlujo } from '../../../api/arbol/archivarFlujo.js';
 import { crearNodo } from '../../../api/arbol/crearNodo.js';
+import { crearTransicion } from '../../../api/arbol/crearTransicion.js';
 import { obtenerArbolFlujo } from '../../../api/arbol/obtenerArbolFlujo.js';
 import { obtenerCatalogos } from '../../../api/arbol/obtenerCatalogos.js';
 import { publicarFlujo } from '../../../api/arbol/publicarFlujo.js';
 import {
   ACCION_FLUJO,
   accionesEstadoDisponibles,
+  describirCondicionesCapturaPerfil,
+  describirCondicionesCoberturaIncompleta,
+  describirCondicionesGrafoInvalido,
   describirErrorAdmin,
   mapArbol,
   MENSAJE_ACCION_FLUJO,
@@ -20,8 +25,15 @@ import {
   payloadCrearNodo,
   validarNodo,
 } from '../../../services/nodosAdmin.js';
+import {
+  configuracionReglaTransicion,
+  payloadActualizarTransicion,
+  payloadCrearTransicion,
+  validarTransicion,
+} from '../../../services/transicionesAdmin.js';
 import { ESTADO_FLUJO } from '../../../types/estadoFlujo.js';
 import {
+  hayCambios,
   initialTreeDetailState,
   treeDetailReducer,
 } from '../utils/treeDetailState.js';
@@ -55,7 +67,7 @@ export function useGroupTreeDetailPage() {
     treeDetailReducer,
     initialTreeDetailState,
   );
-  const { reloadKey, editor, arbol } = state;
+  const { reloadKey, editor, transitionEditor, arbol } = state;
 
   useEffect(() => {
     let cancelado = false;
@@ -90,14 +102,14 @@ export function useGroupTreeDetailPage() {
   }, []);
 
   async function submitEditor() {
-    const errors = validarNodo(editor.values);
+    const esEdicion = editor.mode === 'edit';
+    const errors = validarNodo(editor.values, { esEdicion });
 
     if (Object.keys(errors).length > 0) {
       dispatch({ type: 'EDITOR_INVALID', errors });
       return;
     }
 
-    const esEdicion = editor.mode === 'edit';
     const cambios = esEdicion
       ? payloadActualizarNodo(editor.nodo, editor.values)
       : null;
@@ -131,6 +143,62 @@ export function useGroupTreeDetailPage() {
     }
   }
 
+  // RF-25: qué regla pide el nodo origen elegido.
+  const configTransicion = configuracionReglaTransicion(
+    arbol?.nodos.find(
+      (nodo) => nodo.id === transitionEditor.values.idNodoOrigen,
+    ),
+  );
+
+  async function submitTransitionEditor() {
+    const esEdicion = transitionEditor.mode === 'edit';
+    const errors = validarTransicion(transitionEditor.values, configTransicion);
+
+    if (Object.keys(errors).length > 0) {
+      dispatch({ type: 'TRANSITION_EDITOR_INVALID', errors });
+      return;
+    }
+
+    const cambios = esEdicion
+      ? payloadActualizarTransicion(
+          transitionEditor.transicion,
+          transitionEditor.values,
+          configTransicion,
+        )
+      : null;
+
+    if (esEdicion && cambios === null) {
+      dispatch({
+        type: 'TRANSITION_EDITOR_SAVE_ERROR',
+        message: 'No hay cambios para guardar.',
+      });
+      return;
+    }
+
+    dispatch({ type: 'TRANSITION_EDITOR_SAVING' });
+
+    try {
+      if (esEdicion) {
+        await actualizarTransicion(transitionEditor.transicion.id, cambios);
+      } else {
+        await crearTransicion(
+          flowId,
+          payloadCrearTransicion(transitionEditor.values, configTransicion),
+        );
+      }
+
+      dispatch({
+        type: 'TRANSITION_EDITOR_SAVED',
+        message: esEdicion ? 'Transición actualizada.' : 'Transición creada.',
+      });
+    } catch (error) {
+      dispatch({
+        type: 'TRANSITION_EDITOR_SAVE_ERROR',
+        message: describirErrorAdmin(error),
+      });
+    }
+  }
+
   // Publicar y archivar piden confirmación antes de ejecutarse.
   async function cambiarEstado(accion) {
     dispatch({ type: 'ESTADO_ACCION_START' });
@@ -145,6 +213,17 @@ export function useGroupTreeDetailPage() {
       dispatch({
         type: 'ESTADO_ACCION_ERROR',
         message: describirErrorAdmin(error),
+        // Solo GRAFO_INVALIDO, COBERTURA_INCOMPLETA y NODO_CAPTURA_PERFIL_INVALIDO
+        // (RF-25) traen condiciones estructuradas; nunca dos a la vez, el
+        // resto de errores no agrega nada aquí.
+        condiciones: [
+          ...describirCondicionesGrafoInvalido(error?.detalles),
+          ...describirCondicionesCoberturaIncompleta(
+            error?.detalles,
+            arbol?.nodos,
+          ),
+          ...describirCondicionesCapturaPerfil(error?.detalles),
+        ],
       });
     }
   }
@@ -157,10 +236,41 @@ export function useGroupTreeDetailPage() {
     retry: () => dispatch({ type: 'RELOAD' }),
     openCreate: () => dispatch({ type: 'EDITOR_OPEN_CREATE' }),
     openEdit: (nodo) => dispatch({ type: 'EDITOR_OPEN_EDIT', nodo }),
-    closeEditor: () => dispatch({ type: 'EDITOR_CLOSE' }),
+    // Cancelar/Esc/clic fuera del modal: confirma solo si hay cambios.
+    closeEditor: () =>
+      dispatch(
+        hayCambios(editor)
+          ? { type: 'DESCARTE_SOLICITAR', editor: 'nodo' }
+          : { type: 'EDITOR_CLOSE' },
+      ),
     changeField: (field, value) =>
       dispatch({ type: 'EDITOR_CHANGE', field, value }),
     submitEditor,
+    openCreateTransition: () =>
+      dispatch({ type: 'TRANSITION_EDITOR_OPEN_CREATE' }),
+    openEditTransition: (transicion) =>
+      dispatch({ type: 'TRANSITION_EDITOR_OPEN_EDIT', transicion }),
+    closeTransitionEditor: () =>
+      dispatch(
+        hayCambios(transitionEditor)
+          ? { type: 'DESCARTE_SOLICITAR', editor: 'transicion' }
+          : { type: 'TRANSITION_EDITOR_CLOSE' },
+      ),
+    configTransicion,
+    cancelarDescarte: () => dispatch({ type: 'DESCARTE_CANCELAR' }),
+    confirmarDescarte: () =>
+      dispatch({
+        type:
+          state.confirmDescarte === 'nodo'
+            ? 'EDITOR_CLOSE'
+            : 'TRANSITION_EDITOR_CLOSE',
+      }),
+    changeTransitionField: (field, value) =>
+      dispatch({ type: 'TRANSITION_EDITOR_CHANGE', field, value }),
+    submitTransitionEditor,
+    // El árbol visual selecciona un nodo para ir directo a su edición
+    // (mismo comportamiento que "Editar" en la lista de nodos).
+    selectNodoEnArbol: (nodo) => dispatch({ type: 'EDITOR_OPEN_EDIT', nodo }),
     solicitarCambioEstado: (accion) =>
       dispatch({ type: 'ESTADO_CONFIRM_OPEN', accion }),
     cancelarCambioEstado: () => dispatch({ type: 'ESTADO_CONFIRM_CLOSE' }),
