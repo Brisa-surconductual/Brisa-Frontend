@@ -12,10 +12,10 @@ const { ERROR_CARGA, NO_SOPORTADO } = ESTADO_RENDER;
 
 // RF-33 v1.1: todo recurso caído, también AUDIO y DOCUMENTO, usa el texto
 // de fallo de carga (enmienda D16, reemplaza el texto de D15).
-const AVISO_NO_DISPONIBLE = AVISO_MULTIMEDIA[ERROR_CARGA];
+const AVISO_FALLO_CARGA = AVISO_MULTIMEDIA[ERROR_CARGA];
 
 const AVISO_POR_ESTADO = Object.freeze({
-  [ERROR_CARGA]: AVISO_NO_DISPONIBLE,
+  [ERROR_CARGA]: AVISO_FALLO_CARGA,
   [NO_SOPORTADO]: AVISO_MULTIMEDIA[NO_SOPORTADO],
 });
 
@@ -210,7 +210,7 @@ export function ChatMediaBlock({ bloque, onError, className = '' }) {
     <div className={className}>
       {bloque.noDisponible || !esUrlSegura(bloque.url) ? (
         <Aviso
-          texto={AVISO_NO_DISPONIBLE}
+          texto={AVISO_FALLO_CARGA}
           tipo={bloque.tipo}
           textoAlternativo={bloque.textoAlternativo}
         />
