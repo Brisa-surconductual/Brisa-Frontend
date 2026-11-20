@@ -10,8 +10,8 @@ import { ChatNodeMessage } from '../ChatNodeMessage/ChatNodeMessage.jsx';
 
 import { ChatMediaBlock } from './ChatMediaBlock.jsx';
 
-const ERROR_CARGA = 'El recurso multimedia no está disponible.';
-const NO_SOPORTADO = 'Este formato no se puede mostrar.';
+const ERROR_CARGA = 'No fue posible cargar el contenido multimedia.';
+const NO_SOPORTADO = 'El formato del contenido multimedia no es soportado.';
 const URL_A = 'https://storage.test/a.webp?firma=1';
 const URL_B = 'https://storage.test/a.webp?firma=2';
 
@@ -83,9 +83,17 @@ describe('ChatMediaBlock (RF-33)', () => {
     expect(html).not.toContain('<img');
   });
 
-  it('AUDIO y DOCUMENTO usan el mismo aviso normativo (enmienda D15)', () => {
+  it('AUDIO y DOCUMENTO usan el mismo aviso normativo (enmienda D16)', () => {
     for (const tipo of ['AUDIO', 'DOCUMENTO']) {
       expect(render({ orden: 1, tipo, url: null })).toContain(ERROR_CARGA);
+    }
+  });
+
+  it('sin CORS no se sabe si fue un 404: nunca se usa su texto (D16)', () => {
+    for (const tipo of ['IMAGEN', 'GIF', 'VIDEO', 'AUDIO', 'DOCUMENTO']) {
+      expect(render({ orden: 1, tipo, url: null })).not.toContain(
+        'El recurso multimedia no está disponible.',
+      );
     }
   });
 

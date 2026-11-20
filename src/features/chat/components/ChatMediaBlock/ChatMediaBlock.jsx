@@ -2,16 +2,21 @@ import { CircleAlert, FileText, ImageOff, VideoOff } from 'lucide-react';
 
 import { useRecursoMultimedia } from '../../hooks/useRecursoMultimedia.js';
 import { esUrlSegura } from '../../services/multimedia.js';
-import { ESTADO_RENDER, TIPO_BLOQUE } from '../../types/index.js';
+import {
+  AVISO_MULTIMEDIA,
+  ESTADO_RENDER,
+  TIPO_BLOQUE,
+} from '../../types/index.js';
 
-// RF-33: el texto del 404 es normativo (VERBATIM) y aplica a todo
-// recurso caído, también AUDIO y DOCUMENTO (enmienda D15). El de formato
-// no soportado es provisional (A-058).
-const AVISO_NO_DISPONIBLE = 'El recurso multimedia no está disponible.';
+const { ERROR_CARGA, NO_SOPORTADO } = ESTADO_RENDER;
+
+// RF-33 v1.1: todo recurso caído, también AUDIO y DOCUMENTO, usa el texto
+// de fallo de carga (enmienda D16, reemplaza el texto de D15).
+const AVISO_NO_DISPONIBLE = AVISO_MULTIMEDIA[ERROR_CARGA];
 
 const AVISO_POR_ESTADO = Object.freeze({
-  [ESTADO_RENDER.ERROR_CARGA]: AVISO_NO_DISPONIBLE,
-  [ESTADO_RENDER.NO_SOPORTADO]: 'Este formato no se puede mostrar.',
+  [ERROR_CARGA]: AVISO_NO_DISPONIBLE,
+  [NO_SOPORTADO]: AVISO_MULTIMEDIA[NO_SOPORTADO],
 });
 
 const ICONO_AVISO = Object.freeze({
@@ -178,7 +183,7 @@ const VISUALES = Object.freeze({
 });
 
 // AUDIO y DOCUMENTO siguen como en RF-26, salvo el texto del aviso
-// (enmienda D15 de FE-M03-05).
+// (enmiendas D15 y D16 de FE-M03-05).
 const OTROS = Object.freeze({
   [TIPO_BLOQUE.AUDIO]: Audio,
   [TIPO_BLOQUE.DOCUMENTO]: Documento,
