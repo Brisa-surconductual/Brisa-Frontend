@@ -2,6 +2,10 @@ import { describe, expect, it, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter } from 'react-router-dom';
 
+import {
+  configuracionReglaTransicion,
+  VALORES_TRANSICION_VACIOS,
+} from '../../services/transicionesAdmin.js';
 import { initialTreeDetailState } from './utils/treeDetailState.js';
 import { GroupTreeDetailPage } from './GroupTreeDetailPage.jsx';
 
@@ -60,6 +64,12 @@ function render(state) {
     confirmarCambioEstado: () => {},
     ...state,
   };
+  // El hook calcula la configuración de la regla desde el nodo origen.
+  pageState.configTransicion ??= configuracionReglaTransicion(
+    pageState.arbol?.nodos.find(
+      (nodo) => nodo.id === pageState.transitionEditor.values.idNodoOrigen,
+    ),
+  );
 
   return renderToStaticMarkup(
     <MemoryRouter>
@@ -148,7 +158,36 @@ describe('GroupTreeDetailPage (RF-25, vista del árbol)', () => {
     expect(html).toContain('MENSAJE');
     expect(html).toContain('Escribe el texto del nodo.');
     expect(html).toContain('Ya existe un nodo inicial.');
-    expect(html).not.toContain('Agregar nodo');
+    expect(html).toContain('Crear nodo');
+    expect(html).toContain('<dialog');
+  });
+
+  it('el formulario ofrece marcar el nodo como captura de perfil clínico (RF-25/RF-27B)', () => {
+    const html = render({
+      status: 'ready',
+      arbol,
+      canEdit: true,
+      editor: {
+        mode: 'create',
+        nodo: null,
+        values: {
+          idTipoNodo: '',
+          texto: '',
+          esNodoInicial: false,
+          orden: '',
+          idContenidoCronograma: '',
+          capturaPerfilDimension: 'TIPO_CRAVING',
+        },
+        errors: {},
+        saving: false,
+        saveError: '',
+      },
+    });
+
+    expect(html).toContain('Captura de perfil clínico');
+    expect(html).toContain('Tipo de dependencia');
+    expect(html).toContain('Tipo de craving');
+    expect(html).toContain('<option value="TIPO_CRAVING" selected="">');
   });
 
   it('el formulario ofrece elegir un contenido ya programado en un cronograma', () => {
@@ -293,49 +332,42 @@ describe('GroupTreeDetailPage · árbol visual y transiciones (PR4)', () => {
     expect(soloLectura).not.toContain('Agregar transición');
   });
 
-  it('con el editor de transición abierto muestra su formulario', () => {
+  const editorTransicion = (values = {}) => ({
+    mode: 'create',
+    transicion: null,
+    values: { ...VALORES_TRANSICION_VACIOS, ...values },
+    errors: {},
+    saving: false,
+    saveError: '',
+  });
+  const conOrigen = (entrada) => ({
+    ...arbol,
+    nodos: [arbol.nodos[0], { ...arbol.nodos[1], entrada }],
+  });
+  const renderTransicion = (entrada, values = {}) =>
+    render({
+      status: 'ready',
+      arbol: conOrigen(entrada),
+      canEdit: true,
+      transitionEditor: editorTransicion({ idNodoOrigen: 'b', ...values }),
+    });
+  const opciones = [
+    { valor: 'si', etiqueta: 'Opción afirmativa' },
+    { valor: 'no', etiqueta: 'Opción negativa' },
+  ];
+
+  it('el editor de transición abre en un modal con Crear transición', () => {
     const html = render({
       status: 'ready',
       arbol,
       canEdit: true,
-      reglasValidacion: [
-        {
-          id_regla_validacion: 'r-1',
-          tipo_dato: 'TEXTO',
-          mensaje_error: 'Respuesta requerida',
-        },
-      ],
-      transitionEditor: {
-        mode: 'create',
-        transicion: null,
-        values: {
-          idNodoOrigen: '',
-          idNodoDestino: '',
-          operadorCondicion: 'IGUALDAD',
-          valorIgualdad: '',
-          valorMin: '',
-          valorMax: '',
-          valorCategoria: '',
-          ordenEvaluacion: '',
-          modoRegla: 'existente',
-          idReglaValidacion: '',
-          reglaTipoDato: 'TEXTO',
-          reglaObligatorio: true,
-          reglaValorMin: '',
-          reglaValorMax: '',
-          reglaFormatoPreset: 'CUALQUIERA',
-          reglaValoresPermitidos: '',
-          reglaMensajeError: '',
-        },
-        errors: {},
-        saving: false,
-        saveError: '',
-      },
+      transitionEditor: editorTransicion(),
     });
 
     expect(html).toContain('Nueva transición');
-    expect(html).toContain('Respuesta requerida');
-    expect(html).not.toContain('Agregar transición');
+    expect(html).toContain('Crear transición');
+    expect(html).toContain('<dialog');
+    expect(html).toContain('Elige el nodo de origen para configurar la regla.');
   });
 
   it('un borrador ofrece editar cada transición de la lista; otros estados no', () => {
@@ -344,5 +376,97 @@ describe('GroupTreeDetailPage · árbol visual y transiciones (PR4)', () => {
 
     const soloLectura = render({ status: 'ready', arbol, canEdit: false });
     expect(soloLectura).not.toMatch(/Editar transición/);
+  });
+
+  it('un nodo origen sin respuesta crea una transición automática, sin regla (RF-25)', () => {
+    const html = renderTransicion(null);
+
+    expect(html).toContain('Transición automática');
+    expect(html).not.toContain('Mensaje de error');
+  });
+
+  it('selección única: tags fijos y valor esperado elegido de sus opciones (RF-25)', () => {
+    const html = renderTransicion({ tipo: 'SELECCION_UNICA', opciones });
+
+    expect(html).toContain('<strong>Igualdad</strong>');
+    expect(html).toContain('<strong>Texto</strong>');
+    expect(html).toContain('<strong>Cualquier texto</strong>');
+    expect(html).toMatch(/<select[^>]*id="transicion-valor-esperado"/);
+    expect(html).toContain('>Opción afirmativa<');
+    expect(html).not.toContain('id="transicion-operador"');
+  });
+
+  it('selección múltiple: casillas de sus opciones con los límites del nodo (RF-25)', () => {
+    const html = renderTransicion({
+      tipo: 'SELECCION_MULTIPLE',
+      opciones,
+      min_selecciones: 1,
+      max_selecciones: 2,
+    });
+
+    expect(html).toContain('id="transicion-valor-si"');
+    expect(html).toContain('id="transicion-valor-no"');
+    expect(html).toContain('Marca entre 1 y 2 opciones');
+    expect(html).toContain('<strong>Texto</strong>');
+  });
+
+  it('Sí/No: tag Selección y valor esperado Sí o No (RF-25)', () => {
+    const html = renderTransicion({ tipo: 'BOOLEANO' });
+
+    expect(html).toContain('<strong>Selección</strong>');
+    expect(html).toContain('value="true">Sí</option>');
+    expect(html).toContain('value="false">No</option>');
+  });
+
+  it('escala: rango fijo con mínimo y máximo acotados al nodo (RF-25)', () => {
+    const html = renderTransicion({ tipo: 'ESCALA', min: 1, max: 10 });
+
+    expect(html).toContain('<strong>Rango</strong>');
+    expect(html).toContain('<strong>Numérico</strong>');
+    expect(html).toContain('El nodo admite de 1 a 10.');
+    expect(html).toContain('id="transicion-rango-min"');
+  });
+
+  it('número: el admin elige el operador; por igualdad lista los valores del nodo (RF-25)', () => {
+    const sinOperador = renderTransicion({ tipo: 'NUMERICO', min: 0, max: 2 });
+    expect(sinOperador).toContain('id="transicion-operador"');
+    expect(sinOperador).not.toContain('<strong>Igualdad</strong>');
+
+    const igualdad = renderTransicion(
+      { tipo: 'NUMERICO', min: 0, max: 2 },
+      { operador: 'IGUALDAD' },
+    );
+    expect(igualdad).toMatch(/<select[^>]*id="transicion-valor-esperado"/);
+    expect(igualdad).toContain('value="2">2</option>');
+  });
+
+  it('no ofrece Categoría en ningún caso (RF-25)', () => {
+    const html = renderTransicion({ tipo: 'NUMERICO', min: 0, max: 2 });
+    expect(html).not.toContain('Categoría');
+  });
+
+  it('no ofrece como origen nodos de texto libre o fecha (RF-25)', () => {
+    const html = render({
+      status: 'ready',
+      arbol: conOrigen({ tipo: 'TEXTO_LIBRE' }),
+      canEdit: true,
+      transitionEditor: editorTransicion(),
+    });
+    const origen = html.match(
+      /<select[^>]*id="transicion-origen"[\s\S]*?<\/select>/,
+    )?.[0];
+    expect(origen).toContain('1. Bienvenido a Brisa.');
+    expect(origen).not.toContain('2. (sin texto)');
+  });
+
+  it('cancelar con cambios muestra la confirmación de descarte', () => {
+    const html = render({
+      status: 'ready',
+      arbol,
+      canEdit: true,
+      transitionEditor: editorTransicion({ idNodoOrigen: 'a' }),
+      confirmDescarte: 'transicion',
+    });
+    expect(html).toContain('¿Descartar los cambios?');
   });
 });

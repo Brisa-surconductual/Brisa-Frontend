@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  hayCambios,
   initialTreeDetailState,
   treeDetailReducer,
 } from './treeDetailState.js';
@@ -87,7 +88,7 @@ describe('treeDetailReducer · editor de nodos', () => {
       orden: '3',
       idContenidoCronograma: '',
       tieneEntrada: false,
-      entradaTipo: 'TEXTO_LIBRE',
+      entradaTipo: 'OPCION_UNICA',
       entradaObligatorio: true,
       entradaOpciones: [
         { valor: '', etiqueta: '' },
@@ -104,6 +105,7 @@ describe('treeDetailReducer · editor de nodos', () => {
       entradaMaxPalabras: '',
       entradaMaxCaracteres: '',
       entradaFormato: 'FECHA_HORA',
+      capturaPerfilDimension: '',
     });
   });
 
@@ -158,23 +160,6 @@ describe('treeDetailReducer · editor de nodos', () => {
   });
 });
 
-describe('treeDetailReducer · catálogo de reglas de validación (PR4)', () => {
-  it('arranca sin reglas de validación', () => {
-    expect(initialTreeDetailState.reglasValidacion).toEqual([]);
-  });
-
-  it('el catálogo también guarda las reglas de validación', () => {
-    const next = reduce(initialTreeDetailState, {
-      type: 'CATALOG',
-      tiposNodo: [],
-      contenidosCronograma: [],
-      reglasValidacion: [{ id_regla_validacion: 'r-1' }],
-    });
-
-    expect(next.reglasValidacion).toEqual([{ id_regla_validacion: 'r-1' }]);
-  });
-});
-
 describe('treeDetailReducer · editor de transiciones (PR4)', () => {
   it('arranca con el editor de transiciones cerrado', () => {
     expect(initialTreeDetailState.transitionEditor.mode).toBe('closed');
@@ -193,10 +178,12 @@ describe('treeDetailReducer · editor de transiciones (PR4)', () => {
     const transicion = {
       origenId: 'a',
       destinoId: 'b',
-      operador: 'IGUALDAD',
-      valorCondicion: { valor: 'Sí' },
       ordenEvaluacion: 1,
-      idReglaValidacion: 'r-1',
+      regla: {
+        operador: 'IGUALDAD',
+        valorEsperado: { valor: 'si' },
+        mensajeError: 'Revisa.',
+      },
     };
     const next = reduce(initialTreeDetailState, {
       type: 'TRANSITION_EDITOR_OPEN_EDIT',
@@ -210,7 +197,34 @@ describe('treeDetailReducer · editor de transiciones (PR4)', () => {
     expect(next.transitionEditor.values).toMatchObject({
       idNodoOrigen: 'a',
       idNodoDestino: 'b',
-      valorIgualdad: 'Sí',
+      valorUnico: 'si',
+    });
+  });
+
+  it('cambiar el nodo origen reinicia el valor esperado (depende del nodo)', () => {
+    const abierto = reduce(initialTreeDetailState, {
+      type: 'TRANSITION_EDITOR_OPEN_CREATE',
+    });
+    const conValor = reduce(abierto, {
+      type: 'TRANSITION_EDITOR_CHANGE',
+      field: 'valorUnico',
+      value: 'si',
+    });
+    const conMensaje = reduce(conValor, {
+      type: 'TRANSITION_EDITOR_CHANGE',
+      field: 'mensajeError',
+      value: 'Revisa.',
+    });
+    const next = reduce(conMensaje, {
+      type: 'TRANSITION_EDITOR_CHANGE',
+      field: 'idNodoOrigen',
+      value: 'otro',
+    });
+
+    expect(next.transitionEditor.values).toMatchObject({
+      idNodoOrigen: 'otro',
+      valorUnico: '',
+      mensajeError: 'Revisa.',
     });
   });
 
@@ -332,5 +346,46 @@ describe('treeDetailReducer · cambio de estado del flujo', () => {
       errorEstado: 'El estado no lo permite.',
       reloadKey: 0,
     });
+  });
+});
+
+describe('treeDetailReducer · descartar cambios del modal', () => {
+  const abierto = reduce(initialTreeDetailState, {
+    type: 'EDITOR_OPEN_CREATE',
+  });
+
+  it('un editor recién abierto no tiene cambios', () => {
+    expect(hayCambios(abierto.editor)).toBe(false);
+  });
+
+  it('escribir algo marca cambios', () => {
+    const next = reduce(abierto, {
+      type: 'EDITOR_CHANGE',
+      field: 'texto',
+      value: 'Hola',
+    });
+    expect(hayCambios(next.editor)).toBe(true);
+  });
+
+  it('pedir el descarte abre la confirmación y cancelarla la cierra sin tocar el editor', () => {
+    const pedido = reduce(abierto, {
+      type: 'DESCARTE_SOLICITAR',
+      editor: 'nodo',
+    });
+    expect(pedido.confirmDescarte).toBe('nodo');
+
+    const cancelado = reduce(pedido, { type: 'DESCARTE_CANCELAR' });
+    expect(cancelado.confirmDescarte).toBeNull();
+    expect(cancelado.editor.mode).toBe('create');
+  });
+
+  it('cerrar el editor también cierra la confirmación pendiente', () => {
+    const pedido = reduce(abierto, {
+      type: 'DESCARTE_SOLICITAR',
+      editor: 'nodo',
+    });
+    const cerrado = reduce(pedido, { type: 'EDITOR_CLOSE' });
+    expect(cerrado.confirmDescarte).toBeNull();
+    expect(cerrado.editor.mode).toBe('closed');
   });
 });

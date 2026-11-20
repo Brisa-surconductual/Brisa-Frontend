@@ -1,6 +1,3 @@
-import { Save, X } from 'lucide-react';
-
-import { Button } from '@/shared/components/ui/Button/index.js';
 import { Checkbox } from '@/shared/components/ui/Checkbox/index.js';
 import { SelectField } from '@/shared/components/ui/SelectField/index.js';
 import { TextField } from '@/shared/components/ui/TextField/index.js';
@@ -10,336 +7,275 @@ import {
   OPERADOR_CONDICION,
   OPERADOR_CONDICION_ETIQUETA,
 } from '../../../../types/operadorCondicion.js';
-import {
-  TIPO_DATO_VALIDACION,
-  TIPO_DATO_VALIDACION_ETIQUETA,
-} from '../../../../types/tipoDatoValidacion.js';
-import {
-  MODO_REGLA,
-  opcionesFormatoTexto,
-} from '../../../../services/transicionesAdmin.js';
+import { operadorEfectivo } from '../../../../services/transicionesAdmin.js';
 
-const OPCIONES_OPERADOR = Object.values(OPERADOR_CONDICION).map((operador) => ({
-  value: operador,
-  label: OPERADOR_CONDICION_ETIQUETA[operador],
-}));
+function Etiqueta({ titulo, valor }) {
+  return (
+    <span className="inline-flex items-center gap-[var(--space-1)] rounded-[var(--radius-full)] border border-[var(--brand-200)] bg-[var(--surface-brand)] px-[var(--space-3)] py-[var(--space-1)] text-[length:var(--font-size-sm)] text-[var(--text-primary)]">
+      <span className="text-[var(--text-secondary)]">{titulo}:</span>
+      <strong>{valor}</strong>
+    </span>
+  );
+}
 
-const OPCIONES_TIPO_DATO = Object.values(TIPO_DATO_VALIDACION).map((tipo) => ({
-  value: tipo,
-  label: TIPO_DATO_VALIDACION_ETIQUETA[tipo],
-}));
-
-const OPCIONES_FORMATO_TEXTO = opcionesFormatoTexto();
-
-const OPCIONES_MODO_REGLA = [
-  { value: MODO_REGLA.EXISTENTE, label: 'Usar una regla ya creada' },
-  { value: MODO_REGLA.NUEVA, label: 'Definir una regla nueva' },
-];
+function ErrorCampo({ children }) {
+  return (
+    <p
+      role="alert"
+      className="m-0 text-[11px] leading-[1.45] font-semibold text-[var(--danger-text)]"
+    >
+      {children}
+    </p>
+  );
+}
 
 /*
- * Crear o editar una transición de un flujo en borrador (RF-25, PR4). El
- * nodo origen no se puede editar una vez creada la transición. La condición
- * cambia de forma (IGUALDAD/RANGO/CATEGORIA) según el operador elegido, y
- * la regla de validación es exactamente una de dos: reutilizar una regla
- * existente del catálogo, o definir una nueva embebida en la solicitud.
+ * RF-25: crear o editar una transición (dentro de ChatAdminModal). Cada
+ * transición tiene su propia regla, armada según el tipo de respuesta del
+ * nodo origen (`config`, de `configuracionReglaTransicion`): el operador, el
+ * tipo de dato y el formato se muestran como etiquetas fijas, y el valor
+ * esperado siempre se elige de lo que el nodo ya define, nunca se escribe.
  */
 export function TransitionEditorForm({
+  formId,
   mode,
   values,
   errors,
   saving,
   saveError,
-  nodos,
-  reglasValidacion,
+  nodosOrigen,
+  nodosDestino,
+  config,
   onChange,
   onSubmit,
-  onCancel,
 }) {
-  const title = mode === 'edit' ? 'Editar transición' : 'Nueva transición';
+  const operador = config.tipo ? operadorEfectivo(config, values) : '';
+  const conRegla =
+    config.tipo &&
+    !config.sinRegla &&
+    !config.noSoportado &&
+    !config.faltaRango;
 
   return (
-    <section
-      aria-labelledby="editor-transicion-titulo"
-      className="flex flex-col gap-[var(--space-4)] rounded-[var(--radius-xl)] border border-[var(--brand-200)] bg-[var(--surface-card)] p-[var(--space-5)]"
+    <form
+      id={formId}
+      noValidate
+      className="flex flex-col gap-[var(--space-4)]"
+      onSubmit={(event) => {
+        event.preventDefault();
+        onSubmit();
+      }}
     >
-      <h2
-        id="editor-transicion-titulo"
-        className="m-0 text-[length:var(--font-size-lg)] font-extrabold text-[var(--text-primary)]"
-      >
-        {title}
-      </h2>
-
-      <form
-        noValidate
-        className="flex flex-col gap-[var(--space-4)]"
-        onSubmit={(event) => {
-          event.preventDefault();
-          onSubmit();
-        }}
-      >
-        <div className="grid grid-cols-1 gap-[var(--space-4)] md:grid-cols-2">
-          <SelectField
-            id="transicion-origen"
-            label="Nodo de origen"
-            required
-            disabled={saving || mode === 'edit'}
-            value={values.idNodoOrigen}
-            options={nodos}
-            error={errors.idNodoOrigen}
-            hint={
-              mode === 'edit'
-                ? 'El origen no se puede cambiar una vez creada.'
-                : undefined
-            }
-            onChange={(event) => onChange('idNodoOrigen', event.target.value)}
-          />
-
-          <SelectField
-            id="transicion-destino"
-            label="Nodo de destino"
-            required
-            disabled={saving}
-            value={values.idNodoDestino}
-            options={nodos}
-            error={errors.idNodoDestino}
-            onChange={(event) => onChange('idNodoDestino', event.target.value)}
-          />
-        </div>
-
+      <div className="grid grid-cols-1 gap-[var(--space-4)] md:grid-cols-2">
         <SelectField
-          id="transicion-operador"
-          label="Operador de la condición"
+          id="transicion-origen"
+          label="Nodo de origen"
           required
-          disabled={saving}
-          value={values.operadorCondicion}
-          options={OPCIONES_OPERADOR}
-          error={errors.operadorCondicion}
-          onChange={(event) =>
-            onChange('operadorCondicion', event.target.value)
+          disabled={saving || mode === 'edit'}
+          value={values.idNodoOrigen}
+          options={nodosOrigen}
+          error={errors.idNodoOrigen}
+          hint={
+            mode === 'edit'
+              ? 'El origen no se puede cambiar una vez creada.'
+              : 'Las respuestas de texto libre o fecha no se ofrecen aquí.'
           }
-        />
-
-        {values.operadorCondicion === OPERADOR_CONDICION.IGUALDAD && (
-          <TextField
-            id="transicion-valor-igualdad"
-            label="Valor esperado de la respuesta"
-            required
-            disabled={saving}
-            value={values.valorIgualdad}
-            error={errors.valorIgualdad}
-            hint="Se compara tal cual contra la respuesta del estudiante."
-            onChange={(event) => onChange('valorIgualdad', event.target.value)}
-          />
-        )}
-
-        {values.operadorCondicion === OPERADOR_CONDICION.RANGO && (
-          <div className="grid grid-cols-1 gap-[var(--space-4)] md:grid-cols-2">
-            <TextField
-              id="transicion-valor-min"
-              label="Mínimo"
-              type="number"
-              inputMode="decimal"
-              disabled={saving}
-              value={values.valorMin}
-              error={errors.valorMin}
-              hint="Opcional si hay máximo."
-              onChange={(event) => onChange('valorMin', event.target.value)}
-            />
-            <TextField
-              id="transicion-valor-max"
-              label="Máximo"
-              type="number"
-              inputMode="decimal"
-              disabled={saving}
-              value={values.valorMax}
-              error={errors.valorMax}
-              hint="Opcional si hay mínimo."
-              onChange={(event) => onChange('valorMax', event.target.value)}
-            />
-          </div>
-        )}
-
-        {values.operadorCondicion === OPERADOR_CONDICION.CATEGORIA && (
-          <TextField
-            id="transicion-valor-categoria"
-            label="Valores que activan esta transición"
-            required
-            disabled={saving}
-            value={values.valorCategoria}
-            error={errors.valorCategoria}
-            hint="Separados por comas, por ejemplo: SI, TAL_VEZ"
-            onChange={(event) => onChange('valorCategoria', event.target.value)}
-          />
-        )}
-
-        <TextField
-          id="transicion-orden-evaluacion"
-          label="Orden de evaluación"
-          type="number"
-          inputMode="numeric"
-          min={1}
-          required
-          className="md:max-w-[220px]"
-          disabled={saving}
-          value={values.ordenEvaluacion}
-          error={errors.ordenEvaluacion}
-          hint="Entre las transiciones del mismo origen, se evalúan en este orden."
-          onChange={(event) => onChange('ordenEvaluacion', event.target.value)}
+          onChange={(event) => onChange('idNodoOrigen', event.target.value)}
         />
 
         <SelectField
-          id="transicion-modo-regla"
-          label="Regla de validación de la respuesta"
+          id="transicion-destino"
+          label="Nodo de destino"
+          required
           disabled={saving}
-          value={values.modoRegla}
-          options={OPCIONES_MODO_REGLA}
-          onChange={(event) => onChange('modoRegla', event.target.value)}
+          value={values.idNodoDestino}
+          options={nodosDestino}
+          error={errors.idNodoDestino}
+          onChange={(event) => onChange('idNodoDestino', event.target.value)}
         />
+      </div>
 
-        {values.modoRegla === MODO_REGLA.EXISTENTE ? (
-          <SelectField
-            id="transicion-regla-existente"
-            label="Regla existente"
-            required
-            disabled={saving}
-            value={values.idReglaValidacion}
-            options={reglasValidacion}
-            error={errors.idReglaValidacion}
-            onChange={(event) =>
-              onChange('idReglaValidacion', event.target.value)
-            }
-          />
-        ) : (
-          <div className="flex flex-col gap-[var(--space-4)] rounded-[var(--radius-lg)] border border-[var(--surface-border)] bg-[var(--surface-bg)] p-[var(--space-4)]">
-            <SelectField
-              id="transicion-regla-tipo-dato"
-              label="Tipo de dato"
-              required
-              disabled={saving}
-              value={values.reglaTipoDato}
-              options={OPCIONES_TIPO_DATO}
-              onChange={(event) =>
-                onChange('reglaTipoDato', event.target.value)
-              }
-            />
+      <TextField
+        id="transicion-orden-evaluacion"
+        label="Orden de evaluación"
+        type="number"
+        inputMode="numeric"
+        min={1}
+        required
+        className="md:max-w-[220px]"
+        disabled={saving}
+        value={values.ordenEvaluacion}
+        error={errors.ordenEvaluacion}
+        hint="Entre las transiciones del mismo origen, se evalúan en este orden."
+        onChange={(event) => onChange('ordenEvaluacion', event.target.value)}
+      />
 
-            {values.reglaTipoDato === TIPO_DATO_VALIDACION.NUMERICO && (
+      <fieldset className="m-0 flex flex-col gap-[var(--space-4)] rounded-[var(--radius-lg)] border border-[var(--surface-border)] p-[var(--space-4)]">
+        <legend className="px-[var(--space-1)] text-[13px] font-bold text-[var(--text-primary)]">
+          Regla de la transición
+        </legend>
+
+        {!config.tipo && (
+          <p className="m-0 text-[length:var(--font-size-sm)] text-[var(--text-secondary)]">
+            Elige el nodo de origen para configurar la regla.
+          </p>
+        )}
+
+        {config.sinRegla && (
+          <ChatAdminNotice tone="info" title="Transición automática">
+            El nodo de origen no espera respuesta: el estudiante avanza al
+            confirmar, sin regla de validación.
+          </ChatAdminNotice>
+        )}
+
+        {(config.noSoportado || config.faltaRango) && (
+          <ChatAdminNotice tone="warning" title="Este origen no se puede usar">
+            {config.noSoportado
+              ? 'Las respuestas de texto libre o de fecha u hora no admiten transiciones en esta interfaz.'
+              : 'Configura el mínimo y el máximo de la respuesta en el nodo de origen.'}
+          </ChatAdminNotice>
+        )}
+
+        {conRegla && (
+          <>
+            <div className="flex flex-wrap gap-[var(--space-2)]">
+              {config.operadorFijo && (
+                <Etiqueta
+                  titulo="Operador"
+                  valor={OPERADOR_CONDICION_ETIQUETA[config.operadorFijo]}
+                />
+              )}
+              <Etiqueta
+                titulo="Tipo de dato"
+                valor={config.etiquetas.tipoDato}
+              />
+              {config.etiquetas.formato && (
+                <Etiqueta
+                  titulo="Formato permitido"
+                  valor={config.etiquetas.formato}
+                />
+              )}
+            </div>
+
+            {!config.operadorFijo && (
+              <SelectField
+                id="transicion-operador"
+                label="Operador de la condición"
+                required
+                disabled={saving}
+                value={values.operador}
+                options={config.operadores}
+                error={errors.operador}
+                onChange={(event) => onChange('operador', event.target.value)}
+              />
+            )}
+
+            {operador === OPERADOR_CONDICION.RANGO && (
               <div className="grid grid-cols-1 gap-[var(--space-4)] md:grid-cols-2">
                 <TextField
-                  id="transicion-regla-valor-min"
-                  label="Mínimo"
+                  id="transicion-rango-min"
+                  label="Mínimo esperado"
                   type="number"
                   inputMode="decimal"
+                  min={config.min}
+                  max={config.max}
+                  required
                   disabled={saving}
-                  value={values.reglaValorMin}
-                  error={errors.reglaValorMin}
-                  onChange={(event) =>
-                    onChange('reglaValorMin', event.target.value)
-                  }
+                  value={values.rangoMin}
+                  error={errors.rangoMin}
+                  hint={`El nodo admite de ${config.min} a ${config.max}.`}
+                  onChange={(event) => onChange('rangoMin', event.target.value)}
                 />
                 <TextField
-                  id="transicion-regla-valor-max"
-                  label="Máximo"
+                  id="transicion-rango-max"
+                  label="Máximo esperado"
                   type="number"
                   inputMode="decimal"
+                  min={config.min}
+                  max={config.max}
+                  required
                   disabled={saving}
-                  value={values.reglaValorMax}
-                  error={errors.reglaValorMax}
-                  onChange={(event) =>
-                    onChange('reglaValorMax', event.target.value)
-                  }
+                  value={values.rangoMax}
+                  error={errors.rangoMax}
+                  onChange={(event) => onChange('rangoMax', event.target.value)}
                 />
               </div>
             )}
 
-            {values.reglaTipoDato === TIPO_DATO_VALIDACION.TEXTO && (
-              <SelectField
-                id="transicion-regla-formato"
-                label="Formato permitido"
-                disabled={saving}
-                value={values.reglaFormatoPreset}
-                options={OPCIONES_FORMATO_TEXTO}
-                hint="Elige qué puede escribir el estudiante en esta respuesta."
-                onChange={(event) =>
-                  onChange('reglaFormatoPreset', event.target.value)
-                }
-              />
-            )}
-
-            {values.reglaTipoDato === TIPO_DATO_VALIDACION.SELECCION && (
-              <TextField
-                id="transicion-regla-opciones"
-                label="Opciones permitidas"
-                required
-                disabled={saving}
-                value={values.reglaValoresPermitidos}
-                error={errors.reglaValoresPermitidos}
-                hint="Separadas por comas."
-                onChange={(event) =>
-                  onChange('reglaValoresPermitidos', event.target.value)
-                }
-              />
-            )}
+            {operador === OPERADOR_CONDICION.IGUALDAD &&
+              (config.tipo === 'MULTISELECCION' ? (
+                <div className="flex flex-col gap-[var(--space-2)]">
+                  <span className="text-[13px] font-bold text-[var(--text-primary)]">
+                    Valor esperado de la respuesta
+                  </span>
+                  <p className="m-0 text-[11px] text-[var(--text-muted)]">
+                    {config.minSelecciones === config.maxSelecciones
+                      ? `Marca ${config.minSelecciones} opciones, como se definió en el nodo.`
+                      : `Marca entre ${config.minSelecciones} y ${config.maxSelecciones} opciones, como se definió en el nodo.`}
+                  </p>
+                  {config.opciones.map((opcion) => (
+                    <Checkbox
+                      key={opcion.value}
+                      id={`transicion-valor-${opcion.value}`}
+                      checked={values.valoresMultiples.includes(opcion.value)}
+                      disabled={saving}
+                      onChange={(event) =>
+                        onChange(
+                          'valoresMultiples',
+                          event.target.checked
+                            ? [...values.valoresMultiples, opcion.value]
+                            : values.valoresMultiples.filter(
+                                (valor) => valor !== opcion.value,
+                              ),
+                        )
+                      }
+                    >
+                      {opcion.label}
+                    </Checkbox>
+                  ))}
+                  {errors.valoresMultiples && (
+                    <ErrorCampo>{errors.valoresMultiples}</ErrorCampo>
+                  )}
+                </div>
+              ) : (
+                <SelectField
+                  id="transicion-valor-esperado"
+                  label="Valor esperado de la respuesta"
+                  required
+                  disabled={saving}
+                  value={values.valorUnico}
+                  options={config.opciones ?? config.valores}
+                  error={errors.valorUnico}
+                  hint="Según lo que se definió al crear la respuesta del nodo."
+                  onChange={(event) =>
+                    onChange('valorUnico', event.target.value)
+                  }
+                />
+              ))}
 
             <TextField
-              id="transicion-regla-mensaje"
+              id="transicion-mensaje-error"
               label="Mensaje de error"
               required
               disabled={saving}
-              value={values.reglaMensajeError}
-              error={errors.reglaMensajeError}
-              hint="Se muestra al estudiante cuando su respuesta no cumple la regla."
-              onChange={(event) =>
-                onChange('reglaMensajeError', event.target.value)
-              }
+              value={values.mensajeError}
+              error={errors.mensajeError}
+              hint="Se muestra al estudiante si su respuesta no coincide con ninguna transición."
+              onChange={(event) => onChange('mensajeError', event.target.value)}
             />
-
-            <Checkbox
-              id="transicion-regla-obligatorio"
-              checked={values.reglaObligatorio}
-              disabled={saving}
-              onChange={(event) =>
-                onChange('reglaObligatorio', event.target.checked)
-              }
-            >
-              La respuesta es obligatoria
-            </Checkbox>
-          </div>
+          </>
         )}
+      </fieldset>
 
-        {saveError && (
-          <ChatAdminNotice
-            tone="danger"
-            role="alert"
-            title="No se pudo guardar la transición"
-          >
-            {saveError}
-          </ChatAdminNotice>
-        )}
-
-        <div className="flex flex-col gap-[var(--space-3)] sm:flex-row">
-          <Button
-            type="submit"
-            size="large"
-            loading={saving}
-            loadingText="Guardando..."
-          >
-            <Save size={20} strokeWidth={1.8} aria-hidden="true" />
-            Guardar transición
-          </Button>
-
-          <Button
-            type="button"
-            variant="secondary"
-            size="large"
-            disabled={saving}
-            onClick={onCancel}
-          >
-            <X size={20} strokeWidth={1.8} aria-hidden="true" />
-            Cancelar
-          </Button>
-        </div>
-      </form>
-    </section>
+      {saveError && (
+        <ChatAdminNotice
+          tone="danger"
+          role="alert"
+          title="No se pudo guardar la transición"
+        >
+          {saveError}
+        </ChatAdminNotice>
+      )}
+    </form>
   );
 }

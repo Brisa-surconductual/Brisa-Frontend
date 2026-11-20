@@ -9,6 +9,27 @@ import {
   TIPO_ENTRADA_CONFIGURACION,
   TIPO_ENTRADA_ETIQUETA,
 } from '../types/tipoEntrada.js';
+import {
+  DIMENSION_PERFIL_CLINICO,
+  DIMENSION_PERFIL_CLINICO_ETIQUETA,
+} from '../types/dimensionPerfilClinico.js';
+
+// RF-25/RF-27B: lee la marca de captura de perfil clínico del `contenido`
+// guardado, incluyendo el alias legado `captura_perfil` en snake_case.
+// Vacío ('') significa que el nodo no captura ninguna dimensión.
+function capturaPerfilDesdeContenido(contenido) {
+  const nueva = contenido?.capturaPerfil;
+  if (nueva && typeof nueva === 'object') return nueva.dimension ?? '';
+  if (typeof nueva === 'string') return nueva;
+
+  const legado = contenido?.captura_perfil;
+  if (legado === 'tipo_dependencia') {
+    return DIMENSION_PERFIL_CLINICO.TIPO_DEPENDENCIA;
+  }
+  if (legado === 'tipo_craving') return DIMENSION_PERFIL_CLINICO.TIPO_CRAVING;
+
+  return '';
+}
 
 // Fila vacía del editor de opciones (selección única/múltiple): un campo
 // de texto por opción, no un solo cajón con todas juntas.
@@ -29,7 +50,7 @@ export const VALORES_NODO_VACIOS = Object.freeze({
   // PR4: respuesta que espera el nodo. Sin "tieneEntrada" el nodo es
   // informativo (el estudiante solo confirma "Continuar").
   tieneEntrada: false,
-  entradaTipo: TIPO_ENTRADA.TEXTO_LIBRE,
+  entradaTipo: TIPO_ENTRADA.OPCION_UNICA,
   entradaObligatorio: true,
   entradaOpciones: opcionesVacias(),
   entradaMinSelecciones: '',
@@ -43,13 +64,39 @@ export const VALORES_NODO_VACIOS = Object.freeze({
   entradaMaxPalabras: '',
   entradaMaxCaracteres: '',
   entradaFormato: FORMATO_FECHA.FECHA_HORA,
+  // RF-25/RF-27B: vacío = este nodo no captura perfil clínico.
+  capturaPerfilDimension: '',
 });
 
+// Opciones del selector de dimensión de perfil clínico (RF-25/RF-27B).
+export function opcionesDimensionPerfilClinico() {
+  return Object.values(DIMENSION_PERFIL_CLINICO).map((dimension) => ({
+    value: dimension,
+    label: DIMENSION_PERFIL_CLINICO_ETIQUETA[dimension],
+  }));
+}
+
+// RF-25: en árboles grupales el valor esperado de cada transición se elige
+// de lo que define el nodo, así que no se ofrecen respuestas abiertas.
+const TIPOS_OCULTOS_EN_GRUPAL = new Set([
+  TIPO_ENTRADA.TEXTO_LIBRE,
+  TIPO_ENTRADA.FECHA_HORA,
+]);
+
+export function tipoEntradaOcultoEnGrupal(tipo) {
+  return TIPOS_OCULTOS_EN_GRUPAL.has(tipo);
+}
+
 // Opciones del selector de tipo de respuesta (CONTINUAR no se ofrece: es
-// "sin respuesta", el estado por defecto de "tieneEntrada").
-export function opcionesTipoEntrada() {
+// "sin respuesta", el estado por defecto de "tieneEntrada"). Un nodo antiguo
+// de un tipo oculto conserva su tipo como opción para no perderlo al editar.
+export function opcionesTipoEntrada(tipoActual) {
   return Object.values(TIPO_ENTRADA)
-    .filter((tipo) => tipo !== TIPO_ENTRADA.CONTINUAR)
+    .filter(
+      (tipo) =>
+        tipo !== TIPO_ENTRADA.CONTINUAR &&
+        (!TIPOS_OCULTOS_EN_GRUPAL.has(tipo) || tipo === tipoActual),
+    )
     .map((tipo) => ({ value: tipo, label: TIPO_ENTRADA_ETIQUETA[tipo] }));
 }
 
@@ -77,7 +124,7 @@ export function valoresDesdeNodo(nodo) {
   const entrada = nodo.entrada;
   const tipoCanonico = entrada
     ? (ALIAS_TIPO_ENTRADA[entrada.tipo] ?? entrada.tipo)
-    : TIPO_ENTRADA.TEXTO_LIBRE;
+    : TIPO_ENTRADA.OPCION_UNICA;
 
   return {
     idTipoNodo: nodo.idTipoNodo,
@@ -100,6 +147,7 @@ export function valoresDesdeNodo(nodo) {
     entradaMaxPalabras: numTexto(entrada?.max_palabras),
     entradaMaxCaracteres: numTexto(entrada?.max_caracteres),
     entradaFormato: entrada?.formato ?? FORMATO_FECHA.FECHA_HORA,
+    capturaPerfilDimension: capturaPerfilDesdeContenido(nodo.contenido),
   };
 }
 
@@ -191,9 +239,17 @@ function validarEntrada(valores) {
       if (opcionesValidas.length < 2) {
         errores.entradaOpciones = 'Escribe al menos dos opciones.';
       }
+      if (valores.entradaTipo !== TIPO_ENTRADA.MULTISELECCION) break;
+      // RF-25: el valor esperado de sus transiciones respeta estos límites.
+      const total = opcionesValidas.length;
       const min = numeroValido(valores.entradaMinSelecciones);
       const max = numeroValido(valores.entradaMaxSelecciones);
-      if (min !== null && max !== null && min > max) {
+      if (min !== null && (min < 1 || min > total)) {
+        errores.entradaMinSelecciones = `El mínimo debe estar entre 1 y ${total}.`;
+      }
+      if (max !== null && (max < 1 || max > total)) {
+        errores.entradaMaxSelecciones = `El máximo debe estar entre 1 y ${total}.`;
+      } else if (min !== null && max !== null && min > max) {
         errores.entradaMaxSelecciones =
           'El máximo debe ser mayor o igual que el mínimo.';
       }
@@ -201,10 +257,14 @@ function validarEntrada(valores) {
     }
     case TIPO_ENTRADA.ESCALA:
     case TIPO_ENTRADA.NUMERICO: {
+      // RF-25: el rango es la base de la regla de sus transiciones.
       const min = numeroValido(valores.entradaMin);
       const max = numeroValido(valores.entradaMax);
-      if (min !== null && max !== null && min > max) {
-        errores.entradaMax = 'El máximo debe ser mayor o igual que el mínimo.';
+      if (min === null) errores.entradaMin = 'Indica el valor mínimo.';
+      if (max === null) {
+        errores.entradaMax = 'Indica el valor máximo.';
+      } else if (min !== null && min >= max) {
+        errores.entradaMax = 'El máximo debe ser mayor que el mínimo.';
       }
       break;
     }
@@ -304,6 +364,9 @@ function construirEntrada(valores) {
 export function payloadCrearNodo(valores) {
   const contenido = { texto: valores.texto };
   if (valores.tieneEntrada) contenido.entrada = construirEntrada(valores);
+  if (valores.capturaPerfilDimension) {
+    contenido.capturaPerfil = { dimension: valores.capturaPerfilDimension };
+  }
 
   const payload = {
     id_tipo_nodo: valores.idTipoNodo,
@@ -334,11 +397,21 @@ export function payloadActualizarNodo(nodo, valores) {
   const entradaNueva = valores.tieneEntrada ? construirEntrada(valores) : null;
   const entradaCambio =
     JSON.stringify(entradaNueva) !== JSON.stringify(nodo.entrada ?? null);
+  const capturaPerfilCambio =
+    valores.capturaPerfilDimension !==
+    capturaPerfilDesdeContenido(nodo.contenido);
 
-  if (valores.texto !== nodo.texto || entradaCambio) {
+  if (valores.texto !== nodo.texto || entradaCambio || capturaPerfilCambio) {
     const contenido = { ...nodo.contenido, texto: valores.texto };
     if (entradaNueva) contenido.entrada = entradaNueva;
     else delete contenido.entrada;
+    if (capturaPerfilCambio) {
+      if (valores.capturaPerfilDimension) {
+        contenido.capturaPerfil = { dimension: valores.capturaPerfilDimension };
+      } else {
+        delete contenido.capturaPerfil;
+      }
+    }
     cambios.contenido = contenido;
   }
 

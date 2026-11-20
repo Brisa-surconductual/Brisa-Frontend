@@ -11,6 +11,8 @@ const EDITOR_CERRADO = Object.freeze({
   mode: 'closed', // closed | create | edit
   nodo: null,
   values: VALORES_NODO_VACIOS,
+  // Valores con los que se abrió: Cancelar solo pide confirmación si cambiaron.
+  valoresIniciales: VALORES_NODO_VACIOS,
   errors: Object.freeze({}),
   saving: false,
   saveError: '',
@@ -20,10 +22,26 @@ const TRANSITION_EDITOR_CERRADO = Object.freeze({
   mode: 'closed', // closed | create | edit
   transicion: null,
   values: VALORES_TRANSICION_VACIOS,
+  valoresIniciales: VALORES_TRANSICION_VACIOS,
   errors: Object.freeze({}),
   saving: false,
   saveError: '',
 });
+
+const REGLA_VACIA = Object.freeze({
+  operador: VALORES_TRANSICION_VACIOS.operador,
+  valorUnico: VALORES_TRANSICION_VACIOS.valorUnico,
+  valoresMultiples: VALORES_TRANSICION_VACIOS.valoresMultiples,
+  rangoMin: VALORES_TRANSICION_VACIOS.rangoMin,
+  rangoMax: VALORES_TRANSICION_VACIOS.rangoMax,
+});
+
+// Si el formulario cambió respecto de como se abrió.
+export function hayCambios(editor) {
+  return (
+    JSON.stringify(editor.values) !== JSON.stringify(editor.valoresIniciales)
+  );
+}
 
 export const initialTreeDetailState = Object.freeze({
   status: 'loading', // loading | ready | error
@@ -34,12 +52,11 @@ export const initialTreeDetailState = Object.freeze({
   // Catálogo crudo de `contenidos_cronograma` (RF-25): contenido ya
   // asociado a una unidad temporal, disponible para vincular a un nodo.
   contenidosCronograma: [],
-  // Catálogo crudo de `reglas_validacion` (RF-25, PR4): reglas reutilizables
-  // que una transición puede referenciar en vez de embeber una nueva.
-  reglasValidacion: [],
   editor: EDITOR_CERRADO,
   // Editor de transiciones (RF-25, PR4): independiente del editor de nodos.
   transitionEditor: TRANSITION_EDITOR_CERRADO,
+  // Confirmación de descartar cambios al cancelar un modal: 'nodo' | 'transicion' | null.
+  confirmDescarte: null,
   notice: '',
   // Cambio de estado del flujo (publicar/archivar): confirmación pendiente,
   // acción en curso y error propio, independientes del editor de nodos.
@@ -66,7 +83,6 @@ export function treeDetailReducer(state, action) {
         ...state,
         tiposNodo: action.tiposNodo,
         contenidosCronograma: action.contenidosCronograma,
-        reglasValidacion: action.reglasValidacion,
       };
 
     case 'EDITOR_OPEN_CREATE':
@@ -85,11 +101,12 @@ export function treeDetailReducer(state, action) {
           mode: 'edit',
           nodo: action.nodo,
           values: valoresDesdeNodo(action.nodo),
+          valoresIniciales: valoresDesdeNodo(action.nodo),
         },
       };
 
     case 'EDITOR_CLOSE':
-      return { ...state, editor: EDITOR_CERRADO };
+      return { ...state, editor: EDITOR_CERRADO, confirmDescarte: null };
 
     case 'EDITOR_CHANGE':
       return {
@@ -143,11 +160,16 @@ export function treeDetailReducer(state, action) {
           mode: 'edit',
           transicion: action.transicion,
           values: valoresDesdeTransicion(action.transicion),
+          valoresIniciales: valoresDesdeTransicion(action.transicion),
         },
       };
 
     case 'TRANSITION_EDITOR_CLOSE':
-      return { ...state, transitionEditor: TRANSITION_EDITOR_CERRADO };
+      return {
+        ...state,
+        transitionEditor: TRANSITION_EDITOR_CERRADO,
+        confirmDescarte: null,
+      };
 
     case 'TRANSITION_EDITOR_CHANGE':
       return {
@@ -156,6 +178,9 @@ export function treeDetailReducer(state, action) {
           ...state.transitionEditor,
           values: {
             ...state.transitionEditor.values,
+            // RF-25: el valor esperado depende del nodo origen; al cambiarlo
+            // se reinicia (el mensaje de error se conserva).
+            ...(action.field === 'idNodoOrigen' ? REGLA_VACIA : {}),
             [action.field]: action.value,
           },
           errors: {
@@ -203,6 +228,12 @@ export function treeDetailReducer(state, action) {
         status: 'loading',
         reloadKey: state.reloadKey + 1,
       };
+
+    case 'DESCARTE_SOLICITAR':
+      return { ...state, confirmDescarte: action.editor };
+
+    case 'DESCARTE_CANCELAR':
+      return { ...state, confirmDescarte: null };
 
     case 'ESTADO_CONFIRM_OPEN':
       return {

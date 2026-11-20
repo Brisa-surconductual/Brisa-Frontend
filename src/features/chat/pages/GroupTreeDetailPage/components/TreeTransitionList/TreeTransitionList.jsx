@@ -62,9 +62,9 @@ export function TreeTransitionList({ transiciones, canEdit = false, onEdit }) {
               </p>
 
               <p className="m-0 text-[length:var(--font-size-sm)] text-[var(--text-secondary)]">
-                {OPERADOR_CONDICION_ETIQUETA[transicion.operador] ??
-                  transicion.operador}
-                {transicion.condicion && ` · ${transicion.condicion}`}
+                {transicion.operador
+                  ? `${OPERADOR_CONDICION_ETIQUETA[transicion.operador] ?? transicion.operador} · ${transicion.condicion}`
+                  : transicion.condicion}
                 {` · Evaluación ${transicion.ordenEvaluacion}`}
               </p>
             </li>

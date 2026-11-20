@@ -1,4 +1,5 @@
 import { CHAT_CLIENT_ERROR } from '../api/chatApiUtils.js';
+import { DIMENSION_PERFIL_CLINICO_ETIQUETA } from '../types/dimensionPerfilClinico.js';
 import { ESTADO_FLUJO, NOMBRE_FLUJO_MAX } from '../types/estadoFlujo.js';
 
 const MENSAJE_SIN_CONEXION =
@@ -133,6 +134,67 @@ export function describirCondicionesGrafoInvalido(detalles) {
   return condiciones;
 }
 
+// RF-25: traduce `detalles` del 422 NODO_CAPTURA_PERFIL_INVALIDO a frases
+// concretas sobre qué dimensión clínica falla y por qué. Devuelve [] si no
+// hay detalle (otro tipo de error).
+export function describirCondicionesCapturaPerfil(detalles) {
+  if (!detalles || typeof detalles !== 'object') return [];
+
+  const etiqueta = (dimension) =>
+    DIMENSION_PERFIL_CLINICO_ETIQUETA[dimension] ?? dimension;
+  const lista = (valor) =>
+    (Array.isArray(valor) ? valor : []).map(etiqueta).join(', ');
+
+  const condiciones = [];
+
+  if (detalles.dimensiones_ausentes?.length > 0) {
+    condiciones.push(
+      `Falta un nodo de captura para: ${lista(detalles.dimensiones_ausentes)}.`,
+    );
+  }
+  if (detalles.dimensiones_duplicadas?.length > 0) {
+    condiciones.push(
+      `Hay más de un nodo de captura para: ${lista(detalles.dimensiones_duplicadas)}.`,
+    );
+  }
+  if (detalles.dimensiones_valores_invalidos?.length > 0) {
+    condiciones.push(
+      `El nodo de captura no tiene una regla con los valores clínicos correctos para: ${lista(detalles.dimensiones_valores_invalidos)}.`,
+    );
+  }
+
+  return condiciones;
+}
+
+// RF-25: traduce `detalles` del 422 COBERTURA_INCOMPLETA (respuestas de
+// selección única o Sí/No sin transición) a frases con las etiquetas que el
+// administrativo reconoce. `nodos` son los del árbol ya mapeado.
+export function describirCondicionesCoberturaIncompleta(detalles, nodos) {
+  const faltantes = Array.isArray(detalles?.nodos_sin_cobertura)
+    ? detalles.nodos_sin_cobertura
+    : [];
+  const porId = new Map(
+    (Array.isArray(nodos) ? nodos : []).map((n) => [n.id, n]),
+  );
+
+  return faltantes.map((faltante) => {
+    const nodo = porId.get(faltante.id_nodo);
+    const etiquetaOpcion = new Map(
+      (Array.isArray(nodo?.entrada?.opciones) ? nodo.entrada.opciones : []).map(
+        (opcion) => [opcion.valor, opcion.etiqueta],
+      ),
+    );
+    const etiqueta = (valor) =>
+      valor === 'true'
+        ? 'Sí'
+        : valor === 'false'
+          ? 'No'
+          : (etiquetaOpcion.get(valor) ?? valor);
+    const valores = (faltante.valores_faltantes ?? []).map(etiqueta).join(', ');
+    return `En ${nodo?.etiqueta ?? etiquetaNodoDiagnostico(faltante)} falta una transición para: ${valores}.`;
+  });
+}
+
 // Valor de la condición: el backend lo envía como objeto libre. Se muestra
 // `clave: valor` sin asumir un formato propio.
 export function describirCondicion(valor) {
@@ -196,18 +258,31 @@ export function mapNodo(nodo) {
   });
 }
 
+// RF-25: cada transición trae su regla propia (operador y valor esperado);
+// `null` cuando el nodo origen no espera respuesta (transición automática).
+function mapRegla(regla) {
+  if (!regla) return null;
+  return Object.freeze({
+    id: regla.id_regla_validacion,
+    operador: regla.operador_condicion,
+    // Objeto crudo: lo necesita el formulario para precargar el valor.
+    valorEsperado: regla.valor_esperado,
+    tipoDato: regla.tipo_dato,
+    mensajeError: regla.mensaje_error,
+  });
+}
+
 export function mapTransicion(transicion) {
+  const regla = mapRegla(transicion.regla_validacion);
   return Object.freeze({
     id: transicion.id_regla,
     origenId: transicion.id_nodo_origen,
     destinoId: transicion.id_nodo_destino,
-    operador: transicion.operador_condicion,
-    condicion: describirCondicion(transicion.valor_condicion),
-    // Objeto crudo (RF-25 PR4): lo necesita el formulario de edición para
-    // precargar los subcampos según el operador; `condicion` arriba es
-    // solo para mostrar, no para reconstruir el valor.
-    valorCondicion: transicion.valor_condicion,
-    idReglaValidacion: transicion.id_regla_validacion,
+    operador: regla?.operador ?? null,
+    condicion: regla
+      ? describirCondicion(regla.valorEsperado)
+      : 'Transición automática',
+    regla,
     ordenEvaluacion: transicion.orden_evaluacion,
   });
 }

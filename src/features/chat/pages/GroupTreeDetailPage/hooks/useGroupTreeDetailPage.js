@@ -12,6 +12,8 @@ import { publicarFlujo } from '../../../api/arbol/publicarFlujo.js';
 import {
   ACCION_FLUJO,
   accionesEstadoDisponibles,
+  describirCondicionesCapturaPerfil,
+  describirCondicionesCoberturaIncompleta,
   describirCondicionesGrafoInvalido,
   describirErrorAdmin,
   mapArbol,
@@ -24,12 +26,14 @@ import {
   validarNodo,
 } from '../../../services/nodosAdmin.js';
 import {
+  configuracionReglaTransicion,
   payloadActualizarTransicion,
   payloadCrearTransicion,
   validarTransicion,
 } from '../../../services/transicionesAdmin.js';
 import { ESTADO_FLUJO } from '../../../types/estadoFlujo.js';
 import {
+  hayCambios,
   initialTreeDetailState,
   treeDetailReducer,
 } from '../utils/treeDetailState.js';
@@ -87,7 +91,6 @@ export function useGroupTreeDetailPage() {
             type: 'CATALOG',
             tiposNodo: opcionesTipoNodo(catalogos.tipos_nodo),
             contenidosCronograma: catalogos.contenidos_cronograma ?? [],
-            reglasValidacion: catalogos.reglas_validacion ?? [],
           });
         }
       })
@@ -140,9 +143,16 @@ export function useGroupTreeDetailPage() {
     }
   }
 
+  // RF-25: qué regla pide el nodo origen elegido.
+  const configTransicion = configuracionReglaTransicion(
+    arbol?.nodos.find(
+      (nodo) => nodo.id === transitionEditor.values.idNodoOrigen,
+    ),
+  );
+
   async function submitTransitionEditor() {
     const esEdicion = transitionEditor.mode === 'edit';
-    const errors = validarTransicion(transitionEditor.values);
+    const errors = validarTransicion(transitionEditor.values, configTransicion);
 
     if (Object.keys(errors).length > 0) {
       dispatch({ type: 'TRANSITION_EDITOR_INVALID', errors });
@@ -153,6 +163,7 @@ export function useGroupTreeDetailPage() {
       ? payloadActualizarTransicion(
           transitionEditor.transicion,
           transitionEditor.values,
+          configTransicion,
         )
       : null;
 
@@ -172,7 +183,7 @@ export function useGroupTreeDetailPage() {
       } else {
         await crearTransicion(
           flowId,
-          payloadCrearTransicion(transitionEditor.values),
+          payloadCrearTransicion(transitionEditor.values, configTransicion),
         );
       }
 
@@ -202,9 +213,17 @@ export function useGroupTreeDetailPage() {
       dispatch({
         type: 'ESTADO_ACCION_ERROR',
         message: describirErrorAdmin(error),
-        // Solo GRAFO_INVALIDO (RF-25) trae condiciones estructuradas; el
+        // Solo GRAFO_INVALIDO, COBERTURA_INCOMPLETA y NODO_CAPTURA_PERFIL_INVALIDO
+        // (RF-25) traen condiciones estructuradas; nunca dos a la vez, el
         // resto de errores no agrega nada aquí.
-        condiciones: describirCondicionesGrafoInvalido(error?.detalles),
+        condiciones: [
+          ...describirCondicionesGrafoInvalido(error?.detalles),
+          ...describirCondicionesCoberturaIncompleta(
+            error?.detalles,
+            arbol?.nodos,
+          ),
+          ...describirCondicionesCapturaPerfil(error?.detalles),
+        ],
       });
     }
   }
@@ -217,7 +236,13 @@ export function useGroupTreeDetailPage() {
     retry: () => dispatch({ type: 'RELOAD' }),
     openCreate: () => dispatch({ type: 'EDITOR_OPEN_CREATE' }),
     openEdit: (nodo) => dispatch({ type: 'EDITOR_OPEN_EDIT', nodo }),
-    closeEditor: () => dispatch({ type: 'EDITOR_CLOSE' }),
+    // Cancelar/Esc/clic fuera del modal: confirma solo si hay cambios.
+    closeEditor: () =>
+      dispatch(
+        hayCambios(editor)
+          ? { type: 'DESCARTE_SOLICITAR', editor: 'nodo' }
+          : { type: 'EDITOR_CLOSE' },
+      ),
     changeField: (field, value) =>
       dispatch({ type: 'EDITOR_CHANGE', field, value }),
     submitEditor,
@@ -225,7 +250,21 @@ export function useGroupTreeDetailPage() {
       dispatch({ type: 'TRANSITION_EDITOR_OPEN_CREATE' }),
     openEditTransition: (transicion) =>
       dispatch({ type: 'TRANSITION_EDITOR_OPEN_EDIT', transicion }),
-    closeTransitionEditor: () => dispatch({ type: 'TRANSITION_EDITOR_CLOSE' }),
+    closeTransitionEditor: () =>
+      dispatch(
+        hayCambios(transitionEditor)
+          ? { type: 'DESCARTE_SOLICITAR', editor: 'transicion' }
+          : { type: 'TRANSITION_EDITOR_CLOSE' },
+      ),
+    configTransicion,
+    cancelarDescarte: () => dispatch({ type: 'DESCARTE_CANCELAR' }),
+    confirmarDescarte: () =>
+      dispatch({
+        type:
+          state.confirmDescarte === 'nodo'
+            ? 'EDITOR_CLOSE'
+            : 'TRANSITION_EDITOR_CLOSE',
+      }),
     changeTransitionField: (field, value) =>
       dispatch({ type: 'TRANSITION_EDITOR_CHANGE', field, value }),
     submitTransitionEditor,

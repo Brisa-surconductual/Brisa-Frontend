@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   nombreContenidoCronograma,
   opcionesContenidoCronograma,
+  opcionesDimensionPerfilClinico,
   opcionesTipoEntrada,
   opcionesTipoNodo,
   payloadActualizarNodo,
@@ -13,6 +14,7 @@ import {
   VALORES_NODO_VACIOS,
 } from './nodosAdmin.js';
 import { TIPO_ENTRADA } from '../types/tipoEntrada.js';
+import { DIMENSION_PERFIL_CLINICO } from '../types/dimensionPerfilClinico.js';
 
 const nodo = {
   id: 'n-1',
@@ -418,15 +420,87 @@ describe('resumenEntradaNodo', () => {
   });
 });
 
-describe('opcionesTipoEntrada', () => {
-  it('ofrece todos los tipos salvo CONTINUAR', () => {
-    const opciones = opcionesTipoEntrada();
+describe('opcionesTipoEntrada (RF-25, árboles grupales)', () => {
+  it('no ofrece CONTINUAR, texto libre ni fecha u hora', () => {
+    const valores = opcionesTipoEntrada().map((o) => o.value);
 
-    expect(opciones.map((o) => o.value)).not.toContain(TIPO_ENTRADA.CONTINUAR);
-    expect(opciones).toContainEqual({
-      value: TIPO_ENTRADA.OPCION_UNICA,
-      label: 'Selección única',
-    });
+    expect(valores).toEqual([
+      TIPO_ENTRADA.OPCION_UNICA,
+      TIPO_ENTRADA.MULTISELECCION,
+      TIPO_ENTRADA.ESCALA,
+      TIPO_ENTRADA.NUMERICO,
+      TIPO_ENTRADA.BOOLEANO,
+    ]);
+  });
+
+  it('al editar un nodo antiguo de un tipo oculto, conserva ese tipo como opción', () => {
+    expect(
+      opcionesTipoEntrada(TIPO_ENTRADA.TEXTO_LIBRE).map((o) => o.value),
+    ).toContain(TIPO_ENTRADA.TEXTO_LIBRE);
+  });
+
+  it('un nodo nuevo arranca en selección única', () => {
+    expect(VALORES_NODO_VACIOS.entradaTipo).toBe(TIPO_ENTRADA.OPCION_UNICA);
+  });
+});
+
+describe('límites que necesitan las reglas de sus transiciones (RF-25)', () => {
+  const valores = {
+    ...VALORES_NODO_VACIOS,
+    idTipoNodo: 't',
+    texto: 'x',
+    orden: '1',
+    tieneEntrada: true,
+  };
+
+  it.each([TIPO_ENTRADA.NUMERICO, TIPO_ENTRADA.ESCALA])(
+    '%s exige mínimo y máximo, con mínimo menor que máximo',
+    (entradaTipo) => {
+      expect(validarNodo({ ...valores, entradaTipo })).toMatchObject({
+        entradaMin: expect.any(String),
+        entradaMax: expect.any(String),
+      });
+      expect(
+        validarNodo({
+          ...valores,
+          entradaTipo,
+          entradaMin: '5',
+          entradaMax: '5',
+        }),
+      ).toHaveProperty('entradaMax');
+      expect(
+        validarNodo({
+          ...valores,
+          entradaTipo,
+          entradaMin: '1',
+          entradaMax: '5',
+        }),
+      ).toEqual({});
+    },
+  );
+
+  it('selección múltiple: límites de selección entre 1 y la cantidad de opciones', () => {
+    const multiple = {
+      ...valores,
+      entradaTipo: TIPO_ENTRADA.MULTISELECCION,
+      entradaOpciones: [
+        { valor: 'a', etiqueta: '' },
+        { valor: 'b', etiqueta: '' },
+      ],
+    };
+    expect(
+      validarNodo({ ...multiple, entradaMinSelecciones: '0' }),
+    ).toHaveProperty('entradaMinSelecciones');
+    expect(
+      validarNodo({ ...multiple, entradaMaxSelecciones: '3' }),
+    ).toHaveProperty('entradaMaxSelecciones');
+    expect(
+      validarNodo({
+        ...multiple,
+        entradaMinSelecciones: '1',
+        entradaMaxSelecciones: '2',
+      }),
+    ).toEqual({});
   });
 });
 
@@ -459,5 +533,105 @@ describe('nombreContenidoCronograma', () => {
     expect(nombreContenidoCronograma(catalogoContenidos, null)).toBe('');
     expect(nombreContenidoCronograma(catalogoContenidos, 'cc-x')).toBe('');
     expect(nombreContenidoCronograma(undefined, 'cc-1')).toBe('');
+  });
+});
+
+describe('captura de perfil clínico (RF-25 / RF-27B)', () => {
+  it('opcionesDimensionPerfilClinico ofrece las dos dimensiones', () => {
+    expect(opcionesDimensionPerfilClinico()).toEqual([
+      { value: 'TIPO_DEPENDENCIA', label: 'Tipo de dependencia' },
+      { value: 'TIPO_CRAVING', label: 'Tipo de craving' },
+    ]);
+  });
+
+  it('valoresDesdeNodo lee capturaPerfil.dimension del contenido', () => {
+    const conCaptura = {
+      ...nodo,
+      contenido: {
+        ...nodo.contenido,
+        capturaPerfil: { dimension: DIMENSION_PERFIL_CLINICO.TIPO_CRAVING },
+      },
+    };
+
+    expect(valoresDesdeNodo(conCaptura).capturaPerfilDimension).toBe(
+      DIMENSION_PERFIL_CLINICO.TIPO_CRAVING,
+    );
+  });
+
+  it('valoresDesdeNodo reconoce el alias legado captura_perfil', () => {
+    const conAlias = {
+      ...nodo,
+      contenido: { ...nodo.contenido, captura_perfil: 'tipo_dependencia' },
+    };
+
+    expect(valoresDesdeNodo(conAlias).capturaPerfilDimension).toBe(
+      DIMENSION_PERFIL_CLINICO.TIPO_DEPENDENCIA,
+    );
+  });
+
+  it('valoresDesdeNodo devuelve vacío cuando el nodo no captura perfil', () => {
+    expect(valoresDesdeNodo(nodo).capturaPerfilDimension).toBe('');
+  });
+
+  it('crear: agrega capturaPerfil solo si se eligió una dimensión', () => {
+    const valores = {
+      idTipoNodo: 't-1',
+      texto: 'Hola',
+      esNodoInicial: false,
+      orden: '',
+      capturaPerfilDimension: '',
+    };
+
+    expect(payloadCrearNodo(valores)).toEqual({
+      id_tipo_nodo: 't-1',
+      contenido: { texto: 'Hola' },
+      es_nodo_inicial: false,
+    });
+    expect(
+      payloadCrearNodo({
+        ...valores,
+        capturaPerfilDimension: DIMENSION_PERFIL_CLINICO.TIPO_CRAVING,
+      }).contenido,
+    ).toEqual({
+      texto: 'Hola',
+      capturaPerfil: { dimension: DIMENSION_PERFIL_CLINICO.TIPO_CRAVING },
+    });
+  });
+
+  it('editar: marcar un nodo con una dimensión nueva envía el cambio', () => {
+    const valores = {
+      ...valoresDesdeNodo(nodo),
+      capturaPerfilDimension: DIMENSION_PERFIL_CLINICO.TIPO_DEPENDENCIA,
+    };
+
+    expect(payloadActualizarNodo(nodo, valores)).toEqual({
+      contenido: {
+        texto: 'Hola',
+        otra: 'clave',
+        capturaPerfil: { dimension: DIMENSION_PERFIL_CLINICO.TIPO_DEPENDENCIA },
+      },
+    });
+  });
+
+  it('editar: quitar la marca de captura envía el contenido sin ella', () => {
+    const conCaptura = {
+      ...nodo,
+      contenido: {
+        ...nodo.contenido,
+        capturaPerfil: { dimension: DIMENSION_PERFIL_CLINICO.TIPO_CRAVING },
+      },
+    };
+    const valores = {
+      ...valoresDesdeNodo(conCaptura),
+      capturaPerfilDimension: '',
+    };
+
+    expect(payloadActualizarNodo(conCaptura, valores)).toEqual({
+      contenido: { texto: 'Hola', otra: 'clave' },
+    });
+  });
+
+  it('editar: no tocar la dimensión no genera cambios', () => {
+    expect(payloadActualizarNodo(nodo, valoresDesdeNodo(nodo))).toBeNull();
   });
 });
