@@ -388,9 +388,9 @@ describe('GroupTreeDetailPage · árbol visual y transiciones (PR4)', () => {
   it('selección única: tags fijos y valor esperado elegido de sus opciones (RF-25)', () => {
     const html = renderTransicion({ tipo: 'SELECCION_UNICA', opciones });
 
-    expect(html).toContain('<strong>Igualdad</strong>');
-    expect(html).toContain('<strong>Texto</strong>');
-    expect(html).toContain('<strong>Cualquier texto</strong>');
+    expect(html).toContain('>Igualdad</strong>');
+    expect(html).toContain('>Texto</strong>');
+    expect(html).toContain('>Cualquier texto</strong>');
     expect(html).toMatch(/<select[^>]*id="transicion-valor-esperado"/);
     expect(html).toContain('>Opción afirmativa<');
     expect(html).not.toContain('id="transicion-operador"');
@@ -407,13 +407,13 @@ describe('GroupTreeDetailPage · árbol visual y transiciones (PR4)', () => {
     expect(html).toContain('id="transicion-valor-si"');
     expect(html).toContain('id="transicion-valor-no"');
     expect(html).toContain('Marca entre 1 y 2 opciones');
-    expect(html).toContain('<strong>Texto</strong>');
+    expect(html).toContain('>Texto</strong>');
   });
 
   it('Sí/No: tag Selección y valor esperado Sí o No (RF-25)', () => {
     const html = renderTransicion({ tipo: 'BOOLEANO' });
 
-    expect(html).toContain('<strong>Selección</strong>');
+    expect(html).toContain('>Selección</strong>');
     expect(html).toContain('value="true">Sí</option>');
     expect(html).toContain('value="false">No</option>');
   });
@@ -421,8 +421,8 @@ describe('GroupTreeDetailPage · árbol visual y transiciones (PR4)', () => {
   it('escala: rango fijo con mínimo y máximo acotados al nodo (RF-25)', () => {
     const html = renderTransicion({ tipo: 'ESCALA', min: 1, max: 10 });
 
-    expect(html).toContain('<strong>Rango</strong>');
-    expect(html).toContain('<strong>Numérico</strong>');
+    expect(html).toContain('>Rango</strong>');
+    expect(html).toContain('>Numérico</strong>');
     expect(html).toContain('El nodo admite de 1 a 10.');
     expect(html).toContain('id="transicion-rango-min"');
   });
@@ -430,7 +430,7 @@ describe('GroupTreeDetailPage · árbol visual y transiciones (PR4)', () => {
   it('número: el admin elige el operador; por igualdad lista los valores del nodo (RF-25)', () => {
     const sinOperador = renderTransicion({ tipo: 'NUMERICO', min: 0, max: 2 });
     expect(sinOperador).toContain('id="transicion-operador"');
-    expect(sinOperador).not.toContain('<strong>Igualdad</strong>');
+    expect(sinOperador).not.toContain('>Igualdad</strong>');
 
     const igualdad = renderTransicion(
       { tipo: 'NUMERICO', min: 0, max: 2 },

@@ -11,9 +11,11 @@ import { operadorEfectivo } from '../../../../services/transicionesAdmin.js';
 
 function Etiqueta({ titulo, valor }) {
   return (
-    <span className="inline-flex items-center gap-[var(--space-1)] rounded-[var(--radius-full)] border border-[var(--brand-200)] bg-[var(--surface-brand)] px-[var(--space-3)] py-[var(--space-1)] text-[length:var(--font-size-sm)] text-[var(--text-primary)]">
-      <span className="text-[var(--text-secondary)]">{titulo}:</span>
-      <strong>{valor}</strong>
+    // Tinte claro de marca con texto verde oscuro (contraste AA en modo claro
+    // y oscuro: la escala --brand-* se invierte en el tema oscuro).
+    <span className="inline-flex items-center gap-[var(--space-1)] rounded-[var(--radius-full)] border border-[var(--brand-200)] bg-[var(--brand-50)] px-[var(--space-3)] py-[var(--space-1)] text-[length:var(--font-size-sm)]">
+      <span className="text-[var(--brand-700)]">{titulo}:</span>
+      <strong className="text-[var(--brand-800)]">{valor}</strong>
     </span>
   );
 }
