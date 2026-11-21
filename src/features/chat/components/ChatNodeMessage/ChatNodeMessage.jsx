@@ -30,11 +30,14 @@ export function ChatNodeMessage({ nodo, onRecursoError }) {
           );
         }
 
+        // RF-33 (D12): con otra URL tras la recarga de A-017 el medio se
+        // vuelve a montar y su estado de carga se reinicia.
         return (
           <ChatMediaBlock
-            key={key}
+            key={`${key}-${bloque.url}`}
             bloque={bloque}
-            onError={() => onRecursoError?.(indice)}
+            // Solo el nodo actual recarga; en el historial no hay manejador.
+            onError={onRecursoError && (() => onRecursoError(indice))}
             className={`max-w-[85%] ${SANGRIA}`}
           />
         );

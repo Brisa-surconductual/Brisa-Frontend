@@ -8,16 +8,17 @@ import {
   Skeleton,
 } from '@/shared/components/ui/Skeleton/index.js';
 
-import { ChatThread } from '../../components/ChatThread/index.js';
+import { HistorialConversacion } from '../../components/HistorialConversacion/index.js';
 import { NodeInputForm } from '../../components/NodeInputForm/index.js';
+import { GLASS } from '../../utils/glass.js';
 
+import { SesionCompletada } from './components/SesionCompletada/index.js';
 import { StaleNodeNotice } from './components/StaleNodeNotice/index.js';
 import { useChatConversationPage } from './hooks/useChatConversationPage.js';
 import { ESTADO_CONVERSACION } from './utils/conversationState.js';
 import { ACCION_ERROR_ENVIO } from './utils/envio.js';
 
-const { CARGANDO, LISTO, ERROR, ENVIANDO, AVANZANDO, ERROR_ENVIO } =
-  ESTADO_CONVERSACION;
+const { LISTO, ERROR, ENVIANDO, AVANZANDO, ERROR_ENVIO } = ESTADO_CONVERSACION;
 
 // Esqueleto con la forma de las burbujas de Brisa.
 function ConversationSkeleton({ anchos = ['70%', '55%'] }) {
@@ -45,6 +46,16 @@ function BackButton({ onClick, children }) {
 function ChatConversation() {
   const {
     estado,
+    cargandoInicial,
+    historialError,
+    hayMas,
+    inicioAlcanzado,
+    completada,
+    completadaRef,
+    cargandoAnteriores,
+    errorAnteriores,
+    cargarAnteriores,
+    reintentarHistorial,
     items,
     error,
     errorEnvio,
@@ -71,8 +82,12 @@ function ChatConversation() {
   const errorEnLinea = accionErrorEnvio === ACCION_ERROR_ENVIO.INLINE;
 
   return (
-    <div className="mx-auto flex w-full max-w-[480px] flex-col gap-[var(--space-4)] py-[var(--space-4)]">
-      <header className="flex items-center gap-[var(--space-2)]">
+    <div
+      className={`mx-auto flex w-full max-w-[480px] flex-col gap-[var(--space-4)] rounded-[var(--radius-2xl)] px-[var(--space-3)] py-[var(--space-4)] ${GLASS.fondo}`}
+    >
+      <header
+        className={`flex items-center gap-[var(--space-2)] rounded-[var(--radius-2xl)] px-[var(--space-2)] py-[var(--space-1)] ${GLASS.panel}`}
+      >
         <Button
           variant="ghost"
           size="large"
@@ -88,24 +103,36 @@ function ChatConversation() {
           tabIndex={-1}
           className="m-0 flex items-center gap-[var(--space-2)] text-[length:var(--font-size-lg)] font-extrabold text-balance text-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-600)]"
         >
-          <MessageCircle
-            size={20}
-            strokeWidth={1.8}
-            aria-hidden="true"
-            className="text-[var(--brand-600)]"
-          />
+          <span
+            className={`flex size-[var(--space-8)] items-center justify-center rounded-[var(--radius-full)] text-[var(--brand-600)] ${GLASS.panel}`}
+          >
+            <MessageCircle size={20} strokeWidth={1.8} aria-hidden="true" />
+          </span>
           Chat con Brisa
         </h1>
       </header>
 
       <LoadingRegion
-        loading={estado === CARGANDO}
+        loading={cargandoInicial}
         label="Cargando la conversación"
         skeleton={<ConversationSkeleton />}
       >
-        {hayHilo && (
-          <ChatThread
+        {/* RF-32: el historial falló; el nodo actual sigue disponible. */}
+        {historialError && (
+          <ApiErrorMessage
+            error={historialError}
+            onRetry={reintentarHistorial}
+          />
+        )}
+
+        {(hayHilo || hayMas) && (
+          <HistorialConversacion
             items={items}
+            hayMas={hayMas}
+            inicioAlcanzado={inicioAlcanzado}
+            cargandoAnteriores={cargandoAnteriores}
+            errorAnteriores={errorAnteriores}
+            onCargarAnteriores={cargarAnteriores}
             onRecursoError={onRecursoError}
             ultimoRef={ultimoRef}
           />
@@ -128,6 +155,10 @@ function ChatConversation() {
             enviando={estado !== LISTO}
             errorExterno={errorEnLinea ? errorEnvio : null}
           />
+        )}
+
+        {completada && (
+          <SesionCompletada tituloRef={completadaRef} onVolverInicio={goHome} />
         )}
 
         {estado === ENVIANDO && (

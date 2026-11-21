@@ -8,7 +8,7 @@ export function StaleNodeNotice({ mensaje }) {
   return (
     <p
       role="status"
-      className="m-0 flex items-start gap-[var(--space-2)] rounded-[var(--radius-lg)] border border-[var(--info-border)] bg-[var(--info-bg)] p-[var(--space-3)] text-[length:var(--font-size-sm)] text-[var(--info-text)]"
+      className="m-0 flex items-start gap-[var(--space-2)] rounded-[var(--radius-xl)] border border-[var(--info-border)] bg-[var(--info-bg)] p-[var(--space-3)] shadow-[var(--glass-shadow)] text-[length:var(--font-size-sm)] text-[var(--info-text)]"
     >
       <Info
         size={20}
