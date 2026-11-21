@@ -12,26 +12,37 @@ const ID = '32000000-0000-4000-8000-000000000001';
 
 beforeEach(() => vi.resetAllMocks());
 
-describe('obtenerHistorialInteracciones (RF-32)', () => {
+describe('obtenerHistorialInteracciones (RF-31 / RF-32)', () => {
   it('pide la página más reciente sin parámetros y devuelve data', async () => {
-    const data = { ultima_secuencia: 0, hay_mas: false, interacciones: [] };
+    const data = { items: [], hay_mas: false, siguiente_cursor: null };
     apiClient.get.mockResolvedValue({ status: 200, data: { data } });
 
     await expect(obtenerHistorialInteracciones(ID)).resolves.toBe(data);
 
     const [url, config] = apiClient.get.mock.calls[0];
-    expect(url).toMatch(new RegExp(`/chat/sesiones/${ID}/interacciones$`));
+    expect(url).toMatch(new RegExp(`/chat/sesiones/${ID}/historial$`));
     expect(config).toEqual({ params: undefined });
   });
 
-  it('pide la página anterior con antes_de', async () => {
+  it('pide la página anterior con antes_de_secuencia y limite', async () => {
     apiClient.get.mockResolvedValue({ status: 200, data: { data: {} } });
 
-    await obtenerHistorialInteracciones(ID, { antesDe: 6 });
+    await obtenerHistorialInteracciones(ID, {
+      antesDeSecuencia: 21,
+      limite: 20,
+    });
 
     expect(apiClient.get.mock.calls[0][1]).toEqual({
-      params: { antes_de: 6 },
+      params: { antes_de_secuencia: 21, limite: 20 },
     });
+  });
+
+  it('no envía un cursor que no sea entero', async () => {
+    apiClient.get.mockResolvedValue({ status: 200, data: { data: {} } });
+
+    await obtenerHistorialInteracciones(ID, { antesDeSecuencia: null });
+
+    expect(apiClient.get.mock.calls[0][1]).toEqual({ params: undefined });
   });
 
   it('lanza el error del backend normalizado por codigo', async () => {

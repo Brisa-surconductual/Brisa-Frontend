@@ -8,11 +8,11 @@ import {
   Skeleton,
 } from '@/shared/components/ui/Skeleton/index.js';
 
-import { ChatThread } from '../../components/ChatThread/index.js';
-import { LoadEarlierButton } from '../../components/LoadEarlierButton/index.js';
+import { HistorialConversacion } from '../../components/HistorialConversacion/index.js';
 import { NodeInputForm } from '../../components/NodeInputForm/index.js';
 import { GLASS } from '../../utils/glass.js';
 
+import { SesionCompletada } from './components/SesionCompletada/index.js';
 import { StaleNodeNotice } from './components/StaleNodeNotice/index.js';
 import { useChatConversationPage } from './hooks/useChatConversationPage.js';
 import { ESTADO_CONVERSACION } from './utils/conversationState.js';
@@ -49,6 +49,9 @@ function ChatConversation() {
     cargandoInicial,
     historialError,
     hayMas,
+    inicioAlcanzado,
+    completada,
+    completadaRef,
     cargandoAnteriores,
     errorAnteriores,
     cargarAnteriores,
@@ -122,17 +125,14 @@ function ChatConversation() {
           />
         )}
 
-        {hayMas && (
-          <LoadEarlierButton
-            cargando={cargandoAnteriores}
-            error={errorAnteriores}
-            onCargar={cargarAnteriores}
-          />
-        )}
-
-        {hayHilo && (
-          <ChatThread
+        {(hayHilo || hayMas) && (
+          <HistorialConversacion
             items={items}
+            hayMas={hayMas}
+            inicioAlcanzado={inicioAlcanzado}
+            cargandoAnteriores={cargandoAnteriores}
+            errorAnteriores={errorAnteriores}
+            onCargarAnteriores={cargarAnteriores}
             onRecursoError={onRecursoError}
             ultimoRef={ultimoRef}
           />
@@ -155,6 +155,10 @@ function ChatConversation() {
             enviando={estado !== LISTO}
             errorExterno={errorEnLinea ? errorEnvio : null}
           />
+        )}
+
+        {completada && (
+          <SesionCompletada tituloRef={completadaRef} onVolverInicio={goHome} />
         )}
 
         {estado === ENVIANDO && (

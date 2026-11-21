@@ -4,6 +4,7 @@ import {
   ESTADO_CONVERSACION as E,
   conversationReducer,
   crearEstadoInicial,
+  esSesionCompletada,
   selectItems,
   selectNodoFormulario,
   selectRecursosNoPresentados,
@@ -288,6 +289,36 @@ describe('envío y avance (RF-27 a RF-29)', () => {
 
     expect(estado.estado).toBe(E.COMPLETADA);
     expect(selectNodoFormulario(estado)).toBeNull();
+  });
+
+  it('RF-31: un nodo terminal completa la sesión aunque el estado diga ACTIVA', () => {
+    const terminal = conversacion(undefined, 'fin');
+    const estado = reducir([
+      {
+        type: 'EXITO',
+        conversacion: {
+          ...terminal,
+          nodo: { ...terminal.nodo, esTerminal: true },
+        },
+      },
+    ]);
+
+    expect(estado.estado).toBe(E.COMPLETADA);
+    expect(selectNodoFormulario(estado)).toBeNull();
+    // El nodo terminal (el cierre) sigue en el hilo.
+    expect(selectItems(estado).at(-1).nodo.idNodo).toBe('fin');
+  });
+
+  it('esSesionCompletada: por estado o por nodo terminal', () => {
+    const con = (estadoSesion, esTerminal) => ({
+      estadoSesion,
+      nodo: { esTerminal },
+    });
+
+    expect(esSesionCompletada(con('COMPLETADA', false))).toBe(true);
+    expect(esSesionCompletada(con('ACTIVA', true))).toBe(true);
+    expect(esSesionCompletada(con('ACTIVA', false))).toBe(false);
+    expect(esSesionCompletada(null)).toBe(false);
   });
 
   it('400: error inline, mismo nodo y respuesta descartada (CA-28-1 a 28-5)', () => {
