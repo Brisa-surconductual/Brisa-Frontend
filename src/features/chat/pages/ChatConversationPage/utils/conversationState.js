@@ -114,8 +114,14 @@ const itemNodo = (state) => ({
   nodo: nodoConMarcas(state),
 });
 
+// RF-31: la sesión está completada si el backend lo dice o si el nodo
+// actual es terminal (no admite respuesta).
+export const esSesionCompletada = (conversacion) =>
+  conversacion?.estadoSesion === ESTADO_SESION.COMPLETADA ||
+  conversacion?.nodo?.esTerminal === true;
+
 const estadoTrasCarga = (state, conversacion) => {
-  if (conversacion.estadoSesion === ESTADO_SESION.COMPLETADA) return COMPLETADA;
+  if (esSesionCompletada(conversacion)) return COMPLETADA;
   // Una recarga de recursos durante el envío no cambia el estado.
   return state.estado === CARGANDO || state.estado === AVANZANDO
     ? LISTO

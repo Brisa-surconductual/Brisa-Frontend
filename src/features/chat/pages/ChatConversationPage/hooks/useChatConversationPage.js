@@ -31,8 +31,15 @@ const LOGIN_PATH = '/login';
 // §2.4 de FE-M03-03: única acción del GET que depende del `codigo`.
 const CODIGO_SESION_NO_ENCONTRADA = 'SESION_NO_ENCONTRADA';
 
-const { CARGANDO, LISTO, ERROR, AVANZANDO, ERROR_ENVIO, DIRECCION_INVALIDA } =
-  ESTADO_CONVERSACION;
+const {
+  CARGANDO,
+  LISTO,
+  ERROR,
+  AVANZANDO,
+  ERROR_ENVIO,
+  DIRECCION_INVALIDA,
+  COMPLETADA,
+} = ESTADO_CONVERSACION;
 
 // RF-32: el texto de la burbuja del historial se arma igual que al
 // responder (registro de entradas), con la etiqueta y no el valor interno.
@@ -45,6 +52,8 @@ export function useChatConversationPage() {
   const tituloRef = useRef(null);
   const errorRef = useRef(null);
   const ultimoRef = useRef(null);
+  const completadaRef = useRef(null);
+  const completadaPreviaRef = useRef(null);
   // D12: candado contra dos confirmaciones en el mismo ciclo (doble toque
   // en una opción de envío inmediato), antes de que el estado se pinte.
   const enVueloRef = useRef(false);
@@ -166,6 +175,23 @@ export function useChatConversationPage() {
     if (huboAvance) ultimoRef.current?.focus();
   }, [idUltimo, huboAvance, state.paso]);
 
+  // RF-31: al completarse la sesión durante la visita, el foco va al aviso
+  // de sesión completada (después del efecto anterior, que lo movería a la
+  // última burbuja). Al abrir una sesión ya completada manda el título.
+  useEffect(() => {
+    const previo = completadaPreviaRef.current;
+    completadaPreviaRef.current = state.estado;
+
+    if (
+      state.estado === COMPLETADA &&
+      previo !== null &&
+      previo !== CARGANDO &&
+      previo !== COMPLETADA
+    ) {
+      completadaRef.current?.focus();
+    }
+  }, [state.estado]);
+
   // `enviar` atrapa sus propios errores: quien la llama no espera nada.
   async function enviar(envio, accion) {
     if (enVueloRef.current) return;
@@ -208,7 +234,7 @@ export function useChatConversationPage() {
 
     try {
       const data = await obtenerHistorialInteracciones(idSesion, {
-        antesDe: state.secuenciaMinima,
+        antesDeSecuencia: state.secuenciaMinima,
       });
       if (vivoRef.current) {
         dispatch({
@@ -253,6 +279,11 @@ export function useChatConversationPage() {
         ? state.historialError
         : null,
     hayMas: state.hayMas,
+    // RF-31: el historial cargó y no quedan interacciones anteriores.
+    inicioAlcanzado:
+      state.historialEstado === ESTADO_HISTORIAL.LISTO && !state.hayMas,
+    completada: state.estado === COMPLETADA,
+    completadaRef,
     cargandoAnteriores: state.cargandoAnteriores,
     errorAnteriores: state.errorAnteriores,
     cargarAnteriores: () => void cargarAnteriores(),
