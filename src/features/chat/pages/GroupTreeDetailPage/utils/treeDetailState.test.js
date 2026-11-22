@@ -89,6 +89,7 @@ describe('treeDetailReducer · editor de nodos', () => {
       orden: '3',
       idContenido: '',
       tieneEntrada: false,
+      variableCodigo: '',
       entradaTipo: 'OPCION_UNICA',
       entradaObligatorio: true,
       entradaOpciones: [

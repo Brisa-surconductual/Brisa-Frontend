@@ -15,6 +15,14 @@ import {
   VALOR_PERFIL_CLINICO,
   etiquetaValorPerfilClinico,
 } from '../types/dimensionPerfilClinico.js';
+import { admiteTipoEntrada } from './taxonomiaVariables.js';
+
+// RF-30B: código de la variable taxonómica que captura el nodo
+// (`contenido.variable.codigo`), o '' si no captura ninguna.
+export function variableDesdeContenido(contenido) {
+  const codigo = contenido?.variable?.codigo;
+  return typeof codigo === 'string' ? codigo : '';
+}
 
 // RF-25/RF-27B: lee la marca de captura de perfil clínico del `contenido`
 // guardado, incluyendo el alias legado `captura_perfil` en snake_case.
@@ -93,6 +101,8 @@ export const VALORES_NODO_VACIOS = Object.freeze({
   // dimensión, `capturaPerfilValor` es el valor que el nodo asigna.
   capturaPerfilDimension: '',
   capturaPerfilValor: '',
+  // RF-30B: variable taxonómica (una por nodo, opcional).
+  variableCodigo: '',
 });
 
 // Opciones del selector de dimensión de perfil clínico (RF-25/RF-27B).
@@ -117,12 +127,14 @@ export function tipoEntradaOcultoEnGrupal(tipo) {
 // Opciones del selector de tipo de respuesta (CONTINUAR no se ofrece: es
 // "sin respuesta", el estado por defecto de "tieneEntrada"). Un nodo antiguo
 // de un tipo oculto conserva su tipo como opción para no perderlo al editar.
-export function opcionesTipoEntrada(tipoActual) {
+// RF-30B: con una variable elegida, solo se ofrecen los tipos que admite.
+export function opcionesTipoEntrada(tipoActual, variable = null) {
   return Object.values(TIPO_ENTRADA)
     .filter(
       (tipo) =>
         tipo !== TIPO_ENTRADA.CONTINUAR &&
-        (!TIPOS_OCULTOS_EN_GRUPAL.has(tipo) || tipo === tipoActual),
+        (!TIPOS_OCULTOS_EN_GRUPAL.has(tipo) || tipo === tipoActual) &&
+        admiteTipoEntrada(variable, tipo),
     )
     .map((tipo) => ({ value: tipo, label: TIPO_ENTRADA_ETIQUETA[tipo] }));
 }
@@ -177,6 +189,7 @@ export function valoresDesdeNodo(nodo) {
     entradaFormato: entrada?.formato ?? FORMATO_FECHA.FECHA_HORA,
     capturaPerfilDimension: captura.dimension,
     capturaPerfilValor: captura.valor,
+    variableCodigo: variableDesdeContenido(nodo.contenido),
   };
 }
 
@@ -388,11 +401,19 @@ function capturaPerfil(valores) {
     : null;
 }
 
+function variableNodo(valores) {
+  return valores.variableCodigo && !valores.esNodoFinal
+    ? { codigo: valores.variableCodigo }
+    : null;
+}
+
 export function payloadCrearNodo(valores) {
   const contenido = { texto: valores.texto };
   if (esperaRespuesta(valores)) contenido.entrada = construirEntrada(valores);
   const captura = capturaPerfil(valores);
   if (captura) contenido.capturaPerfil = captura;
+  const variable = variableNodo(valores);
+  if (variable) contenido.variable = variable;
 
   const payload = {
     id_tipo_nodo: valores.idTipoNodo,
@@ -432,7 +453,16 @@ export function payloadActualizarNodo(nodo, valores) {
     (capturaNueva?.dimension ?? '') !== capturaActual.dimension ||
     (capturaNueva?.valor ?? '') !== capturaActual.valor;
 
-  if (valores.texto !== nodo.texto || entradaCambio || capturaPerfilCambio) {
+  const variableNueva = variableNodo(valores)?.codigo ?? '';
+  const variableCambio =
+    variableNueva !== variableDesdeContenido(nodo.contenido);
+
+  if (
+    valores.texto !== nodo.texto ||
+    entradaCambio ||
+    capturaPerfilCambio ||
+    variableCambio
+  ) {
     const contenido = { ...nodo.contenido, texto: valores.texto };
     if (entradaNueva) contenido.entrada = entradaNueva;
     else delete contenido.entrada;
@@ -441,6 +471,8 @@ export function payloadActualizarNodo(nodo, valores) {
       if (capturaNueva) contenido.capturaPerfil = capturaNueva;
       else delete contenido.capturaPerfil;
     }
+    if (variableNueva) contenido.variable = { codigo: variableNueva };
+    else delete contenido.variable;
     cambios.contenido = contenido;
   }
 

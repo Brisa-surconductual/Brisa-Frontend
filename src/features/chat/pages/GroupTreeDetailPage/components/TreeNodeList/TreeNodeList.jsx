@@ -5,6 +5,7 @@ import {
   MessageSquare,
   Pencil,
   UserRound,
+  Tags,
 } from 'lucide-react';
 
 import { Button } from '@/shared/components/ui/Button/index.js';
@@ -16,7 +17,9 @@ import { salidasOrdenadasDeNodo } from '../../../../services/flujosAdmin.js';
 import {
   resumenCapturaPerfil,
   resumenEntradaNodo,
+  variableDesdeContenido,
 } from '../../../../services/nodosAdmin.js';
+import { variablePorCodigo } from '../../../../services/taxonomiaVariables.js';
 
 const CHIP =
   'inline-flex items-center gap-[var(--space-1)] rounded-[var(--radius-full)] border px-[var(--space-2)] py-[2px] text-[length:var(--font-size-xs)]';
@@ -37,6 +40,7 @@ export function TreeNodeList({
   canEdit = false,
   onEdit,
   contenidos = [],
+  variables = [],
 }) {
   return (
     <section
@@ -67,6 +71,9 @@ export function TreeNodeList({
             );
             const respuesta = resumenEntradaNodo(nodo.entrada);
             const captura = resumenCapturaPerfil(nodo.contenido);
+            // RF-30B: variable taxonómica que etiqueta la respuesta.
+            const codigoVariable = variableDesdeContenido(nodo.contenido);
+            const variable = variablePorCodigo(variables, codigoVariable);
             const salidas = salidasOrdenadasDeNodo(nodo, nodos, transiciones);
 
             return (
@@ -109,6 +116,16 @@ export function TreeNodeList({
                         aria-hidden="true"
                       />
                       Captura: {captura}
+                    </span>
+                  )}
+
+                  {codigoVariable && (
+                    <span
+                      className={`${CHIP} border-[var(--glass-border)] bg-[var(--glass-bg)] text-[var(--text-primary)] backdrop-blur-[var(--glass-blur)]`}
+                    >
+                      <Tags size={13} strokeWidth={1.8} aria-hidden="true" />
+                      Variable: {variable?.nombre ?? codigoVariable}
+                      {variable?.habilitada === false && ' (deshabilitada)'}
                     </span>
                   )}
 

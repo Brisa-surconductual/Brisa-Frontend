@@ -8,6 +8,8 @@ import { TextField } from '@/shared/components/ui/TextField/index.js';
 import { ChatAdminNotice } from '../../../../components/ChatAdminNotice/index.js';
 import { ContenidoProgramacion } from '../../../../components/ContenidoProgramacion/index.js';
 import { ExclusiveSwitchGroup } from '../../../../components/ExclusiveSwitchGroup/index.js';
+import { TaxonomyVariablePicker } from '../../../../components/TaxonomyVariablePicker/index.js';
+import { variablePorCodigo } from '../../../../services/taxonomiaVariables.js';
 import {
   opcionesContenido,
   programacionesDe,
@@ -50,9 +52,13 @@ export function NodeEditorForm({
   saveError,
   tiposNodo,
   contenidos = [],
+  variables = [],
   onChange,
   onSubmit,
 }) {
+  // RF-30B: la variable elegida filtra los tipos de respuesta del nodo.
+  const variable = variablePorCodigo(variables, values.variableCodigo);
+
   return (
     <form
       id={formId}
@@ -151,10 +157,20 @@ export function NodeEditorForm({
         </div>
       )}
 
+      {!values.esNodoFinal && (
+        <TaxonomyVariablePicker
+          variables={variables}
+          value={values.variableCodigo}
+          error={errors.variableCodigo}
+          disabled={saving}
+          onChange={(codigo) => onChange('variableCodigo', codigo)}
+        />
+      )}
+
       <Checkbox
         id="nodo-tiene-entrada"
         checked={values.tieneEntrada && !values.esNodoFinal}
-        disabled={saving || values.esNodoFinal}
+        disabled={saving || values.esNodoFinal || Boolean(variable)}
         onChange={(event) => onChange('tieneEntrada', event.target.checked)}
       >
         Este nodo espera una respuesta del estudiante
@@ -175,7 +191,12 @@ export function NodeEditorForm({
             required
             disabled={saving}
             value={values.entradaTipo}
-            options={opcionesTipoEntrada(values.entradaTipo)}
+            options={opcionesTipoEntrada(values.entradaTipo, variable)}
+            hint={
+              variable
+                ? `Filtrado por la variable «${variable.nombre}».`
+                : undefined
+            }
             onChange={(event) => onChange('entradaTipo', event.target.value)}
           />
 

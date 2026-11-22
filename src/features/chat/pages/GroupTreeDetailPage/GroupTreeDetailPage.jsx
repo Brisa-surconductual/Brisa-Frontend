@@ -173,6 +173,7 @@ export function GroupTreeDetailPage() {
             canEdit={canEdit}
             onEdit={page.openEdit}
             contenidos={page.contenidos}
+            variables={page.variables}
           />
         )}
 
@@ -211,6 +212,7 @@ export function GroupTreeDetailPage() {
             saveError={editor.saveError}
             tiposNodo={page.tiposNodo}
             contenidos={page.contenidos}
+            variables={page.variables}
             onChange={page.changeField}
             onSubmit={page.submitEditor}
           />

@@ -11,6 +11,7 @@ export {
 } from './pages/ProgramModalityPage/index.js';
 export { GroupTreeDetailPage } from './pages/GroupTreeDetailPage/index.js';
 export { GroupTreesPage } from './pages/GroupTreesPage/index.js';
+export { TaxonomyVariablesPage } from './pages/TaxonomyVariablesPage/index.js';
 export {
   PersonalizedTreesPage,
   PersonalizedTreesScreen,

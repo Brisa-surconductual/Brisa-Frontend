@@ -1,4 +1,8 @@
 import {
+  ajustarNodoAVariable,
+  variablePorCodigo,
+} from '../../../services/taxonomiaVariables.js';
+import {
   VALORES_NODO_VACIOS,
   valoresDesdeNodo,
 } from '../../../services/nodosAdmin.js';
@@ -40,13 +44,21 @@ const REGLA_VACIA = Object.freeze({
 // - inicial y final son excluyentes;
 // - el nodo final no espera respuesta ni captura perfil;
 // - cambiar la dimensión de captura reinicia su valor.
-function valoresNodoCambiados(valores, field, value) {
-  const siguientes = { ...valores, [field]: value };
+function valoresNodoCambiados(valores, field, value, variables = []) {
+  let siguientes = { ...valores, [field]: value };
   if (field === 'esNodoFinal' && value) {
     siguientes.esNodoInicial = false;
     siguientes.tieneEntrada = false;
     siguientes.capturaPerfilDimension = '';
     siguientes.capturaPerfilValor = '';
+    siguientes.variableCodigo = '';
+  }
+  // RF-30B: la variable filtra el tipo de respuesta del nodo.
+  if (field === 'variableCodigo' && value !== valores[field]) {
+    siguientes = ajustarNodoAVariable(
+      siguientes,
+      variablePorCodigo(variables, value),
+    );
   }
   if (field === 'esNodoInicial' && value) siguientes.esNodoFinal = false;
   if (field === 'capturaPerfilDimension' && value !== valores[field]) {
@@ -68,6 +80,8 @@ export const initialTreeDetailState = Object.freeze({
   error: '',
   reloadKey: 0,
   tiposNodo: [],
+  // RF-30B: taxonomía (incluye deshabilitadas para mostrar las ya usadas).
+  variables: [],
   // RF-25/RF-24: contenidos (ya mapeados) con dónde está programado cada uno.
   contenidos: [],
   editor: EDITOR_CERRADO,
@@ -106,6 +120,9 @@ export function treeDetailReducer(state, action) {
         contenidos: action.contenidos,
       };
 
+    case 'TAXONOMIA':
+      return { ...state, variables: action.variables };
+
     case 'EDITOR_OPEN_CREATE':
       return {
         ...state,
@@ -138,6 +155,7 @@ export function treeDetailReducer(state, action) {
             state.editor.values,
             action.field,
             action.value,
+            state.variables,
           ),
           errors: { ...state.editor.errors, [action.field]: undefined },
           saveError: '',
