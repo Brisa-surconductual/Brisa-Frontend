@@ -25,6 +25,16 @@ describe('chatEntryReducer', () => {
     expect(next.estado).toBe(ESTADO_PANTALLA_ENTRADA.LISTA);
   });
 
+  it('una terapia completada pasa a completada aunque no sea reanudada', () => {
+    for (const reanudada of [false, true]) {
+      const next = chatEntryReducer(initialChatEntryState, {
+        type: 'EXITO',
+        sesion: { reanudada, completada: true },
+      });
+      expect(next.estado).toBe(ESTADO_PANTALLA_ENTRADA.COMPLETADA);
+    }
+  });
+
   it('un error pasa a error y reintentar vuelve a cargando', () => {
     const conError = chatEntryReducer(initialChatEntryState, {
       type: 'ERROR',

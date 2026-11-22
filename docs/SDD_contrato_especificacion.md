@@ -466,6 +466,8 @@ Leyenda de estado: **Cubierto** (UI + contrato + pruebas) · **Parcial** (falta 
 | RF-75, RF-84 a RF-102 | Notificaciones | `notificaciones` (por crear) | Pendiente / mayormente backend |
 | RF-122 a RF-151 | Módulo administrativo | Pantallas en la feature dueña del dato | Parcial (cronograma y chat) |
 
+Nota RF-24 / RF-31 (terapia completada): un estudiante completa una sola vez cada árbol publicado (flujo y versión). Si `POST /chat/sesiones/iniciar` responde con `sesion.estado_actual = 'COMPLETADA'` (con `reanudada: false`), el backend no creó otra sesión: devuelve la sesión completada del árbol vigente con su nodo final e `historial_reciente`. `ChatEntryPage` muestra entonces «¡Has terminado tu terapia!», indica que las respuestas quedaron guardadas y que podrá comenzar otra conversación cuando se publique un nuevo árbol para su modalidad y perfil; no ofrece «Comenzar» ni «Continuar», solo «Ver conversación» (consulta de solo lectura en `ChatConversationPage`) y «Volver al inicio». El estado `COMPLETADA` prevalece sobre `reanudada`.
+
 Nota: en el Excel hay códigos duplicados o irregulares (RF-75 aparece en M05 y M07; `RF93` sin guion; RF-146 no aparece; títulos vacíos en RF-54, RF-55, RF-89, RF-90, RF-92; RF-109 y RF-110 con el mismo título). Se registran como **aclaraciones pendientes** (sección 7) y no se resuelven por suposición.
 
 ---
@@ -585,3 +587,4 @@ Aplicar SDD retroactivamente a todo el código sería inviable. Se adopta así:
 | Versión | Fecha | Cambio |
 |---|---|---|
 | v0.1 | 2026-11-07 | Versión inicial (borrador). |
+| v0.2 | 2026-11-21 | RF-24 / RF-31: estado de entrada «terapia completada»; no se reinicia un árbol ya completado. |

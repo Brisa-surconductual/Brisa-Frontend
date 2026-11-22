@@ -6,6 +6,14 @@ export const initialChatEntryState = Object.freeze({
   error: null,
 });
 
+// La terapia completada prevalece: no se ofrece comenzar ni continuar.
+function estadoDeSesion(sesion) {
+  if (sesion.completada) return ESTADO_PANTALLA_ENTRADA.COMPLETADA;
+  return sesion.reanudada
+    ? ESTADO_PANTALLA_ENTRADA.REANUDANDO
+    : ESTADO_PANTALLA_ENTRADA.LISTA;
+}
+
 export function chatEntryReducer(state, action) {
   switch (action.type) {
     case 'CARGANDO':
@@ -13,9 +21,7 @@ export function chatEntryReducer(state, action) {
 
     case 'EXITO':
       return {
-        estado: action.sesion.reanudada
-          ? ESTADO_PANTALLA_ENTRADA.REANUDANDO
-          : ESTADO_PANTALLA_ENTRADA.LISTA,
+        estado: estadoDeSesion(action.sesion),
         sesion: action.sesion,
         error: null,
       };

@@ -2,6 +2,8 @@ import {
   AlertTriangle,
   ArrowLeft,
   ArrowRight,
+  CircleCheck,
+  History,
   LogIn,
   RefreshCw,
 } from 'lucide-react';
@@ -98,6 +100,43 @@ export function ChatEntryPage() {
         >
           <p className="m-0">
             Empezamos desde el principio de tu intervención.
+          </p>
+          <SessionDetails sesion={sesion} />
+        </EntryStatePanel>
+      )}
+
+      {estado === ESTADO_PANTALLA_ENTRADA.COMPLETADA && (
+        <EntryStatePanel
+          titleId={TITLE_ID}
+          title="¡Has terminado tu terapia!"
+          visual={
+            <CircleCheck
+              size={40}
+              strokeWidth={1.6}
+              className="text-[var(--success-text)]"
+              aria-hidden="true"
+            />
+          }
+          actions={
+            <>
+              <Button onClick={goConversation} size="large">
+                <History size={20} strokeWidth={1.8} aria-hidden="true" />
+                Ver conversación
+              </Button>
+
+              <Button onClick={goHome} variant="secondary" size="large">
+                <ArrowLeft size={20} strokeWidth={1.8} aria-hidden="true" />
+                Volver al inicio
+              </Button>
+            </>
+          }
+        >
+          <p className="m-0">
+            Completaste esta conversación y tus respuestas quedaron guardadas.
+          </p>
+          <p className="m-0 mt-[var(--space-2)]">
+            Podrás comenzar otra conversación cuando se publique un nuevo
+            recorrido para ti.
           </p>
           <SessionDetails sesion={sesion} />
         </EntryStatePanel>

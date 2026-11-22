@@ -77,6 +77,32 @@ describe('ChatEntryPage (RF-24)', () => {
     expect(reanudando).not.toContain('Comenzar');
   });
 
+  it('completada: informa el fin de la terapia sin «Comenzar» ni «Continuar»', () => {
+    const html = render({
+      estado: ESTADO_PANTALLA_ENTRADA.COMPLETADA,
+      sesion: { ...sesion, reanudada: false, completada: true },
+    });
+
+    expect(html).toContain('¡Has terminado tu terapia!');
+    expect(html).toContain('tus respuestas quedaron guardadas');
+    expect(html).toContain('cuando se publique un nuevo');
+    expect(html).toContain('Ver conversación');
+    expect(html).toContain('Volver al inicio');
+    expect(html).not.toContain('Comenzar');
+    expect(html).not.toContain('Continuar');
+    expect(html).not.toContain('<form');
+    expect(html).not.toContain('<input');
+  });
+
+  it('completada: usa solo tokens de diseño', () => {
+    const html = render({
+      estado: ESTADO_PANTALLA_ENTRADA.COMPLETADA,
+      sesion: { ...sesion, completada: true },
+    });
+
+    expect(html).not.toMatch(/#[0-9a-f]{3,6}\b|rgb\(/i);
+  });
+
   it('error reintentable: mensaje del backend tal cual, con Reintentar', () => {
     const html = render({
       estado: ESTADO_PANTALLA_ENTRADA.ERROR,
