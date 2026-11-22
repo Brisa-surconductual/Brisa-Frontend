@@ -5,8 +5,11 @@ import {
   conversationReducer,
   crearEstadoInicial,
   esSesionCompletada,
+  UMBRAL_RECHAZOS_VALIDACION,
   prepararInicio,
+  selectHayRecursoNoDisponible,
   selectItems,
+  selectMostrarDificultad,
   selectNodoFormulario,
   selectRecursosNoPresentados,
   selectSecuenciaSiguiente,
@@ -373,9 +376,9 @@ describe('envío y avance (RF-27 a RF-29)', () => {
     expect(reintento.envio.cuerpo).toBe(inicial.envio.cuerpo);
   });
 
-  it('NODO_DESACTUALIZADO: pide el nodo actual y descarta la respuesta (CA-27-9)', () => {
+  it('SECUENCIA_FUERA_DE_ORDEN: pide el nodo actual y descarta la respuesta (CA-27-9)', () => {
     const inicial = enviando();
-    const e = error(409, 'NODO_DESACTUALIZADO');
+    const e = error(409, 'SECUENCIA_FUERA_DE_ORDEN');
     const estado = conversationReducer(inicial, {
       type: 'ENVIO_ERROR',
       error: e,
@@ -563,12 +566,7 @@ describe('historial y secuencia (RF-30, RF-32)', () => {
     expect(estado.historial).toHaveLength(3);
   });
 
-  it.each([
-    'NODO_DESACTUALIZADO',
-    'SECUENCIA_FUERA_DE_ORDEN',
-    'NODO_TERMINAL',
-    'SESION_NO_ACTIVA',
-  ])(
+  it.each(['SECUENCIA_FUERA_DE_ORDEN', 'NODO_TERMINAL', 'SESION_NO_ACTIVA'])(
     '%s resincroniza nodo e historial sin dejar el nodo viejo (CA-30-4)',
     (codigo) => {
       const inicial = reducir(
@@ -958,5 +956,357 @@ describe('respuestas tardías del historial (RF-32)', () => {
       'nodo-1',
     ]);
     expect(selectSecuenciaSiguiente(tras)).toBe(9);
+  });
+});
+
+// RF-37: un envío con id_interaccion propio, para contar rechazos.
+const envioCon = (idInteraccion) => ({
+  cuerpo: crearCuerpo(conversacion().nodo, 7, {
+    secuencia: 1,
+    idInteraccion,
+  }),
+  textoRespuesta: '7/10',
+});
+
+const rechazo400 = () => ({
+  ...error(400, 'FUERA_DE_RANGO'),
+  mensaje: 'El valor ingresado está fuera del rango permitido.',
+  campo: 'valor',
+});
+
+// Envía y recibe el error indicado sobre el estado dado.
+const enviarYFallar = (estado, e, id = `i-${Math.random()}`) =>
+  reducir(
+    [
+      { type: 'ENVIAR', envio: envioCon(id) },
+      { type: 'ENVIO_ERROR', error: e },
+    ],
+    estado,
+  );
+
+describe('tres respuestas inválidas consecutivas (RF-37)', () => {
+  it('un 400 muestra el mensaje del backend y deja la respuesta editable', () => {
+    const e = rechazo400();
+    const estado = enviarYFallar(listo(), e);
+
+    expect(estado.estado).toBe(E.LISTO);
+    expect(estado.errorEnvio).toBe(e);
+    expect(estado.errorEnvio.mensaje).toBe(
+      'El valor ingresado está fuera del rango permitido.',
+    );
+    expect(selectNodoFormulario(estado)?.idNodo).toBe('n1');
+    expect(estado.rechazosValidacion).toBe(1);
+  });
+
+  it('el primer y el segundo rechazo no ofrecen ayuda; el tercero sí', () => {
+    const uno = enviarYFallar(listo(), rechazo400());
+    const dos = enviarYFallar(uno, rechazo400());
+    const tres = enviarYFallar(dos, rechazo400());
+
+    expect(selectMostrarDificultad(uno)).toBe(false);
+    expect(selectMostrarDificultad(dos)).toBe(false);
+    expect(UMBRAL_RECHAZOS_VALIDACION).toBe(3);
+    expect(selectMostrarDificultad(tres)).toBe(true);
+    // El hilo no se borra y la pregunta no se omite.
+    expect(selectItems(tres).at(-1).nodo.idNodo).toBe('n1');
+    expect(selectNodoFormulario(tres)).not.toBeNull();
+  });
+
+  it('no cuenta dos veces el mismo intento (mismo id_interaccion)', () => {
+    const uno = enviarYFallar(listo(), rechazo400(), 'mismo');
+    const repetido = enviarYFallar(uno, rechazo400(), 'mismo');
+
+    expect(repetido.rechazosValidacion).toBe(1);
+  });
+
+  it.each([
+    ['la red', error(null, 'SIN_CONEXION')],
+    ['un 500', error(500, 'ERROR_PERSISTENCIA')],
+    ['un 409', error(409, 'ID_INTERACCION_REUTILIZADA')],
+    ['un 400 que no es de validación', error(400, 'TIPO_ENTRADA_NO_PERMITIDO')],
+  ])('no cuenta %s como respuesta inválida', (_nombre, e) => {
+    const estado = enviarYFallar(listo(), e);
+
+    expect(estado.rechazosValidacion).toBe(0);
+  });
+
+  it('se reinicia cuando una respuesta es aceptada', () => {
+    const dos = enviarYFallar(
+      enviarYFallar(listo(), rechazo400()),
+      rechazo400(),
+    );
+    const aceptada = reducir(
+      [
+        { type: 'ENVIAR', envio: envioCon('ok') },
+        {
+          type: 'ENVIO_EXITO',
+          respuesta: { estadoSesion: 'ACTIVA', secuencia: 1 },
+        },
+        { type: 'EXITO', conversacion: nodoN2() },
+      ],
+      dos,
+    );
+
+    expect(aceptada.rechazosValidacion).toBe(0);
+    expect(selectMostrarDificultad(enviarYFallar(aceptada, rechazo400()))).toBe(
+      false,
+    );
+  });
+
+  it('se reinicia cuando cambia realmente el nodo', () => {
+    let estado = listo();
+    for (let i = 0; i < 3; i += 1) estado = enviarYFallar(estado, rechazo400());
+    estado = conversationReducer(estado, { type: 'PEDIR_AYUDA' });
+    expect(estado.ayudaSolicitada).toBe(true);
+
+    const mismoNodo = conversationReducer(estado, {
+      type: 'EXITO',
+      conversacion: conversacion(),
+    });
+    expect(mismoNodo.rechazosValidacion).toBe(3);
+
+    const otroNodo = conversationReducer(estado, {
+      type: 'EXITO',
+      conversacion: nodoN2(),
+    });
+    expect(otroNodo.rechazosValidacion).toBe(0);
+    expect(otroNodo.ayudaSolicitada).toBe(false);
+  });
+
+  it('«Pedir ayuda» no cambia el nodo ni el formulario', () => {
+    let estado = listo();
+    for (let i = 0; i < 3; i += 1) estado = enviarYFallar(estado, rechazo400());
+    const ayuda = conversationReducer(estado, { type: 'PEDIR_AYUDA' });
+
+    expect(ayuda.ayudaSolicitada).toBe(true);
+    expect(selectNodoFormulario(ayuda)?.idNodo).toBe('n1');
+    expect(selectItems(ayuda)).toEqual(selectItems(estado));
+  });
+});
+
+describe('recuperación de errores 409 con /iniciar (RF-37)', () => {
+  const recuperacionDe = (estadoSesion = 'ACTIVA', extra = {}) =>
+    inicioDe(
+      respuestaIniciar({
+        sesion: { ...respuestaIniciar().sesion, estado_actual: estadoSesion },
+        ...extra,
+      }),
+    );
+
+  it('NODO_DESACTUALIZADO no repite la respuesta y pide /iniciar', () => {
+    const inicial = enviando();
+    const e = error(409, 'NODO_DESACTUALIZADO');
+    const estado = conversationReducer(inicial, {
+      type: 'ENVIO_ERROR',
+      error: e,
+    });
+
+    expect(estado.estado).toBe(E.RECUPERANDO);
+    expect(estado.recuperacion).toBe(inicial.recuperacion + 1);
+    expect(estado.envio).toBeNull();
+    expect(estado.aviso).toBe(e);
+    // No se usan los GET ni se reenvía.
+    expect(estado.recarga).toBe(inicial.recarga);
+    expect(selectNodoFormulario(estado)).toBeNull();
+  });
+
+  it('restaura nodo, historial y secuencia de /iniciar sin duplicar', () => {
+    const conHistorial = reducir(
+      [
+        { type: 'HISTORIAL_EXITO', pagina: mapHistorial(PAGINA_GET, textoDe) },
+        { type: 'EXITO', conversacion: conversacion() },
+        { type: 'ENVIAR', envio: envioCon('x') },
+        { type: 'ENVIO_ERROR', error: error(409, 'NODO_DESACTUALIZADO') },
+        { type: 'RECUPERACION_EXITO', inicio: recuperacionDe() },
+      ],
+      crearEstadoInicial(ID),
+    );
+    const ids = selectItems(conHistorial).map((i) => i.id);
+
+    expect(conHistorial.estado).toBe(E.LISTO);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(textosRespuesta(conHistorial)).toEqual([
+      'Respuesta 1',
+      'Respuesta 2',
+      'Respuesta 3',
+      'Respuesta 4',
+      'Respuesta 5',
+    ]);
+    expect(selectItems(conHistorial).at(-1).nodo.idNodo).toBe('n6');
+    expect(selectSecuenciaSiguiente(conHistorial)).toBe(6);
+    expect(conHistorial.aviso?.codigo).toBe('NODO_DESACTUALIZADO');
+    expect(conHistorial.historialEstado).toBe('LISTO');
+  });
+
+  it('una recuperación que entrega la sesión COMPLETADA queda en solo lectura', () => {
+    const estado = reducir(
+      [
+        { type: 'ENVIO_ERROR', error: error(409, 'NODO_DESACTUALIZADO') },
+        {
+          type: 'RECUPERACION_EXITO',
+          inicio: recuperacionDe('COMPLETADA'),
+        },
+      ],
+      enviando(),
+    );
+
+    expect(estado.estado).toBe(E.COMPLETADA);
+    expect(selectNodoFormulario(estado)).toBeNull();
+  });
+
+  it('ESTADO_INCONSISTENTE: si /iniciar también falla no hay más reintentos automáticos', () => {
+    const fallo = {
+      ...error(409, 'ESTADO_INCONSISTENTE'),
+      mensaje:
+        'El estado de la conversación es inconsistente. No fue posible recuperar la sesión.',
+    };
+    const recuperando = conversationReducer(enviando(), {
+      type: 'ENVIO_ERROR',
+      error: fallo,
+    });
+    expect(recuperando.estado).toBe(E.RECUPERANDO);
+    expect(recuperando.recuperacion).toBe(1);
+
+    const caido = conversationReducer(recuperando, {
+      type: 'RECUPERACION_ERROR',
+      error: fallo,
+    });
+    expect(caido.estado).toBe(E.ERROR);
+    expect(caido.error.mensaje).toBe(fallo.mensaje);
+    expect(caido.recuperacion).toBe(1);
+
+    // «Reintentar» consulta por GET (nodo e historial), no /iniciar.
+    const reintento = conversationReducer(caido, { type: 'REINTENTAR' });
+    expect(reintento.recuperacion).toBe(1);
+    expect(reintento.recarga).toBe(caido.recarga + 1);
+    expect(reintento.recargaHistorial).toBe(caido.recargaHistorial + 1);
+
+    // Si el GET vuelve con el mismo código, se muestra; no se encadena.
+    const otraVez = conversationReducer(reintento, {
+      type: 'ERROR',
+      error: fallo,
+    });
+    expect(otraVez.estado).toBe(E.ERROR);
+    expect(otraVez.recuperacion).toBe(1);
+  });
+
+  it('un segundo NODO_DESACTUALIZADO antes de avanzar se resincroniza por GET', () => {
+    const recuperado = reducir(
+      [
+        { type: 'ENVIO_ERROR', error: error(409, 'NODO_DESACTUALIZADO') },
+        { type: 'RECUPERACION_EXITO', inicio: recuperacionDe() },
+        { type: 'ENVIAR', envio: envioCon('y') },
+        { type: 'ENVIO_ERROR', error: error(409, 'NODO_DESACTUALIZADO') },
+      ],
+      enviando(),
+    );
+
+    expect(recuperado.estado).toBe(E.AVANZANDO);
+    expect(recuperado.recuperacion).toBe(1);
+    expect(recuperado.recarga).toBeGreaterThan(0);
+  });
+
+  it('tras una respuesta aceptada se permite otra recuperación', () => {
+    const estado = reducir(
+      [
+        { type: 'ENVIO_ERROR', error: error(409, 'NODO_DESACTUALIZADO') },
+        { type: 'RECUPERACION_EXITO', inicio: recuperacionDe() },
+        { type: 'ENVIAR', envio: envioCon('z') },
+        {
+          type: 'ENVIO_EXITO',
+          respuesta: { estadoSesion: 'ACTIVA', secuencia: 6 },
+        },
+        { type: 'EXITO', conversacion: nodoN2() },
+        { type: 'ENVIAR', envio: envioCon('w') },
+        { type: 'ENVIO_ERROR', error: error(409, 'NODO_DESACTUALIZADO') },
+      ],
+      enviando(),
+    );
+
+    expect(estado.estado).toBe(E.RECUPERANDO);
+    expect(estado.recuperacion).toBe(2);
+  });
+
+  it('una respuesta tardía de /iniciar fuera de la recuperación se ignora', () => {
+    const estado = listo();
+
+    expect(
+      conversationReducer(estado, {
+        type: 'RECUPERACION_EXITO',
+        inicio: recuperacionDe(),
+      }),
+    ).toBe(estado);
+  });
+
+  it('los demás 409 conservan su tratamiento', () => {
+    expect(
+      enviarYFallar(listo(), error(409, 'SECUENCIA_FUERA_DE_ORDEN')).estado,
+    ).toBe(E.AVANZANDO);
+    expect(
+      enviarYFallar(listo(), error(409, 'ID_INTERACCION_REUTILIZADA')).estado,
+    ).toBe(E.ERROR_ENVIO);
+  });
+});
+
+describe('fallos de carga y de red (RF-37)', () => {
+  it('un 500 al enviar muestra el mensaje seguro y conserva la respuesta para reintentarla a mano', () => {
+    const e = {
+      ...error(500, 'ERROR_PERSISTENCIA'),
+      mensaje: 'No se pudo guardar tu respuesta. Inténtalo de nuevo.',
+    };
+    const estado = enviarYFallar(listo(), e, 'mismo-id');
+
+    expect(estado.estado).toBe(E.ERROR_ENVIO);
+    expect(estado.errorEnvio.mensaje).toBe(e.mensaje);
+    // D7: el reintento reusa el mismo id_interaccion; no hay reenvío
+    // automático.
+    expect(estado.envio.cuerpo.id_interaccion).toBe('mismo-id');
+    expect(estado.recarga).toBe(listo().recarga);
+  });
+
+  it('una caída de red al enviar ofrece reintentar con el mismo cuerpo', () => {
+    const estado = enviarYFallar(listo(), error(null, 'SIN_CONEXION'), 'r1');
+
+    expect(estado.estado).toBe(E.ERROR_ENVIO);
+    expect(estado.envio.cuerpo.id_interaccion).toBe('r1');
+    expect(
+      conversationReducer(estado, { type: 'REINTENTAR_ENVIO' }).estado,
+    ).toBe(E.ENVIANDO);
+  });
+
+  it('503 RECURSO_NO_DISPONIBLE al cargar el nodo muestra el mensaje y permite un reintento', () => {
+    const e = {
+      ...error(503, 'RECURSO_NO_DISPONIBLE'),
+      mensaje:
+        'No fue posible cargar el contenido en este momento. Inténtalo de nuevo más tarde.',
+    };
+    const estado = conversationReducer(crearEstadoInicial(ID), {
+      type: 'ERROR',
+      error: e,
+    });
+
+    expect(estado.estado).toBe(E.ERROR);
+    expect(estado.error.mensaje).toBe(e.mensaje);
+    expect(estado.error.reintentable).toBe(true);
+    expect(estado.recuperacion).toBe(0);
+    expect(conversationReducer(estado, { type: 'REINTENTAR' }).recarga).toBe(1);
+  });
+
+  it('un recurso multimedia caído no afecta el resto de la conversación', () => {
+    const estado = reducir(
+      [
+        { type: 'HISTORIAL_EXITO', pagina: paginaHistorial() },
+        { type: 'RECURSO_ERROR', indice: 1 },
+        { type: 'EXITO', conversacion: conversacion() },
+        { type: 'RECURSO_ERROR', indice: 1 },
+      ],
+      listo(),
+    );
+
+    expect(selectHayRecursoNoDisponible(estado)).toBe(true);
+    expect(estado.estado).toBe(E.LISTO);
+    expect(selectItems(estado)).toHaveLength(4);
+    expect(estado.recarga).toBe(1);
+    expect(estado.envio).toBeNull();
   });
 });

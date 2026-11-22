@@ -4,6 +4,7 @@ import { CHAT_CLIENT_ERROR, createChatApiError } from '../api/chatApiUtils.js';
 
 import {
   describirErrorInicio,
+  errorInicioParaConversacion,
   mapInicioSesion,
 } from './sesionConversacional.js';
 
@@ -185,5 +186,36 @@ describe('describirErrorInicio', () => {
     const r = describirErrorInicio(error('OTRO', 503));
     expect(r.reintentable).toBe(true);
     expect(r.mensaje).toMatch(/No fue posible/);
+  });
+});
+
+describe('errorInicioParaConversacion (RF-37)', () => {
+  it('presenta un 409 de /iniciar con su mensaje, sin reintento automático', () => {
+    const error = createChatApiError({
+      code: 'ESTADO_INCONSISTENTE',
+      status: 409,
+      message: 'No fue posible recuperar la sesión.',
+      requestId: 'req-9',
+    });
+
+    expect(errorInicioParaConversacion(error)).toEqual({
+      status: 409,
+      codigo: 'ESTADO_INCONSISTENTE',
+      mensaje: 'No fue posible recuperar la sesión.',
+      campo: null,
+      reintentable: false,
+      requestId: 'req-9',
+    });
+  });
+
+  it('sin conexión es reintentable con el mensaje propio', () => {
+    const error = createChatApiError({ code: CHAT_CLIENT_ERROR.SIN_CONEXION });
+
+    expect(errorInicioParaConversacion(error)).toMatchObject({
+      status: null,
+      codigo: 'SIN_CONEXION',
+      reintentable: true,
+    });
+    expect(errorInicioParaConversacion(error).mensaje).not.toBe('');
   });
 });

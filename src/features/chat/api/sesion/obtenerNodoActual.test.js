@@ -21,6 +21,8 @@ describe('obtenerNodoActual (RF-26)', () => {
     expect(apiClient.get).toHaveBeenCalledTimes(1);
     expect(apiClient.get.mock.calls[0]).toEqual([
       expect.stringMatching(new RegExp(`/chat/sesiones/${ID}/nodo-actual$`)),
+      // RF-37: solo la cabecera de correlación, sin cuerpo.
+      { headers: { 'X-Request-Id': expect.any(String) } },
     ]);
   });
 

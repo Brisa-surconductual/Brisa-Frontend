@@ -1,25 +1,39 @@
 import { useEffect, useReducer, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
+import { API_ERROR_CLIENTE } from '@/shared/utils/apiError.js';
+
 import { enviarRespuesta } from '../../../api/sesion/enviarRespuesta.js';
+import { iniciarSesionConversacional } from '../../../api/sesion/iniciarSesionConversacional.js';
 import { obtenerHistorialInteracciones } from '../../../api/sesion/obtenerHistorialInteracciones.js';
 import { obtenerNodoActual } from '../../../api/sesion/obtenerNodoActual.js';
 import { REGISTRO_ENTRADAS } from '../../../components/NodeInput/registroEntradas.js';
+import {
+  CODIGO_ERROR_CLIENTE,
+  registrarErrorCliente,
+} from '../../../services/erroresCliente.js';
 import { mapHistorial } from '../../../services/historialInteracciones.js';
 import {
   leerInicioSesion,
   olvidarInicioSesion,
+  recordarInicioSesion,
 } from '../../../services/inicioSesionReciente.js';
 import { mapNodoActual } from '../../../services/nodoActual.js';
 import { mapResultadoRespuesta } from '../../../services/resultadoRespuesta.js';
-import { MENSAJE_RECUPERADA_DESDE_HISTORIAL } from '../../../services/sesionConversacional.js';
+import {
+  MENSAJE_RECUPERADA_DESDE_HISTORIAL,
+  errorInicioParaConversacion,
+  mapInicioSesion,
+} from '../../../services/sesionConversacional.js';
 import {
   ESTADO_CONVERSACION,
   ESTADO_HISTORIAL,
   conversationReducer,
   crearEstadoInicial,
   prepararInicio,
+  selectHayRecursoNoDisponible,
   selectItems,
+  selectMostrarDificultad,
   selectNodoFormulario,
   selectRecursosNoPresentados,
   selectSecuenciaSiguiente,
@@ -32,7 +46,14 @@ import {
 
 const STUDENT_HOME_PATH = '/app/estudiante';
 const CHAT_ENTRY_PATH = '/app/estudiante/chat';
+const CHAT_SESION_PATH = '/app/estudiante/chat/sesion';
 const LOGIN_PATH = '/login';
+
+// RF-37: sin respuesta del servidor (el backend no pudo registrarlo).
+const esSinConexion = (error) =>
+  error != null &&
+  error.status == null &&
+  error.codigo === API_ERROR_CLIENTE.SIN_CONEXION;
 
 // §2.4 de FE-M03-03: única acción del GET que depende del `codigo`.
 const CODIGO_SESION_NO_ENCONTRADA = 'SESION_NO_ENCONTRADA';
@@ -45,6 +66,7 @@ const {
   ERROR_ENVIO,
   DIRECCION_INVALIDA,
   COMPLETADA,
+  RECUPERANDO,
 } = ESTADO_CONVERSACION;
 
 // RF-32: el texto de la burbuja del historial se arma igual que al
@@ -88,6 +110,81 @@ export function useChatConversationPage() {
   useEffect(() => {
     olvidarInicioSesion(idSesion);
   }, [idSesion]);
+
+  // RF-37: recuperación con /iniciar (RF-32) tras NODO_DESACTUALIZADO o
+  // ESTADO_INCONSISTENTE. Una petición por incremento de `recuperacion`;
+  // el reducer no pide otra si esta falla.
+  useEffect(() => {
+    if (state.recuperacion === 0) return undefined;
+
+    let cancelado = false;
+
+    iniciarSesionConversacional()
+      .then((data) => {
+        if (cancelado) return;
+
+        const modelo = mapInicioSesion(data);
+
+        // El backend entregó otra sesión: se abre esa, con estos mismos
+        // datos (solo en memoria) y sin pedirlos de nuevo.
+        if (modelo.sesion.idSesion !== idSesion) {
+          recordarInicioSesion(modelo);
+          navigate(`${CHAT_SESION_PATH}/${modelo.sesion.idSesion}`, {
+            replace: true,
+          });
+          return;
+        }
+
+        dispatch({
+          type: 'RECUPERACION_EXITO',
+          inicio: prepararInicio(modelo, textoDe),
+        });
+      })
+      .catch((error) => {
+        if (cancelado) return;
+
+        if (error?.status === 401) {
+          navigate(LOGIN_PATH, { replace: true });
+          return;
+        }
+
+        dispatch({
+          type: 'RECUPERACION_ERROR',
+          error: errorInicioParaConversacion(error),
+        });
+      });
+
+    return () => {
+      cancelado = true;
+    };
+  }, [idSesion, state.recuperacion, navigate]);
+
+  // RF-37: el backend no ve la falta de conexión ni un recurso que el
+  // navegador no pudo mostrar; se reportan (sin esperar ni bloquear). Los
+  // errores HTTP no se reportan: el backend ya los registró.
+  const sinConexion = [
+    state.error,
+    state.errorEnvio,
+    state.historialError,
+    state.errorAnteriores,
+  ].some(esSinConexion);
+  const recursoNoDisponible = selectHayRecursoNoDisponible(state);
+
+  useEffect(() => {
+    if (!sinConexion) return;
+    void registrarErrorCliente({
+      codigo: CODIGO_ERROR_CLIENTE.SIN_CONEXION,
+      idSesion,
+    });
+  }, [sinConexion, idSesion]);
+
+  useEffect(() => {
+    if (!recursoNoDisponible) return;
+    void registrarErrorCliente({
+      codigo: CODIGO_ERROR_CLIENTE.RECURSO_NO_DISPONIBLE,
+      idSesion,
+    });
+  }, [recursoNoDisponible, idSesion, state.paso]);
 
   // RF-26: solo lectura. Al montar y en cada recarga (reintento, recurso
   // caído, avance tras un 200 o NODO_DESACTUALIZADO).
@@ -195,7 +292,8 @@ export function useChatConversationPage() {
       tituloRef.current?.focus();
     } else if (
       state.estado === ERROR_ENVIO ||
-      (state.estado === ERROR && previo === AVANZANDO)
+      (state.estado === ERROR &&
+        (previo === AVANZANDO || previo === RECUPERANDO))
     ) {
       errorRef.current?.focus();
     }
@@ -329,9 +427,13 @@ export function useChatConversationPage() {
     aviso: state.aviso,
     // RF-32: aviso discreto hasta el primer avance.
     avisoRecuperacion:
-      state.recuperadaDesdeHistorial && !huboAvance
+      state.recuperadaDesdeHistorial && state.paso === state.pasoRecuperada
         ? MENSAJE_RECUPERADA_DESDE_HISTORIAL
         : null,
+    // RF-37: tres rechazos de validación en el nodo.
+    mostrarDificultad: selectMostrarDificultad(state),
+    ayudaSolicitada: state.ayudaSolicitada,
+    pedirAyuda: () => dispatch({ type: 'PEDIR_AYUDA' }),
     nodoFormulario: selectNodoFormulario(state),
     claveFormulario: `nodo-${state.paso}`,
     hayHilo: items.length > 0,

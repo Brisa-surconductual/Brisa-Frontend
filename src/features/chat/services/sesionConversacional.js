@@ -113,3 +113,19 @@ export function describirErrorInicio(error) {
     requiereLogin: false,
   };
 }
+
+// RF-37: un error de /iniciar (`toChatApiError`) con la forma de D4
+// (`toApiError`) para mostrarlo en la conversación con ApiErrorMessage.
+// Reutiliza `describirErrorInicio`: no hay otro catálogo ni otros textos.
+export function errorInicioParaConversacion(error) {
+  const { mensaje, reintentable } = describirErrorInicio(error);
+
+  return Object.freeze({
+    status: error?.status ?? null,
+    codigo: typeof error?.code === 'string' ? error.code : 'DESCONOCIDO',
+    mensaje,
+    campo: null,
+    reintentable,
+    ...(error?.requestId ? { requestId: error.requestId } : {}),
+  });
+}
