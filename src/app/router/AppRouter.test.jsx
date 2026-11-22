@@ -13,6 +13,7 @@ import {
   CohortNarrativePage,
   CohortNotificationsPage,
   CohortDashboard,
+  CohortEvolutionPage,
 } from '@/features/administracion/index.js';
 import { USER_ROLE } from '@/features/users/types/authTypes.js';
 import { DASHBOARD_SHORTCUTS } from '@/features/users/pages/PsychologyHomePage/data/psychologyStats.js';
@@ -95,6 +96,7 @@ const ADMIN_PATHS = Object.freeze([
   '/app/administrativo/cohortes/co-1/vista-agregada',
   '/app/administrativo/cohortes/co-1/vista-narrativa',
   '/app/administrativo/cohortes/co-1/vista-notificaciones',
+  '/app/administrativo/cohortes/co-1/evolucion',
   '/app/administrativo/auditoria',
   '/app/administrativo/chat/modalidad',
   '/app/administrativo/chat/grupal',
@@ -244,6 +246,17 @@ describe('Rutas administrativas protegidas', () => {
     expect(getActiveAdminSection('/app/administrativo')).toBe(ADMIN_SECTION.DASHBOARD);
     expect(ADMIN_NAV_ITEMS.filter(({ label }) => label === 'Dashboard')).toHaveLength(1);
     expect(ADMIN_NAV_ITEMS.map(({ label }) => label)).not.toContain('Panel principal');
+  });
+
+  it('la evolución temporal (RF-141) monta su página con idCohorte, mantiene Cohortes activa y no añade menú', () => {
+    const leaf = match('/app/administrativo/cohortes/demo-cohorte-b/evolucion').at(-1);
+
+    expect(leaf.route.element.type).toBe(CohortEvolutionPage);
+    expect(leaf.params).toEqual({ idCohorte: 'demo-cohorte-b' });
+    expect(getActiveAdminSection('/app/administrativo/cohortes/demo-cohorte-b/evolucion')).toBe(
+      ADMIN_SECTION.COHORTES,
+    );
+    expect(ADMIN_NAV_ITEMS.map(({ label }) => label)).not.toContain('Evolución temporal');
   });
 
   it('la ficha individual (RF-128) monta su página con idCohorte y referencia, y mantiene Cohortes activa', () => {

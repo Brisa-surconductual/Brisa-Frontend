@@ -57,6 +57,7 @@ import {
   CohortNarrativePage,
   CohortNotificationsPage,
   CohortDashboard,
+  CohortEvolutionPage,
 } from '@/features/administracion/index.js';
 
 import { RequireAuth } from './RequireAuth.jsx';
@@ -325,6 +326,11 @@ export function AppRouter() {
               <Route
                 path="administrativo/cohortes/:idCohorte/vista-notificaciones"
                 element={<CohortNotificationsPage />}
+              />
+
+              <Route
+                path="administrativo/cohortes/:idCohorte/evolucion"
+                element={<CohortEvolutionPage />}
               />
 
               <Route

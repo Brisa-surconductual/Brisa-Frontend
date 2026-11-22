@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   BarChart3,
   BellRing,
+  TrendingUp,
   BookOpen,
   CalendarRange,
   CircleCheck,
@@ -31,6 +32,7 @@ import { PARTICIPATION_STATUS } from '../../types/participantStatus.js';
 import {
   getCohortAggregatePath,
   getCohortNarrativePath,
+  getCohortEvolutionPath,
   getCohortNotificationsPath,
   getCohortTrackingPath,
 } from '../../utils/cohortRoutes.js';
@@ -303,11 +305,11 @@ function CohortDetail() {
                   Vistas de la cohorte
                 </h3>
 
-                <div className="grid grid-cols-1 gap-[var(--space-3)] sm:grid-cols-2 xl:flex xl:flex-wrap">
+                <div className="grid grid-cols-1 gap-[var(--space-3)] sm:grid-cols-2 xl:grid-cols-5">
                   {/* Indicadores de seguimiento (RF-142): otra consulta, otra fuente. */}
                   <Link
                     to={getCohortTrackingPath(cohort.id)}
-                    className="inline-flex min-h-[44px] w-full items-center gap-[var(--space-2)] rounded-[var(--radius-md)] border border-[var(--surface-border)] bg-[var(--surface-card)] px-[var(--space-4)] py-[var(--space-2)] text-left text-[length:var(--font-size-sm)] leading-[var(--line-height-tight)] font-bold text-[var(--brand-600)] no-underline transition-colors duration-150 hover:bg-[var(--surface-hover)] motion-reduce:transition-none xl:w-auto"
+                    className="inline-flex min-h-[44px] w-full items-center gap-[var(--space-2)] rounded-[var(--radius-md)] border border-[var(--surface-border)] bg-[var(--surface-card)] px-[var(--space-4)] py-[var(--space-2)] text-left text-[length:var(--font-size-sm)] leading-[var(--line-height-tight)] font-bold text-[var(--brand-600)] no-underline transition-colors duration-150 hover:bg-[var(--surface-hover)] motion-reduce:transition-none"
                   >
                     <Activity size={16} strokeWidth={1.8} className="shrink-0" aria-hidden="true" />
                     Ver seguimiento
@@ -317,7 +319,7 @@ function CohortDetail() {
                   {/* Vista agregada conductual (RF-132): solo agregados, otra fuente. */}
                   <Link
                     to={getCohortAggregatePath(cohort.id)}
-                    className="inline-flex min-h-[44px] w-full items-center gap-[var(--space-2)] rounded-[var(--radius-md)] border border-[var(--surface-border)] bg-[var(--surface-card)] px-[var(--space-4)] py-[var(--space-2)] text-left text-[length:var(--font-size-sm)] leading-[var(--line-height-tight)] font-bold text-[var(--brand-600)] no-underline transition-colors duration-150 hover:bg-[var(--surface-hover)] motion-reduce:transition-none xl:w-auto"
+                    className="inline-flex min-h-[44px] w-full items-center gap-[var(--space-2)] rounded-[var(--radius-md)] border border-[var(--surface-border)] bg-[var(--surface-card)] px-[var(--space-4)] py-[var(--space-2)] text-left text-[length:var(--font-size-sm)] leading-[var(--line-height-tight)] font-bold text-[var(--brand-600)] no-underline transition-colors duration-150 hover:bg-[var(--surface-hover)] motion-reduce:transition-none"
                   >
                     <BarChart3 size={16} strokeWidth={1.8} className="shrink-0" aria-hidden="true" />
                     Ver vista agregada
@@ -327,7 +329,7 @@ function CohortDetail() {
                   {/* Progresión narrativa agregada (RF-133): solo agregados, fuente propia. */}
                   <Link
                     to={getCohortNarrativePath(cohort.id)}
-                    className="inline-flex min-h-[44px] w-full items-center gap-[var(--space-2)] rounded-[var(--radius-md)] border border-[var(--surface-border)] bg-[var(--surface-card)] px-[var(--space-4)] py-[var(--space-2)] text-left text-[length:var(--font-size-sm)] leading-[var(--line-height-tight)] font-bold text-[var(--brand-600)] no-underline transition-colors duration-150 hover:bg-[var(--surface-hover)] motion-reduce:transition-none xl:w-auto"
+                    className="inline-flex min-h-[44px] w-full items-center gap-[var(--space-2)] rounded-[var(--radius-md)] border border-[var(--surface-border)] bg-[var(--surface-card)] px-[var(--space-4)] py-[var(--space-2)] text-left text-[length:var(--font-size-sm)] leading-[var(--line-height-tight)] font-bold text-[var(--brand-600)] no-underline transition-colors duration-150 hover:bg-[var(--surface-hover)] motion-reduce:transition-none"
                   >
                     <BookOpen size={16} strokeWidth={1.8} className="shrink-0" aria-hidden="true" />
                     Ver progresión narrativa
@@ -337,10 +339,21 @@ function CohortDetail() {
                   {/* Efectividad de notificaciones agregada (RF-134): solo agregados, fuente propia. */}
                   <Link
                     to={getCohortNotificationsPath(cohort.id)}
-                    className="inline-flex min-h-[44px] w-full items-center gap-[var(--space-2)] rounded-[var(--radius-md)] border border-[var(--surface-border)] bg-[var(--surface-card)] px-[var(--space-4)] py-[var(--space-2)] text-left text-[length:var(--font-size-sm)] leading-[var(--line-height-tight)] font-bold text-[var(--brand-600)] no-underline transition-colors duration-150 hover:bg-[var(--surface-hover)] motion-reduce:transition-none xl:w-auto"
+                    className="inline-flex min-h-[44px] w-full items-center gap-[var(--space-2)] rounded-[var(--radius-md)] border border-[var(--surface-border)] bg-[var(--surface-card)] px-[var(--space-4)] py-[var(--space-2)] text-left text-[length:var(--font-size-sm)] leading-[var(--line-height-tight)] font-bold text-[var(--brand-600)] no-underline transition-colors duration-150 hover:bg-[var(--surface-hover)] motion-reduce:transition-none"
                   >
                     <BellRing size={16} strokeWidth={1.8} className="shrink-0" aria-hidden="true" />
                     Ver efectividad de notificaciones
+                    <span className="sr-only"> de {title}</span>
+                  </Link>
+
+                  {/* Evolución temporal por unidad del cronograma (RF-141). En dos
+                      columnas ocupa la fila completa para no quedar suelto. */}
+                  <Link
+                    to={getCohortEvolutionPath(cohort.id)}
+                    className="inline-flex min-h-[44px] w-full items-center gap-[var(--space-2)] rounded-[var(--radius-md)] border border-[var(--surface-border)] bg-[var(--surface-card)] px-[var(--space-4)] py-[var(--space-2)] text-left text-[length:var(--font-size-sm)] leading-[var(--line-height-tight)] font-bold text-[var(--brand-600)] no-underline transition-colors duration-150 hover:bg-[var(--surface-hover)] motion-reduce:transition-none sm:max-xl:col-span-2"
+                  >
+                    <TrendingUp size={16} strokeWidth={1.8} className="shrink-0" aria-hidden="true" />
+                    Ver evolución temporal
                     <span className="sr-only"> de {title}</span>
                   </Link>
                 </div>

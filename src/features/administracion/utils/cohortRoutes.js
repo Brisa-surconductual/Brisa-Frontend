@@ -29,6 +29,12 @@ export function getCohortNotificationsPath(cohortId) {
   return `${getCohortDetailPath(cohortId)}/vista-notificaciones`;
 }
 
+// Evolución temporal de indicadores (RF-141). Solo lleva el
+// identificador de la cohorte y no enlaza a ningún participante.
+export function getCohortEvolutionPath(cohortId) {
+  return `${getCohortDetailPath(cohortId)}/evolucion`;
+}
+
 // Ficha individual (RF-128). `reference` es la referencia OPACA que da la
 // fuente: nunca un correo, documento, nombre ni UUID interno.
 export function getParticipantTrackingPath(cohortId, reference) {

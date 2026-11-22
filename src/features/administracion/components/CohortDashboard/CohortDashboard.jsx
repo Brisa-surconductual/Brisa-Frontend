@@ -11,6 +11,7 @@ import {
   PlugZap,
   RefreshCw,
   SearchX,
+  TrendingUp,
   UsersRound,
 } from 'lucide-react';
 
@@ -26,6 +27,7 @@ import {
   COHORTS_PATH,
   getCohortAggregatePath,
   getCohortDetailPath,
+  getCohortEvolutionPath,
   getCohortNarrativePath,
   getCohortNotificationsPath,
   getCohortTrackingPath,
@@ -168,6 +170,15 @@ function CohortShortcuts({ cohort }) {
             aria-hidden="true"
           />
           Seguimiento de participantes
+        </Link>
+        <Link to={getCohortEvolutionPath(cohort.id)} className={LINK_CLASS}>
+          <TrendingUp
+            size={16}
+            strokeWidth={1.8}
+            className="shrink-0"
+            aria-hidden="true"
+          />
+          Evolución temporal
         </Link>
         <Link to={COHORTS_PATH} className={LINK_CLASS}>
           <Layers

@@ -24,6 +24,8 @@ export { CohortNarrativePage } from './pages/CohortNarrativePage/index.js';
 
 export { CohortNotificationsPage } from './pages/CohortNotificationsPage/index.js';
 
+export { CohortEvolutionPage } from './pages/CohortEvolutionPage/index.js';
+
 // Panel principal de la cohorte activa (RF-140), montado en la pantalla
 // de aterrizaje administrativa por app/router.
 
