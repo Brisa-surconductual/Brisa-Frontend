@@ -9,6 +9,11 @@ import {
   CohortListPage,
   ParticipantTrackingPage,
   ParticipantTrackingProfilePage,
+  CohortAggregatePage,
+  CohortNarrativePage,
+  CohortNotificationsPage,
+  CohortDashboard,
+  CohortEvolutionPage,
 } from '@/features/administracion/index.js';
 import { USER_ROLE } from '@/features/users/types/authTypes.js';
 import { DASHBOARD_SHORTCUTS } from '@/features/users/pages/PsychologyHomePage/data/psychologyStats.js';
@@ -88,6 +93,10 @@ const ADMIN_PATHS = Object.freeze([
   '/app/administrativo/cohortes/co-1/editar',
   '/app/administrativo/cohortes/co-1/seguimiento',
   '/app/administrativo/cohortes/co-1/seguimiento/ref-1',
+  '/app/administrativo/cohortes/co-1/vista-agregada',
+  '/app/administrativo/cohortes/co-1/vista-narrativa',
+  '/app/administrativo/cohortes/co-1/vista-notificaciones',
+  '/app/administrativo/cohortes/co-1/evolucion',
   '/app/administrativo/auditoria',
   '/app/administrativo/chat/modalidad',
   '/app/administrativo/chat/grupal',
@@ -183,6 +192,71 @@ describe('Rutas administrativas protegidas', () => {
       ADMIN_SECTION.COHORTES,
     );
     expect(ADMIN_NAV_ITEMS.map(({ label }) => label)).not.toContain('Seguimiento');
+  });
+
+  it('la vista agregada conductual (RF-132) monta su página con idCohorte y mantiene Cohortes activa, sin menú propio', () => {
+    const leaf = match('/app/administrativo/cohortes/demo-cohorte-b/vista-agregada').at(-1);
+
+    expect(leaf.route.element.type).toBe(CohortAggregatePage);
+    expect(leaf.params).toEqual({ idCohorte: 'demo-cohorte-b' });
+    expect(getActiveAdminSection('/app/administrativo/cohortes/demo-cohorte-b/vista-agregada')).toBe(
+      ADMIN_SECTION.COHORTES,
+    );
+    expect(ADMIN_NAV_ITEMS.map(({ label }) => label)).not.toContain('Vista agregada');
+    expect(match('/app/administrativo/cohortes/demo-cohorte-b/seguimiento').at(-1).route.element.type).toBe(
+      ParticipantTrackingPage,
+    );
+  });
+
+  it('la vista narrativa agregada (RF-133) monta su página con idCohorte y mantiene Cohortes activa, sin menú propio ni alterar RF-132', () => {
+    const leaf = match('/app/administrativo/cohortes/demo-cohorte-b/vista-narrativa').at(-1);
+
+    expect(leaf.route.element.type).toBe(CohortNarrativePage);
+    expect(leaf.params).toEqual({ idCohorte: 'demo-cohorte-b' });
+    expect(getActiveAdminSection('/app/administrativo/cohortes/demo-cohorte-b/vista-narrativa')).toBe(
+      ADMIN_SECTION.COHORTES,
+    );
+    expect(ADMIN_NAV_ITEMS.map(({ label }) => label)).not.toContain('Progresión narrativa');
+    expect(match('/app/administrativo/cohortes/demo-cohorte-b/vista-agregada').at(-1).route.element.type).toBe(
+      CohortAggregatePage,
+    );
+  });
+
+  it('la vista de efectividad de notificaciones (RF-134) monta su página con idCohorte y mantiene Cohortes activa, sin menú propio ni alterar RF-132 ni RF-133', () => {
+    const leaf = match('/app/administrativo/cohortes/demo-cohorte-b/vista-notificaciones').at(-1);
+
+    expect(leaf.route.element.type).toBe(CohortNotificationsPage);
+    expect(leaf.params).toEqual({ idCohorte: 'demo-cohorte-b' });
+    expect(getActiveAdminSection('/app/administrativo/cohortes/demo-cohorte-b/vista-notificaciones')).toBe(
+      ADMIN_SECTION.COHORTES,
+    );
+    expect(ADMIN_NAV_ITEMS.map(({ label }) => label)).not.toContain('Notificaciones');
+    expect(match('/app/administrativo/cohortes/demo-cohorte-b/vista-agregada').at(-1).route.element.type).toBe(
+      CohortAggregatePage,
+    );
+    expect(match('/app/administrativo/cohortes/demo-cohorte-b/vista-narrativa').at(-1).route.element.type).toBe(
+      CohortNarrativePage,
+    );
+  });
+
+  it('el Dashboard monta el panel de la cohorte activa (RF-140) en la pantalla de aterrizaje, sin ruta ni menú nuevos', () => {
+    const leaf = match('/app/administrativo').at(-1);
+
+    expect(leaf.route.element.props.cohortDashboard.type).toBe(CohortDashboard);
+    expect(getActiveAdminSection('/app/administrativo')).toBe(ADMIN_SECTION.DASHBOARD);
+    expect(ADMIN_NAV_ITEMS.filter(({ label }) => label === 'Dashboard')).toHaveLength(1);
+    expect(ADMIN_NAV_ITEMS.map(({ label }) => label)).not.toContain('Panel principal');
+  });
+
+  it('la evolución temporal (RF-141) monta su página con idCohorte, mantiene Cohortes activa y no añade menú', () => {
+    const leaf = match('/app/administrativo/cohortes/demo-cohorte-b/evolucion').at(-1);
+
+    expect(leaf.route.element.type).toBe(CohortEvolutionPage);
+    expect(leaf.params).toEqual({ idCohorte: 'demo-cohorte-b' });
+    expect(getActiveAdminSection('/app/administrativo/cohortes/demo-cohorte-b/evolucion')).toBe(
+      ADMIN_SECTION.COHORTES,
+    );
+    expect(ADMIN_NAV_ITEMS.map(({ label }) => label)).not.toContain('Evolución temporal');
   });
 
   it('la ficha individual (RF-128) monta su página con idCohorte y referencia, y mantiene Cohortes activa', () => {

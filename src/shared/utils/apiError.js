@@ -19,6 +19,17 @@ function leerMensaje(data) {
   return '';
 }
 
+// RF-37: identificador de correlación. El que devolvió el servidor o, si
+// no hubo respuesta, el que envió la petición. Solo se agrega si existe:
+// los módulos que no lo usan conservan la forma de D4.
+function leerIdPeticion(error) {
+  const id =
+    error?.response?.headers?.['x-request-id'] ??
+    error?.config?.headers?.['X-Request-Id'];
+
+  return typeof id === 'string' && id !== '' ? { requestId: id } : {};
+}
+
 // Presenta el error que decidió el backend (D1, D4); no inventa mensajes.
 export function toApiError(error) {
   if (error?.[NORMALIZADO]) return error;
@@ -32,6 +43,7 @@ export function toApiError(error) {
       mensaje: '',
       campo: null,
       reintentable: true,
+      ...leerIdPeticion(error),
     });
   }
 
@@ -45,5 +57,9 @@ export function toApiError(error) {
     mensaje: leerMensaje(data),
     campo: texto(data.campo),
     reintentable: status >= 500,
+    ...leerIdPeticion(error),
   });
 }
+
+// Un error ya normalizado por `toApiError` (marca no enumerable).
+export const esApiErrorNormalizado = (error) => Boolean(error?.[NORMALIZADO]);

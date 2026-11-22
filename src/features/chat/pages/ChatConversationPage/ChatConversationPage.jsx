@@ -1,5 +1,5 @@
 import { ArrowLeft, LoaderCircle, MessageCircle } from 'lucide-react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import { ApiErrorMessage } from '@/shared/components/ui/ApiErrorMessage/index.js';
 import { Button } from '@/shared/components/ui/Button/index.js';
@@ -8,10 +8,12 @@ import {
   Skeleton,
 } from '@/shared/components/ui/Skeleton/index.js';
 
+import { ChatErrorBoundary } from '../../components/ChatErrorBoundary/index.js';
 import { HistorialConversacion } from '../../components/HistorialConversacion/index.js';
 import { NodeInputForm } from '../../components/NodeInputForm/index.js';
 import { GLASS } from '../../utils/glass.js';
 
+import { DificultadRespuesta } from './components/DificultadRespuesta/index.js';
 import { NodoEnEspera } from './components/NodoEnEspera/index.js';
 import { SesionCompletada } from './components/SesionCompletada/index.js';
 import { StaleNodeNotice } from './components/StaleNodeNotice/index.js';
@@ -19,7 +21,10 @@ import { useChatConversationPage } from './hooks/useChatConversationPage.js';
 import { ESTADO_CONVERSACION } from './utils/conversationState.js';
 import { ACCION_ERROR_ENVIO } from './utils/envio.js';
 
-const { LISTO, ERROR, ENVIANDO, AVANZANDO, ERROR_ENVIO } = ESTADO_CONVERSACION;
+const { LISTO, ERROR, ENVIANDO, AVANZANDO, ERROR_ENVIO, RECUPERANDO } =
+  ESTADO_CONVERSACION;
+
+const CHAT_ENTRY_PATH = '/app/estudiante/chat';
 
 // Esqueleto con la forma de las burbujas de Brisa.
 function ConversationSkeleton({ anchos = ['70%', '55%'] }) {
@@ -62,6 +67,10 @@ function ChatConversation() {
     errorEnvio,
     accionErrorEnvio,
     aviso,
+    avisoRecuperacion,
+    mostrarDificultad,
+    ayudaSolicitada,
+    pedirAyuda,
     nodoFormulario,
     espera,
     claveFormulario,
@@ -127,6 +136,9 @@ function ChatConversation() {
           />
         )}
 
+        {/* RF-32: el backend recuperó el último punto válido. */}
+        {avisoRecuperacion && <StaleNodeNotice mensaje={avisoRecuperacion} />}
+
         {(hayHilo || hayMas) && (
           <HistorialConversacion
             items={items}
@@ -147,7 +159,22 @@ function ChatConversation() {
           skeleton={<ConversationSkeleton anchos={['60%']} />}
         />
 
+        {/* RF-37: el último estado válido se pide a /iniciar. */}
+        <LoadingRegion
+          loading={estado === RECUPERANDO}
+          label="Recuperando tu conversación"
+          skeleton={<ConversationSkeleton anchos={['60%']} />}
+        />
+
         {aviso && <StaleNodeNotice mensaje={aviso.mensaje} />}
+
+        {/* RF-37: tras tres respuestas rechazadas en este nodo. */}
+        {mostrarDificultad && (
+          <DificultadRespuesta
+            ayudaSolicitada={ayudaSolicitada}
+            onPedirAyuda={pedirAyuda}
+          />
+        )}
 
         {nodoFormulario && (
           <NodeInputForm
@@ -201,7 +228,8 @@ function ChatConversation() {
               }
             />
 
-            {accionErrorEnvio === ACCION_ERROR_ENVIO.VOLVER_AL_CHAT ? (
+            {accionErrorEnvio === ACCION_ERROR_ENVIO.VOLVER_AL_CHAT ||
+            accionErrorEnvio === ACCION_ERROR_ENVIO.RECUPERAR ? (
               <BackButton onClick={goChat}>Volver al chat</BackButton>
             ) : (
               <BackButton onClick={goHome}>Volver al inicio</BackButton>
@@ -230,8 +258,18 @@ function ChatConversation() {
 }
 
 // Con otro `idSesion` la conversación arranca de cero (estado, D7 y D13).
+// RF-37: un error al presentarla queda contenido en su límite de errores.
 export function ChatConversationPage() {
   const { idSesion } = useParams();
+  const navigate = useNavigate();
 
-  return <ChatConversation key={idSesion} />;
+  return (
+    <ChatErrorBoundary
+      key={idSesion}
+      idSesion={idSesion}
+      onVolverAlChat={() => navigate(CHAT_ENTRY_PATH)}
+    >
+      <ChatConversation key={idSesion} />
+    </ChatErrorBoundary>
+  );
 }

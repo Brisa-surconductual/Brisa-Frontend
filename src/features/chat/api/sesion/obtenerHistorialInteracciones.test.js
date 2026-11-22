@@ -21,7 +21,11 @@ describe('obtenerHistorialInteracciones (RF-31 / RF-32)', () => {
 
     const [url, config] = apiClient.get.mock.calls[0];
     expect(url).toMatch(new RegExp(`/chat/sesiones/${ID}/historial$`));
-    expect(config).toEqual({ params: undefined });
+    // RF-37: cada petición lleva su X-Request-Id.
+    expect(config).toEqual({
+      params: undefined,
+      headers: { 'X-Request-Id': expect.any(String) },
+    });
   });
 
   it('pide la página anterior con antes_de_secuencia y limite', async () => {
@@ -34,6 +38,7 @@ describe('obtenerHistorialInteracciones (RF-31 / RF-32)', () => {
 
     expect(apiClient.get.mock.calls[0][1]).toEqual({
       params: { antes_de_secuencia: 21, limite: 20 },
+      headers: { 'X-Request-Id': expect.any(String) },
     });
   });
 
@@ -42,7 +47,10 @@ describe('obtenerHistorialInteracciones (RF-31 / RF-32)', () => {
 
     await obtenerHistorialInteracciones(ID, { antesDeSecuencia: null });
 
-    expect(apiClient.get.mock.calls[0][1]).toEqual({ params: undefined });
+    expect(apiClient.get.mock.calls[0][1]).toEqual({
+      params: undefined,
+      headers: { 'X-Request-Id': expect.any(String) },
+    });
   });
 
   it('lanza el error del backend normalizado por codigo', async () => {

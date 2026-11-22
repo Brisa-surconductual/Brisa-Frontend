@@ -2,6 +2,8 @@ import { apiClient } from '@/shared/utils/apiClient.jsx';
 import { toApiError } from '@/shared/utils/apiError.js';
 import { CHAT } from '@/shared/utils/constans.jsx';
 
+import { conIdPeticion } from '../chatApiUtils.js';
+
 // RF-31 / RF-32: GET /chat/sesiones/{id_sesion}/historial. Solo lectura y
 // sin CSRF. Sin `antesDeSecuencia` devuelve las interacciones más
 // recientes; con él, las de `secuencia < antesDeSecuencia` (el
@@ -21,7 +23,9 @@ export async function obtenerHistorialInteracciones(
   try {
     const response = await apiClient.get(
       `${CHAT}/sesiones/${encodeURIComponent(idSesion)}/historial`,
-      { params: Object.keys(params).length > 0 ? params : undefined },
+      conIdPeticion({
+        params: Object.keys(params).length > 0 ? params : undefined,
+      }),
     );
 
     return response.data?.data;

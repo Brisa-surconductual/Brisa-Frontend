@@ -83,6 +83,22 @@ export const CHAT_ERROR_CODE = Object.freeze({
   DESTINO_INVALIDO: error(500, FLUJO),
   ERROR_PERFIL: error(500, FLUJO),
 
+  // RF-37: catálogo vigente del filtro conversacional del backend
+  // (`catalogo-errores-conversacionales.ts`). El texto lo da el backend.
+  PARAMETRO_INVALIDO: error(400, VALIDACION),
+  SIN_COINCIDENCIA: error(400, VALIDACION),
+  CSRF_INVALIDO: error(403, FLUJO),
+  NODO_INEXISTENTE: error(404, FLUJO),
+  ESTADO_INCONSISTENTE: error(409, FLUJO),
+  SESION_NO_REANUDABLE: error(409, FLUJO),
+  SECUENCIA_FUERA_DE_ORDEN: error(409, FLUJO),
+  ID_INTERACCION_REUTILIZADA: error(409, FLUJO),
+  HISTORIAL_INCONSISTENTE: error(422, FLUJO),
+  LIMITE_REPORTES: error(429, FLUJO),
+  ERROR_PERSISTENCIA: error(500, FLUJO),
+  CONTENIDO_NO_DISPONIBLE: error(500, FLUJO),
+  RECURSO_NO_DISPONIBLE: error(503, FLUJO),
+
   // Contrato 6.1: precarga
   SESION_NO_INICIALIZADA: error(422, PRECARGA),
   UNIDAD_TEMPORAL_NO_DETERMINADA: error(422, PRECARGA),

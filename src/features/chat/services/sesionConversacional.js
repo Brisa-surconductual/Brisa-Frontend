@@ -2,10 +2,52 @@ import { CHAT_CLIENT_ERROR } from '../api/chatApiUtils.js';
 import { CHAT_ERROR_CODE } from '../types/chatErrorCodes.js';
 import { ESTADO_SESION } from '../types/estadosChat.js';
 
+import { mapNodoActual } from './nodoActual.js';
+
 const MENSAJE_SIN_CONEXION =
   'No pudimos conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.';
 const MENSAJE_GENERICO =
   'No fue posible iniciar tu sesión de chat. Inténtalo de nuevo.';
+
+// RF-32: `recuperada_desde_historial`. Aviso de interfaz, no clínico.
+export const MENSAJE_RECUPERADA_DESDE_HISTORIAL =
+  'BRISA recuperó el último punto válido de tu conversación.';
+
+// RF-32: `nodo_actual` de /iniciar (snake_case) al mismo modelo que da
+// RF-26 (`mapNodoActual`). El nodo lo eligió el backend: no se toca.
+// `disponibilidad` también se conserva (RF-24: nodo en espera).
+const conversacionDeInicio = (sesion, nodo) =>
+  mapNodoActual({
+    idSesion: sesion.id_sesion,
+    estadoSesion: sesion.estado_actual,
+    nodo: {
+      idNodo: nodo.id_nodo,
+      tipoNodo: nodo.tipo_nodo,
+      orden: nodo.orden ?? null,
+      esTerminal: nodo.es_terminal,
+      disponibilidad: nodo.disponibilidad && {
+        habilitado: nodo.disponibilidad.habilitado,
+        habilitaAprox: nodo.disponibilidad.habilita_aprox,
+      },
+      bloques: nodo.bloques,
+      entrada: nodo.entrada,
+    },
+  });
+
+// RF-32: `historial_reciente` tiene la forma de la página del GET del
+// historial; se conserva con esas claves para mapearla con `mapHistorial`,
+// igual que la página que llega por GET. Sin `items` no hay página.
+function paginaDeInicio(historial) {
+  if (!Array.isArray(historial?.items)) return null;
+
+  return Object.freeze({
+    items: Object.freeze([...historial.items]),
+    hay_mas: historial.hay_mas === true,
+    siguiente_cursor: historial.siguiente_cursor ?? null,
+  });
+}
+
+const enteroONull = (valor) => (Number.isInteger(valor) ? valor : null);
 
 // Contrato 3: respuesta del backend → modelo de la interfaz.
 // `tipo_dependencia` y `tipo_craving` se descartan a propósito: el perfil
@@ -15,6 +57,8 @@ export function mapInicioSesion(data) {
 
   return Object.freeze({
     reanudada: data.reanudada === true,
+    // RF-32: el backend reparó el puntero desde el historial.
+    recuperadaDesdeHistorial: data.recuperada_desde_historial === true,
     // El árbol vigente ya se completó: la sesión solo se consulta.
     completada: sesion.estado_actual === ESTADO_SESION.COMPLETADA,
     sesion: Object.freeze({
@@ -23,15 +67,12 @@ export function mapInicioSesion(data) {
       estadoActual: sesion.estado_actual,
       fechaInicio: sesion.fecha_inicio,
       fechaUltimaInteraccion: sesion.fecha_ultima_interaccion,
+      // RF-30 / RF-32: última secuencia confirmada.
+      ultimaSecuencia: enteroONull(sesion.ultima_secuencia),
     }),
-    nodoActual: Object.freeze({
-      idNodo: nodo.id_nodo,
-      tipoNodo: nodo.tipo_nodo,
-      esNodoInicial: nodo.es_nodo_inicial === true,
-      orden: nodo.orden,
-      // Se conserva intacto: el texto no se modifica (RF-26).
-      contenido: nodo.contenido,
-    }),
+    // RF-26 / RF-32: el nodo vigente con el contrato actual.
+    conversacion: conversacionDeInicio(sesion, nodo),
+    historialReciente: paginaDeInicio(data.historial_reciente),
     ubicacionTemporal: ubicacion
       ? Object.freeze({
           nombreUnidad: ubicacion.nombre_unidad,
@@ -75,4 +116,20 @@ export function describirErrorInicio(error) {
     reintentable,
     requiereLogin: false,
   };
+}
+
+// RF-37: un error de /iniciar (`toChatApiError`) con la forma de D4
+// (`toApiError`) para mostrarlo en la conversación con ApiErrorMessage.
+// Reutiliza `describirErrorInicio`: no hay otro catálogo ni otros textos.
+export function errorInicioParaConversacion(error) {
+  const { mensaje, reintentable } = describirErrorInicio(error);
+
+  return Object.freeze({
+    status: error?.status ?? null,
+    codigo: typeof error?.code === 'string' ? error.code : 'DESCONOCIDO',
+    mensaje,
+    campo: null,
+    reintentable,
+    ...(error?.requestId ? { requestId: error.requestId } : {}),
+  });
 }

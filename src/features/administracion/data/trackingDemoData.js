@@ -52,6 +52,23 @@ export const DEMO_TRACKING_REFERENCES = Object.freeze({
   'demo-participante-6': 'seg-f3s9j2',
   'demo-participante-7': 'seg-m8q4y7',
   'demo-participante-8': 'seg-w1c6g3',
+  // Cohorte Piloto B: activos PART-0015 a PART-0030 (fijos, sin alertas).
+  'demo-participante-15': 'seg-axkqmb',
+  'demo-participante-16': 'seg-dlwrht',
+  'demo-participante-17': 'seg-gnpvfz',
+  'demo-participante-18': 'seg-jcsyqe',
+  'demo-participante-19': 'seg-lmbhxa',
+  'demo-participante-20': 'seg-ntuwdk',
+  'demo-participante-21': 'seg-prgzce',
+  'demo-participante-22': 'seg-rvkajn',
+  'demo-participante-23': 'seg-swfmlu',
+  'demo-participante-24': 'seg-tybqgo',
+  'demo-participante-25': 'seg-uhcnzr',
+  'demo-participante-26': 'seg-vxjdpi',
+  'demo-participante-27': 'seg-wqletb',
+  'demo-participante-28': 'seg-xzumav',
+  'demo-participante-29': 'seg-yfhsko',
+  'demo-participante-30': 'seg-zbwdqn',
   'demo-candidato-9': 'seg-e5n2u4',
   'demo-candidato-10': 'seg-h7r9a1',
   'demo-candidato-11': 'seg-t2v5k8',
@@ -119,6 +136,23 @@ export const DEMO_ALERT_HISTORY = Object.freeze({
     inactivity('2025-11-15 08:00', RESOLVED, 'fecha-invalida'),
     craving('2025-11-02T21:30:00Z', DISMISSED, '2025-11-03T14:00:00Z'),
   ),
+  // Cohorte Piloto B: activos PART-0015 a PART-0030 (fijos, sin alertas).
+  'demo-participante-15': history(),
+  'demo-participante-16': history(),
+  'demo-participante-17': history(),
+  'demo-participante-18': history(),
+  'demo-participante-19': history(),
+  'demo-participante-20': history(),
+  'demo-participante-21': history(),
+  'demo-participante-22': history(),
+  'demo-participante-23': history(),
+  'demo-participante-24': history(),
+  'demo-participante-25': history(),
+  'demo-participante-26': history(),
+  'demo-participante-27': history(),
+  'demo-participante-28': history(),
+  'demo-participante-29': history(),
+  'demo-participante-30': history(),
   'demo-candidato-9': history(),
   'demo-candidato-10': history(
     inactivity('2026-03-01T07:30:00-05:00', ACTIVE),
@@ -163,6 +197,55 @@ export const DEMO_TRACKING_PROFILES = Object.freeze({
   }),
   'demo-participante-8': profile('demo-participante-8', {
     progress: 93, adherence: NOT_CALCULABLE, trend: 'ESTABILIZACION', updatedAt: '2025-11-28T06:00:00-05:00',
+  }),
+  // Cohorte Piloto B: activos PART-0015 a PART-0030 (fijos, sin alertas).
+  'demo-participante-15': profile('demo-participante-15', {
+    progress: 74, adherence: 79, trend: TRACKING_TREND.REDUCTION, updatedAt: '2026-03-09T06:00:00-05:00',
+  }),
+  'demo-participante-16': profile('demo-participante-16', {
+    progress: 68, adherence: 71, trend: TRACKING_TREND.STABLE, updatedAt: '2026-03-09T06:00:00-05:00',
+  }),
+  'demo-participante-17': profile('demo-participante-17', {
+    progress: 81, adherence: 86, trend: TRACKING_TREND.REDUCTION, updatedAt: '2026-03-09T06:00:00-05:00',
+  }),
+  'demo-participante-18': profile('demo-participante-18', {
+    progress: 59, adherence: 64, trend: TRACKING_TREND.STABLE, updatedAt: '2026-03-09T06:00:00-05:00',
+  }),
+  'demo-participante-19': profile('demo-participante-19', {
+    progress: 88, adherence: 92, trend: TRACKING_TREND.REDUCTION, updatedAt: '2026-03-09T06:00:00-05:00',
+  }),
+  'demo-participante-20': profile('demo-participante-20', {
+    progress: 63, adherence: 69, trend: TRACKING_TREND.INCREASE, updatedAt: '2026-03-09T06:00:00-05:00',
+  }),
+  'demo-participante-21': profile('demo-participante-21', {
+    progress: 77, adherence: 75, trend: TRACKING_TREND.STABLE, updatedAt: '2026-03-09T06:00:00-05:00',
+  }),
+  'demo-participante-22': profile('demo-participante-22', {
+    progress: 52, adherence: 60, trend: TRACKING_TREND.STABLE, updatedAt: '2026-03-09T06:00:00-05:00',
+  }),
+  'demo-participante-23': profile('demo-participante-23', {
+    progress: 70, adherence: 74, trend: TRACKING_TREND.REDUCTION, updatedAt: '2026-03-09T06:00:00-05:00',
+  }),
+  'demo-participante-24': profile('demo-participante-24', {
+    progress: 85, adherence: 83, trend: TRACKING_TREND.REDUCTION, updatedAt: '2026-03-09T06:00:00-05:00',
+  }),
+  'demo-participante-25': profile('demo-participante-25', {
+    progress: 66, adherence: 67, trend: TRACKING_TREND.STABLE, updatedAt: '2026-03-09T06:00:00-05:00',
+  }),
+  'demo-participante-26': profile('demo-participante-26', {
+    progress: 79, adherence: 80, trend: TRACKING_TREND.REDUCTION, updatedAt: '2026-03-09T06:00:00-05:00',
+  }),
+  'demo-participante-27': profile('demo-participante-27', {
+    progress: 61, adherence: 62, trend: TRACKING_TREND.INCREASE, updatedAt: '2026-03-09T06:00:00-05:00',
+  }),
+  'demo-participante-28': profile('demo-participante-28', {
+    progress: 72, adherence: 76, trend: TRACKING_TREND.STABLE, updatedAt: '2026-03-09T06:00:00-05:00',
+  }),
+  'demo-participante-29': profile('demo-participante-29', {
+    progress: 90, adherence: 89, trend: TRACKING_TREND.REDUCTION, updatedAt: '2026-03-09T06:00:00-05:00',
+  }),
+  'demo-participante-30': profile('demo-participante-30', {
+    progress: 57, adherence: 65, trend: TRACKING_TREND.STABLE, updatedAt: '2026-03-09T06:00:00-05:00',
   }),
   'demo-candidato-9': profile('demo-candidato-9', {
     progress: 12, adherence: 65, trend: TRACKING_TREND.INCREASE, updatedAt: '2026-03-02T06:00:00-05:00',

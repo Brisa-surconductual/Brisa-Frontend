@@ -30,6 +30,13 @@ const NEW_COHORT = Object.freeze({
 
 const codes = (participants) => participants.map(({ code }) => code);
 
+// Activos adicionales de la Cohorte Piloto B (PART-0015 a PART-0030),
+// alineados con los 18 activos de la vista agregada (RF-132).
+const PILOT_B_EXTRA = Array.from(
+  { length: 16 },
+  (_, index) => `PART-${String(15 + index).padStart(4, '0')}`,
+);
+
 let fetchSpy;
 
 beforeEach(() => {
@@ -67,7 +74,7 @@ describe('Fuente de participantes en modo de demostración', () => {
 
     const participants = await listCohortParticipants('demo-cohorte-b');
 
-    expect(codes(participants)).toEqual(['PART-0001', 'PART-0002', 'PART-0003', 'PART-0004', 'PART-0005', 'PART-0006']);
+    expect(codes(participants)).toEqual(['PART-0001', 'PART-0002', 'PART-0003', 'PART-0004', 'PART-0005', 'PART-0006', ...PILOT_B_EXTRA]);
     expect(participants.every(({ cohortId }) => cohortId === 'demo-cohorte-b')).toBe(true);
     expect(codes(await listCohortParticipants('demo-cohorte-c'))).toEqual(['PART-0007', 'PART-0008']);
   });
@@ -97,7 +104,7 @@ describe('Fuente de participantes en modo de demostración', () => {
     await updateCohort('demo-cohorte-b', NEW_COHORT);
     await changeCohortStatus('demo-cohorte-b', COHORT_TRANSITION.INACTIVATE);
 
-    expect(await listCohortParticipants('demo-cohorte-b')).toHaveLength(6);
+    expect(await listCohortParticipants('demo-cohorte-b')).toHaveLength(22);
   });
 
   it('error-participantes: solo falla la consulta de participantes', async () => {
@@ -135,6 +142,7 @@ describe('Asignación de participantes en modo de demostración (RF-125)', () =>
     // E7-R1: registro completo (iniciales y catálogo), sin el inexistente.
     expect(catalog.map(({ code }) => code)).toEqual([
       'PART-0001', 'PART-0002', 'PART-0003', 'PART-0004', 'PART-0005', 'PART-0006',
+      ...PILOT_B_EXTRA,
       'PART-0007', 'PART-0008', 'PART-0009', 'PART-0010', 'PART-0011', 'PART-0012', 'PART-0013',
     ]);
     for (const candidate of catalog) expect(Object.keys(candidate).sort()).toEqual(['code', 'id', 'issue']);
@@ -164,7 +172,7 @@ describe('Asignación de participantes en modo de demostración (RF-125)', () =>
 
     const again = await assignParticipants('demo-cohorte-b', ['demo-candidato-12']);
     expect(again).toMatchObject({ ok: false, error: ASSIGNMENT_ERROR.CONFLICT });
-    expect(await listCohortParticipants('demo-cohorte-b')).toHaveLength(7);
+    expect(await listCohortParticipants('demo-cohorte-b')).toHaveLength(23);
   });
 
   it('una cohorte creada temporalmente puede recibir participantes', async () => {
@@ -231,7 +239,7 @@ describe('Asignación de participantes en modo de demostración (RF-125)', () =>
     enableDemo('error-catalogo');
 
     await expect(listAvailableParticipants('demo-cohorte-a')).rejects.toThrow('Error simulado');
-    expect(await listCohortParticipants('demo-cohorte-b')).toHaveLength(6);
+    expect(await listCohortParticipants('demo-cohorte-b')).toHaveLength(22);
   });
 });
 
@@ -246,7 +254,7 @@ describe('Retiro de participantes en modo de demostración (RF-125)', () => {
 
     expect(outcome).toMatchObject({ ok: true, removed: { code: 'PART-0003', cohortId: 'demo-cohorte-b' } });
     const after = await listCohortParticipants('demo-cohorte-b');
-    expect(codes(after)).toEqual(['PART-0001', 'PART-0002', 'PART-0004', 'PART-0005', 'PART-0006']);
+    expect(codes(after)).toEqual(['PART-0001', 'PART-0002', 'PART-0004', 'PART-0005', 'PART-0006', ...PILOT_B_EXTRA]);
     expect(after).toEqual(before.filter(({ code }) => code !== 'PART-0003'));
     expect(codes(await listCohortParticipants('demo-cohorte-c'))).toEqual(['PART-0007', 'PART-0008']);
     expect(DEMO_PARTICIPANTS[2].code).toBe('PART-0003');
@@ -280,7 +288,7 @@ describe('Retiro de participantes en modo de demostración (RF-125)', () => {
     expect((await removeCohortParticipant('no-existe', 'demo-participante-1')).error).toBe(REMOVAL_ERROR.COHORT_NOT_FOUND);
     expect((await removeCohortParticipant('demo-cohorte-b', 'no-existe')).error).toBe(REMOVAL_ERROR.PARTICIPANT_NOT_FOUND);
     expect((await removeCohortParticipant('demo-cohorte-a', 'demo-participante-1')).error).toBe(REMOVAL_ERROR.NOT_ASSOCIATED);
-    expect(await listCohortParticipants('demo-cohorte-b')).toHaveLength(6);
+    expect(await listCohortParticipants('demo-cohorte-b')).toHaveLength(22);
   });
 
   it('un retiro repetido no informa éxito ni cambia otros registros', async () => {
@@ -288,13 +296,13 @@ describe('Retiro de participantes en modo de demostración (RF-125)', () => {
     await removeCohortParticipant('demo-cohorte-b', 'demo-participante-1');
 
     expect(await removeCohortParticipant('demo-cohorte-b', 'demo-participante-1')).toEqual({ ok: false, error: REMOVAL_ERROR.NOT_ASSOCIATED });
-    expect(await listCohortParticipants('demo-cohorte-b')).toHaveLength(5);
+    expect(await listCohortParticipants('demo-cohorte-b')).toHaveLength(21);
   });
 
   it('persiste al navegar y se restablece al recargar', async () => {
     enableDemo();
     await removeCohortParticipant('demo-cohorte-b', 'demo-participante-1');
-    expect(await listCohortParticipants('demo-cohorte-b')).toHaveLength(5);
+    expect(await listCohortParticipants('demo-cohorte-b')).toHaveLength(21);
 
     resetDemoSource();
 
@@ -305,7 +313,7 @@ describe('Retiro de participantes en modo de demostración (RF-125)', () => {
     enableDemo('error-guardado');
 
     await expect(removeCohortParticipant('demo-cohorte-b', 'demo-participante-1')).rejects.toThrow('Error simulado');
-    expect(await listCohortParticipants('demo-cohorte-b')).toHaveLength(6);
+    expect(await listCohortParticipants('demo-cohorte-b')).toHaveLength(22);
   });
 
   it('retiro-desactualizado: la lista mostrada incluye a PART-0002, pero otra operación ya lo retiró', async () => {
@@ -314,7 +322,7 @@ describe('Retiro de participantes en modo de demostración (RF-125)', () => {
     expect(codes(await listCohortParticipants('demo-cohorte-b'))).toContain('PART-0002');
     expect((await removeCohortParticipant('demo-cohorte-b', 'demo-participante-2')).error).toBe(REMOVAL_ERROR.NOT_ASSOCIATED);
     expect(codes(await listCohortParticipants('demo-cohorte-b'))).not.toContain('PART-0002');
-    expect(await listCohortParticipants('demo-cohorte-b')).toHaveLength(5);
+    expect(await listCohortParticipants('demo-cohorte-b')).toHaveLength(21);
   });
 });
 
@@ -358,7 +366,7 @@ describe('E7-R1: participantes iniciales retirados vuelven al catálogo', () => 
       'Línea base no registrada.',
     ]);
     expect(codes(await listCohortParticipants('demo-cohorte-b'))).toEqual([
-      'PART-0001', 'PART-0002', 'PART-0003', 'PART-0005', 'PART-0006', 'PART-0004',
+      'PART-0001', 'PART-0002', 'PART-0003', 'PART-0005', 'PART-0006', ...PILOT_B_EXTRA, 'PART-0004',
     ]);
   });
 

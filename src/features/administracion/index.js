@@ -17,3 +17,16 @@ export { AuditLogPage } from './pages/AuditLogPage/index.js';
 export { ParticipantTrackingPage } from './pages/ParticipantTrackingPage/index.js';
 
 export { ParticipantTrackingProfilePage } from './pages/ParticipantTrackingProfilePage/index.js';
+
+export { CohortAggregatePage } from './pages/CohortAggregatePage/index.js';
+
+export { CohortNarrativePage } from './pages/CohortNarrativePage/index.js';
+
+export { CohortNotificationsPage } from './pages/CohortNotificationsPage/index.js';
+
+export { CohortEvolutionPage } from './pages/CohortEvolutionPage/index.js';
+
+// Panel principal de la cohorte activa (RF-140), montado en la pantalla
+// de aterrizaje administrativa por app/router.
+
+export { CohortDashboard } from './components/CohortDashboard/index.js';

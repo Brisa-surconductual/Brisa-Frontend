@@ -7,6 +7,8 @@ import { nuevoUuid } from '../../../utils/nuevoUuid.js';
 export const ACCION_ERROR_ENVIO = Object.freeze({
   INLINE: 'INLINE',
   DESACTUALIZADO: 'DESACTUALIZADO',
+  // RF-37: el estado se recupera con POST /chat/sesiones/iniciar (RF-32).
+  RECUPERAR: 'RECUPERAR',
   LOGIN: 'LOGIN',
   REINTENTAR: 'REINTENTAR',
   VOLVER_AL_CHAT: 'VOLVER_AL_CHAT',
@@ -22,12 +24,18 @@ const CODIGO = Object.freeze({
 // descarta la respuesta y se vuelven a pedir el nodo actual y el
 // historial, que traen la secuencia y la posición vigentes.
 const CODIGOS_RESINCRONIZAR = Object.freeze([
-  'NODO_DESACTUALIZADO',
   'SECUENCIA_FUERA_DE_ORDEN',
   'NODO_TERMINAL',
   'SESION_NO_ACTIVA',
   // RF-24/RF-22: el nodo aún no se habilita; al recargar se muestra la espera.
   'NODO_EN_ESPERA_CRONOGRAMA',
+]);
+
+// RF-37: la conversación en curso ya no coincide con la guardada. No se
+// repite la respuesta: se pide a /iniciar el último estado válido (RF-32).
+export const CODIGOS_RECUPERAR = Object.freeze([
+  'NODO_DESACTUALIZADO',
+  'ESTADO_INCONSISTENTE',
 ]);
 
 // Contrato vigente del POST (RF-30): sin operación sin conexión (ADR-0005).
@@ -39,6 +47,7 @@ export function clasificarErrorEnvio(error) {
 
   // El 401 llega sin `codigo`: se decide por estado HTTP.
   if (status === 401) return ACCION_ERROR_ENVIO.LOGIN;
+  if (CODIGOS_RECUPERAR.includes(codigo)) return ACCION_ERROR_ENVIO.RECUPERAR;
   if (CODIGOS_RESINCRONIZAR.includes(codigo)) {
     return ACCION_ERROR_ENVIO.DESACTUALIZADO;
   }

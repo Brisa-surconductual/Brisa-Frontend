@@ -4,12 +4,14 @@ import {
   ArrowRight,
   CircleCheck,
   History,
+  Info,
   LogIn,
   RefreshCw,
 } from 'lucide-react';
 
 import { Button } from '@/shared/components/ui/Button/index.js';
 
+import { MENSAJE_RECUPERADA_DESDE_HISTORIAL } from '../../services/sesionConversacional.js';
 import { ESTADO_PANTALLA_ENTRADA } from '../../types/estadoPantallaEntrada.js';
 
 import { BrisaMark } from './components/BrisaMark/index.js';
@@ -82,6 +84,19 @@ export function ChatEntryPage() {
           <p className="m-0">
             Tu conversación sigue en el punto donde la dejaste.
           </p>
+          {sesion.recuperadaDesdeHistorial && (
+            <p className="m-0 mt-[var(--space-3)] flex items-start justify-center gap-[var(--space-2)] text-[length:var(--font-size-sm)] text-[var(--info-text)]">
+              <Info
+                size={16}
+                strokeWidth={1.75}
+                aria-hidden="true"
+                className="mt-[2px] shrink-0"
+              />
+              <span className="text-pretty">
+                {MENSAJE_RECUPERADA_DESDE_HISTORIAL}
+              </span>
+            </p>
+          )}
           <SessionDetails sesion={sesion} />
         </EntryStatePanel>
       )}
