@@ -1,5 +1,6 @@
 import { CHAT_CLIENT_ERROR } from '../api/chatApiUtils.js';
 import { CHAT_ERROR_CODE } from '../types/chatErrorCodes.js';
+import { ESTADO_SESION } from '../types/estadosChat.js';
 
 const MENSAJE_SIN_CONEXION =
   'No pudimos conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.';
@@ -14,6 +15,8 @@ export function mapInicioSesion(data) {
 
   return Object.freeze({
     reanudada: data.reanudada === true,
+    // El árbol vigente ya se completó: la sesión solo se consulta.
+    completada: sesion.estado_actual === ESTADO_SESION.COMPLETADA,
     sesion: Object.freeze({
       idSesion: sesion.id_sesion,
       modalidadActiva: sesion.modalidad_activa,

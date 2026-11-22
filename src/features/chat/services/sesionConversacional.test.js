@@ -50,6 +50,26 @@ describe('mapInicioSesion', () => {
     expect(modelo.ubicacionTemporal).toBeNull();
   });
 
+  it('marca como completada una sesión COMPLETADA y solo esa', () => {
+    const completada = mapInicioSesion({
+      ...respuesta,
+      reanudada: false,
+      sesion: { ...respuesta.sesion, estado_actual: 'COMPLETADA' },
+    });
+    expect(completada.completada).toBe(true);
+    expect(completada.sesion.estadoActual).toBe('COMPLETADA');
+    expect(completada.sesion.idSesion).toBe('s-1');
+
+    for (const estado of ['ACTIVA', 'PAUSADA']) {
+      expect(
+        mapInicioSesion({
+          ...respuesta,
+          sesion: { ...respuesta.sesion, estado_actual: estado },
+        }).completada,
+      ).toBe(false);
+    }
+  });
+
   it('trata reanudada ausente como sesión nueva', () => {
     expect(
       mapInicioSesion({ ...respuesta, reanudada: undefined }).reanudada,
