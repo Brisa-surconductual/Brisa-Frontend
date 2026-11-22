@@ -203,6 +203,14 @@ export const esSesionCompletada = (conversacion) =>
   conversacion?.estadoSesion === ESTADO_SESION.COMPLETADA ||
   conversacion?.nodo?.esTerminal === true;
 
+// RF-31: con la sesión completada solo entra el nodo final (sin nodo a la
+// vista, el backend lo da por completado o terminal) o la recarga del
+// mismo nodo ya mostrado.
+const aceptaNodoTrasCompletar = (state, conversacion) =>
+  state.conversacion
+    ? state.conversacion.nodo.idNodo === conversacion?.nodo?.idNodo
+    : esSesionCompletada(conversacion);
+
 const estadoTrasCarga = (state, conversacion) => {
   if (esSesionCompletada(conversacion)) return COMPLETADA;
   // Una recarga de recursos durante el envío no cambia el estado.
@@ -411,9 +419,15 @@ export function conversationReducer(state, action) {
       };
 
     case 'EXITO':
-      // Una recarga de recursos que llega tras completar la sesión ya no
-      // tiene nodo que reponer (D8).
-      if (state.estado === COMPLETADA) return state;
+      // RF-31 (CA-31-4): tras completar se acepta el nodo final que pidió el
+      // envío, y la recarga de recursos de ese mismo nodo. Una respuesta
+      // tardía del nodo anterior (activo, no terminal) no lo repone (D8).
+      if (
+        state.estado === COMPLETADA &&
+        !aceptaNodoTrasCompletar(state, action.conversacion)
+      ) {
+        return state;
+      }
 
       return alCargar(state, action.conversacion);
 

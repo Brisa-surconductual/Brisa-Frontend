@@ -1310,3 +1310,163 @@ describe('fallos de carga y de red (RF-37)', () => {
     expect(estado.envio).toBeNull();
   });
 });
+
+describe('nodo final al completar la sesión (RF-31, CA-31-4)', () => {
+  const nodoFinal = (extra = {}) =>
+    conversacion('https://example.test/fin.png?firma=1', 'fin', {
+      estadoSesion: 'COMPLETADA',
+      ...extra,
+      nodo: {
+        idNodo: 'fin',
+        esTerminal: true,
+        bloques: [
+          { orden: 1, tipo: 'TEXTO', texto: 'Gracias por llegar hasta aquí.' },
+          { orden: 2, tipo: 'IMAGEN', url: 'https://example.test/fin.png?f=1' },
+        ],
+        entrada: null,
+        ...extra.nodo,
+      },
+    });
+
+  const completadaPorEnvio = () =>
+    reducir(
+      [
+        { type: 'HISTORIAL_EXITO', pagina: paginaHistorial() },
+        {
+          type: 'ENVIO_EXITO',
+          respuesta: { estadoSesion: 'COMPLETADA', secuencia: 8 },
+        },
+      ],
+      enviando(),
+    );
+
+  it('el envío completa la sesión y pide el nodo final', () => {
+    const estado = completadaPorEnvio();
+
+    expect(estado.estado).toBe(E.COMPLETADA);
+    expect(estado.conversacion).toBeNull();
+    expect(estado.recarga).toBe(enviando().recarga + 1);
+  });
+
+  it('el nodo final se muestra en cuanto llega, al final del hilo y sin formulario', () => {
+    const estado = conversationReducer(completadaPorEnvio(), {
+      type: 'EXITO',
+      conversacion: nodoFinal(),
+    });
+    const items = selectItems(estado);
+
+    expect(estado.estado).toBe(E.COMPLETADA);
+    expect(items.at(-1)).toMatchObject({
+      actual: true,
+      nodo: { idNodo: 'fin', esTerminal: true },
+    });
+    expect(items.at(-1).nodo.bloques[0].texto).toBe(
+      'Gracias por llegar hasta aquí.',
+    );
+    expect(selectNodoFormulario(estado)).toBeNull();
+  });
+
+  it('conserva el historial y la respuesta que cerró la sesión, sin duplicados', () => {
+    const estado = conversationReducer(completadaPorEnvio(), {
+      type: 'EXITO',
+      conversacion: nodoFinal(),
+    });
+    const ids = selectItems(estado).map((i) => i.id);
+
+    expect(ids).toEqual([
+      'historial-i6-nodo',
+      'historial-i7-nodo',
+      'historial-i7-respuesta',
+      'nodo-0',
+      'respuesta-0',
+      'nodo-1',
+    ]);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('también acepta un nodo terminal aunque el estado diga ACTIVA', () => {
+    const estado = conversationReducer(completadaPorEnvio(), {
+      type: 'EXITO',
+      conversacion: nodoFinal({ estadoSesion: 'ACTIVA' }),
+    });
+
+    expect(selectItems(estado).at(-1).nodo.idNodo).toBe('fin');
+    expect(estado.estado).toBe(E.COMPLETADA);
+  });
+
+  it('no admite nuevas respuestas después del cierre', () => {
+    const estado = conversationReducer(completadaPorEnvio(), {
+      type: 'EXITO',
+      conversacion: nodoFinal(),
+    });
+
+    expect(
+      conversationReducer(estado, { type: 'ENVIAR', envio: envio() }),
+    ).toBe(estado);
+  });
+
+  it('un nodo anterior que llega tarde no reemplaza ni duplica el nodo final', () => {
+    const conFinal = conversationReducer(completadaPorEnvio(), {
+      type: 'EXITO',
+      conversacion: nodoFinal(),
+    });
+
+    expect(
+      conversationReducer(conFinal, {
+        type: 'EXITO',
+        conversacion: conversacion(),
+      }),
+    ).toBe(conFinal);
+  });
+
+  it('volver a recibir el nodo final (recarga de recursos) no lo duplica', () => {
+    const conFinal = conversationReducer(completadaPorEnvio(), {
+      type: 'EXITO',
+      conversacion: nodoFinal(),
+    });
+    const recargado = reducir(
+      [
+        { type: 'RECURSO_ERROR', indice: 1 },
+        {
+          type: 'EXITO',
+          conversacion: nodoFinal({
+            nodo: {
+              bloques: [
+                {
+                  orden: 1,
+                  tipo: 'TEXTO',
+                  texto: 'Gracias por llegar hasta aquí.',
+                },
+                {
+                  orden: 2,
+                  tipo: 'IMAGEN',
+                  url: 'https://example.test/fin.png?f=2',
+                },
+              ],
+            },
+          }),
+        },
+      ],
+      conFinal,
+    );
+
+    expect(selectItems(recargado).map((i) => i.id)).toEqual(
+      selectItems(conFinal).map((i) => i.id),
+    );
+    expect(recargado.recargando).toBe(false);
+    expect(recargado.fallidos).toEqual([]);
+    expect(recargado.estado).toBe(E.COMPLETADA);
+  });
+
+  it('una sesión ya completada que se recupera muestra su nodo final en solo lectura', () => {
+    const estado = reducir([
+      { type: 'HISTORIAL_EXITO', pagina: paginaHistorial() },
+      { type: 'EXITO', conversacion: nodoFinal() },
+    ]);
+
+    expect(estado.estado).toBe(E.COMPLETADA);
+    expect(selectItems(estado).at(-1).nodo.idNodo).toBe('fin');
+    expect(selectItems(estado)).toHaveLength(4);
+    expect(selectNodoFormulario(estado)).toBeNull();
+  });
+});

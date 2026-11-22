@@ -299,13 +299,16 @@ export function useChatConversationPage() {
     }
   }, [state.estado]);
 
-  // §2.4: lo nuevo del hilo recibe el foco (la burbuja y luego el nodo, o
-  // la última burbuja si la sesión se completó). `paso` cubre CONTINUAR
-  // que completa la sesión: no agrega burbuja y el último item no cambia.
-  // No corre tras un 400 ni con la recarga de recursos.
+  // §2.4: lo nuevo del hilo recibe el foco (la burbuja y luego el nodo).
+  // `paso` cubre CONTINUAR que completa la sesión: no agrega burbuja y el
+  // último item no cambia. No corre tras un 400 ni con la recarga de
+  // recursos. Con la sesión completada el foco es del aviso de cierre
+  // (CA-31-4): el nodo final, que llega después, no se lo quita.
+  const sesionCompletada = state.estado === COMPLETADA;
+
   useEffect(() => {
-    if (huboAvance) ultimoRef.current?.focus();
-  }, [idUltimo, huboAvance, state.paso]);
+    if (huboAvance && !sesionCompletada) ultimoRef.current?.focus();
+  }, [idUltimo, huboAvance, state.paso, sesionCompletada]);
 
   // RF-31: al completarse la sesión durante la visita, el foco va al aviso
   // de sesión completada (después del efecto anterior, que lo movería a la
