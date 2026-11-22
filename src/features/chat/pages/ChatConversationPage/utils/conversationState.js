@@ -368,16 +368,30 @@ export function conversationReducer(state, action) {
 }
 
 // Items del hilo: el historial y, al final, el nodo actual.
+// RF-24/RF-22: el nodo actual aún no se habilita en el cronograma.
+const enEspera = (state) =>
+  state.conversacion?.nodo?.disponibilidad?.habilitado === false;
+
 export function selectItems(state) {
-  if (!state.conversacion) return state.historial;
+  // Un nodo en espera no tiene contenido que pintar en el hilo.
+  if (!state.conversacion || enEspera(state)) return state.historial;
 
   return [...state.historial, { ...itemNodo(state), actual: true }];
 }
 
 // D9: con la sesión completada o mientras se carga, no hay formulario.
 export function selectNodoFormulario(state) {
-  return state.conversacion && CON_FORMULARIO.includes(state.estado)
+  return state.conversacion &&
+    !enEspera(state) &&
+    CON_FORMULARIO.includes(state.estado)
     ? state.conversacion.nodo
+    : null;
+}
+
+// RF-24/RF-22: datos de la espera (o null si el nodo ya está habilitado).
+export function selectEspera(state) {
+  return enEspera(state)
+    ? { habilitaAprox: state.conversacion.nodo.disponibilidad.habilitaAprox }
     : null;
 }
 

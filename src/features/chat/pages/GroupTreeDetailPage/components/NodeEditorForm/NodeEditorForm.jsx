@@ -6,7 +6,12 @@ import { SelectField } from '@/shared/components/ui/SelectField/index.js';
 import { TextField } from '@/shared/components/ui/TextField/index.js';
 
 import { ChatAdminNotice } from '../../../../components/ChatAdminNotice/index.js';
+import { ContenidoProgramacion } from '../../../../components/ContenidoProgramacion/index.js';
 import { ExclusiveSwitchGroup } from '../../../../components/ExclusiveSwitchGroup/index.js';
+import {
+  opcionesContenido,
+  programacionesDe,
+} from '../../../../services/contenidosAdmin.js';
 import { FORMATO_FECHA, TIPO_ENTRADA } from '../../../../types/tipoEntrada.js';
 import {
   opcionesDimensionPerfilClinico,
@@ -28,7 +33,7 @@ const OPCIONES_FORMATO_FECHA = [
  * Crear o editar un nodo de un flujo en borrador (RF-25). Edita el tipo,
  * el texto, si es el nodo inicial, el orden, opcionalmente el contenido
  * asociado (solo contenido ya programado en un cronograma, vía
- * `contenidos_cronograma`) y, opcionalmente, la respuesta que espera el
+ * `contenidos`, con sus cronogramas, unidades y fechas) y, opcionalmente, la respuesta que espera el
  * nodo del estudiante (PR4): sin ella, el nodo es informativo. RF-25:
  * "nodo inicial" y "nodo final" son excluyentes, y la captura de perfil
  * clínico elige su valor con interruptores (solo uno activo). Los
@@ -44,7 +49,7 @@ export function NodeEditorForm({
   saving,
   saveError,
   tiposNodo,
-  contenidosCronograma,
+  contenidos = [],
   onChange,
   onSubmit,
 }) {
@@ -125,15 +130,26 @@ export function NodeEditorForm({
         id="nodo-contenido-cronograma"
         label="Contenido asociado"
         disabled={saving}
-        value={values.idContenidoCronograma}
-        options={contenidosCronograma}
+        value={values.idContenido}
+        options={opcionesContenido(contenidos)}
         placeholder="Sin contenido asociado"
         hint="Solo contenido ya programado en una unidad temporal de un cronograma."
-        error={errors.idContenidoCronograma}
-        onChange={(event) =>
-          onChange('idContenidoCronograma', event.target.value)
-        }
+        error={errors.idContenido}
+        onChange={(event) => onChange('idContenido', event.target.value)}
       />
+
+      {values.idContenido && (
+        <div className="flex flex-col gap-[var(--space-2)]">
+          <p className="m-0 text-[length:var(--font-size-xs)] text-[var(--text-secondary)]">
+            Cada estudiante podrá responder este nodo cuando el contenido se
+            habilite en su propio cronograma (RF-24); antes verá la fecha en que
+            se habilita.
+          </p>
+          <ContenidoProgramacion
+            programaciones={programacionesDe(values.idContenido, contenidos)}
+          />
+        </div>
+      )}
 
       <Checkbox
         id="nodo-tiene-entrada"

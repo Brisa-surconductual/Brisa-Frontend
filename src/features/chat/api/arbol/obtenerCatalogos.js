@@ -8,7 +8,9 @@ import {
 } from '../chatApiUtils.js';
 
 // RF-25: GET /chat/admin/catalogos. Responde `{ data: { tipos_nodo,
-// tipos_entrada, contenidos_cronograma, enums } }`.
+// tipos_entrada, contenidos_cronograma, contenidos, enums } }`.
+// `contenidos` (RF-25/RF-24): cada contenido con sus programaciones por
+// cronograma (unidad y fechas); es el que usa el editor de nodos.
 // `contenidos_cronograma`: contenido ya asociado a una unidad temporal de
 // un cronograma, disponible para vincular a un nodo.
 export async function obtenerCatalogos() {

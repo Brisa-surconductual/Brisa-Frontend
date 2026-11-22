@@ -10,6 +10,7 @@ import { obtenerArbolFlujo } from '../../../api/arbol/obtenerArbolFlujo.js';
 import { obtenerCatalogos } from '../../../api/arbol/obtenerCatalogos.js';
 import { publicarFlujo } from '../../../api/arbol/publicarFlujo.js';
 import { useAutoDismiss } from '../../../hooks/useAutoDismiss.js';
+import { mapContenidos } from '../../../services/contenidosAdmin.js';
 import {
   ACCION_FLUJO,
   accionesEstadoDisponibles,
@@ -109,7 +110,7 @@ export function useGroupTreeDetailPage() {
           dispatch({
             type: 'CATALOG',
             tiposNodo: opcionesTipoNodo(catalogos.tipos_nodo),
-            contenidosCronograma: catalogos.contenidos_cronograma ?? [],
+            contenidos: mapContenidos(catalogos.contenidos),
           });
         }
       })

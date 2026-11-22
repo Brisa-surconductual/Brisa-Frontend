@@ -77,6 +77,12 @@ export function mapNodoActual(data) {
       tipoNodo: nodo.tipoNodo,
       orden: nodo.orden,
       esTerminal: nodo.esTerminal === true,
+      // RF-24/RF-22: un nodo en espera del cronograma llega sin contenido ni
+      // entrada. Sin el campo (backend anterior) se asume habilitado.
+      disponibilidad: Object.freeze({
+        habilitado: nodo.disponibilidad?.habilitado !== false,
+        habilitaAprox: nodo.disponibilidad?.habilitaAprox ?? null,
+      }),
       bloques: Object.freeze([...bloques].sort(compararOrden)),
       entrada: mapEntrada(nodo.entrada),
     }),

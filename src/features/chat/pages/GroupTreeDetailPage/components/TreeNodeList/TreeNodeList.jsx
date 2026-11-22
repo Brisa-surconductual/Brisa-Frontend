@@ -2,7 +2,6 @@ import {
   Flag,
   FlagTriangleRight,
   HelpCircle,
-  Link2,
   MessageSquare,
   Pencil,
   UserRound,
@@ -11,9 +10,10 @@ import {
 import { Button } from '@/shared/components/ui/Button/index.js';
 
 import { ChatAdminNotice } from '../../../../components/ChatAdminNotice/index.js';
+import { ContenidoAsociadoResumen } from '../../../../components/ContenidoAsociadoResumen/index.js';
+import { buscarContenido } from '../../../../services/contenidosAdmin.js';
 import { salidasOrdenadasDeNodo } from '../../../../services/flujosAdmin.js';
 import {
-  nombreContenidoCronograma,
   resumenCapturaPerfil,
   resumenEntradaNodo,
 } from '../../../../services/nodosAdmin.js';
@@ -25,7 +25,7 @@ const CHIP =
  * Nodos del flujo, con el inicial al principio. Solo lectura: el texto
  * se muestra tal cual lo definió el equipo de psicología. Cuando un nodo
  * tiene contenido asociado (RF-25), se muestra su nombre y su unidad
- * temporal a partir del catálogo `contenidos_cronograma`. Cuando el nodo
+ * temporal a partir del catálogo `contenidos` (cronograma, unidad y fechas). Cuando el nodo
  * espera una respuesta (PR4), se muestra de qué tipo; sin ese dato, el
  * nodo es informativo (el estudiante solo confirma "Continuar").
  * RF-25: cada tarjeta lista sus salidas en el orden en que el motor las
@@ -36,7 +36,7 @@ export function TreeNodeList({
   transiciones = [],
   canEdit = false,
   onEdit,
-  contenidosCronograma = [],
+  contenidos = [],
 }) {
   return (
     <section
@@ -60,9 +60,10 @@ export function TreeNodeList({
       ) : (
         <ol className="m-0 flex list-none flex-col gap-[var(--space-3)] p-0">
           {nodos.map((nodo) => {
-            const contenidoAsociado = nombreContenidoCronograma(
-              contenidosCronograma,
-              nodo.idContenidoCronograma,
+            // RF-25/RF-24: contenido del nodo y dónde está programado.
+            const contenidoAsociado = buscarContenido(
+              nodo.idContenido,
+              contenidos,
             );
             const respuesta = resumenEntradaNodo(nodo.entrada);
             const captura = resumenCapturaPerfil(nodo.contenido);
@@ -116,14 +117,6 @@ export function TreeNodeList({
                       Orden {nodo.orden}
                     </span>
                   )}
-
-                  {contenidoAsociado && (
-                    <span className="inline-flex items-center gap-[var(--space-1)] rounded-[var(--radius-full)] border border-[var(--surface-border)] bg-[var(--surface-bg)] px-[var(--space-2)] py-[2px] text-[length:var(--font-size-xs)] text-[var(--text-secondary)]">
-                      <Link2 size={13} strokeWidth={1.8} aria-hidden="true" />
-                      {contenidoAsociado}
-                    </span>
-                  )}
-
                   {respuesta && (
                     <span className="inline-flex items-center gap-[var(--space-1)] rounded-[var(--radius-full)] border border-[var(--surface-border)] bg-[var(--surface-bg)] px-[var(--space-2)] py-[2px] text-[length:var(--font-size-xs)] text-[var(--text-secondary)]">
                       <HelpCircle
@@ -152,6 +145,11 @@ export function TreeNodeList({
                 <p className="m-0 text-[length:var(--font-size-base)] leading-[var(--line-height-normal)] [overflow-wrap:anywhere] whitespace-pre-line text-[var(--text-primary)]">
                   {nodo.texto || 'Sin texto.'}
                 </p>
+
+                {/* RF-25/RF-24: contenido, unidades y cronogramas, rotulados. */}
+                {nodo.idContenido && (
+                  <ContenidoAsociadoResumen contenido={contenidoAsociado} />
+                )}
 
                 {!nodo.esNodoFinal && (
                   <div className="flex flex-col gap-[var(--space-1)] border-t border-[var(--surface-border)] pt-[var(--space-2)]">
