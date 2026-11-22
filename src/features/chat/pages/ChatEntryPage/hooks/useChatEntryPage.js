@@ -2,6 +2,7 @@ import { useEffect, useReducer } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { iniciarSesionConversacional } from '../../../api/sesion/iniciarSesionConversacional.js';
+import { recordarInicioSesion } from '../../../services/inicioSesionReciente.js';
 import {
   describirErrorInicio,
   mapInicioSesion,
@@ -19,7 +20,10 @@ async function cargarSesion(dispatch, estaCancelado = () => false) {
     const data = await iniciarSesionConversacional();
 
     if (!estaCancelado()) {
-      dispatch({ type: 'EXITO', sesion: mapInicioSesion(data) });
+      const sesion = mapInicioSesion(data);
+      // RF-32: la conversación reutiliza esta respuesta (solo en memoria).
+      recordarInicioSesion(sesion);
+      dispatch({ type: 'EXITO', sesion });
     }
   } catch (error) {
     if (!estaCancelado()) {

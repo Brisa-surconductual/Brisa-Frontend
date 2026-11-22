@@ -3,6 +3,7 @@ import { CHAT } from '@/shared/utils/constans.jsx';
 
 import {
   CHAT_CLIENT_ERROR,
+  conIdPeticion,
   createChatApiError,
   toChatApiError,
 } from '../chatApiUtils.js';
@@ -13,7 +14,11 @@ import {
 // `null` como el texto "null" y el backend responde 400.
 async function solicitar() {
   try {
-    const response = await apiClient.post(`${CHAT}/sesiones/iniciar`, {});
+    const response = await apiClient.post(
+      `${CHAT}/sesiones/iniciar`,
+      {},
+      conIdPeticion(),
+    );
     const data = response.data?.data;
 
     if (!data?.sesion || !data?.nodo_actual) {

@@ -5,11 +5,18 @@ import {
   conversationReducer,
   crearEstadoInicial,
   esSesionCompletada,
+  UMBRAL_RECHAZOS_VALIDACION,
+  prepararInicio,
+  selectHayRecursoNoDisponible,
   selectItems,
+  selectMostrarDificultad,
   selectNodoFormulario,
   selectRecursosNoPresentados,
   selectSecuenciaSiguiente,
 } from './conversationState.js';
+import { mapHistorial } from '../../../services/historialInteracciones.js';
+import { mapInicioSesion } from '../../../services/sesionConversacional.js';
+
 import { crearCuerpo } from './envio.js';
 
 const ID = '26000000-0000-4000-8000-000000000001';
@@ -369,9 +376,9 @@ describe('envío y avance (RF-27 a RF-29)', () => {
     expect(reintento.envio.cuerpo).toBe(inicial.envio.cuerpo);
   });
 
-  it('NODO_DESACTUALIZADO: pide el nodo actual y descarta la respuesta (CA-27-9)', () => {
+  it('SECUENCIA_FUERA_DE_ORDEN: pide el nodo actual y descarta la respuesta (CA-27-9)', () => {
     const inicial = enviando();
-    const e = error(409, 'NODO_DESACTUALIZADO');
+    const e = error(409, 'SECUENCIA_FUERA_DE_ORDEN');
     const estado = conversationReducer(inicial, {
       type: 'ENVIO_ERROR',
       error: e,
@@ -559,12 +566,7 @@ describe('historial y secuencia (RF-30, RF-32)', () => {
     expect(estado.historial).toHaveLength(3);
   });
 
-  it.each([
-    'NODO_DESACTUALIZADO',
-    'SECUENCIA_FUERA_DE_ORDEN',
-    'NODO_TERMINAL',
-    'SESION_NO_ACTIVA',
-  ])(
+  it.each(['SECUENCIA_FUERA_DE_ORDEN', 'NODO_TERMINAL', 'SESION_NO_ACTIVA'])(
     '%s resincroniza nodo e historial sin dejar el nodo viejo (CA-30-4)',
     (codigo) => {
       const inicial = reducir(
@@ -646,5 +648,825 @@ describe('recursos no presentados (RF-33, RF-30)', () => {
     );
 
     expect(selectRecursosNoPresentados(estado)).toEqual([]);
+  });
+});
+
+// RF-32: respuesta de /iniciar con cinco respuestas guardadas.
+const interaccion = (secuencia) => ({
+  id_interaccion: `i${secuencia}`,
+  secuencia,
+  timestamp_interaccion: '2026-11-21T10:00:00.000Z',
+  nodo: {
+    id_nodo: `h${secuencia}`,
+    tipo_nodo: 'PREGUNTA',
+    bloques: [{ orden: 1, tipo: 'TEXTO', texto: `Pregunta ${secuencia}` }],
+  },
+  respuesta: {
+    tipo_entrada: 'OPCION_UNICA',
+    valor: `V${secuencia}`,
+    etiqueta: `Respuesta ${secuencia}`,
+  },
+  id_nodo_destino: `h${secuencia + 1}`,
+});
+
+const respuestaIniciar = (extra = {}) => ({
+  reanudada: true,
+  recuperada_desde_historial: false,
+  sesion: {
+    id_sesion: ID,
+    modalidad_activa: 'GRUPAL',
+    tipo_dependencia: 'TOLERANCIA',
+    tipo_craving: 'POSITIVO',
+    estado_actual: 'ACTIVA',
+    fecha_inicio: '2026-11-21T09:00:00.000Z',
+    fecha_ultima_interaccion: '2026-11-21T10:00:00.000Z',
+    ultima_secuencia: 5,
+  },
+  nodo_actual: {
+    id_nodo: 'n6',
+    tipo_nodo: 'PREGUNTA',
+    es_terminal: false,
+    disponibilidad: { habilitado: true, habilita_aprox: null },
+    bloques: [{ orden: 1, tipo: 'TEXTO', texto: 'Pregunta 6' }],
+    entrada: { tipo: 'ESCALA', obligatorio: true, min: 0, max: 10, paso: 1 },
+  },
+  historial_reciente: {
+    items: [1, 2, 3, 4, 5].map(interaccion),
+    hay_mas: false,
+    siguiente_cursor: null,
+  },
+  ubicacion_temporal: { nombre_unidad: 'Semana 1', finalizado_programa: false },
+  ...extra,
+});
+
+const textoDe = () => null;
+const inicioDe = (data = respuestaIniciar()) =>
+  prepararInicio(mapInicioSesion(data), textoDe);
+const desdeIniciar = (data) => crearEstadoInicial(ID, inicioDe(data));
+
+const PAGINA_GET = {
+  items: [1, 2, 3, 4, 5].map(interaccion),
+  hay_mas: false,
+  siguiente_cursor: null,
+};
+
+const textosRespuesta = (estado) =>
+  selectItems(estado)
+    .filter((i) => i.tipo === 'respuesta')
+    .map((i) => i.texto);
+
+describe('reanudación con la respuesta de /iniciar (RF-32)', () => {
+  it('presenta el historial reciente antes del nodo actual, sin pedir los GET', () => {
+    const estado = desdeIniciar();
+    const items = selectItems(estado);
+
+    expect(estado.estado).toBe(E.LISTO);
+    expect(estado.nodoPrecargado).toBe(true);
+    expect(estado.historialPrecargado).toBe(true);
+    expect(estado.recarga).toBe(0);
+    expect(estado.recargaHistorial).toBe(0);
+    expect(items).toHaveLength(11);
+    expect(items.at(-1)).toMatchObject({
+      actual: true,
+      nodo: { idNodo: 'n6' },
+    });
+    expect(items.slice(0, -1).every((i) => i.id.startsWith('historial-'))).toBe(
+      true,
+    );
+    expect(selectNodoFormulario(estado)?.idNodo).toBe('n6');
+  });
+
+  it('recupera cinco respuestas guardadas en orden', () => {
+    const estado = desdeIniciar();
+
+    expect(textosRespuesta(estado)).toEqual([
+      'Respuesta 1',
+      'Respuesta 2',
+      'Respuesta 3',
+      'Respuesta 4',
+      'Respuesta 5',
+    ]);
+    expect(
+      selectItems(estado)
+        .filter((i) => i.tipo === 'nodo' && !i.actual)
+        .map((i) => i.nodo.idNodo),
+    ).toEqual(['h1', 'h2', 'h3', 'h4', 'h5']);
+  });
+
+  it('con ultima_secuencia 5 el próximo envío lleva secuencia 6', () => {
+    const estado = desdeIniciar();
+    const cuerpo = crearCuerpo(estado.conversacion.nodo, 7, {
+      secuencia: selectSecuenciaSiguiente(estado),
+    });
+
+    expect(selectSecuenciaSiguiente(estado)).toBe(6);
+    expect(cuerpo.secuencia).toBe(6);
+  });
+
+  it('ultima_secuencia manda aunque la página reciente llegue vacía', () => {
+    const estado = desdeIniciar(
+      respuestaIniciar({
+        historial_reciente: { items: [], hay_mas: true, siguiente_cursor: 9 },
+        sesion: { ...respuestaIniciar().sesion, ultima_secuencia: 9 },
+      }),
+    );
+
+    expect(selectSecuenciaSiguiente(estado)).toBe(10);
+  });
+
+  it('conserva la paginación cuando hay_mas es verdadero', () => {
+    const estado = desdeIniciar(
+      respuestaIniciar({
+        historial_reciente: {
+          items: [4, 5].map(interaccion),
+          hay_mas: true,
+          siguiente_cursor: 4,
+        },
+      }),
+    );
+
+    expect(estado.hayMas).toBe(true);
+    expect(estado.secuenciaMinima).toBe(4);
+
+    const conAnteriores = reducir(
+      [
+        { type: 'CARGAR_ANTERIORES' },
+        {
+          type: 'ANTERIORES_EXITO',
+          pagina: mapHistorial(
+            {
+              items: [3, 4].map(interaccion),
+              hay_mas: false,
+              siguiente_cursor: null,
+            },
+            textoDe,
+          ),
+        },
+      ],
+      estado,
+    );
+
+    expect(textosRespuesta(conAnteriores)).toEqual([
+      'Respuesta 3',
+      'Respuesta 4',
+      'Respuesta 5',
+    ]);
+    expect(conAnteriores.hayMas).toBe(false);
+  });
+
+  it('recuperada_desde_historial: true queda marcada para el aviso', () => {
+    const estado = desdeIniciar(
+      respuestaIniciar({ recuperada_desde_historial: true }),
+    );
+
+    expect(estado.recuperadaDesdeHistorial).toBe(true);
+    // El nodo es el que eligió el backend.
+    expect(estado.conversacion.nodo.idNodo).toBe('n6');
+  });
+
+  it('recuperada_desde_historial: false no marca el aviso', () => {
+    expect(desdeIniciar().recuperadaDesdeHistorial).toBe(false);
+  });
+
+  it('una sesión COMPLETADA sigue en solo lectura', () => {
+    const estado = desdeIniciar(
+      respuestaIniciar({
+        reanudada: false,
+        sesion: { ...respuestaIniciar().sesion, estado_actual: 'COMPLETADA' },
+        nodo_actual: { ...respuestaIniciar().nodo_actual, es_terminal: true },
+      }),
+    );
+
+    expect(estado.estado).toBe(E.COMPLETADA);
+    expect(selectNodoFormulario(estado)).toBeNull();
+    expect(textosRespuesta(estado)).toHaveLength(5);
+  });
+
+  it('una sesión nueva arranca con el nodo inicial y secuencia 1', () => {
+    const estado = desdeIniciar(
+      respuestaIniciar({
+        reanudada: false,
+        sesion: { ...respuestaIniciar().sesion, ultima_secuencia: 0 },
+        historial_reciente: {
+          items: [],
+          hay_mas: false,
+          siguiente_cursor: null,
+        },
+      }),
+    );
+
+    expect(selectItems(estado)).toHaveLength(1);
+    expect(selectSecuenciaSiguiente(estado)).toBe(1);
+  });
+
+  it('datos de otro idSesion se ignoran y se carga por GET', () => {
+    const otro = crearEstadoInicial(
+      '26000000-0000-4000-8000-000000000099',
+      inicioDe(),
+    );
+
+    expect(otro.estado).toBe(E.CARGANDO);
+    expect(otro.nodoPrecargado).toBe(false);
+    expect(otro.historialPrecargado).toBe(false);
+  });
+
+  it('sin historial_reciente solo se omite el GET del nodo', () => {
+    const estado = desdeIniciar(
+      respuestaIniciar({ historial_reciente: undefined }),
+    );
+
+    expect(estado.nodoPrecargado).toBe(true);
+    expect(estado.historialPrecargado).toBe(false);
+    expect(estado.historialEstado).toBe('CARGANDO');
+    expect(selectSecuenciaSiguiente(estado)).toBe(6);
+  });
+
+  it('al recargar (F5) los GET restauran la misma conversación', () => {
+    const recargada = reducir([
+      { type: 'EXITO', conversacion: inicioDe().conversacion },
+      { type: 'HISTORIAL_EXITO', pagina: mapHistorial(PAGINA_GET, textoDe) },
+    ]);
+    const precargada = desdeIniciar();
+
+    expect(crearEstadoInicial(ID).estado).toBe(E.CARGANDO);
+    expect(selectItems(recargada).map((i) => i.id)).toEqual(
+      selectItems(precargada).map((i) => i.id),
+    );
+    expect(selectSecuenciaSiguiente(recargada)).toBe(6);
+  });
+
+  it('resincronizar con la misma página no duplica mensajes', () => {
+    const estado = reducir(
+      [
+        { type: 'REINTENTAR_HISTORIAL' },
+        { type: 'HISTORIAL_EXITO', pagina: mapHistorial(PAGINA_GET, textoDe) },
+      ],
+      desdeIniciar(),
+    );
+    const ids = selectItems(estado).map((i) => i.id);
+
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(textosRespuesta(estado)).toHaveLength(5);
+  });
+
+  it('una resincronización tras /iniciar vuelve a pedir nodo e historial', () => {
+    const estado = reducir(
+      [
+        {
+          type: 'ENVIAR',
+          envio: { cuerpo: { secuencia: 6 }, textoRespuesta: '7/10' },
+        },
+        { type: 'ENVIO_ERROR', error: error(409, 'SECUENCIA_FUERA_DE_ORDEN') },
+      ],
+      desdeIniciar(),
+    );
+
+    expect(estado.recarga).toBe(1);
+    expect(estado.recargaHistorial).toBe(1);
+  });
+});
+
+describe('respuestas tardías del historial (RF-32)', () => {
+  it('una página antigua que llega después de responder no borra lo avanzado', () => {
+    const tras = reducir(
+      [
+        { type: 'EXITO', conversacion: conversacion() },
+        {
+          type: 'ENVIAR',
+          envio: { cuerpo: { secuencia: 1 }, textoRespuesta: '7/10' },
+        },
+        {
+          type: 'ENVIO_EXITO',
+          respuesta: { estadoSesion: 'ACTIVA', secuencia: 8 },
+        },
+        { type: 'EXITO', conversacion: nodoN2() },
+        // Historial inicial pedido al montar, que llega tarde.
+        { type: 'HISTORIAL_EXITO', pagina: paginaHistorial() },
+      ],
+      crearEstadoInicial(ID),
+    );
+    const ids = selectItems(tras).map((i) => i.id);
+
+    expect(ids).toEqual([
+      'historial-i6-nodo',
+      'historial-i7-nodo',
+      'historial-i7-respuesta',
+      'nodo-0',
+      'respuesta-0',
+      'nodo-1',
+    ]);
+    expect(selectSecuenciaSiguiente(tras)).toBe(9);
+  });
+});
+
+// RF-37: un envío con id_interaccion propio, para contar rechazos.
+const envioCon = (idInteraccion) => ({
+  cuerpo: crearCuerpo(conversacion().nodo, 7, {
+    secuencia: 1,
+    idInteraccion,
+  }),
+  textoRespuesta: '7/10',
+});
+
+const rechazo400 = () => ({
+  ...error(400, 'FUERA_DE_RANGO'),
+  mensaje: 'El valor ingresado está fuera del rango permitido.',
+  campo: 'valor',
+});
+
+// Envía y recibe el error indicado sobre el estado dado.
+const enviarYFallar = (estado, e, id = `i-${Math.random()}`) =>
+  reducir(
+    [
+      { type: 'ENVIAR', envio: envioCon(id) },
+      { type: 'ENVIO_ERROR', error: e },
+    ],
+    estado,
+  );
+
+describe('tres respuestas inválidas consecutivas (RF-37)', () => {
+  it('un 400 muestra el mensaje del backend y deja la respuesta editable', () => {
+    const e = rechazo400();
+    const estado = enviarYFallar(listo(), e);
+
+    expect(estado.estado).toBe(E.LISTO);
+    expect(estado.errorEnvio).toBe(e);
+    expect(estado.errorEnvio.mensaje).toBe(
+      'El valor ingresado está fuera del rango permitido.',
+    );
+    expect(selectNodoFormulario(estado)?.idNodo).toBe('n1');
+    expect(estado.rechazosValidacion).toBe(1);
+  });
+
+  it('el primer y el segundo rechazo no ofrecen ayuda; el tercero sí', () => {
+    const uno = enviarYFallar(listo(), rechazo400());
+    const dos = enviarYFallar(uno, rechazo400());
+    const tres = enviarYFallar(dos, rechazo400());
+
+    expect(selectMostrarDificultad(uno)).toBe(false);
+    expect(selectMostrarDificultad(dos)).toBe(false);
+    expect(UMBRAL_RECHAZOS_VALIDACION).toBe(3);
+    expect(selectMostrarDificultad(tres)).toBe(true);
+    // El hilo no se borra y la pregunta no se omite.
+    expect(selectItems(tres).at(-1).nodo.idNodo).toBe('n1');
+    expect(selectNodoFormulario(tres)).not.toBeNull();
+  });
+
+  it('no cuenta dos veces el mismo intento (mismo id_interaccion)', () => {
+    const uno = enviarYFallar(listo(), rechazo400(), 'mismo');
+    const repetido = enviarYFallar(uno, rechazo400(), 'mismo');
+
+    expect(repetido.rechazosValidacion).toBe(1);
+  });
+
+  it.each([
+    ['la red', error(null, 'SIN_CONEXION')],
+    ['un 500', error(500, 'ERROR_PERSISTENCIA')],
+    ['un 409', error(409, 'ID_INTERACCION_REUTILIZADA')],
+    ['un 400 que no es de validación', error(400, 'TIPO_ENTRADA_NO_PERMITIDO')],
+  ])('no cuenta %s como respuesta inválida', (_nombre, e) => {
+    const estado = enviarYFallar(listo(), e);
+
+    expect(estado.rechazosValidacion).toBe(0);
+  });
+
+  it('se reinicia cuando una respuesta es aceptada', () => {
+    const dos = enviarYFallar(
+      enviarYFallar(listo(), rechazo400()),
+      rechazo400(),
+    );
+    const aceptada = reducir(
+      [
+        { type: 'ENVIAR', envio: envioCon('ok') },
+        {
+          type: 'ENVIO_EXITO',
+          respuesta: { estadoSesion: 'ACTIVA', secuencia: 1 },
+        },
+        { type: 'EXITO', conversacion: nodoN2() },
+      ],
+      dos,
+    );
+
+    expect(aceptada.rechazosValidacion).toBe(0);
+    expect(selectMostrarDificultad(enviarYFallar(aceptada, rechazo400()))).toBe(
+      false,
+    );
+  });
+
+  it('se reinicia cuando cambia realmente el nodo', () => {
+    let estado = listo();
+    for (let i = 0; i < 3; i += 1) estado = enviarYFallar(estado, rechazo400());
+    estado = conversationReducer(estado, { type: 'PEDIR_AYUDA' });
+    expect(estado.ayudaSolicitada).toBe(true);
+
+    const mismoNodo = conversationReducer(estado, {
+      type: 'EXITO',
+      conversacion: conversacion(),
+    });
+    expect(mismoNodo.rechazosValidacion).toBe(3);
+
+    const otroNodo = conversationReducer(estado, {
+      type: 'EXITO',
+      conversacion: nodoN2(),
+    });
+    expect(otroNodo.rechazosValidacion).toBe(0);
+    expect(otroNodo.ayudaSolicitada).toBe(false);
+  });
+
+  it('«Pedir ayuda» no cambia el nodo ni el formulario', () => {
+    let estado = listo();
+    for (let i = 0; i < 3; i += 1) estado = enviarYFallar(estado, rechazo400());
+    const ayuda = conversationReducer(estado, { type: 'PEDIR_AYUDA' });
+
+    expect(ayuda.ayudaSolicitada).toBe(true);
+    expect(selectNodoFormulario(ayuda)?.idNodo).toBe('n1');
+    expect(selectItems(ayuda)).toEqual(selectItems(estado));
+  });
+});
+
+describe('recuperación de errores 409 con /iniciar (RF-37)', () => {
+  const recuperacionDe = (estadoSesion = 'ACTIVA', extra = {}) =>
+    inicioDe(
+      respuestaIniciar({
+        sesion: { ...respuestaIniciar().sesion, estado_actual: estadoSesion },
+        ...extra,
+      }),
+    );
+
+  it('NODO_DESACTUALIZADO no repite la respuesta y pide /iniciar', () => {
+    const inicial = enviando();
+    const e = error(409, 'NODO_DESACTUALIZADO');
+    const estado = conversationReducer(inicial, {
+      type: 'ENVIO_ERROR',
+      error: e,
+    });
+
+    expect(estado.estado).toBe(E.RECUPERANDO);
+    expect(estado.recuperacion).toBe(inicial.recuperacion + 1);
+    expect(estado.envio).toBeNull();
+    expect(estado.aviso).toBe(e);
+    // No se usan los GET ni se reenvía.
+    expect(estado.recarga).toBe(inicial.recarga);
+    expect(selectNodoFormulario(estado)).toBeNull();
+  });
+
+  it('restaura nodo, historial y secuencia de /iniciar sin duplicar', () => {
+    const conHistorial = reducir(
+      [
+        { type: 'HISTORIAL_EXITO', pagina: mapHistorial(PAGINA_GET, textoDe) },
+        { type: 'EXITO', conversacion: conversacion() },
+        { type: 'ENVIAR', envio: envioCon('x') },
+        { type: 'ENVIO_ERROR', error: error(409, 'NODO_DESACTUALIZADO') },
+        { type: 'RECUPERACION_EXITO', inicio: recuperacionDe() },
+      ],
+      crearEstadoInicial(ID),
+    );
+    const ids = selectItems(conHistorial).map((i) => i.id);
+
+    expect(conHistorial.estado).toBe(E.LISTO);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(textosRespuesta(conHistorial)).toEqual([
+      'Respuesta 1',
+      'Respuesta 2',
+      'Respuesta 3',
+      'Respuesta 4',
+      'Respuesta 5',
+    ]);
+    expect(selectItems(conHistorial).at(-1).nodo.idNodo).toBe('n6');
+    expect(selectSecuenciaSiguiente(conHistorial)).toBe(6);
+    expect(conHistorial.aviso?.codigo).toBe('NODO_DESACTUALIZADO');
+    expect(conHistorial.historialEstado).toBe('LISTO');
+  });
+
+  it('una recuperación que entrega la sesión COMPLETADA queda en solo lectura', () => {
+    const estado = reducir(
+      [
+        { type: 'ENVIO_ERROR', error: error(409, 'NODO_DESACTUALIZADO') },
+        {
+          type: 'RECUPERACION_EXITO',
+          inicio: recuperacionDe('COMPLETADA'),
+        },
+      ],
+      enviando(),
+    );
+
+    expect(estado.estado).toBe(E.COMPLETADA);
+    expect(selectNodoFormulario(estado)).toBeNull();
+  });
+
+  it('ESTADO_INCONSISTENTE: si /iniciar también falla no hay más reintentos automáticos', () => {
+    const fallo = {
+      ...error(409, 'ESTADO_INCONSISTENTE'),
+      mensaje:
+        'El estado de la conversación es inconsistente. No fue posible recuperar la sesión.',
+    };
+    const recuperando = conversationReducer(enviando(), {
+      type: 'ENVIO_ERROR',
+      error: fallo,
+    });
+    expect(recuperando.estado).toBe(E.RECUPERANDO);
+    expect(recuperando.recuperacion).toBe(1);
+
+    const caido = conversationReducer(recuperando, {
+      type: 'RECUPERACION_ERROR',
+      error: fallo,
+    });
+    expect(caido.estado).toBe(E.ERROR);
+    expect(caido.error.mensaje).toBe(fallo.mensaje);
+    expect(caido.recuperacion).toBe(1);
+
+    // «Reintentar» consulta por GET (nodo e historial), no /iniciar.
+    const reintento = conversationReducer(caido, { type: 'REINTENTAR' });
+    expect(reintento.recuperacion).toBe(1);
+    expect(reintento.recarga).toBe(caido.recarga + 1);
+    expect(reintento.recargaHistorial).toBe(caido.recargaHistorial + 1);
+
+    // Si el GET vuelve con el mismo código, se muestra; no se encadena.
+    const otraVez = conversationReducer(reintento, {
+      type: 'ERROR',
+      error: fallo,
+    });
+    expect(otraVez.estado).toBe(E.ERROR);
+    expect(otraVez.recuperacion).toBe(1);
+  });
+
+  it('un segundo NODO_DESACTUALIZADO antes de avanzar se resincroniza por GET', () => {
+    const recuperado = reducir(
+      [
+        { type: 'ENVIO_ERROR', error: error(409, 'NODO_DESACTUALIZADO') },
+        { type: 'RECUPERACION_EXITO', inicio: recuperacionDe() },
+        { type: 'ENVIAR', envio: envioCon('y') },
+        { type: 'ENVIO_ERROR', error: error(409, 'NODO_DESACTUALIZADO') },
+      ],
+      enviando(),
+    );
+
+    expect(recuperado.estado).toBe(E.AVANZANDO);
+    expect(recuperado.recuperacion).toBe(1);
+    expect(recuperado.recarga).toBeGreaterThan(0);
+  });
+
+  it('tras una respuesta aceptada se permite otra recuperación', () => {
+    const estado = reducir(
+      [
+        { type: 'ENVIO_ERROR', error: error(409, 'NODO_DESACTUALIZADO') },
+        { type: 'RECUPERACION_EXITO', inicio: recuperacionDe() },
+        { type: 'ENVIAR', envio: envioCon('z') },
+        {
+          type: 'ENVIO_EXITO',
+          respuesta: { estadoSesion: 'ACTIVA', secuencia: 6 },
+        },
+        { type: 'EXITO', conversacion: nodoN2() },
+        { type: 'ENVIAR', envio: envioCon('w') },
+        { type: 'ENVIO_ERROR', error: error(409, 'NODO_DESACTUALIZADO') },
+      ],
+      enviando(),
+    );
+
+    expect(estado.estado).toBe(E.RECUPERANDO);
+    expect(estado.recuperacion).toBe(2);
+  });
+
+  it('una respuesta tardía de /iniciar fuera de la recuperación se ignora', () => {
+    const estado = listo();
+
+    expect(
+      conversationReducer(estado, {
+        type: 'RECUPERACION_EXITO',
+        inicio: recuperacionDe(),
+      }),
+    ).toBe(estado);
+  });
+
+  it('los demás 409 conservan su tratamiento', () => {
+    expect(
+      enviarYFallar(listo(), error(409, 'SECUENCIA_FUERA_DE_ORDEN')).estado,
+    ).toBe(E.AVANZANDO);
+    expect(
+      enviarYFallar(listo(), error(409, 'ID_INTERACCION_REUTILIZADA')).estado,
+    ).toBe(E.ERROR_ENVIO);
+  });
+});
+
+describe('fallos de carga y de red (RF-37)', () => {
+  it('un 500 al enviar muestra el mensaje seguro y conserva la respuesta para reintentarla a mano', () => {
+    const e = {
+      ...error(500, 'ERROR_PERSISTENCIA'),
+      mensaje: 'No se pudo guardar tu respuesta. Inténtalo de nuevo.',
+    };
+    const estado = enviarYFallar(listo(), e, 'mismo-id');
+
+    expect(estado.estado).toBe(E.ERROR_ENVIO);
+    expect(estado.errorEnvio.mensaje).toBe(e.mensaje);
+    // D7: el reintento reusa el mismo id_interaccion; no hay reenvío
+    // automático.
+    expect(estado.envio.cuerpo.id_interaccion).toBe('mismo-id');
+    expect(estado.recarga).toBe(listo().recarga);
+  });
+
+  it('una caída de red al enviar ofrece reintentar con el mismo cuerpo', () => {
+    const estado = enviarYFallar(listo(), error(null, 'SIN_CONEXION'), 'r1');
+
+    expect(estado.estado).toBe(E.ERROR_ENVIO);
+    expect(estado.envio.cuerpo.id_interaccion).toBe('r1');
+    expect(
+      conversationReducer(estado, { type: 'REINTENTAR_ENVIO' }).estado,
+    ).toBe(E.ENVIANDO);
+  });
+
+  it('503 RECURSO_NO_DISPONIBLE al cargar el nodo muestra el mensaje y permite un reintento', () => {
+    const e = {
+      ...error(503, 'RECURSO_NO_DISPONIBLE'),
+      mensaje:
+        'No fue posible cargar el contenido en este momento. Inténtalo de nuevo más tarde.',
+    };
+    const estado = conversationReducer(crearEstadoInicial(ID), {
+      type: 'ERROR',
+      error: e,
+    });
+
+    expect(estado.estado).toBe(E.ERROR);
+    expect(estado.error.mensaje).toBe(e.mensaje);
+    expect(estado.error.reintentable).toBe(true);
+    expect(estado.recuperacion).toBe(0);
+    expect(conversationReducer(estado, { type: 'REINTENTAR' }).recarga).toBe(1);
+  });
+
+  it('un recurso multimedia caído no afecta el resto de la conversación', () => {
+    const estado = reducir(
+      [
+        { type: 'HISTORIAL_EXITO', pagina: paginaHistorial() },
+        { type: 'RECURSO_ERROR', indice: 1 },
+        { type: 'EXITO', conversacion: conversacion() },
+        { type: 'RECURSO_ERROR', indice: 1 },
+      ],
+      listo(),
+    );
+
+    expect(selectHayRecursoNoDisponible(estado)).toBe(true);
+    expect(estado.estado).toBe(E.LISTO);
+    expect(selectItems(estado)).toHaveLength(4);
+    expect(estado.recarga).toBe(1);
+    expect(estado.envio).toBeNull();
+  });
+});
+
+describe('nodo final al completar la sesión (RF-31, CA-31-4)', () => {
+  const nodoFinal = (extra = {}) =>
+    conversacion('https://example.test/fin.png?firma=1', 'fin', {
+      estadoSesion: 'COMPLETADA',
+      ...extra,
+      nodo: {
+        idNodo: 'fin',
+        esTerminal: true,
+        bloques: [
+          { orden: 1, tipo: 'TEXTO', texto: 'Gracias por llegar hasta aquí.' },
+          { orden: 2, tipo: 'IMAGEN', url: 'https://example.test/fin.png?f=1' },
+        ],
+        entrada: null,
+        ...extra.nodo,
+      },
+    });
+
+  const completadaPorEnvio = () =>
+    reducir(
+      [
+        { type: 'HISTORIAL_EXITO', pagina: paginaHistorial() },
+        {
+          type: 'ENVIO_EXITO',
+          respuesta: { estadoSesion: 'COMPLETADA', secuencia: 8 },
+        },
+      ],
+      enviando(),
+    );
+
+  it('el envío completa la sesión y pide el nodo final', () => {
+    const estado = completadaPorEnvio();
+
+    expect(estado.estado).toBe(E.COMPLETADA);
+    expect(estado.conversacion).toBeNull();
+    expect(estado.recarga).toBe(enviando().recarga + 1);
+  });
+
+  it('el nodo final se muestra en cuanto llega, al final del hilo y sin formulario', () => {
+    const estado = conversationReducer(completadaPorEnvio(), {
+      type: 'EXITO',
+      conversacion: nodoFinal(),
+    });
+    const items = selectItems(estado);
+
+    expect(estado.estado).toBe(E.COMPLETADA);
+    expect(items.at(-1)).toMatchObject({
+      actual: true,
+      nodo: { idNodo: 'fin', esTerminal: true },
+    });
+    expect(items.at(-1).nodo.bloques[0].texto).toBe(
+      'Gracias por llegar hasta aquí.',
+    );
+    expect(selectNodoFormulario(estado)).toBeNull();
+  });
+
+  it('conserva el historial y la respuesta que cerró la sesión, sin duplicados', () => {
+    const estado = conversationReducer(completadaPorEnvio(), {
+      type: 'EXITO',
+      conversacion: nodoFinal(),
+    });
+    const ids = selectItems(estado).map((i) => i.id);
+
+    expect(ids).toEqual([
+      'historial-i6-nodo',
+      'historial-i7-nodo',
+      'historial-i7-respuesta',
+      'nodo-0',
+      'respuesta-0',
+      'nodo-1',
+    ]);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('también acepta un nodo terminal aunque el estado diga ACTIVA', () => {
+    const estado = conversationReducer(completadaPorEnvio(), {
+      type: 'EXITO',
+      conversacion: nodoFinal({ estadoSesion: 'ACTIVA' }),
+    });
+
+    expect(selectItems(estado).at(-1).nodo.idNodo).toBe('fin');
+    expect(estado.estado).toBe(E.COMPLETADA);
+  });
+
+  it('no admite nuevas respuestas después del cierre', () => {
+    const estado = conversationReducer(completadaPorEnvio(), {
+      type: 'EXITO',
+      conversacion: nodoFinal(),
+    });
+
+    expect(
+      conversationReducer(estado, { type: 'ENVIAR', envio: envio() }),
+    ).toBe(estado);
+  });
+
+  it('un nodo anterior que llega tarde no reemplaza ni duplica el nodo final', () => {
+    const conFinal = conversationReducer(completadaPorEnvio(), {
+      type: 'EXITO',
+      conversacion: nodoFinal(),
+    });
+
+    expect(
+      conversationReducer(conFinal, {
+        type: 'EXITO',
+        conversacion: conversacion(),
+      }),
+    ).toBe(conFinal);
+  });
+
+  it('volver a recibir el nodo final (recarga de recursos) no lo duplica', () => {
+    const conFinal = conversationReducer(completadaPorEnvio(), {
+      type: 'EXITO',
+      conversacion: nodoFinal(),
+    });
+    const recargado = reducir(
+      [
+        { type: 'RECURSO_ERROR', indice: 1 },
+        {
+          type: 'EXITO',
+          conversacion: nodoFinal({
+            nodo: {
+              bloques: [
+                {
+                  orden: 1,
+                  tipo: 'TEXTO',
+                  texto: 'Gracias por llegar hasta aquí.',
+                },
+                {
+                  orden: 2,
+                  tipo: 'IMAGEN',
+                  url: 'https://example.test/fin.png?f=2',
+                },
+              ],
+            },
+          }),
+        },
+      ],
+      conFinal,
+    );
+
+    expect(selectItems(recargado).map((i) => i.id)).toEqual(
+      selectItems(conFinal).map((i) => i.id),
+    );
+    expect(recargado.recargando).toBe(false);
+    expect(recargado.fallidos).toEqual([]);
+    expect(recargado.estado).toBe(E.COMPLETADA);
+  });
+
+  it('una sesión ya completada que se recupera muestra su nodo final en solo lectura', () => {
+    const estado = reducir([
+      { type: 'HISTORIAL_EXITO', pagina: paginaHistorial() },
+      { type: 'EXITO', conversacion: nodoFinal() },
+    ]);
+
+    expect(estado.estado).toBe(E.COMPLETADA);
+    expect(selectItems(estado).at(-1).nodo.idNodo).toBe('fin');
+    expect(selectItems(estado)).toHaveLength(4);
+    expect(selectNodoFormulario(estado)).toBeNull();
   });
 });

@@ -1,8 +1,15 @@
-import { anteponerSinDuplicar } from '../../../services/historialInteracciones.js';
+import {
+  anteponerSinDuplicar,
+  mapHistorial,
+} from '../../../services/historialInteracciones.js';
 import { esIdSesionValido } from '../../../services/nodoActual.js';
 import { ESTADO_SESION } from '../../../types/index.js';
 
-import { ACCION_ERROR_ENVIO, clasificarErrorEnvio } from './envio.js';
+import {
+  ACCION_ERROR_ENVIO,
+  CODIGOS_RECUPERAR,
+  clasificarErrorEnvio,
+} from './envio.js';
 
 export const ESTADO_CONVERSACION = Object.freeze({
   CARGANDO: 'CARGANDO',
@@ -16,7 +23,13 @@ export const ESTADO_CONVERSACION = Object.freeze({
   ERROR_ENVIO: 'ERROR_ENVIO',
   // D8 y A-016: sin más respuestas.
   COMPLETADA: 'COMPLETADA',
+  // RF-37: esperando el último estado válido de /iniciar.
+  RECUPERANDO: 'RECUPERANDO',
 });
+
+// RF-37: rechazos de validación consecutivos en un nodo antes de ofrecer
+// ayuda.
+export const UMBRAL_RECHAZOS_VALIDACION = 3;
 
 const {
   CARGANDO,
@@ -27,6 +40,7 @@ const {
   AVANZANDO,
   ERROR_ENVIO,
   COMPLETADA,
+  RECUPERANDO,
 } = ESTADO_CONVERSACION;
 
 // RF-32: estado de la carga del historial, independiente del nodo actual.
@@ -72,12 +86,81 @@ const BASE = Object.freeze({
   errorEnvio: null,
   // D15: 409 NODO_DESACTUALIZADO, visible sobre el nodo nuevo.
   aviso: null,
+  // RF-32: el nodo o la página reciente ya llegaron con /iniciar; la
+  // primera consulta por GET se omite (las recargas posteriores no).
+  nodoPrecargado: false,
+  historialPrecargado: false,
+  // RF-32: `recuperada_desde_historial` de /iniciar.
+  recuperadaDesdeHistorial: false,
+  // Paso en que llegó ese estado: el aviso se ve hasta el primer avance.
+  pasoRecuperada: 0,
+  // RF-37: respuestas del nodo actual rechazadas por validación (400), sin
+  // contar dos veces el mismo `id_interaccion`.
+  rechazosValidacion: 0,
+  ultimoRechazo: null,
+  ayudaSolicitada: false,
+  // RF-37: cada incremento pide /iniciar. Una sola recuperación automática
+  // hasta el siguiente envío aceptado: si falla, no se encadenan más.
+  recuperacion: 0,
+  recuperacionUsada: false,
+  // Tras una recuperación fallida, «Reintentar» pide también el historial.
+  historialPendiente: false,
 });
 
-export function crearEstadoInicial(idSesion) {
-  return esIdSesionValido(idSesion)
-    ? BASE
-    : { ...BASE, estado: DIRECCION_INVALIDA };
+const SIN_RECHAZOS = Object.freeze({
+  rechazosValidacion: 0,
+  ultimoRechazo: null,
+  ayudaSolicitada: false,
+});
+
+/*
+ * RF-32: modelo de /iniciar (`mapInicioSesion`) → `inicio` para
+ * `crearEstadoInicial`. La página reciente se mapea igual que la del GET
+ * (`mapHistorial`, con `textoDe` del registro de entradas).
+ */
+export function prepararInicio(modelo, textoDe) {
+  if (!modelo?.conversacion) return null;
+
+  return {
+    conversacion: modelo.conversacion,
+    pagina: modelo.historialReciente
+      ? mapHistorial(modelo.historialReciente, textoDe)
+      : null,
+    ultimaSecuencia: modelo.sesion?.ultimaSecuencia ?? null,
+    recuperadaDesdeHistorial: modelo.recuperadaDesdeHistorial === true,
+  };
+}
+
+/*
+ * `inicio` (opcional) es la respuesta de /iniciar ya mapeada:
+ * `{ conversacion, pagina, ultimaSecuencia, recuperadaDesdeHistorial }`.
+ * Solo se usa si es del mismo `idSesion` de la URL; si no, o tras F5, la
+ * conversación se carga por GET.
+ */
+export function crearEstadoInicial(idSesion, inicio = null) {
+  if (!esIdSesionValido(idSesion)) {
+    return { ...BASE, estado: DIRECCION_INVALIDA };
+  }
+
+  const conversacion = inicio?.conversacion;
+  if (!conversacion?.nodo?.idNodo || conversacion.idSesion !== idSesion) {
+    return BASE;
+  }
+
+  let estado = { ...alCargar(BASE, conversacion), nodoPrecargado: true };
+
+  if (inicio.pagina) {
+    estado = {
+      ...alCargarHistorial(estado, inicio.pagina),
+      historialPrecargado: true,
+    };
+  }
+
+  return {
+    ...estado,
+    ultimaSecuencia: masAlta(estado.ultimaSecuencia, inicio.ultimaSecuencia),
+    recuperadaDesdeHistorial: inicio.recuperadaDesdeHistorial === true,
+  };
 }
 
 // Tras la recarga de D7 solo siguen caídos los recursos cuya URL no
@@ -120,6 +203,14 @@ export const esSesionCompletada = (conversacion) =>
   conversacion?.estadoSesion === ESTADO_SESION.COMPLETADA ||
   conversacion?.nodo?.esTerminal === true;
 
+// RF-31: con la sesión completada solo entra el nodo final (sin nodo a la
+// vista, el backend lo da por completado o terminal) o la recarga del
+// mismo nodo ya mostrado.
+const aceptaNodoTrasCompletar = (state, conversacion) =>
+  state.conversacion
+    ? state.conversacion.nodo.idNodo === conversacion?.nodo?.idNodo
+    : esSesionCompletada(conversacion);
+
 const estadoTrasCarga = (state, conversacion) => {
   if (esSesionCompletada(conversacion)) return COMPLETADA;
   // Una recarga de recursos durante el envío no cambia el estado.
@@ -152,6 +243,7 @@ function alCargar(state, conversacion) {
   // se reinician los recursos caídos.
   return {
     ...comun,
+    ...SIN_RECHAZOS,
     historial: anterior
       ? [...state.historial, itemNodo(state)]
       : state.historial,
@@ -179,6 +271,8 @@ function alEnviarConExito(state, respuesta) {
 
   return {
     ...state,
+    ...SIN_RECHAZOS,
+    recuperacionUsada: false,
     ultimaSecuencia: masAlta(state.ultimaSecuencia, respuesta?.secuencia),
     estado: completada ? COMPLETADA : AVANZANDO,
     conversacion: null,
@@ -204,10 +298,20 @@ function masAlta(actual, nueva) {
 
 // RF-32: la página más reciente reemplaza el hilo cerrado (carga inicial
 // o resincronización). Los items en memoria quedan cubiertos por ella.
+// Una página tardía, anterior a la última secuencia confirmada (p. ej. el
+// historial inicial llega después de responder), no borra lo avanzado:
+// se antepone sin duplicar.
 function alCargarHistorial(state, pagina) {
+  const tardia =
+    state.ultimaSecuencia !== null &&
+    Number.isInteger(pagina.ultimaSecuencia) &&
+    pagina.ultimaSecuencia < state.ultimaSecuencia;
+
   return {
     ...state,
-    historial: pagina.items,
+    historial: tardia
+      ? anteponerSinDuplicar(pagina.items, state.historial)
+      : pagina.items,
     historialEstado: ESTADO_HISTORIAL.LISTO,
     historialError: null,
     hayMas: pagina.hayMas,
@@ -217,27 +321,74 @@ function alCargarHistorial(state, pagina) {
   };
 }
 
+// RF-37: un 400 de validación cuenta una vez por `id_interaccion`. Los
+// errores de red, los 409 y los 5xx no pasan por aquí.
+function contarRechazo(state, error) {
+  const id = state.envio?.cuerpo?.id_interaccion ?? null;
+
+  if (error?.status !== 400 || id === null || id === state.ultimoRechazo) {
+    return {};
+  }
+
+  return {
+    rechazosValidacion: state.rechazosValidacion + 1,
+    ultimoRechazo: id,
+  };
+}
+
+// CA-27-9 y CA-30-4: se descarta la respuesta y se piden el nodo actual y
+// el historial. El nodo viejo no pasa al hilo: el historial del servidor
+// dice qué se respondió de verdad.
+const resincronizar = (state, error) => ({
+  ...state,
+  estado: AVANZANDO,
+  conversacion: null,
+  envio: null,
+  aviso: error,
+  recarga: state.recarga + 1,
+  historialEstado: ESTADO_HISTORIAL.CARGANDO,
+  recargaHistorial: state.recargaHistorial + 1,
+});
+
+// RF-37: se descarta la respuesta (no se repite) y se pide /iniciar. El
+// mensaje del backend queda como aviso informativo sobre el estado nuevo.
+const recuperar = (state, error) => ({
+  ...state,
+  estado: RECUPERANDO,
+  conversacion: null,
+  envio: null,
+  errorEnvio: null,
+  error: null,
+  aviso: error,
+  recuperacion: state.recuperacion + 1,
+  recuperacionUsada: true,
+});
+
 function alFallarEnvio(state, error) {
   switch (clasificarErrorEnvio(error)) {
     // CA-28-1 a CA-28-5: mismo nodo, respuesta editable y, al corregir,
     // idRespuesta nuevo.
     case ACCION_ERROR_ENVIO.INLINE:
-      return { ...state, estado: LISTO, envio: null, errorEnvio: error };
-
-    // CA-27-9 y CA-30-4: se descarta la respuesta y se piden el nodo
-    // actual y el historial. El nodo viejo no pasa al hilo: el historial
-    // del servidor dice qué se respondió de verdad.
-    case ACCION_ERROR_ENVIO.DESACTUALIZADO:
       return {
         ...state,
-        estado: AVANZANDO,
-        conversacion: null,
+        ...contarRechazo(state, error),
+        estado: LISTO,
         envio: null,
-        aviso: error,
-        recarga: state.recarga + 1,
-        historialEstado: ESTADO_HISTORIAL.CARGANDO,
-        recargaHistorial: state.recargaHistorial + 1,
+        errorEnvio: error,
       };
+
+    case ACCION_ERROR_ENVIO.DESACTUALIZADO:
+      return resincronizar(state, error);
+
+    // RF-37: una recuperación automática por episodio. Si ya se usó, un
+    // nodo desactualizado se resincroniza por GET y un estado inconsistente
+    // se muestra con la opción de volver al chat; nunca hay bucle.
+    case ACCION_ERROR_ENVIO.RECUPERAR:
+      if (!state.recuperacionUsada) return recuperar(state, error);
+      if (error?.codigo === 'NODO_DESACTUALIZADO') {
+        return resincronizar(state, error);
+      }
+      return { ...state, estado: ERROR_ENVIO, envio: null, errorEnvio: error };
 
     // CA-27-8: se conserva el cuerpo para reenviarlo igual.
     case ACCION_ERROR_ENVIO.REINTENTAR:
@@ -260,12 +411,23 @@ export function conversationReducer(state, action) {
         error: null,
         aviso: null,
         recarga: state.recarga + 1,
+        ...(state.historialPendiente && {
+          historialPendiente: false,
+          historialEstado: ESTADO_HISTORIAL.CARGANDO,
+          recargaHistorial: state.recargaHistorial + 1,
+        }),
       };
 
     case 'EXITO':
-      // Una recarga de recursos que llega tras completar la sesión ya no
-      // tiene nodo que reponer (D8).
-      if (state.estado === COMPLETADA) return state;
+      // RF-31 (CA-31-4): tras completar se acepta el nodo final que pidió el
+      // envío, y la recarga de recursos de ese mismo nodo. Una respuesta
+      // tardía del nodo anterior (activo, no terminal) no lo repone (D8).
+      if (
+        state.estado === COMPLETADA &&
+        !aceptaNodoTrasCompletar(state, action.conversacion)
+      ) {
+        return state;
+      }
 
       return alCargar(state, action.conversacion);
 
@@ -273,7 +435,40 @@ export function conversationReducer(state, action) {
       // D7: si falla la recarga, el nodo sigue visible con sus avisos.
       if (state.recargando) return { ...state, recargando: false };
 
+      // RF-37: un estado inconsistente al consultar la conversación se
+      // recupera con /iniciar, una sola vez.
+      if (
+        CODIGOS_RECUPERAR.includes(action.error?.codigo) &&
+        !state.recuperacionUsada
+      ) {
+        return recuperar(state, action.error);
+      }
+
       return { ...state, estado: ERROR, error: action.error };
+
+    // RF-37 con RF-32: el último estado válido que entregó /iniciar
+    // reemplaza el hilo (el historial del servidor manda) y la secuencia.
+    // El cliente no decide cuál era el nodo válido.
+    case 'RECUPERACION_EXITO':
+      if (state.estado !== RECUPERANDO) return state;
+
+      return alRecuperar(state, action.inicio);
+
+    // La recuperación falló: se muestra el error del backend. «Reintentar»
+    // consulta por GET; /iniciar no se vuelve a pedir automáticamente.
+    case 'RECUPERACION_ERROR':
+      if (state.estado !== RECUPERANDO) return state;
+
+      return {
+        ...state,
+        estado: ERROR,
+        error: action.error,
+        historialPendiente: true,
+      };
+
+    // RF-37: «Pedir ayuda» tras tres rechazos.
+    case 'PEDIR_AYUDA':
+      return { ...state, ayudaSolicitada: true };
 
     case 'RECURSO_ERROR': {
       if (state.fallidos.includes(action.indice)) return state;
@@ -366,6 +561,61 @@ export function conversationReducer(state, action) {
       return state;
   }
 }
+
+function alRecuperar(state, inicio) {
+  if (!inicio?.conversacion?.nodo?.idNodo) {
+    return { ...state, estado: ERROR, historialPendiente: true };
+  }
+
+  const base = {
+    ...state,
+    ...SIN_RECHAZOS,
+    estado: AVANZANDO,
+    conversacion: null,
+    error: null,
+    historial: [],
+    hayMas: false,
+    secuenciaMinima: null,
+    cargandoAnteriores: false,
+    errorAnteriores: null,
+    ultimaSecuencia: null,
+    paso: state.paso + 1,
+    reintentoUsado: false,
+    recargando: false,
+    fallidos: [],
+    envio: null,
+    errorEnvio: null,
+  };
+  let recuperado = alCargar(base, inicio.conversacion);
+
+  recuperado = inicio.pagina
+    ? alCargarHistorial(recuperado, inicio.pagina)
+    : {
+        ...recuperado,
+        historialEstado: ESTADO_HISTORIAL.CARGANDO,
+        recargaHistorial: recuperado.recargaHistorial + 1,
+      };
+
+  return {
+    ...recuperado,
+    ultimaSecuencia: masAlta(
+      recuperado.ultimaSecuencia,
+      inicio.ultimaSecuencia,
+    ),
+    recuperadaDesdeHistorial: inicio.recuperadaDesdeHistorial === true,
+    pasoRecuperada: recuperado.paso,
+  };
+}
+
+// RF-37: tras tres rechazos en el nodo, con el formulario a la vista.
+export const selectMostrarDificultad = (state) =>
+  state.rechazosValidacion >= UMBRAL_RECHAZOS_VALIDACION &&
+  selectNodoFormulario(state) !== null;
+
+// RF-33 / RF-37: algún recurso del nodo quedó sin mostrarse tras el único
+// reintento.
+export const selectHayRecursoNoDisponible = (state) =>
+  state.reintentoUsado && !state.recargando && state.fallidos.length > 0;
 
 // Items del hilo: el historial y, al final, el nodo actual.
 export function selectItems(state) {
