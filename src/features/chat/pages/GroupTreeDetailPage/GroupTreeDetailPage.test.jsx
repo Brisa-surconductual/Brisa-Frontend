@@ -1,3 +1,4 @@
+import { mapContenidos } from '../../services/contenidosAdmin.js';
 import { describe, expect, it, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter } from 'react-router-dom';
@@ -8,6 +9,51 @@ import {
 } from '../../services/transicionesAdmin.js';
 import { initialTreeDetailState } from './utils/treeDetailState.js';
 import { GroupTreeDetailPage } from './GroupTreeDetailPage.jsx';
+
+// RF-25/RF-24: contenido programado en dos cronogramas con fechas distintas.
+const CONTENIDOS = mapContenidos([
+  {
+    id_contenido: 'c-1',
+    nombre_contenido: 'Video 1',
+    tipo_contenido: 'MULTIMEDIA',
+    programaciones: [
+      {
+        id_contenido_cronograma: 'cc-1',
+        cronograma: {
+          id_cronograma: 'cr-1',
+          nombre_cronograma: 'Cronograma base',
+          estado: 'ACTIVO',
+        },
+        unidad: {
+          id_unidad_temporal: 'ut-1',
+          orden_unidad: 1,
+          nombre_unidad: 'Semana 1',
+          fecha_inicio: '2026-12-01',
+          fecha_fin: '2026-12-07',
+        },
+        fecha_inicio_disponibilidad: '2026-12-01T13:00:00.000Z',
+        fecha_fin_disponibilidad: '2026-12-07T23:00:00.000Z',
+      },
+      {
+        id_contenido_cronograma: 'cc-2',
+        cronograma: {
+          id_cronograma: 'cr-2',
+          nombre_cronograma: 'Cronograma B',
+          estado: 'INACTIVO',
+        },
+        unidad: {
+          id_unidad_temporal: 'ut-3',
+          orden_unidad: 3,
+          nombre_unidad: 'Semana 3',
+          fecha_inicio: '2026-12-15',
+          fecha_fin: '2026-12-21',
+        },
+        fecha_inicio_disponibilidad: null,
+        fecha_fin_disponibilidad: null,
+      },
+    ],
+  },
+]);
 
 let pageState;
 
@@ -146,7 +192,7 @@ describe('GroupTreeDetailPage (RF-25, vista del árbol)', () => {
           texto: '',
           esNodoInicial: false,
           orden: '',
-          idContenidoCronograma: '',
+          idContenido: '',
         },
         errors: { texto: 'Escribe el texto del nodo.' },
         saving: false,
@@ -175,7 +221,7 @@ describe('GroupTreeDetailPage (RF-25, vista del árbol)', () => {
           texto: '',
           esNodoInicial: false,
           orden: '',
-          idContenidoCronograma: '',
+          idContenido: '',
           capturaPerfilDimension: 'TIPO_CRAVING',
         },
         errors: {},
@@ -195,16 +241,7 @@ describe('GroupTreeDetailPage (RF-25, vista del árbol)', () => {
       status: 'ready',
       arbol,
       canEdit: true,
-      contenidosCronograma: [
-        {
-          id_contenido_cronograma: 'cc-1',
-          id_contenido: 'c-1',
-          nombre_contenido: 'Video 1',
-          id_unidad_temporal: 'ut-1',
-          nombre_unidad: 'Semana 1',
-          orden_unidad: 1,
-        },
-      ],
+      contenidos: CONTENIDOS,
       editor: {
         mode: 'create',
         nodo: null,
@@ -213,7 +250,7 @@ describe('GroupTreeDetailPage (RF-25, vista del árbol)', () => {
           texto: '',
           esNodoInicial: false,
           orden: '',
-          idContenidoCronograma: '',
+          idContenido: '',
         },
         errors: {},
         saving: false,
@@ -222,7 +259,7 @@ describe('GroupTreeDetailPage (RF-25, vista del árbol)', () => {
     });
 
     expect(html).toContain('Contenido asociado');
-    expect(html).toContain('Video 1 · Semana 1');
+    expect(html).toContain('Video 1 · en 2 cronogramas');
   });
 
   it('un nodo con contenido asociado lo muestra en la lista de solo lectura', () => {
@@ -230,24 +267,46 @@ describe('GroupTreeDetailPage (RF-25, vista del árbol)', () => {
       status: 'ready',
       arbol: {
         ...arbol,
-        nodos: [
-          { ...arbol.nodos[0], idContenidoCronograma: 'cc-1' },
-          arbol.nodos[1],
-        ],
+        nodos: [{ ...arbol.nodos[0], idContenido: 'c-1' }, arbol.nodos[1]],
       },
-      contenidosCronograma: [
-        {
-          id_contenido_cronograma: 'cc-1',
-          id_contenido: 'c-1',
-          nombre_contenido: 'Video 1',
-          id_unidad_temporal: 'ut-1',
-          nombre_unidad: 'Semana 1',
-          orden_unidad: 1,
-        },
-      ],
+      contenidos: CONTENIDOS,
     });
 
-    expect(html).toContain('Video 1 · Semana 1');
+    // RF-25/RF-24: la tarjeta muestra cronograma, unidad y fechas.
+    expect(html).toContain('Video 1');
+    expect(html).toContain('Contenido asociado');
+    expect(html).toContain('Cronograma base (activo)');
+    expect(html).toContain('Unidad 1 · Semana 1');
+    expect(html).toContain('Cronograma B (inactivo)');
+    expect(html).toContain('Unidad 3 · Semana 3');
+    expect(html).toContain('2026');
+  });
+
+  it('el formulario muestra dónde está programado el contenido elegido', () => {
+    const html = render({
+      status: 'ready',
+      arbol,
+      canEdit: true,
+      contenidos: CONTENIDOS,
+      editor: {
+        mode: 'create',
+        nodo: null,
+        values: {
+          idTipoNodo: '',
+          texto: '',
+          esNodoInicial: false,
+          orden: '',
+          idContenido: 'c-1',
+        },
+        errors: {},
+        saving: false,
+        saveError: '',
+      },
+    });
+
+    expect(html).toContain('Cronogramas donde está programado este contenido');
+    expect(html).toContain('Unidad 1 · Semana 1');
+    expect(html).toContain('Fechas de la plantilla del cronograma');
   });
 
   it('muestra el aviso de éxito tras guardar', () => {

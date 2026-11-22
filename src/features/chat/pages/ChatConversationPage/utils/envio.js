@@ -27,6 +27,8 @@ const CODIGOS_RESINCRONIZAR = Object.freeze([
   'SECUENCIA_FUERA_DE_ORDEN',
   'NODO_TERMINAL',
   'SESION_NO_ACTIVA',
+  // RF-24/RF-22: el nodo aún no se habilita; al recargar se muestra la espera.
+  'NODO_EN_ESPERA_CRONOGRAMA',
 ]);
 
 // RF-37: la conversación en curso ya no coincide con la guardada. No se

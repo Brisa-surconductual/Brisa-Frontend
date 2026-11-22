@@ -287,7 +287,9 @@ export function mapNodo(nodo) {
     // RF-25: nodo de cierre del flujo.
     esNodoFinal: nodo.es_nodo_final === true,
     orden: nodo.orden ?? null,
-    idContenidoCronograma: nodo.id_contenido_cronograma ?? null,
+    // RF-25/RF-24: el nodo se liga al contenido; cada estudiante lo recorre
+    // según su programación en su propio cronograma.
+    idContenido: nodo.id_contenido ?? null,
     // Objeto crudo (PR4): lo necesita el formulario para precargar la
     // respuesta configurada. `null` si el nodo no espera respuesta.
     entrada:

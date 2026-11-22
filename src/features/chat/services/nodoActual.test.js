@@ -64,6 +64,7 @@ describe('mapNodoActual (RF-26)', () => {
     expect(Object.keys(resultado.nodo).sort()).toEqual(
       [
         'bloques',
+        'disponibilidad',
         'entrada',
         'esTerminal',
         'idNodo',

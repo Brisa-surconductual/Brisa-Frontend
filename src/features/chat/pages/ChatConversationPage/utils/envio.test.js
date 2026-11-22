@@ -92,7 +92,8 @@ describe('clasificarErrorEnvio (tabla 2.5)', () => {
     [{ status: 409, codigo: 'ESTADO_INCONSISTENTE' }, A.RECUPERAR],
     // Otros 409 no se reintentan ni se recuperan.
     [{ status: 409, codigo: 'ID_INTERACCION_REUTILIZADA' }, A.VOLVER_AL_INICIO],
-    [{ status: 409, codigo: 'NODO_EN_ESPERA_CRONOGRAMA' }, A.VOLVER_AL_INICIO],
+    // RF-24/RF-22: se resincroniza y la recarga muestra la espera.
+    [{ status: 409, codigo: 'NODO_EN_ESPERA_CRONOGRAMA' }, A.DESACTUALIZADO],
     [{ status: 409, codigo: 'NODO_TERMINAL' }, A.DESACTUALIZADO],
     [{ status: 409, codigo: 'SESION_NO_ACTIVA' }, A.DESACTUALIZADO],
     [{ status: 409, codigo: 'SECUENCIA_FUERA_DE_ORDEN' }, A.DESACTUALIZADO],

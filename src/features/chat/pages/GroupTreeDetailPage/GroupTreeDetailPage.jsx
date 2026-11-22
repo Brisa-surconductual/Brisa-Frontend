@@ -16,7 +16,6 @@ import { ChatAdminNotice } from '../../components/ChatAdminNotice/index.js';
 import { ChatSectionTabs } from '../../components/ChatSectionTabs/index.js';
 import { FlowStatusBadge } from '../../components/FlowStatusBadge/index.js';
 import { ACCION_FLUJO } from '../../services/flujosAdmin.js';
-import { opcionesContenidoCronograma } from '../../services/nodosAdmin.js';
 import {
   opcionesNodoDestino,
   opcionesNodoOrigen,
@@ -173,7 +172,8 @@ export function GroupTreeDetailPage() {
             transiciones={arbol.transiciones}
             canEdit={canEdit}
             onEdit={page.openEdit}
-            contenidosCronograma={page.contenidosCronograma}
+            contenidos={page.contenidos}
+            variables={page.variables}
           />
         )}
 
@@ -211,9 +211,8 @@ export function GroupTreeDetailPage() {
             saving={editor.saving}
             saveError={editor.saveError}
             tiposNodo={page.tiposNodo}
-            contenidosCronograma={opcionesContenidoCronograma(
-              page.contenidosCronograma,
-            )}
+            contenidos={page.contenidos}
+            variables={page.variables}
             onChange={page.changeField}
             onSubmit={page.submitEditor}
           />

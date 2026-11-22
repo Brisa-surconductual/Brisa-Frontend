@@ -15,7 +15,7 @@ export const MENSAJE_RECUPERADA_DESDE_HISTORIAL =
 
 // RF-32: `nodo_actual` de /iniciar (snake_case) al mismo modelo que da
 // RF-26 (`mapNodoActual`). El nodo lo eligió el backend: no se toca.
-// Otros campos (p. ej. `disponibilidad`) se toleran y no pasan.
+// `disponibilidad` también se conserva (RF-24: nodo en espera).
 const conversacionDeInicio = (sesion, nodo) =>
   mapNodoActual({
     idSesion: sesion.id_sesion,
@@ -25,6 +25,10 @@ const conversacionDeInicio = (sesion, nodo) =>
       tipoNodo: nodo.tipo_nodo,
       orden: nodo.orden ?? null,
       esTerminal: nodo.es_terminal,
+      disponibilidad: nodo.disponibilidad && {
+        habilitado: nodo.disponibilidad.habilitado,
+        habilitaAprox: nodo.disponibilidad.habilita_aprox,
+      },
       bloques: nodo.bloques,
       entrada: nodo.entrada,
     },

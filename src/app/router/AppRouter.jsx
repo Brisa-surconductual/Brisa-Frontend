@@ -10,6 +10,7 @@ import {
   ChatOfflinePage,
   GroupTreeDetailPage,
   GroupTreesPage,
+  TaxonomyVariablesPage,
   ProgramModalityScreen,
   PersonalizedTreesScreen,
 } from '@/features/chat/index.js';
@@ -361,6 +362,11 @@ export function AppRouter() {
               <Route
                 path="administrativo/chat/arboles"
                 element={<PersonalizedTreesScreen />}
+              />
+
+              <Route
+                path="administrativo/chat/variables"
+                element={<TaxonomyVariablesPage />}
               />
               </Route>
             </Route>

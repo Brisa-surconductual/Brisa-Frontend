@@ -9,7 +9,9 @@ import { crearTransicion } from '../../../api/arbol/crearTransicion.js';
 import { obtenerArbolFlujo } from '../../../api/arbol/obtenerArbolFlujo.js';
 import { obtenerCatalogos } from '../../../api/arbol/obtenerCatalogos.js';
 import { publicarFlujo } from '../../../api/arbol/publicarFlujo.js';
+import { listarTaxonomiaVariables } from '../../../api/taxonomia/listarTaxonomiaVariables.js';
 import { useAutoDismiss } from '../../../hooks/useAutoDismiss.js';
+import { mapContenidos } from '../../../services/contenidosAdmin.js';
 import {
   ACCION_FLUJO,
   accionesEstadoDisponibles,
@@ -36,6 +38,10 @@ import {
   payloadCrearTransicion,
   validarTransicion,
 } from '../../../services/transicionesAdmin.js';
+import {
+  validarNodoContraVariable,
+  variablePorCodigo,
+} from '../../../services/taxonomiaVariables.js';
 import { ESTADO_FLUJO } from '../../../types/estadoFlujo.js';
 import {
   hayCambios,
@@ -109,8 +115,26 @@ export function useGroupTreeDetailPage() {
           dispatch({
             type: 'CATALOG',
             tiposNodo: opcionesTipoNodo(catalogos.tipos_nodo),
-            contenidosCronograma: catalogos.contenidos_cronograma ?? [],
+            contenidos: mapContenidos(catalogos.contenidos),
           });
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelado = true;
+    };
+  }, []);
+
+  // RF-30B: taxonomía para el selector "Variable que captura". Incluye las
+  // deshabilitadas para mostrar (y señalar) las que un nodo ya tenía.
+  useEffect(() => {
+    let cancelado = false;
+
+    listarTaxonomiaVariables({ incluirDeshabilitadas: true })
+      .then((taxonomia) => {
+        if (!cancelado) {
+          dispatch({ type: 'TAXONOMIA', variables: taxonomia.variables });
         }
       })
       .catch(() => {});
@@ -125,7 +149,13 @@ export function useGroupTreeDetailPage() {
 
   async function submitEditor({ confirmarEliminacion = false } = {}) {
     const esEdicion = editor.mode === 'edit';
-    const errors = validarNodo(editor.values, { esEdicion });
+    const errors = {
+      ...validarNodo(editor.values, { esEdicion }),
+      ...validarNodoContraVariable(
+        editor.values,
+        variablePorCodigo(state.variables, editor.values.variableCodigo),
+      ),
+    };
 
     if (Object.keys(errors).length > 0) {
       dispatch({ type: 'EDITOR_INVALID', errors });

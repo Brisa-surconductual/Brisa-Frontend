@@ -69,8 +69,11 @@ describe('mapInicioSesion', () => {
     });
     expect(conversacion.nodo.bloques.map((b) => b.orden)).toEqual([1, 2]);
     expect(conversacion.nodo.bloques[0].texto).toBe('Hola');
-    // `disponibilidad` se tolera y no pasa al modelo.
-    expect(conversacion.nodo).not.toHaveProperty('disponibilidad');
+    // RF-24/RF-22: `disponibilidad` pasa al modelo (nodo en espera).
+    expect(conversacion.nodo.disponibilidad).toEqual({
+      habilitado: true,
+      habilitaAprox: null,
+    });
   });
 
   it('RF-32: conserva historial_reciente, ultima_secuencia y recuperada_desde_historial', () => {

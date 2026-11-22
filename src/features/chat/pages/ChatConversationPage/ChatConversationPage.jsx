@@ -14,6 +14,7 @@ import { NodeInputForm } from '../../components/NodeInputForm/index.js';
 import { GLASS } from '../../utils/glass.js';
 
 import { DificultadRespuesta } from './components/DificultadRespuesta/index.js';
+import { NodoEnEspera } from './components/NodoEnEspera/index.js';
 import { SesionCompletada } from './components/SesionCompletada/index.js';
 import { StaleNodeNotice } from './components/StaleNodeNotice/index.js';
 import { useChatConversationPage } from './hooks/useChatConversationPage.js';
@@ -71,6 +72,7 @@ function ChatConversation() {
     ayudaSolicitada,
     pedirAyuda,
     nodoFormulario,
+    espera,
     claveFormulario,
     hayHilo,
     tituloRef,
@@ -181,6 +183,13 @@ function ChatConversation() {
             onResponder={responder}
             enviando={estado !== LISTO}
             errorExterno={errorEnLinea ? errorEnvio : null}
+          />
+        )}
+
+        {espera && !completada && (
+          <NodoEnEspera
+            habilitaAprox={espera.habilitaAprox}
+            onVolverInicio={goHome}
           />
         )}
 

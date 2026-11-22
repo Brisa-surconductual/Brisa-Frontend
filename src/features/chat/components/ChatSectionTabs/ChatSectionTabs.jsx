@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { GitBranch, SlidersHorizontal, Users } from 'lucide-react';
+import { GitBranch, SlidersHorizontal, Tags, Users } from 'lucide-react';
 
 const SECTIONS = Object.freeze([
   Object.freeze({
@@ -18,6 +18,12 @@ const SECTIONS = Object.freeze([
     label: 'Árboles',
     path: '/app/administrativo/chat/arboles',
     icon: GitBranch,
+  }),
+  // RF-30B: gestión de la taxonomía de variables, junto a "Árboles".
+  Object.freeze({
+    label: 'Variables',
+    path: '/app/administrativo/chat/variables',
+    icon: Tags,
   }),
 ]);
 

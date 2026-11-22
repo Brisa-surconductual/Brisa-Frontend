@@ -47,21 +47,21 @@ describe('treeDetailReducer · carga', () => {
 });
 
 describe('treeDetailReducer · catálogos', () => {
-  it('arranca sin tipos de nodo ni contenidos de cronograma', () => {
+  it('arranca sin tipos de nodo ni contenidos', () => {
     expect(initialTreeDetailState.tiposNodo).toEqual([]);
-    expect(initialTreeDetailState.contenidosCronograma).toEqual([]);
+    expect(initialTreeDetailState.contenidos).toEqual([]);
   });
 
-  it('guarda los tipos de nodo y los contenidos de cronograma del catálogo', () => {
+  it('guarda los tipos de nodo y los contenidos del catálogo', () => {
     const next = reduce(initialTreeDetailState, {
       type: 'CATALOG',
       tiposNodo: [{ value: 't-1', label: 'MENSAJE' }],
-      contenidosCronograma: [{ id_contenido_cronograma: 'cc-1' }],
+      contenidos: [{ id: 'c-1', nombre: 'Video 1', programaciones: [] }],
     });
 
     expect(next.tiposNodo).toEqual([{ value: 't-1', label: 'MENSAJE' }]);
-    expect(next.contenidosCronograma).toEqual([
-      { id_contenido_cronograma: 'cc-1' },
+    expect(next.contenidos).toEqual([
+      { id: 'c-1', nombre: 'Video 1', programaciones: [] },
     ]);
   });
 });
@@ -87,8 +87,9 @@ describe('treeDetailReducer · editor de nodos', () => {
       esNodoInicial: false,
       esNodoFinal: false,
       orden: '3',
-      idContenidoCronograma: '',
+      idContenido: '',
       tieneEntrada: false,
+      variableCodigo: '',
       entradaTipo: 'OPCION_UNICA',
       entradaObligatorio: true,
       entradaOpciones: [
