@@ -90,7 +90,7 @@ describe('Vista narrativa agregada (RF-133): presentación', () => {
 
     expect(text).toContain('Progresión narrativa y gamificación');
     expect(text).toContain('Cohorte consultada Cohorte Piloto B');
-    expect(text).toMatch(/Inicio 4 .*Desarrollo 9 .*Cierre 3/);
+    expect(text).toMatch(/Inicio 6 .*Desarrollo 9 .*Cierre 3/);
     expect(text).toContain('Programa completado 2');
     expect(text).toContain('Usuarios con logros 13');
     expect(text).toContain('Logros desbloqueados 41');
@@ -162,7 +162,7 @@ describe('Vista narrativa agregada (RF-133): presentación', () => {
 
     expect(text).toContain('Aviso del módulo de gamificación');
     expect(text).toContain('no se incluyen en la distribución por fase');
-    expect(text).toMatch(/Inicio 4 .*Desarrollo 9 .*Cierre 3/);
+    expect(text).toMatch(/Inicio 6 .*Desarrollo 9 .*Cierre 3/);
   });
 
   it('sin consolidar: estado funcional, sin error ni reintento', () => {

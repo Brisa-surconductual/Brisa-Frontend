@@ -77,7 +77,7 @@ describe('Puerto de la vista narrativa en demostración (RF-133)', () => {
 
     expect(b.status).toBe(S.READY);
     expect(b.data.phaseDistribution.map(({ users }) => users)).toEqual([
-      4, 9, 3,
+      6, 9, 3,
     ]);
     expect(b.lastAvailableAt).toBe('2026-11-20T11:30:00Z');
     expect(c.data.phaseDistribution.map(({ users }) => users)).toEqual([

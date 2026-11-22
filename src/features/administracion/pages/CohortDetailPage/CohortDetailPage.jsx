@@ -22,6 +22,7 @@ import {
 import { Button } from '@/shared/components/ui/Button/index.js';
 import { ConfirmationDialog } from '@/shared/components/ui/ConfirmationDialog/index.js';
 
+import { CohortExportButton } from '../../components/CohortExportButton/index.js';
 import { CohortNotice } from '../../components/CohortNotice/index.js';
 import { CohortPeriod } from '../../components/CohortPeriod/index.js';
 import { CohortStatusBadge } from '../../components/CohortStatusBadge/index.js';
@@ -358,6 +359,17 @@ function CohortDetail() {
                   </Link>
                 </div>
               </nav>
+            )}
+
+            {/* Exportación CSV de indicadores agregados (RF-144). */}
+            {cohort.id && (
+              <div className="mt-[var(--space-4)] border-t border-[var(--surface-border)] pt-[var(--space-4)]">
+                <CohortExportButton
+                  cohortId={cohort.id}
+                  cohortName={title}
+                  cohortStatus={cohort.status}
+                />
+              </div>
             )}
           </section>
 

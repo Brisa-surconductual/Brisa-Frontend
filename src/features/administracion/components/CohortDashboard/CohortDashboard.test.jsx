@@ -169,7 +169,7 @@ describe('Panel principal (RF-140): presentación', () => {
 
     expect(text).toContain('Participantes activos 18');
     expect(text).toContain('Adherencia promedio 0,7342');
-    expect(text).toMatch(/Inicio 4 .*Desarrollo 9 .*Cierre 3/);
+    expect(text).toMatch(/Inicio 6 .*Desarrollo 9 .*Cierre 3/);
     expect(text).toContain('Tasa de apertura promedio 0,5825');
     expect(text).toContain('Tasa de conversión promedio 0,3125');
     expect(text).toContain('Enviadas 412');

@@ -50,6 +50,16 @@ function render(changes, entry = `/app/administrativo/cohortes/${COHORT_B.id}`) 
 
 const textOf = (html) => html.replace(/<[^>]+>/g, '');
 
+// Sección de participantes (RF-125): allí no debe haber acciones.
+const participantsSectionOf = (html) =>
+  html.slice(html.indexOf('aria-labelledby="participantes-cohorte"'));
+
+// Fuera de esa sección solo puede haber el botón de exportación (RF-144).
+const onlyButtonIsExport = (html) =>
+  [...html.matchAll(/<button[\s\S]*?<\/button>/g)].every(([button]) =>
+    button.includes('Exportar indicadores CSV'),
+  );
+
 function withParticipants(participants = PARTICIPANTS_B, cohort = COHORT_B) {
   return render({
     cohort,
@@ -92,10 +102,10 @@ describe('Detalle de cohorte (RF-125)', () => {
   it('lista un participante por tarjeta con su código y el resumen por estado', () => {
     const html = withParticipants();
 
-    expect(html.match(/<article/g)).toHaveLength(6);
+    expect(html.match(/<article/g)).toHaveLength(22);
     for (const { code } of PARTICIPANTS_B) expect(html).toContain(code);
     expect(textOf(html)).toContain(
-      '6 participantes · 2 activos · 3 pendientes de validación · 1 inactivo',
+      '22 participantes · 18 activos · 3 pendientes de validación · 1 inactivo',
     );
   });
 
@@ -198,9 +208,12 @@ describe('Detalle de cohorte (RF-125)', () => {
 
   it('es solo de consulta: sin asignar, retirar ni editar participantes', () => {
     const html = withParticipants();
+    const participants = participantsSectionOf(html);
 
-    expect(html).not.toMatch(/<button|<form|<input|<select/);
+    expect(participants).not.toMatch(/<button|<form|<input|<select/);
     expect(textOf(html)).not.toMatch(/Asignar|Retirar|Editar|Eliminar/);
+    // El único botón de la página es la exportación agregada (RF-144).
+    expect(onlyButtonIsExport(html)).toBe(true);
   });
 
   it('identifica los datos ficticios como demostración', () => {
@@ -212,7 +225,8 @@ describe('Detalle de cohorte (RF-125)', () => {
 
     expect(html).toMatch(/role="status"[\s\S]*Esta cohorte aún no tiene participantes/);
     expect(html).not.toContain('<article');
-    expect(html).not.toContain('<button');
+    expect(participantsSectionOf(html)).not.toContain('<button');
+    expect(onlyButtonIsExport(html)).toBe(true);
     expect(textOf(html)).toContain('0 participantes');
   });
 

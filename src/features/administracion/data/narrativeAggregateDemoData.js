@@ -24,9 +24,14 @@ const phase = (fase, total) => Object.freeze({ fase, total });
 
 export const DEMO_NARRATIVE_DATA = Object.freeze({
   'demo-cohorte-a': null,
+  // Piloto B: las fases suman 18, los mismos usuarios activos que la
+  // vista conductual (RF-132). Por RF-133, quien aún no tiene avance
+  // narrativo cuenta en INICIO. Los 4 asignados restantes (3 pendientes
+  // de validación y 1 inactivo) no tienen perfil narrativo activo: es lo
+  // que describe el escenario usuarios-excluidos.
   'demo-cohorte-b': Object.freeze({
     distribucion_por_fase_narrativa: Object.freeze([
-      phase('INICIO', 4),
+      phase('INICIO', 6),
       phase('DESARROLLO', 9),
       phase('CIERRE', 3),
     ]),

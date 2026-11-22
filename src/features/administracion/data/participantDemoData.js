@@ -36,6 +36,29 @@ const COMPLETE_CHECKS = Object.freeze({
   baselineStatus: BASELINE_STATUS.REGISTERED,
 });
 
+/*
+ * Cohorte Piloto B (ACTIVA): 22 asignados = 18 activos, 3 pendientes de
+ * validación y 1 inactivo. Los 18 activos coinciden con
+ * total_usuarios_activos de la vista agregada de la misma cohorte
+ * (behavioralAggregateDemoData.js, RF-132/RF-140/RF-144); la prueba
+ * demoFixtureCoherence.test.js lo vigila. Además de los seis casos
+ * originales, PART-0015 a PART-0030 son activos con registro completo,
+ * consentimiento aceptado y línea base registrada.
+ */
+const PILOT_B_ADDITIONAL_ACTIVE = Object.freeze(
+  Array.from({ length: 16 }, (_, index) => {
+    const number = 15 + index;
+
+    return participant({
+      id: `demo-participante-${number}`,
+      cohortId: 'demo-cohorte-b',
+      code: `PART-${String(number).padStart(4, '0')}`,
+      participationStatus: PARTICIPATION_STATUS.ACTIVE,
+      ...COMPLETE_CHECKS,
+    });
+  }),
+);
+
 export const DEMO_PARTICIPANTS = Object.freeze([
   // Cohorte Piloto B (ACTIVA): los tres estados de participación.
   participant({
@@ -93,6 +116,7 @@ export const DEMO_PARTICIPANTS = Object.freeze([
     participationStatus: PARTICIPATION_STATUS.INACTIVE,
     ...COMPLETE_CHECKS,
   }),
+  ...PILOT_B_ADDITIONAL_ACTIVE,
   // Cohorte Piloto C (INACTIVA): participantes inactivos.
   participant({
     id: 'demo-participante-7',
