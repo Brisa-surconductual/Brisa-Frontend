@@ -17,6 +17,12 @@ export function getCohortAggregatePath(cohortId) {
   return `${getCohortDetailPath(cohortId)}/vista-agregada`;
 }
 
+// Vista agregada de progresión narrativa (RF-133). Solo lleva el
+// identificador de la cohorte y no enlaza a ningún participante.
+export function getCohortNarrativePath(cohortId) {
+  return `${getCohortDetailPath(cohortId)}/vista-narrativa`;
+}
+
 // Ficha individual (RF-128). `reference` es la referencia OPACA que da la
 // fuente: nunca un correo, documento, nombre ni UUID interno.
 export function getParticipantTrackingPath(cohortId, reference) {

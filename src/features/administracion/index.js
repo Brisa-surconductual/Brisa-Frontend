@@ -19,3 +19,5 @@ export { ParticipantTrackingPage } from './pages/ParticipantTrackingPage/index.j
 export { ParticipantTrackingProfilePage } from './pages/ParticipantTrackingProfilePage/index.js';
 
 export { CohortAggregatePage } from './pages/CohortAggregatePage/index.js';
+
+export { CohortNarrativePage } from './pages/CohortNarrativePage/index.js';

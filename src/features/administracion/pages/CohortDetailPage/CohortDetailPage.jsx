@@ -4,6 +4,7 @@ import {
   AlertTriangle,
   ArrowLeft,
   BarChart3,
+  BookOpen,
   CalendarRange,
   CircleCheck,
   FlaskConical,
@@ -28,6 +29,7 @@ import { ParticipantCard } from '../../components/ParticipantCard/index.js';
 import { PARTICIPATION_STATUS } from '../../types/participantStatus.js';
 import {
   getCohortAggregatePath,
+  getCohortNarrativePath,
   getCohortTrackingPath,
 } from '../../utils/cohortRoutes.js';
 
@@ -309,6 +311,18 @@ function CohortDetail() {
               >
                 <BarChart3 size={16} strokeWidth={1.8} aria-hidden="true" />
                 Ver vista agregada
+                <span className="sr-only"> de {title}</span>
+              </Link>
+            )}
+
+            {/* Progresión narrativa agregada (RF-133): solo agregados, fuente propia. */}
+            {cohort.id && (
+              <Link
+                to={getCohortNarrativePath(cohort.id)}
+                className="mt-[var(--space-3)] inline-flex min-h-[44px] w-fit items-center gap-[var(--space-2)] rounded-[var(--radius-md)] border border-[var(--surface-border)] bg-[var(--surface-card)] px-[var(--space-4)] text-[length:var(--font-size-sm)] font-bold text-[var(--brand-600)] no-underline transition-colors duration-150 hover:bg-[var(--surface-hover)] motion-reduce:transition-none"
+              >
+                <BookOpen size={16} strokeWidth={1.8} aria-hidden="true" />
+                Ver progresión narrativa
                 <span className="sr-only"> de {title}</span>
               </Link>
             )}
