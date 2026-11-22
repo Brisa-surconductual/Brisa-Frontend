@@ -6,7 +6,7 @@ import { Button } from '@/shared/components/ui/Button/index.js';
  * RF-31: la sesión terminó (`esTerminal` o estado COMPLETADA). Sustituye
  * al formulario: no se admiten más respuestas y el historial sigue a la
  * vista. El texto es de interfaz y no clínico; el contenido de cierre lo
- * da el nodo terminal (A-016).
+ * da el nodo final, que se muestra justo antes (A-016, RF-25).
  */
 export function SesionCompletada({ tituloRef, onVolverInicio }) {
   return (
@@ -26,12 +26,13 @@ export function SesionCompletada({ tituloRef, onVolverInicio }) {
           aria-hidden="true"
           className="shrink-0"
         />
-        Sesión completada
+        ¡Has terminado tu terapia!
       </h2>
 
       <p className="m-0 text-[length:var(--font-size-sm)] text-pretty">
-        Esta conversación terminó y tus respuestas quedaron guardadas. Ya no se
-        pueden agregar respuestas a esta sesión.
+        Llegaste al final del recorrido y tus respuestas quedaron guardadas.
+        Gracias por tu constancia: ya no se pueden agregar respuestas a esta
+        sesión.
       </p>
 
       <Button variant="secondary" size="large" onClick={onVolverInicio}>

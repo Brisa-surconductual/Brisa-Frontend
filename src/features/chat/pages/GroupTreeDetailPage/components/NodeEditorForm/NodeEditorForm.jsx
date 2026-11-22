@@ -6,10 +6,12 @@ import { SelectField } from '@/shared/components/ui/SelectField/index.js';
 import { TextField } from '@/shared/components/ui/TextField/index.js';
 
 import { ChatAdminNotice } from '../../../../components/ChatAdminNotice/index.js';
+import { ExclusiveSwitchGroup } from '../../../../components/ExclusiveSwitchGroup/index.js';
 import { FORMATO_FECHA, TIPO_ENTRADA } from '../../../../types/tipoEntrada.js';
 import {
   opcionesDimensionPerfilClinico,
   opcionesTipoEntrada,
+  opcionesValorPerfilClinico,
   opcionVacia,
   tipoEntradaOcultoEnGrupal,
 } from '../../../../services/nodosAdmin.js';
@@ -27,7 +29,9 @@ const OPCIONES_FORMATO_FECHA = [
  * el texto, si es el nodo inicial, el orden, opcionalmente el contenido
  * asociado (solo contenido ya programado en un cronograma, vía
  * `contenidos_cronograma`) y, opcionalmente, la respuesta que espera el
- * nodo del estudiante (PR4): sin ella, el nodo es informativo. Los
+ * nodo del estudiante (PR4): sin ella, el nodo es informativo. RF-25:
+ * "nodo inicial" y "nodo final" son excluyentes, y la captura de perfil
+ * clínico elige su valor con interruptores (solo uno activo). Los
  * subcampos de la respuesta cambian según el tipo elegido, igual que el
  * formulario de transiciones con su regla de validación. Los errores van
  * en texto, junto a cada campo. Vive dentro de ChatAdminModal: el título y
@@ -133,14 +137,21 @@ export function NodeEditorForm({
 
       <Checkbox
         id="nodo-tiene-entrada"
-        checked={values.tieneEntrada}
-        disabled={saving}
+        checked={values.tieneEntrada && !values.esNodoFinal}
+        disabled={saving || values.esNodoFinal}
         onChange={(event) => onChange('tieneEntrada', event.target.checked)}
       >
         Este nodo espera una respuesta del estudiante
       </Checkbox>
 
-      {values.tieneEntrada && (
+      {!values.tieneEntrada && !values.esNodoFinal && (
+        <p className="m-0 text-[length:var(--font-size-xs)] text-[var(--text-secondary)]">
+          Sin respuesta, el estudiante solo pulsa “Continuar”. Si el nodo no
+          tiene transiciones, avanza al siguiente nodo por orden.
+        </p>
+      )}
+
+      {values.tieneEntrada && !values.esNodoFinal && (
         <div className="flex flex-col gap-[var(--space-4)] rounded-[var(--radius-lg)] border border-[var(--surface-border)] bg-[var(--surface-bg)] p-[var(--space-4)]">
           <SelectField
             id="nodo-entrada-tipo"
@@ -343,19 +354,7 @@ export function NodeEditorForm({
               </div>
 
               {values.entradaTipo === TIPO_ENTRADA.ESCALA && (
-                <div className="grid grid-cols-1 gap-[var(--space-4)] md:grid-cols-3">
-                  <TextField
-                    id="nodo-entrada-paso"
-                    label="Paso"
-                    type="number"
-                    inputMode="decimal"
-                    disabled={saving}
-                    value={values.entradaPaso}
-                    hint="De a cuánto sube o baja el control al moverlo. Ej: 1 para enteros, 0.5 para medios puntos. Vacío = 1."
-                    onChange={(event) =>
-                      onChange('entradaPaso', event.target.value)
-                    }
-                  />
+                <div className="grid grid-cols-1 gap-[var(--space-4)] md:grid-cols-2">
                   <TextField
                     id="nodo-entrada-etiqueta-min"
                     label="Etiqueta del mínimo"
@@ -446,27 +445,60 @@ export function NodeEditorForm({
         </div>
       )}
 
-      <SelectField
-        id="nodo-captura-perfil"
-        label="Captura de perfil clínico"
-        disabled={saving}
-        value={values.capturaPerfilDimension}
-        options={OPCIONES_DIMENSION_PERFIL_CLINICO}
-        placeholder="Este nodo no captura perfil clínico"
-        hint="Solo para árboles grupales: marca este nodo como el punto donde se registra esta variable clínica del usuario (RF-27B). El árbol publicado debe tener exactamente un nodo por dimensión."
-        onChange={(event) =>
-          onChange('capturaPerfilDimension', event.target.value)
-        }
-      />
+      {!values.esNodoFinal && (
+        <SelectField
+          id="nodo-captura-perfil"
+          label="Captura de perfil clínico"
+          disabled={saving}
+          value={values.capturaPerfilDimension}
+          options={OPCIONES_DIMENSION_PERFIL_CLINICO}
+          placeholder="Este nodo no captura perfil clínico"
+          hint="Solo para árboles grupales: cuando el estudiante pasa por este nodo, su perfil queda con el valor activado (RF-27B). El árbol publicado debe tener nodos para cada valor de cada dimensión."
+          onChange={(event) =>
+            onChange('capturaPerfilDimension', event.target.value)
+          }
+        />
+      )}
+
+      {values.capturaPerfilDimension && !values.esNodoFinal && (
+        <ExclusiveSwitchGroup
+          id="nodo-captura-perfil-valor"
+          legend="Valor que captura este nodo"
+          options={opcionesValorPerfilClinico(values.capturaPerfilDimension)}
+          value={values.capturaPerfilValor}
+          error={errors.capturaPerfilValor}
+          hint="Solo un valor puede estar activado."
+          disabled={saving}
+          onChange={(valor) => onChange('capturaPerfilValor', valor)}
+        />
+      )}
 
       <Checkbox
         id="nodo-inicial"
         checked={values.esNodoInicial}
-        disabled={saving}
+        disabled={saving || values.esNodoFinal}
         onChange={(event) => onChange('esNodoInicial', event.target.checked)}
       >
         Es el nodo inicial del flujo
       </Checkbox>
+
+      <Checkbox
+        id="nodo-final"
+        checked={values.esNodoFinal}
+        disabled={saving || values.esNodoInicial}
+        error={errors.esNodoFinal}
+        onChange={(event) => onChange('esNodoFinal', event.target.checked)}
+      >
+        Es el nodo final del flujo
+      </Checkbox>
+
+      {(values.esNodoInicial || values.esNodoFinal) && (
+        <p className="m-0 text-[length:var(--font-size-xs)] text-[var(--text-secondary)]">
+          {values.esNodoFinal
+            ? 'El nodo final cierra la terapia: no espera respuesta ni tiene transiciones de salida, y no puede ser el nodo inicial.'
+            : 'El nodo inicial no puede ser también el nodo final.'}
+        </p>
+      )}
 
       {saveError && (
         <ChatAdminNotice

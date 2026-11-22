@@ -62,10 +62,14 @@ export function TreeTransitionList({ transiciones, canEdit = false, onEdit }) {
               </p>
 
               <p className="m-0 text-[length:var(--font-size-sm)] text-[var(--text-secondary)]">
-                {transicion.operador
-                  ? `${OPERADOR_CONDICION_ETIQUETA[transicion.operador] ?? transicion.operador} · ${transicion.condicion}`
-                  : transicion.condicion}
-                {` · Evaluación ${transicion.ordenEvaluacion}`}
+                {/* RF-25: "cualquier otra respuesta" no tiene condición propia. */}
+                {transicion.esPorDefecto
+                  ? `${transicion.condicion} · Se evalúa al final`
+                  : transicion.operador
+                    ? `${OPERADOR_CONDICION_ETIQUETA[transicion.operador] ?? transicion.operador} · ${transicion.condicion}`
+                    : transicion.condicion}
+                {!transicion.esPorDefecto &&
+                  ` · Evaluación ${transicion.ordenEvaluacion}`}
               </p>
             </li>
           ))}

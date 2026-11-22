@@ -319,7 +319,7 @@ describe('GroupTreeDetailPage · árbol visual y transiciones (PR4)', () => {
   it('dibuja el árbol con cada nodo por su etiqueta', () => {
     const html = render({ status: 'ready', arbol });
 
-    expect(html).toContain('Árbol del flujo');
+    expect(html).toContain('Flujo del árbol');
     expect(html).toContain('1. Bienvenido a Brisa.');
     expect(html).toContain('2. (sin texto)');
   });

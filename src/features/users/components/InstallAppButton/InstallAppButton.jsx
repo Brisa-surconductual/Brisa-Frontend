@@ -6,10 +6,13 @@ import { INSTALL_MODE } from '../../types/installInstructions.js';
 export function InstallAppButton({ modo, onOpen, className = '' }) {
   if (modo === INSTALL_MODE.INSTALADA) return null;
 
+  // En modo nativo abre el aviso del navegador, no la hoja.
+  const opensSheet = modo === INSTALL_MODE.INSTRUCCIONES;
+
   return (
     <button
       type="button"
-      aria-haspopup="dialog"
+      aria-haspopup={opensSheet ? 'dialog' : undefined}
       onClick={onOpen}
       className={`inline-flex min-h-[48px] w-full items-center justify-center gap-[var(--space-2)] rounded-[var(--radius-md)] px-[var(--space-6)] text-[15px] leading-[1.2] font-bold transition-colors duration-[120ms] motion-reduce:transition-none ${className}`}
     >

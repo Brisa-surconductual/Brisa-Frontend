@@ -12,8 +12,8 @@ describe('SesionCompletada (RF-31)', () => {
   );
 
   it('informa que la sesión terminó y no admite más respuestas', () => {
-    expect(html).toContain('Sesión completada');
-    expect(html).toContain('Ya no se pueden agregar respuestas');
+    expect(html).toContain('¡Has terminado tu terapia!');
+    expect(html).toContain('ya no se pueden agregar respuestas');
     expect(html).not.toContain('<form');
     expect(html).not.toContain('<input');
   });

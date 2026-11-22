@@ -9,6 +9,7 @@ import { crearTransicion } from '../../../api/arbol/crearTransicion.js';
 import { obtenerArbolFlujo } from '../../../api/arbol/obtenerArbolFlujo.js';
 import { obtenerCatalogos } from '../../../api/arbol/obtenerCatalogos.js';
 import { publicarFlujo } from '../../../api/arbol/publicarFlujo.js';
+import { useAutoDismiss } from '../../../hooks/useAutoDismiss.js';
 import {
   ACCION_FLUJO,
   accionesEstadoDisponibles,
@@ -23,10 +24,14 @@ import {
   opcionesTipoNodo,
   payloadActualizarNodo,
   payloadCrearNodo,
+  transicionesAfectadasPorCambio,
   validarNodo,
 } from '../../../services/nodosAdmin.js';
 import {
   configuracionReglaTransicion,
+  destinoPorDefectoActual,
+  destinosOcupadosDelOrigen,
+  ordenEvaluacionSugerido,
   payloadActualizarTransicion,
   payloadCrearTransicion,
   validarTransicion,
@@ -47,6 +52,20 @@ function ejecutarAccionEstado(accion, idFlujo) {
     default:
       throw new Error(`Acción desconocida: ${accion}`);
   }
+}
+
+const CODIGO_TRANSICIONES_AFECTADAS = 'TRANSICIONES_AFECTADAS';
+
+// RF-25: transiciones afectadas listas para el diálogo de confirmación.
+function describirAfectadas(transiciones, arbol) {
+  const etiqueta = (id) =>
+    arbol?.nodos.find((n) => n.id === id)?.etiqueta ?? 'Nodo desconocido';
+  return transiciones.map((t) => ({
+    id: t.id,
+    origen: etiqueta(t.origenId),
+    destino: etiqueta(t.destinoId),
+    orden: t.ordenEvaluacion,
+  }));
 }
 
 async function cargarArbol(dispatch, idFlujo, estaCancelado) {
@@ -101,7 +120,10 @@ export function useGroupTreeDetailPage() {
     };
   }, []);
 
-  async function submitEditor() {
+  // RF-25: los avisos de éxito se cierran solos.
+  useAutoDismiss(state.notice, () => dispatch({ type: 'NOTICE_CLEAR' }));
+
+  async function submitEditor({ confirmarEliminacion = false } = {}) {
     const esEdicion = editor.mode === 'edit';
     const errors = validarNodo(editor.values, { esEdicion });
 
@@ -122,11 +144,33 @@ export function useGroupTreeDetailPage() {
       return;
     }
 
+    // RF-25: cambiar el tipo de respuesta invalida las transiciones de
+    // salida; se pide confirmación antes de eliminarlas.
+    if (esEdicion && !confirmarEliminacion) {
+      const afectadas = transicionesAfectadasPorCambio(
+        editor.nodo,
+        editor.values,
+        arbol?.transiciones,
+      );
+      if (afectadas.length > 0) {
+        dispatch({
+          type: 'AFECTADAS_SOLICITAR',
+          transiciones: describirAfectadas(afectadas, arbol),
+        });
+        return;
+      }
+    }
+
     dispatch({ type: 'EDITOR_SAVING' });
 
     try {
       if (esEdicion) {
-        await actualizarNodo(editor.nodo.id, cambios);
+        await actualizarNodo(
+          editor.nodo.id,
+          confirmarEliminacion
+            ? { ...cambios, eliminar_transiciones_afectadas: true }
+            : cambios,
+        );
       } else {
         await crearNodo(flowId, payloadCrearNodo(editor.values));
       }
@@ -136,6 +180,21 @@ export function useGroupTreeDetailPage() {
         message: esEdicion ? 'Nodo actualizado.' : 'Nodo creado.',
       });
     } catch (error) {
+      // Red de seguridad: el backend detectó transiciones afectadas que el
+      // árbol en pantalla no tenía (p. ej. otra pestaña las creó).
+      if (error?.code === CODIGO_TRANSICIONES_AFECTADAS) {
+        const ids = new Set(
+          (error.detalles?.transiciones ?? []).map((t) => t.id_regla),
+        );
+        dispatch({
+          type: 'AFECTADAS_SOLICITAR',
+          transiciones: describirAfectadas(
+            (arbol?.transiciones ?? []).filter((t) => ids.has(t.id)),
+            arbol,
+          ),
+        });
+        return;
+      }
       dispatch({
         type: 'EDITOR_SAVE_ERROR',
         message: describirErrorAdmin(error),
@@ -152,7 +211,16 @@ export function useGroupTreeDetailPage() {
 
   async function submitTransitionEditor() {
     const esEdicion = transitionEditor.mode === 'edit';
-    const errors = validarTransicion(transitionEditor.values, configTransicion);
+    const errors = validarTransicion(
+      transitionEditor.values,
+      configTransicion,
+      // Al crear, el destino por defecto actual ya viene en `idNodoDestinoOtro`.
+      destinosOcupadosDelOrigen(
+        arbol?.transiciones,
+        transitionEditor.values.idNodoOrigen,
+        esEdicion ? transitionEditor.transicion.id : null,
+      ),
+    );
 
     if (Object.keys(errors).length > 0) {
       dispatch({ type: 'TRANSITION_EDITOR_INVALID', errors });
@@ -245,7 +313,10 @@ export function useGroupTreeDetailPage() {
       ),
     changeField: (field, value) =>
       dispatch({ type: 'EDITOR_CHANGE', field, value }),
-    submitEditor,
+    submitEditor: () => submitEditor(),
+    // RF-25: confirmación del diálogo de transiciones afectadas.
+    confirmarAfectadas: () => submitEditor({ confirmarEliminacion: true }),
+    cancelarAfectadas: () => dispatch({ type: 'AFECTADAS_CANCELAR' }),
     openCreateTransition: () =>
       dispatch({ type: 'TRANSITION_EDITOR_OPEN_CREATE' }),
     openEditTransition: (transicion) =>
@@ -266,7 +337,19 @@ export function useGroupTreeDetailPage() {
             : 'TRANSITION_EDITOR_CLOSE',
       }),
     changeTransitionField: (field, value) =>
-      dispatch({ type: 'TRANSITION_EDITOR_CHANGE', field, value }),
+      dispatch(
+        field === 'idNodoOrigen'
+          ? {
+              type: 'TRANSITION_EDITOR_ORIGEN',
+              value,
+              ordenSugerido: ordenEvaluacionSugerido(
+                arbol?.transiciones,
+                value,
+              ),
+              destinoOtro: destinoPorDefectoActual(arbol?.transiciones, value),
+            }
+          : { type: 'TRANSITION_EDITOR_CHANGE', field, value },
+      ),
     submitTransitionEditor,
     // El árbol visual selecciona un nodo para ir directo a su edición
     // (mismo comportamiento que "Editar" en la lista de nodos).

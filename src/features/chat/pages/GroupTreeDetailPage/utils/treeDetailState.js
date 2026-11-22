@@ -36,6 +36,25 @@ const REGLA_VACIA = Object.freeze({
   rangoMax: VALORES_TRANSICION_VACIOS.rangoMax,
 });
 
+// RF-25: reglas del formulario de nodo que dependen de otro campo:
+// - inicial y final son excluyentes;
+// - el nodo final no espera respuesta ni captura perfil;
+// - cambiar la dimensión de captura reinicia su valor.
+function valoresNodoCambiados(valores, field, value) {
+  const siguientes = { ...valores, [field]: value };
+  if (field === 'esNodoFinal' && value) {
+    siguientes.esNodoInicial = false;
+    siguientes.tieneEntrada = false;
+    siguientes.capturaPerfilDimension = '';
+    siguientes.capturaPerfilValor = '';
+  }
+  if (field === 'esNodoInicial' && value) siguientes.esNodoFinal = false;
+  if (field === 'capturaPerfilDimension' && value !== valores[field]) {
+    siguientes.capturaPerfilValor = '';
+  }
+  return siguientes;
+}
+
 // Si el formulario cambió respecto de como se abrió.
 export function hayCambios(editor) {
   return (
@@ -58,6 +77,9 @@ export const initialTreeDetailState = Object.freeze({
   // Confirmación de descartar cambios al cancelar un modal: 'nodo' | 'transicion' | null.
   confirmDescarte: null,
   notice: '',
+  // RF-25: transiciones que se eliminarían al cambiar el tipo de respuesta
+  // del nodo en edición; null = sin confirmación pendiente.
+  confirmAfectadas: null,
   // Cambio de estado del flujo (publicar/archivar): confirmación pendiente,
   // acción en curso y error propio, independientes del editor de nodos.
   confirmEstado: null, // 'PUBLICAR' | 'ARCHIVAR' | null
@@ -113,7 +135,11 @@ export function treeDetailReducer(state, action) {
         ...state,
         editor: {
           ...state.editor,
-          values: { ...state.editor.values, [action.field]: action.value },
+          values: valoresNodoCambiados(
+            state.editor.values,
+            action.field,
+            action.value,
+          ),
           errors: { ...state.editor.errors, [action.field]: undefined },
           saveError: '',
         },
@@ -134,10 +160,24 @@ export function treeDetailReducer(state, action) {
         editor: { ...state.editor, saving: false, saveError: action.message },
       };
 
+    case 'AFECTADAS_SOLICITAR':
+      return {
+        ...state,
+        confirmAfectadas: action.transiciones,
+        editor: { ...state.editor, saving: false },
+      };
+
+    case 'AFECTADAS_CANCELAR':
+      return { ...state, confirmAfectadas: null };
+
+    case 'NOTICE_CLEAR':
+      return { ...state, notice: '' };
+
     case 'EDITOR_SAVED':
       // Cierra el formulario y vuelve a consultar el árbol.
       return {
         ...state,
+        confirmAfectadas: null,
         editor: EDITOR_CERRADO,
         notice: action.message,
         status: 'loading',
@@ -149,6 +189,34 @@ export function treeDetailReducer(state, action) {
         ...state,
         notice: '',
         transitionEditor: { ...TRANSITION_EDITOR_CERRADO, mode: 'create' },
+      };
+
+    // RF-25: al elegir el origen se sugieren el orden de evaluación y el
+    // destino actual de "cualquier otra respuesta"; un destino igual al
+    // nuevo origen se limpia.
+    case 'TRANSITION_EDITOR_ORIGEN':
+      return {
+        ...state,
+        transitionEditor: {
+          ...state.transitionEditor,
+          values: {
+            ...state.transitionEditor.values,
+            ...REGLA_VACIA,
+            idNodoOrigen: action.value,
+            idNodoDestino:
+              state.transitionEditor.values.idNodoDestino === action.value
+                ? ''
+                : state.transitionEditor.values.idNodoDestino,
+            ordenEvaluacion: action.ordenSugerido,
+            idNodoDestinoOtro: action.destinoOtro,
+          },
+          errors: {
+            ...state.transitionEditor.errors,
+            idNodoOrigen: undefined,
+            ordenEvaluacion: undefined,
+          },
+          saveError: '',
+        },
       };
 
     case 'TRANSITION_EDITOR_OPEN_EDIT':

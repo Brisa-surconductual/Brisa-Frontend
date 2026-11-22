@@ -1,0 +1,14 @@
+# Cabeceras de Cloudflare Pages para la PWA (ADR-0006).
+
+# El service worker y el manifest siempre se revalidan; si no, las
+# actualizaciones de Brisa no llegan a la app instalada.
+/sw.js
+  Cache-Control: no-cache
+
+/manifest.webmanifest
+  Content-Type: application/manifest+json
+  Cache-Control: no-cache
+
+# Archivos con hash de Vite: nunca cambian de contenido.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable

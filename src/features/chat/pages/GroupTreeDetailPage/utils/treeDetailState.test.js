@@ -85,6 +85,7 @@ describe('treeDetailReducer · editor de nodos', () => {
       idTipoNodo: 't-1',
       texto: 'Hola',
       esNodoInicial: false,
+      esNodoFinal: false,
       orden: '3',
       idContenidoCronograma: '',
       tieneEntrada: false,
@@ -98,7 +99,6 @@ describe('treeDetailReducer · editor de nodos', () => {
       entradaMaxSelecciones: '',
       entradaMin: '',
       entradaMax: '',
-      entradaPaso: '',
       entradaEtiquetaMin: '',
       entradaEtiquetaMax: '',
       entradaMinPalabras: '',
@@ -106,6 +106,7 @@ describe('treeDetailReducer · editor de nodos', () => {
       entradaMaxCaracteres: '',
       entradaFormato: 'FECHA_HORA',
       capturaPerfilDimension: '',
+      capturaPerfilValor: '',
     });
   });
 
@@ -387,5 +388,86 @@ describe('treeDetailReducer · descartar cambios del modal', () => {
     const cerrado = reduce(pedido, { type: 'EDITOR_CLOSE' });
     expect(cerrado.confirmDescarte).toBeNull();
     expect(cerrado.editor.mode).toBe('closed');
+  });
+});
+
+describe('treeDetailReducer · usabilidad del editor (RF-25)', () => {
+  const conEditor = (values) =>
+    treeDetailReducer(
+      {
+        ...initialTreeDetailState,
+        editor: { ...initialTreeDetailState.editor, values },
+      },
+      { type: 'NOOP' },
+    );
+
+  it('marcar nodo final apaga inicial, respuesta y captura', () => {
+    const state = conEditor({
+      ...initialTreeDetailState.editor.values,
+      esNodoInicial: true,
+      tieneEntrada: true,
+      capturaPerfilDimension: 'TIPO_CRAVING',
+      capturaPerfilValor: 'POSITIVO',
+    });
+    const next = treeDetailReducer(state, {
+      type: 'EDITOR_CHANGE',
+      field: 'esNodoFinal',
+      value: true,
+    });
+
+    expect(next.editor.values).toMatchObject({
+      esNodoFinal: true,
+      esNodoInicial: false,
+      tieneEntrada: false,
+      capturaPerfilDimension: '',
+      capturaPerfilValor: '',
+    });
+  });
+
+  it('cambiar la dimensión reinicia el valor activado', () => {
+    const state = conEditor({
+      ...initialTreeDetailState.editor.values,
+      capturaPerfilDimension: 'TIPO_CRAVING',
+      capturaPerfilValor: 'POSITIVO',
+    });
+    const next = treeDetailReducer(state, {
+      type: 'EDITOR_CHANGE',
+      field: 'capturaPerfilDimension',
+      value: 'TIPO_DEPENDENCIA',
+    });
+
+    expect(next.editor.values.capturaPerfilValor).toBe('');
+  });
+
+  it('elegir origen sugiere el orden y limpia un destino igual al origen', () => {
+    const state = treeDetailReducer(initialTreeDetailState, {
+      type: 'TRANSITION_EDITOR_OPEN_CREATE',
+    });
+    const conDestino = treeDetailReducer(state, {
+      type: 'TRANSITION_EDITOR_CHANGE',
+      field: 'idNodoDestino',
+      value: 'n-1',
+    });
+    const next = treeDetailReducer(conDestino, {
+      type: 'TRANSITION_EDITOR_ORIGEN',
+      value: 'n-1',
+      ordenSugerido: '3',
+      destinoOtro: 'n-9',
+    });
+
+    expect(next.transitionEditor.values).toMatchObject({
+      idNodoOrigen: 'n-1',
+      idNodoDestino: '',
+      ordenEvaluacion: '3',
+      idNodoDestinoOtro: 'n-9',
+    });
+  });
+
+  it('el aviso se puede limpiar (auto-cierre a los 8 s)', () => {
+    const next = treeDetailReducer(
+      { ...initialTreeDetailState, notice: 'Nodo creado.' },
+      { type: 'NOTICE_CLEAR' },
+    );
+    expect(next.notice).toBe('');
   });
 });

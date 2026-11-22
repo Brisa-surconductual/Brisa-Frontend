@@ -36,10 +36,23 @@ it('no contiene HTML y solo usa teclas conocidas', () => {
   });
 });
 
-it('Computador tiene los grupos de Chrome, Edge y Firefox', () => {
+it('Computador cubre Chrome, Edge, Opera, Safari y Firefox', () => {
   expect(INSTALL_INSTRUCTIONS.desktop.groups.map((g) => g.title)).toEqual([
     'En Chrome',
     'En Edge',
+    'En Opera',
+    'En Safari (Mac)',
     'En Firefox (Windows)',
   ]);
+});
+
+// Con manifest (ADR-0006) se instala; ya no se recomienda el acceso directo.
+it('Android recomienda «Instalar», no «Crear acceso directo»', () => {
+  const text = INSTALL_INSTRUCTIONS.android.steps
+    .flat()
+    .map((fragment) => fragment.negrita ?? fragment)
+    .join(' ');
+
+  expect(text).toContain('«Instalar»');
+  expect(text).not.toContain('«Crear acceso directo»');
 });

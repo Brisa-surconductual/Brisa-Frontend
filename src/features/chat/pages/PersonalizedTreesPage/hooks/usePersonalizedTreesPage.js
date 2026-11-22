@@ -11,6 +11,7 @@ import {
   MENSAJE_ACCION_ARBOL,
   nombreArbolPersonalizado,
 } from '../../../services/arbolesPersonalizados.js';
+import { useAutoDismiss } from '../../../hooks/useAutoDismiss.js';
 import { describirErrorAdmin } from '../../../services/flujosAdmin.js';
 import {
   initialPersonalizedTreesState,
@@ -60,6 +61,9 @@ export function usePersonalizedTreesPage() {
     initialPersonalizedTreesState,
   );
   const { reloadKey } = state;
+
+  // RF-25: los avisos de éxito se cierran solos a los 8 s.
+  useAutoDismiss(state.notice, () => dispatch({ type: 'NOTICE_CLEAR' }));
 
   useEffect(() => {
     let cancelado = false;
