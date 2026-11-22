@@ -118,7 +118,7 @@ describe('Coherencia entre listado (RF-142) y ficha (RF-128)', () => {
     enableDemo();
     const list = interpretTrackingResponse(await listCohortTracking(COHORT, { ...INITIAL_TRACKING_QUERY, limit: 50 }), COHORT);
 
-    expect(list.entries).toHaveLength(6);
+    expect(list.entries).toHaveLength(22);
     for (const entry of list.entries) {
       const result = await interpreted(COHORT, entry.reference);
 
@@ -133,7 +133,8 @@ describe('Coherencia entre listado (RF-142) y ficha (RF-128)', () => {
       expect(valueOf(result.profile.adherence)).toBe(entry.adherence);
       expect(result.profile.activeAlerts).toHaveLength(entry.activeAlertCount);
     }
-  });
+    // Recorre las 22 fichas de la Cohorte Piloto B (400 ms simulados cada una).
+  }, 20_000);
 });
 
 describe('Escenarios de la ficha (VITE_M08_PROFILE_SCENARIO)', () => {
@@ -185,6 +186,6 @@ describe('Escenarios de la ficha (VITE_M08_PROFILE_SCENARIO)', () => {
 
     expect(await codeOf(getParticipantTrackingProfile(COHORT, REF_1))).toBe(TRACKING_QUERY_ERROR.MODULE_UNAVAILABLE);
     vi.stubEnv('VITE_M08_TRACKING_SCENARIO', 'lista');
-    expect((await listCohortTracking(COHORT, INITIAL_TRACKING_QUERY)).total).toBe(6);
+    expect((await listCohortTracking(COHORT, INITIAL_TRACKING_QUERY)).total).toBe(22);
   });
 });

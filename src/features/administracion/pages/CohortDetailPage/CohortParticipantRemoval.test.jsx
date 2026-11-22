@@ -182,8 +182,8 @@ describe('Resultado del retiro', () => {
 
     expect(html).toMatch(/tabindex="-1"[^>]*role="status"[\s\S]*Participante retirado temporalmente/);
     expect(html).not.toContain('>PART-0003</span>');
-    expect(html.match(/<article/g)).toHaveLength(5);
-    expect(textOf(html)).toContain('5 participantes · 2 activos · 2 pendientes de validación · 1 inactivo');
+    expect(html.match(/<article/g)).toHaveLength(21);
+    expect(textOf(html)).toContain('21 participantes · 18 activos · 2 pendientes de validación · 1 inactivo');
     expect(cardOf(html, 'PART-0004')).toContain('Registro incompleto.');
   });
 
@@ -195,7 +195,7 @@ describe('Resultado del retiro', () => {
     });
 
     expect(html).toMatch(/tabindex="-1"[^>]*role="alert"[\s\S]*No se retiró al participante/);
-    expect(html.match(/<article/g)).toHaveLength(6);
+    expect(html.match(/<article/g)).toHaveLength(22);
   });
 
   it('el aviso se mantiene fuera de la lista, también mientras se vuelve a consultar', () => {

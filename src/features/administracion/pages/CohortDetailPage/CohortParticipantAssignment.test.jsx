@@ -301,7 +301,7 @@ describe('Resultado de la asignación', () => {
       assignmentChanges: { result: assigned },
     });
 
-    expect(html.match(/<article/g)).toHaveLength(8);
-    expect(textOf(html)).toContain('8 participantes · 3 activos · 4 pendientes de validación · 1 inactivo');
+    expect(html.match(/<article/g)).toHaveLength(24);
+    expect(textOf(html)).toContain('24 participantes · 19 activos · 4 pendientes de validación · 1 inactivo');
   });
 });

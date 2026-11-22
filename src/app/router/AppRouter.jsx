@@ -53,6 +53,11 @@ import {
   CohortListPage,
   ParticipantTrackingPage,
   ParticipantTrackingProfilePage,
+  CohortAggregatePage,
+  CohortNarrativePage,
+  CohortNotificationsPage,
+  CohortDashboard,
+  CohortEvolutionPage,
 } from '@/features/administracion/index.js';
 
 import { RequireAuth } from './RequireAuth.jsx';
@@ -194,7 +199,9 @@ export function AppRouter() {
               <Route element={<AdminLayout />}>
               <Route
                 path="administrativo"
-                element={<PsychologyHomePage />}
+                element={
+                  <PsychologyHomePage cohortDashboard={<CohortDashboard />} />
+                }
               />
 
               <Route
@@ -304,6 +311,26 @@ export function AppRouter() {
               <Route
                 path="administrativo/cohortes/:idCohorte/seguimiento/:referencia"
                 element={<ParticipantTrackingProfilePage />}
+              />
+
+              <Route
+                path="administrativo/cohortes/:idCohorte/vista-agregada"
+                element={<CohortAggregatePage />}
+              />
+
+              <Route
+                path="administrativo/cohortes/:idCohorte/vista-narrativa"
+                element={<CohortNarrativePage />}
+              />
+
+              <Route
+                path="administrativo/cohortes/:idCohorte/vista-notificaciones"
+                element={<CohortNotificationsPage />}
+              />
+
+              <Route
+                path="administrativo/cohortes/:idCohorte/evolucion"
+                element={<CohortEvolutionPage />}
               />
 
               <Route

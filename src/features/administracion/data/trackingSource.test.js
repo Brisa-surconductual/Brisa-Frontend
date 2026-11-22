@@ -18,6 +18,13 @@ function enableDemo(scenario) {
 }
 
 const codes = (response) => response.items.map(({ code }) => code);
+
+// Activos adicionales de la Cohorte Piloto B (PART-0015 a PART-0030),
+// alineados con los 18 activos de la vista agregada (RF-132).
+const PILOT_B_EXTRA = Array.from(
+  { length: 16 },
+  (_, index) => `PART-${String(15 + index).padStart(4, '0')}`,
+);
 const all = (query = INITIAL_TRACKING_QUERY) => ({ ...query, limit: 50 });
 
 let fetchSpy;
@@ -55,8 +62,8 @@ describe('Relación con la cohorte (demostración)', () => {
     const response = await listCohortTracking('demo-cohorte-b', all());
 
     expect(getTrackingSourceMode()).toBe(TRACKING_SOURCE_MODE.DEMO);
-    expect(response).toMatchObject({ access: TRACKING_ACCESS.GRANTED, cohortId: 'demo-cohorte-b', total: 6 });
-    expect(codes(response)).toEqual(['PART-0001', 'PART-0002', 'PART-0003', 'PART-0004', 'PART-0005', 'PART-0006']);
+    expect(response).toMatchObject({ access: TRACKING_ACCESS.GRANTED, cohortId: 'demo-cohorte-b', total: 22 });
+    expect(codes(response)).toEqual(['PART-0001', 'PART-0002', 'PART-0003', 'PART-0004', 'PART-0005', 'PART-0006', ...PILOT_B_EXTRA]);
     expect(response.items.every(({ cohortId }) => cohortId === 'demo-cohorte-b')).toBe(true);
   });
 
@@ -79,7 +86,7 @@ describe('Relación con la cohorte (demostración)', () => {
     await assignParticipants('demo-cohorte-b', ['demo-candidato-11']);
 
     expect(codes(await listCohortTracking('demo-cohorte-b', all()))).toEqual([
-      'PART-0001', 'PART-0002', 'PART-0004', 'PART-0005', 'PART-0006', 'PART-0011',
+      'PART-0001', 'PART-0002', 'PART-0004', 'PART-0005', 'PART-0006', ...PILOT_B_EXTRA, 'PART-0011',
     ]);
   });
 
@@ -108,10 +115,10 @@ describe('Filtros, orden y paginación aplicados por la fuente', () => {
   it('filtra por progreso, adherencia y alertas activas', async () => {
     enableDemo();
 
-    expect(codes(await listCohortTracking('demo-cohorte-b', all(withFilter(INITIAL_TRACKING_QUERY, 'progressMin', '50'))))).toEqual(['PART-0001', 'PART-0003', 'PART-0006']);
-    expect(codes(await listCohortTracking('demo-cohorte-b', all(withFilter(INITIAL_TRACKING_QUERY, 'adherenceMin', '75'))))).toEqual(['PART-0001']);
+    expect(codes(await listCohortTracking('demo-cohorte-b', all(withFilter(INITIAL_TRACKING_QUERY, 'progressMin', '50'))))).toEqual(['PART-0001', 'PART-0003', 'PART-0006', ...PILOT_B_EXTRA]);
+    expect(codes(await listCohortTracking('demo-cohorte-b', all(withFilter(INITIAL_TRACKING_QUERY, 'adherenceMin', '75'))))).toEqual(['PART-0001', 'PART-0015', 'PART-0017', 'PART-0019', 'PART-0021', 'PART-0024', 'PART-0026', 'PART-0028', 'PART-0029']);
     expect(codes(await listCohortTracking('demo-cohorte-b', all(withFilter(INITIAL_TRACKING_QUERY, 'alerts', 'con-alertas'))))).toEqual(['PART-0002', 'PART-0004', 'PART-0006']);
-    expect(codes(await listCohortTracking('demo-cohorte-b', all(withFilter(INITIAL_TRACKING_QUERY, 'alerts', 'sin-alertas'))))).toEqual(['PART-0001', 'PART-0003']);
+    expect(codes(await listCohortTracking('demo-cohorte-b', all(withFilter(INITIAL_TRACKING_QUERY, 'alerts', 'sin-alertas'))))).toEqual(['PART-0001', 'PART-0003', ...PILOT_B_EXTRA]);
   });
 
   it('un filtro sin resultados devuelve una lista vacía autorizada', async () => {
@@ -124,8 +131,8 @@ describe('Filtros, orden y paginación aplicados por la fuente', () => {
   it('ordena por indicador, con los no disponibles al final', async () => {
     enableDemo();
 
-    expect(codes(await listCohortTracking('demo-cohorte-b', all(withSort(INITIAL_TRACKING_QUERY, { field: 'progreso', direction: 'desc' }))))).toEqual(['PART-0001', 'PART-0003', 'PART-0006', 'PART-0002', 'PART-0004', 'PART-0005']);
-    expect(codes(await listCohortTracking('demo-cohorte-b', all(withSort(INITIAL_TRACKING_QUERY, { field: 'adherencia', direction: 'asc' }))))).toEqual(['PART-0004', 'PART-0006', 'PART-0002', 'PART-0003', 'PART-0001', 'PART-0005']);
+    expect(codes(await listCohortTracking('demo-cohorte-b', all(withSort(INITIAL_TRACKING_QUERY, { field: 'progreso', direction: 'desc' }))))).toEqual(['PART-0029', 'PART-0019', 'PART-0024', 'PART-0001', 'PART-0017', 'PART-0026', 'PART-0021', 'PART-0015', 'PART-0028', 'PART-0023', 'PART-0016', 'PART-0025', 'PART-0003', 'PART-0020', 'PART-0027', 'PART-0018', 'PART-0030', 'PART-0006', 'PART-0022', 'PART-0002', 'PART-0004', 'PART-0005']);
+    expect(codes(await listCohortTracking('demo-cohorte-b', all(withSort(INITIAL_TRACKING_QUERY, { field: 'adherencia', direction: 'asc' }))))).toEqual(['PART-0004', 'PART-0006', 'PART-0002', 'PART-0022', 'PART-0027', 'PART-0018', 'PART-0030', 'PART-0025', 'PART-0020', 'PART-0016', 'PART-0003', 'PART-0023', 'PART-0021', 'PART-0028', 'PART-0015', 'PART-0026', 'PART-0024', 'PART-0017', 'PART-0029', 'PART-0001', 'PART-0019', 'PART-0005']);
     expect(codes(await listCohortTracking('demo-cohorte-b', all(withSort(INITIAL_TRACKING_QUERY, { field: 'alertas', direction: 'desc' })))).slice(0, 3)).toEqual(['PART-0004', 'PART-0002', 'PART-0006']);
   });
 
@@ -134,10 +141,10 @@ describe('Filtros, orden y paginación aplicados por la fuente', () => {
     const first = await listCohortTracking('demo-cohorte-b', INITIAL_TRACKING_QUERY);
     const second = await listCohortTracking('demo-cohorte-b', withPage(INITIAL_TRACKING_QUERY, 1, first.total));
 
-    expect(first).toMatchObject({ total: 6, offset: 0, limit: 5 });
+    expect(first).toMatchObject({ total: 22, offset: 0, limit: 5 });
     expect(first.items).toHaveLength(5);
-    expect(second).toMatchObject({ total: 6, offset: 5 });
-    expect(codes(second)).toEqual(['PART-0006']);
+    expect(second).toMatchObject({ total: 22, offset: 5 });
+    expect(codes(second)).toEqual(['PART-0006', 'PART-0015', 'PART-0016', 'PART-0017', 'PART-0018']);
   });
 });
 
@@ -187,6 +194,6 @@ describe('Escenarios de seguimiento', () => {
     enableDemo();
     vi.stubEnv('VITE_M08_DEMO_SCENARIO', 'error-participantes');
 
-    expect((await listCohortTracking('demo-cohorte-b', all())).total).toBe(6);
+    expect((await listCohortTracking('demo-cohorte-b', all())).total).toBe(22);
   });
 });
