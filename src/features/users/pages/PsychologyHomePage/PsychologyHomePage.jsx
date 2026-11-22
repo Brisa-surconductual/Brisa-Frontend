@@ -12,8 +12,13 @@ import { usePsychologyHomePage } from './hooks/usePsychologyHomePage.js';
  * La navegación entre Dashboard, Población y Ajustes la aporta
  * el layout administrativo (enlaces con ?tab=). Aquí solo se
  * muestra el panel de la sección activa con su título.
+ *
+ * `cohortDashboard` (opcional): panel de la cohorte activa (RF-140,
+ * módulo administrativo). Lo inyecta app/router, porque las features
+ * no se importan entre sí; se muestra primero en el Dashboard, por
+ * encima de los indicadores del programa y los accesos de gestión.
  */
-export function PsychologyHomePage() {
+export function PsychologyHomePage({ cohortDashboard = null }) {
   const {
     email,
     roleLabel,
@@ -37,14 +42,27 @@ export function PsychologyHomePage() {
 
         {activeTabId === ADMINISTRATIVE_TAB.DASHBOARD && (
           <p className="mt-[var(--space-1)] mb-0 max-w-[640px] text-[length:var(--font-size-md)] leading-[var(--line-height-normal)] text-[var(--text-secondary)]">
-            Resumen agregado y anónimo del programa. Consulta el estado de
-            las cuentas de estudiantes y accede a las tareas de gestión.
+            Panorama agregado y anónimo de la cohorte activa y del
+            programa. Revisa primero las alertas críticas y accede desde
+            aquí a las tareas de gestión.
           </p>
         )}
       </header>
 
       {activeTabId === ADMINISTRATIVE_TAB.DASHBOARD && (
-        <DashboardPanel />
+        <div className="flex flex-col gap-[var(--space-8)]">
+          {cohortDashboard}
+          {/* Separa el panorama de la cohorte del resumen del programa. */}
+          <div
+            className={
+              cohortDashboard
+                ? 'border-t border-[var(--surface-border)] pt-[var(--space-8)]'
+                : undefined
+            }
+          >
+            <DashboardPanel />
+          </div>
+        </div>
       )}
 
       {activeTabId === ADMINISTRATIVE_TAB.POBLACION && (

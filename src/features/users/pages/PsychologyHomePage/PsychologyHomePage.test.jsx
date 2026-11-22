@@ -27,9 +27,9 @@ vi.mock('./components/SettingsPanel.jsx', () => ({
   SettingsPanel: () => <p>panel-ajustes</p>,
 }));
 
-function render(tab) {
+function render(tab, props = {}) {
   activeTabId = tab;
-  return renderToStaticMarkup(<PsychologyHomePage />);
+  return renderToStaticMarkup(<PsychologyHomePage {...props} />);
 }
 
 describe('Panel administrativo dentro del nuevo layout', () => {
@@ -51,5 +51,24 @@ describe('Panel administrativo dentro del nuevo layout', () => {
     expect(html).not.toContain('role="tab');
     expect(html).not.toContain('<main');
     expect(html).not.toContain('<header class="w-full');
+  });
+
+  it('Dashboard: el panel de la cohorte activa (RF-140) va primero y se conservan indicadores y accesos', () => {
+    const html = render('DASHBOARD', {
+      cohortDashboard: <p>panel-cohorte-activa</p>,
+    });
+
+    expect(html).toContain('panel-dashboard');
+    expect(html.indexOf('panel-cohorte-activa')).toBeLessThan(
+      html.indexOf('panel-dashboard'),
+    );
+  });
+
+  it('el panel de la cohorte activa solo aparece en el Dashboard', () => {
+    for (const tab of ['POBLACION', 'AJUSTES']) {
+      expect(
+        render(tab, { cohortDashboard: <p>panel-cohorte-activa</p> }),
+      ).not.toContain('panel-cohorte-activa');
+    }
   });
 });

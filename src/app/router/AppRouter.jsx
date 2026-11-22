@@ -56,6 +56,7 @@ import {
   CohortAggregatePage,
   CohortNarrativePage,
   CohortNotificationsPage,
+  CohortDashboard,
 } from '@/features/administracion/index.js';
 
 import { RequireAuth } from './RequireAuth.jsx';
@@ -197,7 +198,9 @@ export function AppRouter() {
               <Route element={<AdminLayout />}>
               <Route
                 path="administrativo"
-                element={<PsychologyHomePage />}
+                element={
+                  <PsychologyHomePage cohortDashboard={<CohortDashboard />} />
+                }
               />
 
               <Route

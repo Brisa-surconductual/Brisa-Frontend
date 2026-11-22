@@ -12,6 +12,7 @@ import {
   CohortAggregatePage,
   CohortNarrativePage,
   CohortNotificationsPage,
+  CohortDashboard,
 } from '@/features/administracion/index.js';
 import { USER_ROLE } from '@/features/users/types/authTypes.js';
 import { DASHBOARD_SHORTCUTS } from '@/features/users/pages/PsychologyHomePage/data/psychologyStats.js';
@@ -234,6 +235,15 @@ describe('Rutas administrativas protegidas', () => {
     expect(match('/app/administrativo/cohortes/demo-cohorte-b/vista-narrativa').at(-1).route.element.type).toBe(
       CohortNarrativePage,
     );
+  });
+
+  it('el Dashboard monta el panel de la cohorte activa (RF-140) en la pantalla de aterrizaje, sin ruta ni menú nuevos', () => {
+    const leaf = match('/app/administrativo').at(-1);
+
+    expect(leaf.route.element.props.cohortDashboard.type).toBe(CohortDashboard);
+    expect(getActiveAdminSection('/app/administrativo')).toBe(ADMIN_SECTION.DASHBOARD);
+    expect(ADMIN_NAV_ITEMS.filter(({ label }) => label === 'Dashboard')).toHaveLength(1);
+    expect(ADMIN_NAV_ITEMS.map(({ label }) => label)).not.toContain('Panel principal');
   });
 
   it('la ficha individual (RF-128) monta su página con idCohorte y referencia, y mantiene Cohortes activa', () => {
