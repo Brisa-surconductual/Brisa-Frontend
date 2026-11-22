@@ -52,6 +52,29 @@ describe('ChatEntryPage (RF-24)', () => {
     expect(html).toContain('Última actividad');
   });
 
+  it('RF-32: recuperada_desde_historial true muestra el aviso discreto', () => {
+    const html = render({
+      estado: ESTADO_PANTALLA_ENTRADA.REANUDANDO,
+      sesion: { ...sesion, recuperadaDesdeHistorial: true },
+    });
+
+    expect(html).toContain('Retomamos donde quedaste');
+    expect(html).toContain(
+      'BRISA recuperó el último punto válido de tu conversación.',
+    );
+    expect(html).not.toContain('role="alert"');
+  });
+
+  it('RF-32: recuperada_desde_historial false no muestra el aviso', () => {
+    const html = render({
+      estado: ESTADO_PANTALLA_ENTRADA.REANUDANDO,
+      sesion: { ...sesion, recuperadaDesdeHistorial: false },
+    });
+
+    expect(html).toContain('Retomamos donde quedaste');
+    expect(html).not.toContain('recuperó el último punto válido');
+  });
+
   it('lista: sesión nueva desde el inicio', () => {
     const html = render({
       estado: ESTADO_PANTALLA_ENTRADA.LISTA,

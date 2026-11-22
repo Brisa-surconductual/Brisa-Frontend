@@ -5,11 +5,15 @@ import {
   conversationReducer,
   crearEstadoInicial,
   esSesionCompletada,
+  prepararInicio,
   selectItems,
   selectNodoFormulario,
   selectRecursosNoPresentados,
   selectSecuenciaSiguiente,
 } from './conversationState.js';
+import { mapHistorial } from '../../../services/historialInteracciones.js';
+import { mapInicioSesion } from '../../../services/sesionConversacional.js';
+
 import { crearCuerpo } from './envio.js';
 
 const ID = '26000000-0000-4000-8000-000000000001';
@@ -646,5 +650,313 @@ describe('recursos no presentados (RF-33, RF-30)', () => {
     );
 
     expect(selectRecursosNoPresentados(estado)).toEqual([]);
+  });
+});
+
+// RF-32: respuesta de /iniciar con cinco respuestas guardadas.
+const interaccion = (secuencia) => ({
+  id_interaccion: `i${secuencia}`,
+  secuencia,
+  timestamp_interaccion: '2026-11-21T10:00:00.000Z',
+  nodo: {
+    id_nodo: `h${secuencia}`,
+    tipo_nodo: 'PREGUNTA',
+    bloques: [{ orden: 1, tipo: 'TEXTO', texto: `Pregunta ${secuencia}` }],
+  },
+  respuesta: {
+    tipo_entrada: 'OPCION_UNICA',
+    valor: `V${secuencia}`,
+    etiqueta: `Respuesta ${secuencia}`,
+  },
+  id_nodo_destino: `h${secuencia + 1}`,
+});
+
+const respuestaIniciar = (extra = {}) => ({
+  reanudada: true,
+  recuperada_desde_historial: false,
+  sesion: {
+    id_sesion: ID,
+    modalidad_activa: 'GRUPAL',
+    tipo_dependencia: 'TOLERANCIA',
+    tipo_craving: 'POSITIVO',
+    estado_actual: 'ACTIVA',
+    fecha_inicio: '2026-11-21T09:00:00.000Z',
+    fecha_ultima_interaccion: '2026-11-21T10:00:00.000Z',
+    ultima_secuencia: 5,
+  },
+  nodo_actual: {
+    id_nodo: 'n6',
+    tipo_nodo: 'PREGUNTA',
+    es_terminal: false,
+    disponibilidad: { habilitado: true, habilita_aprox: null },
+    bloques: [{ orden: 1, tipo: 'TEXTO', texto: 'Pregunta 6' }],
+    entrada: { tipo: 'ESCALA', obligatorio: true, min: 0, max: 10, paso: 1 },
+  },
+  historial_reciente: {
+    items: [1, 2, 3, 4, 5].map(interaccion),
+    hay_mas: false,
+    siguiente_cursor: null,
+  },
+  ubicacion_temporal: { nombre_unidad: 'Semana 1', finalizado_programa: false },
+  ...extra,
+});
+
+const textoDe = () => null;
+const inicioDe = (data = respuestaIniciar()) =>
+  prepararInicio(mapInicioSesion(data), textoDe);
+const desdeIniciar = (data) => crearEstadoInicial(ID, inicioDe(data));
+
+const PAGINA_GET = {
+  items: [1, 2, 3, 4, 5].map(interaccion),
+  hay_mas: false,
+  siguiente_cursor: null,
+};
+
+const textosRespuesta = (estado) =>
+  selectItems(estado)
+    .filter((i) => i.tipo === 'respuesta')
+    .map((i) => i.texto);
+
+describe('reanudación con la respuesta de /iniciar (RF-32)', () => {
+  it('presenta el historial reciente antes del nodo actual, sin pedir los GET', () => {
+    const estado = desdeIniciar();
+    const items = selectItems(estado);
+
+    expect(estado.estado).toBe(E.LISTO);
+    expect(estado.nodoPrecargado).toBe(true);
+    expect(estado.historialPrecargado).toBe(true);
+    expect(estado.recarga).toBe(0);
+    expect(estado.recargaHistorial).toBe(0);
+    expect(items).toHaveLength(11);
+    expect(items.at(-1)).toMatchObject({
+      actual: true,
+      nodo: { idNodo: 'n6' },
+    });
+    expect(items.slice(0, -1).every((i) => i.id.startsWith('historial-'))).toBe(
+      true,
+    );
+    expect(selectNodoFormulario(estado)?.idNodo).toBe('n6');
+  });
+
+  it('recupera cinco respuestas guardadas en orden', () => {
+    const estado = desdeIniciar();
+
+    expect(textosRespuesta(estado)).toEqual([
+      'Respuesta 1',
+      'Respuesta 2',
+      'Respuesta 3',
+      'Respuesta 4',
+      'Respuesta 5',
+    ]);
+    expect(
+      selectItems(estado)
+        .filter((i) => i.tipo === 'nodo' && !i.actual)
+        .map((i) => i.nodo.idNodo),
+    ).toEqual(['h1', 'h2', 'h3', 'h4', 'h5']);
+  });
+
+  it('con ultima_secuencia 5 el próximo envío lleva secuencia 6', () => {
+    const estado = desdeIniciar();
+    const cuerpo = crearCuerpo(estado.conversacion.nodo, 7, {
+      secuencia: selectSecuenciaSiguiente(estado),
+    });
+
+    expect(selectSecuenciaSiguiente(estado)).toBe(6);
+    expect(cuerpo.secuencia).toBe(6);
+  });
+
+  it('ultima_secuencia manda aunque la página reciente llegue vacía', () => {
+    const estado = desdeIniciar(
+      respuestaIniciar({
+        historial_reciente: { items: [], hay_mas: true, siguiente_cursor: 9 },
+        sesion: { ...respuestaIniciar().sesion, ultima_secuencia: 9 },
+      }),
+    );
+
+    expect(selectSecuenciaSiguiente(estado)).toBe(10);
+  });
+
+  it('conserva la paginación cuando hay_mas es verdadero', () => {
+    const estado = desdeIniciar(
+      respuestaIniciar({
+        historial_reciente: {
+          items: [4, 5].map(interaccion),
+          hay_mas: true,
+          siguiente_cursor: 4,
+        },
+      }),
+    );
+
+    expect(estado.hayMas).toBe(true);
+    expect(estado.secuenciaMinima).toBe(4);
+
+    const conAnteriores = reducir(
+      [
+        { type: 'CARGAR_ANTERIORES' },
+        {
+          type: 'ANTERIORES_EXITO',
+          pagina: mapHistorial(
+            {
+              items: [3, 4].map(interaccion),
+              hay_mas: false,
+              siguiente_cursor: null,
+            },
+            textoDe,
+          ),
+        },
+      ],
+      estado,
+    );
+
+    expect(textosRespuesta(conAnteriores)).toEqual([
+      'Respuesta 3',
+      'Respuesta 4',
+      'Respuesta 5',
+    ]);
+    expect(conAnteriores.hayMas).toBe(false);
+  });
+
+  it('recuperada_desde_historial: true queda marcada para el aviso', () => {
+    const estado = desdeIniciar(
+      respuestaIniciar({ recuperada_desde_historial: true }),
+    );
+
+    expect(estado.recuperadaDesdeHistorial).toBe(true);
+    // El nodo es el que eligió el backend.
+    expect(estado.conversacion.nodo.idNodo).toBe('n6');
+  });
+
+  it('recuperada_desde_historial: false no marca el aviso', () => {
+    expect(desdeIniciar().recuperadaDesdeHistorial).toBe(false);
+  });
+
+  it('una sesión COMPLETADA sigue en solo lectura', () => {
+    const estado = desdeIniciar(
+      respuestaIniciar({
+        reanudada: false,
+        sesion: { ...respuestaIniciar().sesion, estado_actual: 'COMPLETADA' },
+        nodo_actual: { ...respuestaIniciar().nodo_actual, es_terminal: true },
+      }),
+    );
+
+    expect(estado.estado).toBe(E.COMPLETADA);
+    expect(selectNodoFormulario(estado)).toBeNull();
+    expect(textosRespuesta(estado)).toHaveLength(5);
+  });
+
+  it('una sesión nueva arranca con el nodo inicial y secuencia 1', () => {
+    const estado = desdeIniciar(
+      respuestaIniciar({
+        reanudada: false,
+        sesion: { ...respuestaIniciar().sesion, ultima_secuencia: 0 },
+        historial_reciente: {
+          items: [],
+          hay_mas: false,
+          siguiente_cursor: null,
+        },
+      }),
+    );
+
+    expect(selectItems(estado)).toHaveLength(1);
+    expect(selectSecuenciaSiguiente(estado)).toBe(1);
+  });
+
+  it('datos de otro idSesion se ignoran y se carga por GET', () => {
+    const otro = crearEstadoInicial(
+      '26000000-0000-4000-8000-000000000099',
+      inicioDe(),
+    );
+
+    expect(otro.estado).toBe(E.CARGANDO);
+    expect(otro.nodoPrecargado).toBe(false);
+    expect(otro.historialPrecargado).toBe(false);
+  });
+
+  it('sin historial_reciente solo se omite el GET del nodo', () => {
+    const estado = desdeIniciar(
+      respuestaIniciar({ historial_reciente: undefined }),
+    );
+
+    expect(estado.nodoPrecargado).toBe(true);
+    expect(estado.historialPrecargado).toBe(false);
+    expect(estado.historialEstado).toBe('CARGANDO');
+    expect(selectSecuenciaSiguiente(estado)).toBe(6);
+  });
+
+  it('al recargar (F5) los GET restauran la misma conversación', () => {
+    const recargada = reducir([
+      { type: 'EXITO', conversacion: inicioDe().conversacion },
+      { type: 'HISTORIAL_EXITO', pagina: mapHistorial(PAGINA_GET, textoDe) },
+    ]);
+    const precargada = desdeIniciar();
+
+    expect(crearEstadoInicial(ID).estado).toBe(E.CARGANDO);
+    expect(selectItems(recargada).map((i) => i.id)).toEqual(
+      selectItems(precargada).map((i) => i.id),
+    );
+    expect(selectSecuenciaSiguiente(recargada)).toBe(6);
+  });
+
+  it('resincronizar con la misma página no duplica mensajes', () => {
+    const estado = reducir(
+      [
+        { type: 'REINTENTAR_HISTORIAL' },
+        { type: 'HISTORIAL_EXITO', pagina: mapHistorial(PAGINA_GET, textoDe) },
+      ],
+      desdeIniciar(),
+    );
+    const ids = selectItems(estado).map((i) => i.id);
+
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(textosRespuesta(estado)).toHaveLength(5);
+  });
+
+  it('una resincronización tras /iniciar vuelve a pedir nodo e historial', () => {
+    const estado = reducir(
+      [
+        {
+          type: 'ENVIAR',
+          envio: { cuerpo: { secuencia: 6 }, textoRespuesta: '7/10' },
+        },
+        { type: 'ENVIO_ERROR', error: error(409, 'SECUENCIA_FUERA_DE_ORDEN') },
+      ],
+      desdeIniciar(),
+    );
+
+    expect(estado.recarga).toBe(1);
+    expect(estado.recargaHistorial).toBe(1);
+  });
+});
+
+describe('respuestas tardías del historial (RF-32)', () => {
+  it('una página antigua que llega después de responder no borra lo avanzado', () => {
+    const tras = reducir(
+      [
+        { type: 'EXITO', conversacion: conversacion() },
+        {
+          type: 'ENVIAR',
+          envio: { cuerpo: { secuencia: 1 }, textoRespuesta: '7/10' },
+        },
+        {
+          type: 'ENVIO_EXITO',
+          respuesta: { estadoSesion: 'ACTIVA', secuencia: 8 },
+        },
+        { type: 'EXITO', conversacion: nodoN2() },
+        // Historial inicial pedido al montar, que llega tarde.
+        { type: 'HISTORIAL_EXITO', pagina: paginaHistorial() },
+      ],
+      crearEstadoInicial(ID),
+    );
+    const ids = selectItems(tras).map((i) => i.id);
+
+    expect(ids).toEqual([
+      'historial-i6-nodo',
+      'historial-i7-nodo',
+      'historial-i7-respuesta',
+      'nodo-0',
+      'respuesta-0',
+      'nodo-1',
+    ]);
+    expect(selectSecuenciaSiguiente(tras)).toBe(9);
   });
 });

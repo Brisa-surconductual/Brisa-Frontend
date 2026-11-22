@@ -61,6 +61,7 @@ function ChatConversation() {
     errorEnvio,
     accionErrorEnvio,
     aviso,
+    avisoRecuperacion,
     nodoFormulario,
     claveFormulario,
     hayHilo,
@@ -124,6 +125,9 @@ function ChatConversation() {
             onRetry={reintentarHistorial}
           />
         )}
+
+        {/* RF-32: el backend recuperó el último punto válido. */}
+        {avisoRecuperacion && <StaleNodeNotice mensaje={avisoRecuperacion} />}
 
         {(hayHilo || hayMas) && (
           <HistorialConversacion

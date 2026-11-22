@@ -19,13 +19,24 @@ const respuesta = {
     estado_actual: 'ACTIVA',
     fecha_inicio: '2026-11-05T05:33:50.053Z',
     fecha_ultima_interaccion: '2026-11-05T05:40:00.000Z',
+    ultima_secuencia: 5,
   },
+  recuperada_desde_historial: false,
   nodo_actual: {
     id_nodo: 'n-1',
-    tipo_nodo: 'MENSAJE',
-    contenido: { texto: 'Hola' },
-    es_nodo_inicial: true,
-    orden: 1,
+    tipo_nodo: 'PREGUNTA',
+    es_terminal: false,
+    disponibilidad: { habilitado: true, habilita_aprox: null },
+    bloques: [
+      { orden: 2, tipo: 'IMAGEN', url: 'https://example.test/a.png?firma=1' },
+      { orden: 1, tipo: 'TEXTO', texto: 'Hola' },
+    ],
+    entrada: { tipo: 'ESCALA', obligatorio: true, min: 0, max: 10, paso: 1 },
+  },
+  historial_reciente: {
+    items: [{ id_interaccion: 'i-5', secuencia: 5 }],
+    hay_mas: true,
+    siguiente_cursor: 5,
   },
   ubicacion_temporal: {
     id_unidad_temporal: 'u-1',
@@ -40,9 +51,61 @@ describe('mapInicioSesion', () => {
 
     expect(modelo.reanudada).toBe(true);
     expect(modelo.sesion.idSesion).toBe('s-1');
-    expect(modelo.nodoActual.contenido).toEqual({ texto: 'Hola' });
     expect(modelo.ubicacionTemporal.nombreUnidad).toBe('Semana 1');
     expect(JSON.stringify(modelo)).not.toMatch(/dependencia|craving/i);
+  });
+
+  it('RF-32: normaliza nodo_actual al modelo de RF-26 sin cambiar el nodo', () => {
+    const { conversacion } = mapInicioSesion(respuesta);
+
+    expect(conversacion.idSesion).toBe('s-1');
+    expect(conversacion.estadoSesion).toBe('ACTIVA');
+    expect(conversacion.nodo).toMatchObject({
+      idNodo: 'n-1',
+      tipoNodo: 'PREGUNTA',
+      esTerminal: false,
+      entrada: { tipo: 'ESCALA', min: 0, max: 10 },
+    });
+    expect(conversacion.nodo.bloques.map((b) => b.orden)).toEqual([1, 2]);
+    expect(conversacion.nodo.bloques[0].texto).toBe('Hola');
+    // `disponibilidad` se tolera y no pasa al modelo.
+    expect(conversacion.nodo).not.toHaveProperty('disponibilidad');
+  });
+
+  it('RF-32: conserva historial_reciente, ultima_secuencia y recuperada_desde_historial', () => {
+    const modelo = mapInicioSesion(respuesta);
+
+    expect(modelo.sesion.ultimaSecuencia).toBe(5);
+    expect(modelo.recuperadaDesdeHistorial).toBe(false);
+    expect(modelo.historialReciente).toEqual({
+      items: [{ id_interaccion: 'i-5', secuencia: 5 }],
+      hay_mas: true,
+      siguiente_cursor: 5,
+    });
+    expect(
+      mapInicioSesion({ ...respuesta, recuperada_desde_historial: true })
+        .recuperadaDesdeHistorial,
+    ).toBe(true);
+  });
+
+  it('RF-32: sin historial_reciente ni ultima_secuencia válidos quedan en null', () => {
+    const modelo = mapInicioSesion({
+      ...respuesta,
+      historial_reciente: undefined,
+      sesion: { ...respuesta.sesion, ultima_secuencia: '5' },
+    });
+
+    expect(modelo.historialReciente).toBeNull();
+    expect(modelo.sesion.ultimaSecuencia).toBeNull();
+  });
+
+  it('RF-32: no conserva el perfil clínico ni identificadores del árbol', () => {
+    const modelo = mapInicioSesion(respuesta);
+    const json = JSON.stringify(modelo);
+
+    expect(json).not.toMatch(/dependencia|craving|TOLERANCIA|POSITIVO/i);
+    expect(json).not.toContain('f-1');
+    expect(modelo.sesion).not.toHaveProperty('idFlujoConversacional');
   });
 
   it('tolera una respuesta sin ubicación temporal', () => {

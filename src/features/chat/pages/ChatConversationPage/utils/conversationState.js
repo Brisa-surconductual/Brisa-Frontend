@@ -1,4 +1,7 @@
-import { anteponerSinDuplicar } from '../../../services/historialInteracciones.js';
+import {
+  anteponerSinDuplicar,
+  mapHistorial,
+} from '../../../services/historialInteracciones.js';
 import { esIdSesionValido } from '../../../services/nodoActual.js';
 import { ESTADO_SESION } from '../../../types/index.js';
 
@@ -72,12 +75,62 @@ const BASE = Object.freeze({
   errorEnvio: null,
   // D15: 409 NODO_DESACTUALIZADO, visible sobre el nodo nuevo.
   aviso: null,
+  // RF-32: el nodo o la página reciente ya llegaron con /iniciar; la
+  // primera consulta por GET se omite (las recargas posteriores no).
+  nodoPrecargado: false,
+  historialPrecargado: false,
+  // RF-32: `recuperada_desde_historial` de /iniciar.
+  recuperadaDesdeHistorial: false,
 });
 
-export function crearEstadoInicial(idSesion) {
-  return esIdSesionValido(idSesion)
-    ? BASE
-    : { ...BASE, estado: DIRECCION_INVALIDA };
+/*
+ * RF-32: modelo de /iniciar (`mapInicioSesion`) → `inicio` para
+ * `crearEstadoInicial`. La página reciente se mapea igual que la del GET
+ * (`mapHistorial`, con `textoDe` del registro de entradas).
+ */
+export function prepararInicio(modelo, textoDe) {
+  if (!modelo?.conversacion) return null;
+
+  return {
+    conversacion: modelo.conversacion,
+    pagina: modelo.historialReciente
+      ? mapHistorial(modelo.historialReciente, textoDe)
+      : null,
+    ultimaSecuencia: modelo.sesion?.ultimaSecuencia ?? null,
+    recuperadaDesdeHistorial: modelo.recuperadaDesdeHistorial === true,
+  };
+}
+
+/*
+ * `inicio` (opcional) es la respuesta de /iniciar ya mapeada:
+ * `{ conversacion, pagina, ultimaSecuencia, recuperadaDesdeHistorial }`.
+ * Solo se usa si es del mismo `idSesion` de la URL; si no, o tras F5, la
+ * conversación se carga por GET.
+ */
+export function crearEstadoInicial(idSesion, inicio = null) {
+  if (!esIdSesionValido(idSesion)) {
+    return { ...BASE, estado: DIRECCION_INVALIDA };
+  }
+
+  const conversacion = inicio?.conversacion;
+  if (!conversacion?.nodo?.idNodo || conversacion.idSesion !== idSesion) {
+    return BASE;
+  }
+
+  let estado = { ...alCargar(BASE, conversacion), nodoPrecargado: true };
+
+  if (inicio.pagina) {
+    estado = {
+      ...alCargarHistorial(estado, inicio.pagina),
+      historialPrecargado: true,
+    };
+  }
+
+  return {
+    ...estado,
+    ultimaSecuencia: masAlta(estado.ultimaSecuencia, inicio.ultimaSecuencia),
+    recuperadaDesdeHistorial: inicio.recuperadaDesdeHistorial === true,
+  };
 }
 
 // Tras la recarga de D7 solo siguen caídos los recursos cuya URL no
@@ -204,10 +257,20 @@ function masAlta(actual, nueva) {
 
 // RF-32: la página más reciente reemplaza el hilo cerrado (carga inicial
 // o resincronización). Los items en memoria quedan cubiertos por ella.
+// Una página tardía, anterior a la última secuencia confirmada (p. ej. el
+// historial inicial llega después de responder), no borra lo avanzado:
+// se antepone sin duplicar.
 function alCargarHistorial(state, pagina) {
+  const tardia =
+    state.ultimaSecuencia !== null &&
+    Number.isInteger(pagina.ultimaSecuencia) &&
+    pagina.ultimaSecuencia < state.ultimaSecuencia;
+
   return {
     ...state,
-    historial: pagina.items,
+    historial: tardia
+      ? anteponerSinDuplicar(pagina.items, state.historial)
+      : pagina.items,
     historialEstado: ESTADO_HISTORIAL.LISTO,
     historialError: null,
     hayMas: pagina.hayMas,

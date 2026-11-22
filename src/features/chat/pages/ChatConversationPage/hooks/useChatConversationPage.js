@@ -6,13 +6,19 @@ import { obtenerHistorialInteracciones } from '../../../api/sesion/obtenerHistor
 import { obtenerNodoActual } from '../../../api/sesion/obtenerNodoActual.js';
 import { REGISTRO_ENTRADAS } from '../../../components/NodeInput/registroEntradas.js';
 import { mapHistorial } from '../../../services/historialInteracciones.js';
+import {
+  leerInicioSesion,
+  olvidarInicioSesion,
+} from '../../../services/inicioSesionReciente.js';
 import { mapNodoActual } from '../../../services/nodoActual.js';
 import { mapResultadoRespuesta } from '../../../services/resultadoRespuesta.js';
+import { MENSAJE_RECUPERADA_DESDE_HISTORIAL } from '../../../services/sesionConversacional.js';
 import {
   ESTADO_CONVERSACION,
   ESTADO_HISTORIAL,
   conversationReducer,
   crearEstadoInicial,
+  prepararInicio,
   selectItems,
   selectNodoFormulario,
   selectRecursosNoPresentados,
@@ -59,10 +65,10 @@ export function useChatConversationPage() {
   const enVueloRef = useRef(false);
   const vivoRef = useRef(false);
   const estadoPrevioRef = useRef(null);
-  const [state, dispatch] = useReducer(
-    conversationReducer,
-    idSesion,
-    crearEstadoInicial,
+  const [state, dispatch] = useReducer(conversationReducer, idSesion, (id) =>
+    // RF-32: la respuesta de /iniciar de este mismo `idSesion`, si la
+    // pantalla de entrada la dejó en memoria.
+    crearEstadoInicial(id, prepararInicio(leerInicioSesion(id), textoDe)),
   );
   const direccionInvalida = state.estado === DIRECCION_INVALIDA;
   const items = selectItems(state);
@@ -77,6 +83,12 @@ export function useChatConversationPage() {
     };
   }, []);
 
+  // RF-32: los datos de /iniciar se usan una sola vez; una visita
+  // posterior a la misma URL vuelve a consultar por GET.
+  useEffect(() => {
+    olvidarInicioSesion(idSesion);
+  }, [idSesion]);
+
   // RF-26: solo lectura. Al montar y en cada recarga (reintento, recurso
   // caído, avance tras un 200 o NODO_DESACTUALIZADO).
   useEffect(() => {
@@ -84,6 +96,9 @@ export function useChatConversationPage() {
       navigate(CHAT_ENTRY_PATH, { replace: true });
       return undefined;
     }
+
+    // RF-32: el nodo llegó con /iniciar; solo las recargas lo piden.
+    if (state.nodoPrecargado && state.recarga === 0) return undefined;
 
     let cancelado = false;
 
@@ -108,12 +123,24 @@ export function useChatConversationPage() {
     return () => {
       cancelado = true;
     };
-  }, [idSesion, state.recarga, direccionInvalida, navigate]);
+  }, [
+    idSesion,
+    state.recarga,
+    state.nodoPrecargado,
+    direccionInvalida,
+    navigate,
+  ]);
 
   // RF-32: historial reciente. Al montar y en cada resincronización o
   // reintento. Si falla, el nodo actual sigue disponible (CA-32-5).
   useEffect(() => {
     if (direccionInvalida) return undefined;
+
+    // RF-32: la página reciente llegó con /iniciar; solo las
+    // resincronizaciones y reintentos la piden.
+    if (state.historialPrecargado && state.recargaHistorial === 0) {
+      return undefined;
+    }
 
     let cancelado = false;
 
@@ -140,7 +167,13 @@ export function useChatConversationPage() {
     return () => {
       cancelado = true;
     };
-  }, [idSesion, state.recargaHistorial, direccionInvalida, navigate]);
+  }, [
+    idSesion,
+    state.recargaHistorial,
+    state.historialPrecargado,
+    direccionInvalida,
+    navigate,
+  ]);
 
   // El candado se abre cuando la página vuelve a admitir una acción.
   // `errorEnvio` cuenta: un 400 vuelve a LISTO sin cambiar `estado`.
@@ -157,7 +190,8 @@ export function useChatConversationPage() {
     const previo = estadoPrevioRef.current;
     estadoPrevioRef.current = state.estado;
 
-    if (previo === CARGANDO && state.estado !== CARGANDO) {
+    // Con los datos de /iniciar la página monta ya cargada (previo null).
+    if ((previo === CARGANDO || previo === null) && state.estado !== CARGANDO) {
       tituloRef.current?.focus();
     } else if (
       state.estado === ERROR_ENVIO ||
@@ -293,6 +327,11 @@ export function useChatConversationPage() {
     errorEnvio: state.errorEnvio,
     accionErrorEnvio,
     aviso: state.aviso,
+    // RF-32: aviso discreto hasta el primer avance.
+    avisoRecuperacion:
+      state.recuperadaDesdeHistorial && !huboAvance
+        ? MENSAJE_RECUPERADA_DESDE_HISTORIAL
+        : null,
     nodoFormulario: selectNodoFormulario(state),
     claveFormulario: `nodo-${state.paso}`,
     hayHilo: items.length > 0,
