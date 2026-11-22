@@ -1,12 +1,25 @@
-import { Flag, HelpCircle, Link2, MessageSquare, Pencil } from 'lucide-react';
+import {
+  Flag,
+  FlagTriangleRight,
+  HelpCircle,
+  Link2,
+  MessageSquare,
+  Pencil,
+  UserRound,
+} from 'lucide-react';
 
 import { Button } from '@/shared/components/ui/Button/index.js';
 
 import { ChatAdminNotice } from '../../../../components/ChatAdminNotice/index.js';
+import { salidasOrdenadasDeNodo } from '../../../../services/flujosAdmin.js';
 import {
   nombreContenidoCronograma,
+  resumenCapturaPerfil,
   resumenEntradaNodo,
 } from '../../../../services/nodosAdmin.js';
+
+const CHIP =
+  'inline-flex items-center gap-[var(--space-1)] rounded-[var(--radius-full)] border px-[var(--space-2)] py-[2px] text-[length:var(--font-size-xs)]';
 
 /*
  * Nodos del flujo, con el inicial al principio. Solo lectura: el texto
@@ -15,9 +28,12 @@ import {
  * temporal a partir del catálogo `contenidos_cronograma`. Cuando el nodo
  * espera una respuesta (PR4), se muestra de qué tipo; sin ese dato, el
  * nodo es informativo (el estudiante solo confirma "Continuar").
+ * RF-25: cada tarjeta lista sus salidas en el orden en que el motor las
+ * evalúa ("cualquier otra respuesta" siempre al final).
  */
 export function TreeNodeList({
   nodos,
+  transiciones = [],
   canEdit = false,
   onEdit,
   contenidosCronograma = [],
@@ -49,6 +65,8 @@ export function TreeNodeList({
               nodo.idContenidoCronograma,
             );
             const respuesta = resumenEntradaNodo(nodo.entrada);
+            const captura = resumenCapturaPerfil(nodo.contenido);
+            const salidas = salidasOrdenadasDeNodo(nodo, nodos, transiciones);
 
             return (
               <li
@@ -64,6 +82,32 @@ export function TreeNodeList({
                     <span className="inline-flex items-center gap-[var(--space-1)] rounded-[var(--radius-full)] border border-[var(--info-border)] bg-[var(--info-bg)] px-[var(--space-2)] py-[2px] text-[length:var(--font-size-xs)] font-bold text-[var(--info-text)]">
                       <Flag size={13} strokeWidth={2} aria-hidden="true" />
                       Nodo inicial
+                    </span>
+                  )}
+
+                  {nodo.esNodoFinal && (
+                    <span
+                      className={`${CHIP} border-[var(--success-border)] bg-[var(--success-bg)] font-bold text-[var(--success-text)]`}
+                    >
+                      <FlagTriangleRight
+                        size={13}
+                        strokeWidth={2}
+                        aria-hidden="true"
+                      />
+                      Nodo final
+                    </span>
+                  )}
+
+                  {captura && (
+                    <span
+                      className={`${CHIP} border-[var(--surface-border)] bg-[var(--surface-bg)] text-[var(--text-secondary)]`}
+                    >
+                      <UserRound
+                        size={13}
+                        strokeWidth={1.8}
+                        aria-hidden="true"
+                      />
+                      Captura: {captura}
                     </span>
                   )}
 
@@ -108,6 +152,38 @@ export function TreeNodeList({
                 <p className="m-0 text-[length:var(--font-size-base)] leading-[var(--line-height-normal)] [overflow-wrap:anywhere] whitespace-pre-line text-[var(--text-primary)]">
                   {nodo.texto || 'Sin texto.'}
                 </p>
+
+                {!nodo.esNodoFinal && (
+                  <div className="flex flex-col gap-[var(--space-1)] border-t border-[var(--surface-border)] pt-[var(--space-2)]">
+                    <p className="m-0 text-[length:var(--font-size-xs)] font-bold text-[var(--text-secondary)]">
+                      Orden de evaluación de transiciones
+                    </p>
+                    {salidas.length === 0 ? (
+                      <p className="m-0 text-[length:var(--font-size-xs)] text-[var(--warning-text)]">
+                        Sin transiciones de salida.
+                      </p>
+                    ) : (
+                      <ol className="m-0 flex list-none flex-col gap-[2px] p-0 text-[length:var(--font-size-xs)] text-[var(--text-primary)]">
+                        {salidas.map((salida) => (
+                          <li
+                            key={salida.id}
+                            className="[overflow-wrap:anywhere]"
+                          >
+                            <span className="font-bold tabular-nums">
+                              {salida.esPorDefecto
+                                ? 'Por defecto'
+                                : salida.esImplicita
+                                  ? 'Automática'
+                                  : `${salida.orden}.`}
+                            </span>{' '}
+                            {salida.esImplicita ? '' : `${salida.regla} `}→{' '}
+                            {salida.destino}
+                          </li>
+                        ))}
+                      </ol>
+                    )}
+                  </div>
+                )}
               </li>
             );
           })}

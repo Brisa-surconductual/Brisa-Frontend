@@ -82,6 +82,13 @@ export {
 } from './context/index.js';
 
 
+// Instalación de la PWA: se activa al arrancar (main.jsx, ADR-0006)
+
+export {
+  listenInstallPrompt,
+} from './utils/installPromptEvent.js';
+
+
 // Tipos públicos utilizados fuera de la feature
 
 export {

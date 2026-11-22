@@ -1,6 +1,11 @@
 import { CHAT_CLIENT_ERROR } from '../api/chatApiUtils.js';
-import { DIMENSION_PERFIL_CLINICO_ETIQUETA } from '../types/dimensionPerfilClinico.js';
+import {
+  DIMENSION_PERFIL_CLINICO_ETIQUETA,
+  etiquetaValorPerfilClinico,
+} from '../types/dimensionPerfilClinico.js';
 import { ESTADO_FLUJO, NOMBRE_FLUJO_MAX } from '../types/estadoFlujo.js';
+import { OPERADOR_CONDICION } from '../types/operadorCondicion.js';
+import { ALIAS_TIPO_ENTRADA, TIPO_ENTRADA } from '../types/tipoEntrada.js';
 
 const MENSAJE_SIN_CONEXION =
   'No pudimos conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.';
@@ -67,9 +72,11 @@ function recortar(texto) {
     : texto;
 }
 
-// Inicial primero; luego por `orden` (sin orden al final) y por fecha.
+// Inicial primero y final al último; luego por `orden` (sin orden al
+// final) y por fecha.
 function compararNodos(a, b) {
   if (a.esNodoInicial !== b.esNodoInicial) return a.esNodoInicial ? -1 : 1;
+  if (a.esNodoFinal !== b.esNodoFinal) return a.esNodoFinal ? 1 : -1;
 
   const ordenA = a.orden ?? Number.MAX_SAFE_INTEGER;
   const ordenB = b.orden ?? Number.MAX_SAFE_INTEGER;
@@ -103,6 +110,25 @@ export function describirCondicionesGrafoInvalido(detalles) {
   if (detalles.sin_nodo_inicial) {
     condiciones.push(
       'Falta un nodo inicial: ningún nodo está marcado como punto de partida (o hay más de uno).',
+    );
+  }
+
+  // RF-25: el flujo debe cerrar en exactamente un nodo final.
+  if (detalles.sin_nodo_final) {
+    condiciones.push(
+      'Falta el nodo final: marca un nodo como "Es el nodo final del flujo" (solo uno).',
+    );
+  }
+
+  const sinSalida = Array.isArray(detalles.nodos_sin_salida)
+    ? detalles.nodos_sin_salida
+    : [];
+  if (sinSalida.length > 0) {
+    const lista = sinSalida.map(etiquetaNodoDiagnostico).join(', ');
+    condiciones.push(
+      sinSalida.length === 1
+        ? `Hay un nodo sin salida que no es el nodo final: ${lista}.`
+        : `Hay ${sinSalida.length} nodos sin salida que no son el nodo final: ${lista}.`,
     );
   }
 
@@ -162,6 +188,18 @@ export function describirCondicionesCapturaPerfil(detalles) {
       `El nodo de captura no tiene una regla con los valores clínicos correctos para: ${lista(detalles.dimensiones_valores_invalidos)}.`,
     );
   }
+  // RF-25/RF-27B: captura por valor; cada valor debe tener su nodo.
+  (Array.isArray(detalles.dimensiones_valores_faltantes)
+    ? detalles.dimensiones_valores_faltantes
+    : []
+  ).forEach(({ dimension, valores_faltantes: faltantes }) => {
+    const valores = (Array.isArray(faltantes) ? faltantes : [])
+      .map((valor) => etiquetaValorPerfilClinico(dimension, valor) || valor)
+      .join(', ');
+    condiciones.push(
+      `Falta un nodo que capture ${etiqueta(dimension)}: ${valores}.`,
+    );
+  });
 
   return condiciones;
 }
@@ -246,6 +284,8 @@ export function mapNodo(nodo) {
     // Texto del nodo tal cual lo definió psicología (RF-26).
     texto: textoDelNodo(nodo.contenido),
     esNodoInicial: nodo.es_nodo_inicial === true,
+    // RF-25: nodo de cierre del flujo.
+    esNodoFinal: nodo.es_nodo_final === true,
     orden: nodo.orden ?? null,
     idContenidoCronograma: nodo.id_contenido_cronograma ?? null,
     // Objeto crudo (PR4): lo necesita el formulario para precargar la
@@ -272,19 +312,124 @@ function mapRegla(regla) {
   });
 }
 
+export const TEXTO_CUALQUIER_OTRA = 'Cualquier otra respuesta';
+
 export function mapTransicion(transicion) {
   const regla = mapRegla(transicion.regla_validacion);
+  const esPorDefecto = regla?.operador === OPERADOR_CONDICION.SIEMPRE;
   return Object.freeze({
-    id: transicion.id_regla,
+    // El backend responde `id_transicion` al crear/editar y `id_regla` en el árbol.
+    id: transicion.id_regla ?? transicion.id_transicion,
     origenId: transicion.id_nodo_origen,
     destinoId: transicion.id_nodo_destino,
     operador: regla?.operador ?? null,
-    condicion: regla
-      ? describirCondicion(regla.valorEsperado)
-      : 'Transición automática',
+    condicion: esPorDefecto
+      ? TEXTO_CUALQUIER_OTRA
+      : regla
+        ? describirCondicion(regla.valorEsperado)
+        : 'Transición automática',
     regla,
+    // RF-25: "cualquier otra respuesta" (operador SIEMPRE), siempre última.
+    esPorDefecto,
     ordenEvaluacion: transicion.orden_evaluacion,
   });
+}
+
+function etiquetaValor(nodo, valor) {
+  if (valor === true || valor === 'true') return 'Sí';
+  if (valor === false || valor === 'false') return 'No';
+  const opciones = Array.isArray(nodo?.entrada?.opciones)
+    ? nodo.entrada.opciones
+    : [];
+  const opcion = opciones.find(
+    (o) => (typeof o === 'string' ? o : o?.valor) === valor,
+  );
+  if (typeof opcion === 'string') return opcion;
+  return opcion?.etiqueta ?? String(valor);
+}
+
+// RF-25: regla de una transición en palabras del administrativo, usando
+// las etiquetas de las opciones del nodo origen.
+export function describirRegla(transicion, nodoOrigen) {
+  const regla = transicion?.regla;
+  if (!regla) {
+    return transicion?.operador && transicion?.condicion
+      ? transicion.condicion
+      : 'Automática';
+  }
+  if (regla.operador === OPERADOR_CONDICION.SIEMPRE) {
+    return TEXTO_CUALQUIER_OTRA;
+  }
+  const esperado = regla.valorEsperado ?? {};
+  if (regla.operador === OPERADOR_CONDICION.RANGO) {
+    return `Si responde entre ${esperado.min} y ${esperado.max}`;
+  }
+  const valor = esperado.valor;
+  if (Array.isArray(valor)) {
+    return `Si elige ${valor.map((v) => `«${etiquetaValor(nodoOrigen, v)}»`).join(' + ')}`;
+  }
+  return `Si responde «${etiquetaValor(nodoOrigen, valor)}»`;
+}
+
+function esSinRespuesta(nodo) {
+  const tipo = nodo?.entrada
+    ? (ALIAS_TIPO_ENTRADA[nodo.entrada.tipo] ?? nodo.entrada.tipo)
+    : TIPO_ENTRADA.CONTINUAR;
+  return tipo === TIPO_ENTRADA.CONTINUAR;
+}
+
+// RF-25: misma regla que el backend. En flujos con nodo final, un nodo sin
+// respuesta y sin transiciones avanza al siguiente nodo por `orden`.
+export function destinoImplicito(nodo, nodos, transiciones) {
+  const lista = Array.isArray(nodos) ? nodos : [];
+  if (!nodo || nodo.esNodoFinal || nodo.orden === null) return null;
+  if (!lista.some((n) => n.esNodoFinal)) return null;
+  if (!esSinRespuesta(nodo)) return null;
+  if ((transiciones ?? []).some((t) => t.origenId === nodo.id)) return null;
+  return lista
+    .filter((n) => n.id !== nodo.id && n.orden !== null && n.orden > nodo.orden)
+    .reduce(
+      (mejor, n) => (mejor === null || n.orden < mejor.orden ? n : mejor),
+      null,
+    );
+}
+
+// RF-25: salidas de un nodo en el orden en que el motor las evalúa, para
+// la tarjeta del nodo. Incluye el avance implícito cuando aplica.
+export function salidasOrdenadasDeNodo(nodo, nodos, transiciones) {
+  const porId = new Map((nodos ?? []).map((n) => [n.id, n]));
+  const propias = (transiciones ?? [])
+    .filter((t) => t.origenId === nodo.id)
+    .sort((a, b) => a.ordenEvaluacion - b.ordenEvaluacion);
+
+  if (propias.length === 0) {
+    const siguiente = destinoImplicito(nodo, nodos, transiciones);
+    return siguiente
+      ? [
+          Object.freeze({
+            id: `implicita-${nodo.id}`,
+            orden: null,
+            regla: 'Automática (siguiente por orden)',
+            destino: siguiente.etiqueta ?? '',
+            destinoId: siguiente.id,
+            esPorDefecto: false,
+            esImplicita: true,
+          }),
+        ]
+      : [];
+  }
+
+  return propias.map((t) =>
+    Object.freeze({
+      id: t.id,
+      orden: t.ordenEvaluacion,
+      regla: describirRegla(t, nodo),
+      destino: porId.get(t.destinoId)?.etiqueta ?? 'Nodo desconocido',
+      destinoId: t.destinoId,
+      esPorDefecto: t.esPorDefecto === true,
+      esImplicita: false,
+    }),
+  );
 }
 
 // Árbol listo para pintar: nodos ordenados con una etiqueta corta y

@@ -189,8 +189,9 @@ function alEnviarConExito(state, respuesta) {
     fallidos: [],
     envio: null,
     errorEnvio: null,
-    // CA-29-6: el destino no se calcula; se pide a RF-26.
-    recarga: completada ? state.recarga : state.recarga + 1,
+    // CA-29-6: el destino no se calcula; se pide a RF-26. RF-25: también al
+    // completar, para mostrar el contenido del nodo final antes del cierre.
+    recarga: state.recarga + 1,
   };
 }
 

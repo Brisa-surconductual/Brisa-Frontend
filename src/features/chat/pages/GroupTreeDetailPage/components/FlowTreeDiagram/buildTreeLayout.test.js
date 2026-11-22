@@ -91,3 +91,69 @@ describe('buildTreeLayout', () => {
     expect(layout.aristas).toEqual([]);
   });
 });
+
+describe('buildTreeLayout · flujo del árbol (RF-25)', () => {
+  const nodoRF25 = (id, extra = {}) => ({
+    id,
+    etiqueta: id,
+    esNodoInicial: false,
+    esNodoFinal: false,
+    orden: null,
+    entrada: { tipo: 'BOOLEANO' },
+    ...extra,
+  });
+  const rama = (id, origenId, destinoId, extra = {}) => ({
+    id,
+    origenId,
+    destinoId,
+    ordenEvaluacion: 1,
+    regla: null,
+    ...extra,
+  });
+
+  it('centra al padre sobre sus hijos y deja el nodo final abajo', () => {
+    const nodos = [
+      nodoRF25('a', { esNodoInicial: true }),
+      nodoRF25('b'),
+      nodoRF25('c'),
+      nodoRF25('f', { esNodoFinal: true, entrada: null }),
+    ];
+    const layout = buildTreeLayout(nodos, [
+      rama('t1', 'a', 'b'),
+      rama('t2', 'a', 'c', { ordenEvaluacion: 2 }),
+      rama('t3', 'b', 'f'),
+      rama('t4', 'c', 'f'),
+    ]);
+    const caja = (id) => layout.cajas.find((c) => c.nodo.id === id);
+
+    expect(caja('a').x).toBe((caja('b').x + caja('c').x) / 2);
+    expect(caja('f').fila).toBeGreaterThan(caja('b').fila);
+    expect(caja('f').x).toBe(caja('a').x);
+  });
+
+  it('dibuja ramas curvas con su tipo y etiqueta', () => {
+    const nodos = [
+      nodoRF25('a', { esNodoInicial: true, orden: 1, entrada: null }),
+      nodoRF25('b', { orden: 2, entrada: null }),
+      nodoRF25('f', { orden: 3, esNodoFinal: true, entrada: null }),
+    ];
+    const layout = buildTreeLayout(nodos, [
+      rama('t1', 'b', 'f', {
+        esPorDefecto: true,
+        regla: { operador: 'SIEMPRE', valorEsperado: {} },
+      }),
+    ]);
+    const porId = new Map(layout.aristas.map((a) => [a.id, a]));
+
+    expect(porId.get('implicita-a')).toMatchObject({
+      tipo: 'IMPLICITA',
+      etiqueta: 'Automática',
+    });
+    expect(porId.get('t1')).toMatchObject({
+      tipo: 'POR_DEFECTO',
+      etiqueta: 'Otra respuesta',
+    });
+    expect(porId.get('t1').d).toMatch(/^M .* C /);
+    expect(layout.cajas.every((c) => !c.huerfano)).toBe(true);
+  });
+});

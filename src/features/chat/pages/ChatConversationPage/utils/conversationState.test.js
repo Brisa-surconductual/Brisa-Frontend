@@ -252,7 +252,8 @@ describe('envío y avance (RF-27 a RF-29)', () => {
     });
 
     expect(estado.estado).toBe(E.COMPLETADA);
-    expect(estado.recarga).toBe(inicial.recarga);
+    // RF-25: se pide el nodo final para mostrar su contenido de cierre.
+    expect(estado.recarga).toBe(inicial.recarga + 1);
     expect(selectNodoFormulario(estado)).toBeNull();
     expect(selectItems(estado).map((i) => i.id)).toEqual([
       'nodo-0',

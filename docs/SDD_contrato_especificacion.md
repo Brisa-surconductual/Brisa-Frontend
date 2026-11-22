@@ -227,7 +227,7 @@ Estas diferencias entre la norma y el estado actual del repo se registran, sin c
 | `features/cronograma/` tiene `data/` y `test-utils/` sin norma escrita | C-ORG-6 | Documentar su uso (o crear un ADR) |
 | Código anterior a C-EXT-1: unos 48 archivos `.jsx` sin JSX en `users/`, `cronograma/` y `shared/` (`api/*.jsx`, `apiClient.jsx`, `constans.jsx`, `useLogoutHandler.jsx` y algunas pruebas) | C-EXT-1, C-EXT-2 | Migrar por feature en PR aparte, a cargo de quien tenga el módulo. `features/chat/` ya cumple |
 | Barriles en `app/` (`layouts/*/index.js`, `providers/index.js`) | C-ORG-9 | Eliminarlos en un PR aparte de `app/`. `features/chat/api/` ya cumple |
-| `users` contiene piezas de instalación PWA | ADR-0001 (propuesta) | Esperar decisión del equipo |
+| `users` contiene piezas de instalación PWA | ADR-0001 (propuesta) | Esperar decisión del equipo. ADR-0006 las conecta al aviso nativo de instalación sin moverlas |
 
 ### 3.2 Stack tecnológico, producto y equipo
 
@@ -271,7 +271,7 @@ Reglas del stack (cláusulas **C-STK**):
 
 #### Requisitos de PWA (cláusulas **C-PWA**)
 
-El repositorio tiene hoy íconos y componentes de instalación (`InstallAppButton`, `InstallSheet`, `useInstallPrompt`), pero **no se encontró manifiesto web ni service worker**. Se establecen como requisitos de la especificación:
+El repositorio tiene íconos y componentes de instalación (`InstallAppButton`, `InstallSheet`, `useInstallPrompt`). Desde ADR-0006 (2026-11-21) también tiene manifiesto web y service worker generados con `vite-plugin-pwa`. Se establecen como requisitos de la especificación:
 
 - **C-PWA-1.** La app DEBE ser instalable: `manifest.webmanifest` (nombre, `display: standalone`, colores desde los tokens, íconos 192/512 y maskable) enlazado desde `index.html`.
 - **C-PWA-2.** DEBE existir un service worker con estrategia de caché explícita para el *app shell*. Los datos de salud NO DEBEN quedar en caché sin protección ni sin una regla documentada (RF-34, RF-34B).
@@ -362,10 +362,10 @@ Los nombres y responsabilidades concretas se asignan en la sección 11 al aproba
 | Observación | Norma | Acción sugerida |
 |---|---|---|
 | No existe `.github/workflows/` | C-CICD | Crear el workflow de CI y despliegue y documentarlo en un ADR |
-| No hay manifiesto web ni service worker | C-PWA-1, C-PWA-2 | Tarea de PWA con su ficha (RF-34, RF-34B, RF-35) |
+| ~~No hay manifiesto web ni service worker~~ | C-PWA-1, C-PWA-2 | **Resuelto en ADR-0006** (FE-PWA-01, 2026-11-21): manifest, service worker que solo precachea el app shell y aviso de actualización. RF-34, RF-34B y RF-35 están eliminados (ADR-0005) |
 | Conviven `package-lock.json` y `pnpm-lock.yaml` | C-STK-4 | Elegir gestor y borrar el otro lockfile |
 | `lint-staged` apunta a `src/features/auth`, `student` y `psychology`, que no existen; las features reales son `users`, `chat` y `cronograma` | Calidad antes de commit | Actualizar `lint-staged` a las carpetas reales o a `src/**` |
-| No hay `public/_redirects` ni `_headers` | Despliegue en Pages | Añadirlos al crear el workflow |
+| No hay `public/_redirects`; `_headers` solo tiene la caché de la PWA (ADR-0006) | Despliegue en Pages | Añadir la CSP y las demás cabeceras de seguridad al crear el workflow |
 | `CLAUDE.md` indica ramas «desde `master`», pero el flujo vigente es `feat/...` desde `develop` con PR a `test` | C-GIT-1, C-GIT-2 | Actualizar la sección Git de `CLAUDE.md` para que coincida con el flujo de ramas |
 
 ---

@@ -274,13 +274,12 @@ describe('respuesta del nodo (PR4)', () => {
     expect(validarNodo(valores)).toHaveProperty('entradaMaxSelecciones');
   });
 
-  it('ESCALA: guarda min, max, paso y etiquetas', () => {
+  it('ESCALA: guarda min, max y etiquetas; sin paso (RF-25)', () => {
     const payload = payloadCrearNodo({
       ...base,
       entradaTipo: TIPO_ENTRADA.ESCALA,
       entradaMin: '0',
       entradaMax: '10',
-      entradaPaso: '1',
       entradaEtiquetaMin: 'Nada',
       entradaEtiquetaMax: 'Mucho',
     });
@@ -290,7 +289,6 @@ describe('respuesta del nodo (PR4)', () => {
       obligatorio: true,
       min: 0,
       max: 10,
-      paso: 1,
       etiquetas: { min: 'Nada', max: 'Mucho' },
     });
   });
@@ -602,13 +600,17 @@ describe('captura de perfil clínico (RF-25 / RF-27B)', () => {
     const valores = {
       ...valoresDesdeNodo(nodo),
       capturaPerfilDimension: DIMENSION_PERFIL_CLINICO.TIPO_DEPENDENCIA,
+      capturaPerfilValor: 'TOLERANCIA',
     };
 
     expect(payloadActualizarNodo(nodo, valores)).toEqual({
       contenido: {
         texto: 'Hola',
         otra: 'clave',
-        capturaPerfil: { dimension: DIMENSION_PERFIL_CLINICO.TIPO_DEPENDENCIA },
+        capturaPerfil: {
+          dimension: DIMENSION_PERFIL_CLINICO.TIPO_DEPENDENCIA,
+          valor: 'TOLERANCIA',
+        },
       },
     });
   });

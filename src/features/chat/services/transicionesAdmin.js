@@ -24,6 +24,12 @@ export const VALORES_TRANSICION_VACIOS = Object.freeze({
   rangoMin: '',
   rangoMax: '',
   mensajeError: '',
+  // RF-25: destino de "cualquier otra respuesta" (transición SIEMPRE del
+  // origen). Vacío = no se define o no se cambia.
+  idNodoDestinoOtro: '',
+  // RF-25: se está editando la transición "cualquier otra respuesta"; solo
+  // se cambia su destino (su orden lo fija el backend: siempre última).
+  esPorDefecto: false,
 });
 
 const TIPOS_NO_SOPORTADOS = new Set([
@@ -142,12 +148,56 @@ export function opcionesNodo(nodos) {
 }
 
 // Origen: no se ofrecen nodos de texto libre ni de fecha u hora (su valor
-// esperado no se puede elegir de opciones).
+// esperado no se puede elegir de opciones) ni el nodo final (RF-25: no
+// tiene salidas).
 export function opcionesNodoOrigen(nodos) {
   return opcionesNodo(
     (Array.isArray(nodos) ? nodos : []).filter(
-      (nodo) => !TIPOS_NO_SOPORTADOS.has(tipoEntrada(nodo.entrada)),
+      (nodo) =>
+        !nodo.esNodoFinal &&
+        !TIPOS_NO_SOPORTADOS.has(tipoEntrada(nodo.entrada)),
     ),
+  );
+}
+
+// RF-25: el destino nunca es el propio origen ni el nodo inicial (el flujo
+// no puede volver a empezar). El backend valida lo mismo.
+export function opcionesNodoDestino(nodos, idNodoOrigen) {
+  return opcionesNodo(
+    (Array.isArray(nodos) ? nodos : []).filter(
+      (nodo) => nodo.id !== idNodoOrigen && !nodo.esNodoInicial,
+    ),
+  );
+}
+
+function transicionesDeOrigen(transiciones, idNodoOrigen) {
+  return (Array.isArray(transiciones) ? transiciones : []).filter(
+    (t) => t.origenId === idNodoOrigen,
+  );
+}
+
+// RF-25: orden sugerido = máximo de las transiciones específicas del origen
+// + 1 ("cualquier otra respuesta" no cuenta: siempre va última).
+export function ordenEvaluacionSugerido(transiciones, idNodoOrigen) {
+  if (!idNodoOrigen) return '';
+  const ordenes = transicionesDeOrigen(transiciones, idNodoOrigen)
+    .filter((t) => !t.esPorDefecto)
+    .map((t) => t.ordenEvaluacion);
+  return String(ordenes.length === 0 ? 1 : Math.max(...ordenes) + 1);
+}
+
+// Cuántas transiciones específicas tiene ya el origen (para el hint).
+export function totalTransicionesEspecificas(transiciones, idNodoOrigen) {
+  return transicionesDeOrigen(transiciones, idNodoOrigen).filter(
+    (t) => !t.esPorDefecto,
+  ).length;
+}
+
+// RF-25: destino actual de "cualquier otra respuesta" del origen ('' si no hay).
+export function destinoPorDefectoActual(transiciones, idNodoOrigen) {
+  return (
+    transicionesDeOrigen(transiciones, idNodoOrigen).find((t) => t.esPorDefecto)
+      ?.destinoId ?? ''
   );
 }
 
@@ -194,8 +244,35 @@ function validarRegla(valores, config, errores) {
   }
 }
 
+const MENSAJE_DESTINO_REPETIDO =
+  'Es el mismo destino de "cualquier otra respuesta": elige otro para que el camino tenga sentido.';
+
+// RF-25: destinos ya usados por las demás transiciones del origen (sin la
+// que se edita): el de "cualquier otra respuesta" y los específicos.
+export function destinosOcupadosDelOrigen(
+  transiciones,
+  idNodoOrigen,
+  idTransicionEditada = null,
+) {
+  const otras = transicionesDeOrigen(transiciones, idNodoOrigen).filter(
+    (t) => t.id !== idTransicionEditada,
+  );
+  return {
+    destinoPorDefecto: otras.find((t) => t.esPorDefecto)?.destinoId ?? '',
+    destinosEspecificos: otras
+      .filter((t) => !t.esPorDefecto)
+      .map((t) => t.destinoId),
+  };
+}
+
 // Devuelve un objeto con un mensaje por campo inválido ({} si todo es válido).
-export function validarTransicion(valores, config = { tipo: null }) {
+// `ocupados` (de `destinosOcupadosDelOrigen`) evita que una transición
+// específica y "cualquier otra respuesta" lleven al mismo nodo (RF-25).
+export function validarTransicion(
+  valores,
+  config = { tipo: null },
+  ocupados = { destinoPorDefecto: '', destinosEspecificos: [] },
+) {
   const errores = {};
 
   if (!valores.idNodoOrigen) errores.idNodoOrigen = 'Elige el nodo de origen.';
@@ -204,6 +281,35 @@ export function validarTransicion(valores, config = { tipo: null }) {
   } else if (valores.idNodoOrigen === valores.idNodoDestino) {
     errores.idNodoDestino = 'El destino no puede ser el mismo nodo de origen.';
   }
+  if (valores.idNodoDestinoOtro) {
+    if (valores.idNodoDestinoOtro === valores.idNodoOrigen) {
+      errores.idNodoDestinoOtro =
+        'El destino no puede ser el mismo nodo de origen.';
+    } else if (
+      valores.idNodoDestinoOtro === valores.idNodoDestino ||
+      ocupados.destinosEspecificos.includes(valores.idNodoDestinoOtro)
+    ) {
+      errores.idNodoDestinoOtro =
+        'Ya hay una transición de este origen hacia ese nodo: "cualquier otra respuesta" debe ir a un destino distinto.';
+    }
+  }
+
+  if (valores.idNodoDestino && !errores.idNodoDestino) {
+    if (
+      valores.esPorDefecto
+        ? ocupados.destinosEspecificos.includes(valores.idNodoDestino)
+        : !valores.idNodoDestinoOtro &&
+          valores.idNodoDestino === ocupados.destinoPorDefecto
+    ) {
+      errores.idNodoDestino = valores.esPorDefecto
+        ? 'Ya hay una transición de este origen hacia ese nodo: "cualquier otra respuesta" debe ir a un destino distinto.'
+        : MENSAJE_DESTINO_REPETIDO;
+    }
+  }
+
+  // RF-25: la transición "cualquier otra respuesta" solo cambia su destino.
+  if (valores.esPorDefecto) return errores;
+
   if (!/^[1-9]\d*$/.test(String(valores.ordenEvaluacion).trim())) {
     errores.ordenEvaluacion =
       'El orden de evaluación debe ser un número entero desde 1.';
@@ -257,8 +363,13 @@ export function payloadCrearTransicion(valores, config) {
     id_nodo_destino: valores.idNodoDestino,
     orden_evaluacion: Number(valores.ordenEvaluacion),
   };
-  if (!config.sinRegla)
+  if (!config.sinRegla) {
     payload.regla_validacion = construirRegla(valores, config);
+    // RF-25: crea o redirige "cualquier otra respuesta" en la misma operación.
+    if (valores.idNodoDestinoOtro) {
+      payload.id_nodo_destino_otro = valores.idNodoDestinoOtro;
+    }
+  }
   return payload;
 }
 
@@ -279,6 +390,10 @@ export function payloadActualizarTransicion(transicion, valores, config) {
 
   if (valores.idNodoDestino !== transicion.destinoId) {
     cambios.id_nodo_destino = valores.idNodoDestino;
+  }
+  // RF-25: en "cualquier otra respuesta" solo se edita el destino.
+  if (transicion.esPorDefecto) {
+    return Object.keys(cambios).length > 0 ? cambios : null;
   }
   const orden = Number(valores.ordenEvaluacion);
   if (orden !== transicion.ordenEvaluacion) cambios.orden_evaluacion = orden;
@@ -309,7 +424,10 @@ export function valoresDesdeTransicion(transicion) {
     ordenEvaluacion: String(transicion.ordenEvaluacion ?? ''),
     operador: regla?.operador ?? '',
     mensajeError: regla?.mensajeError ?? '',
+    esPorDefecto: transicion.esPorDefecto === true,
   };
+
+  if (regla?.operador === OPERADOR_CONDICION.SIEMPRE) return valores;
 
   if (regla?.operador === OPERADOR_CONDICION.RANGO) {
     return {

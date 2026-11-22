@@ -14,9 +14,10 @@ export const INSTALL_PLATFORM = Object.freeze({
   UNSUPPORTED: 'unsupported',
 });
 
-// Fase PWA: se agrega el modo 'nativo' (aviso de instalación del navegador).
+// 'nativo': el navegador entregó su aviso de instalación (ADR-0006).
 export const INSTALL_MODE = Object.freeze({
   INSTALADA: 'instalada',
+  NATIVO: 'nativo',
   INSTRUCCIONES: 'instrucciones',
 });
 
@@ -53,10 +54,9 @@ const key = (name) => ({ tecla: name });
 // Menús de Chrome, Edge, Firefox y Android revisados a mano por el
 // responsable (2026-10-17).
 export const INSTALL_INSTRUCTIONS = deepFreeze({
-  // FASE PWA: cuando haya manifest y la app esté en HTTPS, "Instalar" quedará
-  // habilitada. Cambiar estos pasos para recomendar "Instalar" (abre Brisa
-  // como app y oculta el botón) en lugar de "Crear acceso directo". Ver A8 y
-  // A9 en M01_aclaraciones.md.
+  // Con manifest y HTTPS (ADR-0006) el navegador ofrece «Instalar»: abre
+  // Brisa como app y oculta el botón. Esta hoja solo aparece cuando el
+  // navegador no entregó su aviso nativo (o la persona ya lo rechazó).
   [INSTALL_PLATFORM.ANDROID]: {
     steps: [
       [
@@ -65,15 +65,11 @@ export const INSTALL_INSTRUCTIONS = deepFreeze({
         ' arriba a la derecha.',
       ],
       ['Desliza y elige ', bold('«Instalar y crear acceso directo»'), '.'],
-      [
-        'Elige ',
-        bold('«Crear acceso directo»'),
-        ' y confirma con ',
-        bold('«Agregar»'),
-        '.',
-      ],
+      ['Elige ', bold('«Instalar»'), ' y confirma.'],
     ],
-    note: 'Si usas otro navegador, busca la misma opción en su menú.',
+    note:
+      'En Firefox, Opera o Samsung Internet busca «Instalar» o ' +
+      '«Agregar a pantalla de inicio» en el menú.',
   },
   [INSTALL_PLATFORM.IOS]: {
     steps: [
@@ -85,7 +81,9 @@ export const INSTALL_INSTRUCTIONS = deepFreeze({
       ['Desliza y elige ', bold('«Agregar a inicio»'), '.'],
       ['Toca ', bold('«Agregar»'), ' arriba a la derecha.'],
     ],
-    note: 'Si no ves la opción, abre esta página en Safari.',
+    note:
+      'Desde iOS 16.4 también funciona en Chrome y Edge. Si no ves la ' +
+      'opción, abre esta página en Safari.',
   },
   [INSTALL_PLATFORM.DESKTOP]: {
     intro:
@@ -95,6 +93,11 @@ export const INSTALL_INSTRUCTIONS = deepFreeze({
       {
         title: 'En Chrome',
         steps: [
+          [
+            'Toca el ícono ',
+            bold('«Instalar»'),
+            ' en la barra de direcciones, o sigue estos pasos:',
+          ],
           [
             'Abre el menú ',
             key(INSTALL_KEY.MENU_VERTICAL),
@@ -130,6 +133,31 @@ export const INSTALL_INSTRUCTIONS = deepFreeze({
           ['Confirma con ', bold('«Instalar»'), '.'],
         ],
       },
+      {
+        title: 'En Opera',
+        steps: [
+          [
+            'Toca el ícono ',
+            bold('«Instalar»'),
+            ' en la barra de direcciones.',
+          ],
+          ['Confirma con ', bold('«Instalar»'), '.'],
+        ],
+      },
+      // Safari instala sitios en el Dock desde macOS Sonoma (Safari 17).
+      {
+        title: 'En Safari (Mac)',
+        steps: [
+          [
+            'En la barra de menús, abre ',
+            bold('«Archivo»'),
+            ' y elige ',
+            bold('«Añadir al Dock»'),
+            '.',
+          ],
+          ['Confirma con ', bold('«Añadir»'), '.'],
+        ],
+      },
       // Firefox solo permite instalar sitios en Windows (versión 143+).
       {
         title: 'En Firefox (Windows)',
@@ -152,6 +180,15 @@ export const INSTALL_INSTRUCTIONS = deepFreeze({
     steps: [
       ['En Android, abre esta página en ', bold('Chrome'), '.'],
       ['En iPhone, ábrela en ', bold('Safari'), '.'],
+      [
+        'En computador, ábrela en ',
+        bold('Chrome'),
+        ', ',
+        bold('Edge'),
+        ' o ',
+        bold('Safari'),
+        '.',
+      ],
     ],
   },
 });

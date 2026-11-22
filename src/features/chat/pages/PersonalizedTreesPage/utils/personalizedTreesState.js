@@ -32,6 +32,10 @@ export function personalizedTreesReducer(state, action) {
     case 'CONFIRM_CLOSE':
       return { ...state, confirm: null };
 
+    // RF-25: el aviso de éxito se cierra solo (useAutoDismiss).
+    case 'NOTICE_CLEAR':
+      return { ...state, notice: '' };
+
     case 'ACTION_START':
       return { ...state, busy: true, notice: '', actionError: '' };
 

@@ -35,6 +35,7 @@ No se crea la feature `install-app`.
 - **Lo que cambia:** la instalación queda como parte de `users`; no hay imports entre features.
 - **Lo que queda pendiente o como deuda:** si otra feature necesita el botón o la hoja, hay que subirlos a `shared/` en un PR aparte y pequeño.
 - **Cuándo revisarla:** cuando una segunda feature necesite estas piezas (por ejemplo, el perfil) o cuando se implemente la fase PWA y el hook crezca.
+- **Revisión 2026-11-21 (ADR-0006):** se implementó la fase PWA. El hook agregó el modo `nativo` y `utils/installPromptEvent.js`; todo sigue en `users`, porque ninguna otra feature lo usa. La decisión se mantiene.
 
 ## Referencias
 

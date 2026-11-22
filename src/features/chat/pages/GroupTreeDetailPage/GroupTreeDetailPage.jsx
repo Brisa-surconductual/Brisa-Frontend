@@ -18,10 +18,12 @@ import { FlowStatusBadge } from '../../components/FlowStatusBadge/index.js';
 import { ACCION_FLUJO } from '../../services/flujosAdmin.js';
 import { opcionesContenidoCronograma } from '../../services/nodosAdmin.js';
 import {
-  opcionesNodo,
+  opcionesNodoDestino,
   opcionesNodoOrigen,
+  totalTransicionesEspecificas,
 } from '../../services/transicionesAdmin.js';
 
+import { AffectedTransitionsDialog } from './components/AffectedTransitionsDialog/index.js';
 import { FlowStatusActions } from './components/FlowStatusActions/index.js';
 import { FlowTreeDiagram } from './components/FlowTreeDiagram/index.js';
 import { NodeEditorForm } from './components/NodeEditorForm/index.js';
@@ -48,9 +50,9 @@ const TEXTO_CONFIRMACION_ESTADO = Object.freeze({
 });
 
 /*
- * RF-25 · Árbol de un flujo grupal: nodos y transiciones. El árbol visual
- * (FlowTreeDiagram) ubica los nodos por sus transiciones reales desde el
- * nodo inicial, no por `orden`. Nodos y transiciones se pueden crear y
+ * RF-25 · Árbol de un flujo grupal: nodos y transiciones. El "Flujo del
+ * árbol" (FlowTreeDiagram) dibuja cada nodo como una hoja y cada transición
+ * como una rama, desde el nodo inicial hasta el nodo final. Nodos y transiciones se pueden crear y
  * editar mientras el flujo sea un borrador. Publicar y archivar cambian el
  * estado del flujo (el backend valida la estructura al publicar); no hay
  * "desarchivar" ni "despublicar". Crear o editar un nodo o una transición
@@ -168,6 +170,7 @@ export function GroupTreeDetailPage() {
         {status === 'ready' && (
           <TreeNodeList
             nodos={arbol.nodos}
+            transiciones={arbol.transiciones}
             canEdit={canEdit}
             onEdit={page.openEdit}
             contenidosCronograma={page.contenidosCronograma}
@@ -242,12 +245,28 @@ export function GroupTreeDetailPage() {
             saving={transitionEditor.saving}
             saveError={transitionEditor.saveError}
             nodosOrigen={opcionesNodoOrigen(arbol.nodos)}
-            nodosDestino={opcionesNodo(arbol.nodos)}
+            nodosDestino={opcionesNodoDestino(
+              arbol.nodos,
+              transitionEditor.values.idNodoOrigen,
+            )}
+            totalTransicionesOrigen={totalTransicionesEspecificas(
+              arbol.transiciones,
+              transitionEditor.values.idNodoOrigen,
+            )}
             config={page.configTransicion}
             onChange={page.changeTransitionField}
             onSubmit={page.submitTransitionEditor}
           />
         </ChatAdminModal>
+      )}
+
+      {page.confirmAfectadas && (
+        <AffectedTransitionsDialog
+          transiciones={page.confirmAfectadas}
+          saving={editor.saving}
+          onConfirm={page.confirmarAfectadas}
+          onCancel={page.cancelarAfectadas}
+        />
       )}
 
       <ConfirmationDialog

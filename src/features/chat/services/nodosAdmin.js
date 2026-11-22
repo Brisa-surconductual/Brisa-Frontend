@@ -12,23 +12,46 @@ import {
 import {
   DIMENSION_PERFIL_CLINICO,
   DIMENSION_PERFIL_CLINICO_ETIQUETA,
+  VALOR_PERFIL_CLINICO,
+  etiquetaValorPerfilClinico,
 } from '../types/dimensionPerfilClinico.js';
 
 // RF-25/RF-27B: lee la marca de captura de perfil clínico del `contenido`
 // guardado, incluyendo el alias legado `captura_perfil` en snake_case.
-// Vacío ('') significa que el nodo no captura ninguna dimensión.
-function capturaPerfilDesdeContenido(contenido) {
+// Vacío ('') significa que el nodo no captura ninguna dimensión (o, en
+// `valor`, que es una captura legado sin valor elegido).
+export function capturaPerfilDesdeContenido(contenido) {
   const nueva = contenido?.capturaPerfil;
-  if (nueva && typeof nueva === 'object') return nueva.dimension ?? '';
-  if (typeof nueva === 'string') return nueva;
+  if (nueva && typeof nueva === 'object') {
+    return { dimension: nueva.dimension ?? '', valor: nueva.valor ?? '' };
+  }
+  if (typeof nueva === 'string') return { dimension: nueva, valor: '' };
 
   const legado = contenido?.captura_perfil;
   if (legado === 'tipo_dependencia') {
-    return DIMENSION_PERFIL_CLINICO.TIPO_DEPENDENCIA;
+    return { dimension: DIMENSION_PERFIL_CLINICO.TIPO_DEPENDENCIA, valor: '' };
   }
-  if (legado === 'tipo_craving') return DIMENSION_PERFIL_CLINICO.TIPO_CRAVING;
+  if (legado === 'tipo_craving') {
+    return { dimension: DIMENSION_PERFIL_CLINICO.TIPO_CRAVING, valor: '' };
+  }
 
-  return '';
+  return { dimension: '', valor: '' };
+}
+
+// Resumen de la captura para la tarjeta del nodo: "Tipo de dependencia ·
+// Tolerancia". Cadena vacía si el nodo no captura perfil.
+export function resumenCapturaPerfil(contenido) {
+  const { dimension, valor } = capturaPerfilDesdeContenido(contenido);
+  if (!dimension) return '';
+  const nombre = DIMENSION_PERFIL_CLINICO_ETIQUETA[dimension] ?? dimension;
+  const etiqueta = etiquetaValorPerfilClinico(dimension, valor);
+  return etiqueta ? `${nombre} · ${etiqueta}` : nombre;
+}
+
+// Valores excluyentes de la dimensión elegida, para el grupo de
+// interruptores del formulario. [] si no hay dimensión.
+export function opcionesValorPerfilClinico(dimension) {
+  return VALOR_PERFIL_CLINICO[dimension] ?? [];
 }
 
 // Fila vacía del editor de opciones (selección única/múltiple): un campo
@@ -45,6 +68,8 @@ export const VALORES_NODO_VACIOS = Object.freeze({
   idTipoNodo: '',
   texto: '',
   esNodoInicial: false,
+  // RF-25: nodo de cierre del flujo (único; nunca también inicial).
+  esNodoFinal: false,
   orden: '',
   idContenidoCronograma: '',
   // PR4: respuesta que espera el nodo. Sin "tieneEntrada" el nodo es
@@ -57,15 +82,16 @@ export const VALORES_NODO_VACIOS = Object.freeze({
   entradaMaxSelecciones: '',
   entradaMin: '',
   entradaMax: '',
-  entradaPaso: '',
   entradaEtiquetaMin: '',
   entradaEtiquetaMax: '',
   entradaMinPalabras: '',
   entradaMaxPalabras: '',
   entradaMaxCaracteres: '',
   entradaFormato: FORMATO_FECHA.FECHA_HORA,
-  // RF-25/RF-27B: vacío = este nodo no captura perfil clínico.
+  // RF-25/RF-27B: vacío = este nodo no captura perfil clínico. Con
+  // dimensión, `capturaPerfilValor` es el valor que el nodo asigna.
   capturaPerfilDimension: '',
+  capturaPerfilValor: '',
 });
 
 // Opciones del selector de dimensión de perfil clínico (RF-25/RF-27B).
@@ -122,6 +148,7 @@ function opcionesDesdeEntrada(opciones) {
 
 export function valoresDesdeNodo(nodo) {
   const entrada = nodo.entrada;
+  const captura = capturaPerfilDesdeContenido(nodo.contenido);
   const tipoCanonico = entrada
     ? (ALIAS_TIPO_ENTRADA[entrada.tipo] ?? entrada.tipo)
     : TIPO_ENTRADA.OPCION_UNICA;
@@ -130,6 +157,7 @@ export function valoresDesdeNodo(nodo) {
     idTipoNodo: nodo.idTipoNodo,
     texto: nodo.texto,
     esNodoInicial: nodo.esNodoInicial,
+    esNodoFinal: nodo.esNodoFinal === true,
     orden: nodo.orden === null ? '' : String(nodo.orden),
     idContenidoCronograma: nodo.idContenidoCronograma ?? '',
     tieneEntrada: entrada != null,
@@ -140,14 +168,14 @@ export function valoresDesdeNodo(nodo) {
     entradaMaxSelecciones: numTexto(entrada?.max_selecciones),
     entradaMin: numTexto(entrada?.min),
     entradaMax: numTexto(entrada?.max),
-    entradaPaso: numTexto(entrada?.paso),
     entradaEtiquetaMin: entrada?.etiquetas?.min ?? '',
     entradaEtiquetaMax: entrada?.etiquetas?.max ?? '',
     entradaMinPalabras: numTexto(entrada?.min_palabras),
     entradaMaxPalabras: numTexto(entrada?.max_palabras),
     entradaMaxCaracteres: numTexto(entrada?.max_caracteres),
     entradaFormato: entrada?.formato ?? FORMATO_FECHA.FECHA_HORA,
-    capturaPerfilDimension: capturaPerfilDesdeContenido(nodo.contenido),
+    capturaPerfilDimension: captura.dimension,
+    capturaPerfilValor: captura.valor,
   };
 }
 
@@ -216,8 +244,20 @@ export function validarNodo(valores, { esEdicion = false } = {}) {
     errores.orden = 'El orden debe ser un número entero desde 1.';
   }
 
-  if (valores.tieneEntrada) {
+  // RF-25: el nodo final cierra la terapia; no abre el flujo ni espera
+  // respuesta (el formulario ya lo impide, esto es la red de seguridad).
+  if (valores.esNodoFinal && valores.esNodoInicial) {
+    errores.esNodoFinal =
+      'Un nodo no puede ser el inicial y el final del flujo a la vez.';
+  }
+
+  if (valores.tieneEntrada && !valores.esNodoFinal) {
     Object.assign(errores, validarEntrada(valores));
+  }
+
+  // RF-25/RF-27B: el nodo de captura asigna un valor concreto.
+  if (valores.capturaPerfilDimension && !valores.capturaPerfilValor) {
+    errores.capturaPerfilValor = 'Activa el valor que captura este nodo.';
   }
 
   return errores;
@@ -318,10 +358,8 @@ function construirEntrada(valores) {
       if (valores.entradaMax.trim() !== '') {
         entrada.max = Number(valores.entradaMax);
       }
+      // RF-25: la escala numérica avanza de 1 en 1; ya no se configura paso.
       if (valores.entradaTipo === TIPO_ENTRADA.ESCALA) {
-        if (valores.entradaPaso.trim() !== '') {
-          entrada.paso = Number(valores.entradaPaso);
-        }
         if (
           valores.entradaEtiquetaMin.trim() !== '' ||
           valores.entradaEtiquetaMax.trim() !== ''
@@ -361,17 +399,31 @@ function construirEntrada(valores) {
   return entrada;
 }
 
+// El nodo final nunca lleva respuesta ni captura (RF-25).
+function esperaRespuesta(valores) {
+  return valores.tieneEntrada && !valores.esNodoFinal;
+}
+
+function capturaPerfil(valores) {
+  return valores.capturaPerfilDimension && !valores.esNodoFinal
+    ? {
+        dimension: valores.capturaPerfilDimension,
+        valor: valores.capturaPerfilValor,
+      }
+    : null;
+}
+
 export function payloadCrearNodo(valores) {
   const contenido = { texto: valores.texto };
-  if (valores.tieneEntrada) contenido.entrada = construirEntrada(valores);
-  if (valores.capturaPerfilDimension) {
-    contenido.capturaPerfil = { dimension: valores.capturaPerfilDimension };
-  }
+  if (esperaRespuesta(valores)) contenido.entrada = construirEntrada(valores);
+  const captura = capturaPerfil(valores);
+  if (captura) contenido.capturaPerfil = captura;
 
   const payload = {
     id_tipo_nodo: valores.idTipoNodo,
     contenido,
     es_nodo_inicial: valores.esNodoInicial,
+    es_nodo_final: valores.esNodoFinal,
   };
   const orden = String(valores.orden).trim();
 
@@ -394,23 +446,25 @@ export function payloadActualizarNodo(nodo, valores) {
   if (valores.idTipoNodo !== nodo.idTipoNodo)
     cambios.id_tipo_nodo = valores.idTipoNodo;
 
-  const entradaNueva = valores.tieneEntrada ? construirEntrada(valores) : null;
+  const entradaNueva = esperaRespuesta(valores)
+    ? construirEntrada(valores)
+    : null;
   const entradaCambio =
     JSON.stringify(entradaNueva) !== JSON.stringify(nodo.entrada ?? null);
+  const capturaNueva = capturaPerfil(valores);
+  const capturaActual = capturaPerfilDesdeContenido(nodo.contenido);
   const capturaPerfilCambio =
-    valores.capturaPerfilDimension !==
-    capturaPerfilDesdeContenido(nodo.contenido);
+    (capturaNueva?.dimension ?? '') !== capturaActual.dimension ||
+    (capturaNueva?.valor ?? '') !== capturaActual.valor;
 
   if (valores.texto !== nodo.texto || entradaCambio || capturaPerfilCambio) {
     const contenido = { ...nodo.contenido, texto: valores.texto };
     if (entradaNueva) contenido.entrada = entradaNueva;
     else delete contenido.entrada;
     if (capturaPerfilCambio) {
-      if (valores.capturaPerfilDimension) {
-        contenido.capturaPerfil = { dimension: valores.capturaPerfilDimension };
-      } else {
-        delete contenido.capturaPerfil;
-      }
+      delete contenido.captura_perfil;
+      if (capturaNueva) contenido.capturaPerfil = capturaNueva;
+      else delete contenido.capturaPerfil;
     }
     cambios.contenido = contenido;
   }
@@ -418,10 +472,34 @@ export function payloadActualizarNodo(nodo, valores) {
   if (valores.esNodoInicial !== nodo.esNodoInicial) {
     cambios.es_nodo_inicial = valores.esNodoInicial;
   }
+  if (valores.esNodoFinal !== (nodo.esNodoFinal === true)) {
+    cambios.es_nodo_final = valores.esNodoFinal;
+  }
   if (orden !== nodo.orden) cambios.orden = orden;
   if (idContenidoCronograma !== (nodo.idContenidoCronograma ?? null)) {
     cambios.id_contenido_cronograma = idContenidoCronograma;
   }
 
   return Object.keys(cambios).length > 0 ? cambios : null;
+}
+
+// RF-25: tipo de respuesta efectivo (CONTINUAR = sin respuesta).
+function tipoRespuesta(entrada) {
+  if (!entrada) return TIPO_ENTRADA.CONTINUAR;
+  return ALIAS_TIPO_ENTRADA[entrada.tipo] ?? entrada.tipo;
+}
+
+// RF-25: transiciones de salida que dejan de tener sentido si se guarda el
+// nodo con estos valores (sus reglas se derivan del tipo de respuesta). El
+// backend exige confirmar su eliminación (409 TRANSICIONES_AFECTADAS).
+export function transicionesAfectadasPorCambio(nodo, valores, transiciones) {
+  if (!nodo) return [];
+  const antes = tipoRespuesta(nodo.entrada);
+  const despues = esperaRespuesta(valores)
+    ? valores.entradaTipo
+    : TIPO_ENTRADA.CONTINUAR;
+  if (antes === despues) return [];
+  return (Array.isArray(transiciones) ? transiciones : []).filter(
+    (t) => t.origenId === nodo.id,
+  );
 }

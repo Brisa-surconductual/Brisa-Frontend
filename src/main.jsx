@@ -13,7 +13,19 @@ import '@fontsource/ibm-plex-mono/latin-500.css';
 import './styles/tokens.css';
 import './styles/globals.css';
 
+import { listenInstallPrompt } from './features/users/index.js';
+
 import App from './App.jsx';
+
+// PWA (ADR-0006): el aviso de instalación puede llegar antes de que se
+// monte la Home, y el service worker solo se registra en producción.
+listenInstallPrompt(window);
+
+if (import.meta.env.PROD) {
+  import('./app/pwa/registerServiceWorker.js').then(
+    ({ registerServiceWorker }) => registerServiceWorker(),
+  );
+}
 
 const rootElement = document.getElementById('root');
 
