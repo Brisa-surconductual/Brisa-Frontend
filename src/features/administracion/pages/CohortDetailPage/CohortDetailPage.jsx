@@ -4,6 +4,7 @@ import {
   AlertTriangle,
   ArrowLeft,
   BarChart3,
+  BellRing,
   BookOpen,
   CalendarRange,
   CircleCheck,
@@ -30,6 +31,7 @@ import { PARTICIPATION_STATUS } from '../../types/participantStatus.js';
 import {
   getCohortAggregatePath,
   getCohortNarrativePath,
+  getCohortNotificationsPath,
   getCohortTrackingPath,
 } from '../../utils/cohortRoutes.js';
 
@@ -323,6 +325,18 @@ function CohortDetail() {
               >
                 <BookOpen size={16} strokeWidth={1.8} aria-hidden="true" />
                 Ver progresión narrativa
+                <span className="sr-only"> de {title}</span>
+              </Link>
+            )}
+
+            {/* Efectividad de notificaciones agregada (RF-134): solo agregados, fuente propia. */}
+            {cohort.id && (
+              <Link
+                to={getCohortNotificationsPath(cohort.id)}
+                className="mt-[var(--space-3)] inline-flex min-h-[44px] w-fit items-center gap-[var(--space-2)] rounded-[var(--radius-md)] border border-[var(--surface-border)] bg-[var(--surface-card)] px-[var(--space-4)] text-[length:var(--font-size-sm)] font-bold text-[var(--brand-600)] no-underline transition-colors duration-150 hover:bg-[var(--surface-hover)] motion-reduce:transition-none"
+              >
+                <BellRing size={16} strokeWidth={1.8} aria-hidden="true" />
+                Ver efectividad de notificaciones
                 <span className="sr-only"> de {title}</span>
               </Link>
             )}

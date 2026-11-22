@@ -23,6 +23,12 @@ export function getCohortNarrativePath(cohortId) {
   return `${getCohortDetailPath(cohortId)}/vista-narrativa`;
 }
 
+// Vista agregada de efectividad de notificaciones (RF-134). Solo lleva
+// el identificador de la cohorte y no enlaza a ningún participante.
+export function getCohortNotificationsPath(cohortId) {
+  return `${getCohortDetailPath(cohortId)}/vista-notificaciones`;
+}
+
 // Ficha individual (RF-128). `reference` es la referencia OPACA que da la
 // fuente: nunca un correo, documento, nombre ni UUID interno.
 export function getParticipantTrackingPath(cohortId, reference) {
