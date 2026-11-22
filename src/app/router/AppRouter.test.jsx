@@ -9,6 +9,7 @@ import {
   CohortListPage,
   ParticipantTrackingPage,
   ParticipantTrackingProfilePage,
+  CohortAggregatePage,
 } from '@/features/administracion/index.js';
 import { USER_ROLE } from '@/features/users/types/authTypes.js';
 import { DASHBOARD_SHORTCUTS } from '@/features/users/pages/PsychologyHomePage/data/psychologyStats.js';
@@ -88,6 +89,7 @@ const ADMIN_PATHS = Object.freeze([
   '/app/administrativo/cohortes/co-1/editar',
   '/app/administrativo/cohortes/co-1/seguimiento',
   '/app/administrativo/cohortes/co-1/seguimiento/ref-1',
+  '/app/administrativo/cohortes/co-1/vista-agregada',
   '/app/administrativo/auditoria',
   '/app/administrativo/chat/modalidad',
   '/app/administrativo/chat/grupal',
@@ -183,6 +185,20 @@ describe('Rutas administrativas protegidas', () => {
       ADMIN_SECTION.COHORTES,
     );
     expect(ADMIN_NAV_ITEMS.map(({ label }) => label)).not.toContain('Seguimiento');
+  });
+
+  it('la vista agregada conductual (RF-132) monta su página con idCohorte y mantiene Cohortes activa, sin menú propio', () => {
+    const leaf = match('/app/administrativo/cohortes/demo-cohorte-b/vista-agregada').at(-1);
+
+    expect(leaf.route.element.type).toBe(CohortAggregatePage);
+    expect(leaf.params).toEqual({ idCohorte: 'demo-cohorte-b' });
+    expect(getActiveAdminSection('/app/administrativo/cohortes/demo-cohorte-b/vista-agregada')).toBe(
+      ADMIN_SECTION.COHORTES,
+    );
+    expect(ADMIN_NAV_ITEMS.map(({ label }) => label)).not.toContain('Vista agregada');
+    expect(match('/app/administrativo/cohortes/demo-cohorte-b/seguimiento').at(-1).route.element.type).toBe(
+      ParticipantTrackingPage,
+    );
   });
 
   it('la ficha individual (RF-128) monta su página con idCohorte y referencia, y mantiene Cohortes activa', () => {

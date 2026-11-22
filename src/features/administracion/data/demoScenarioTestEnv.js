@@ -16,6 +16,7 @@ export const DEMO_SCENARIO_VARIABLES = Object.freeze([
   'VITE_M08_NARRATIVE_SCENARIO',
   'VITE_M08_NOTIFICATIONS_SCENARIO',
   'VITE_M08_TEMPORAL_SCENARIO',
+  'VITE_M08_AGGREGATE_SCENARIO',
 ]);
 
 export function resetDemoScenarios(vi) {
