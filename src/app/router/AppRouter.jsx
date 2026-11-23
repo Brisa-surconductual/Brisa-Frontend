@@ -59,6 +59,8 @@ import {
   CohortNotificationsPage,
   CohortDashboard,
   CohortEvolutionPage,
+  ParticipantSessionsPage,
+  SessionTraceabilityPage,
 } from '@/features/administracion/index.js';
 
 import { RequireAuth } from './RequireAuth.jsx';
@@ -367,6 +369,17 @@ export function AppRouter() {
               <Route
                 path="administrativo/chat/variables"
                 element={<TaxonomyVariablesPage />}
+              />
+
+              {/* RF-38: trazabilidad de sesiones por seudónimo A7 (solo lectura). */}
+              <Route
+                path="administrativo/chat/participantes/:codigoParticipante/sesiones"
+                element={<ParticipantSessionsPage />}
+              />
+
+              <Route
+                path="administrativo/chat/participantes/:codigoParticipante/sesiones/:idSesion/trazabilidad"
+                element={<SessionTraceabilityPage />}
               />
               </Route>
             </Route>
