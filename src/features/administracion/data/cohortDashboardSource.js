@@ -34,7 +34,7 @@ const sectionQuery = (section, query) => async (cohortId) => {
 
 export const DASHBOARD_SOURCE = Object.freeze({
   isIntegrationPending: () =>
-    getCohortSourceMode() === COHORT_SOURCE_MODE.PENDING_INTEGRATION,
+    getCohortSourceMode() !== COHORT_SOURCE_MODE.DEMO,
   listCohorts,
   queries: Object.freeze({
     [DASHBOARD_SECTION.BEHAVIORAL]: sectionQuery(

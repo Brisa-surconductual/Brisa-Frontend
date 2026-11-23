@@ -30,8 +30,7 @@ describe('Transiciones disponibles por estado (RF-124)', () => {
   it.each([
     [DRAFT, [COHORT_TRANSITION.ACTIVATE]],
     [ACTIVE, [COHORT_TRANSITION.INACTIVATE]],
-    // Reactivar no está definido: una cohorte inactiva no ofrece nada.
-    [INACTIVE, []],
+    [INACTIVE, [COHORT_TRANSITION.ACTIVATE]],
     [{ ...DRAFT, status: 'OTRO' }, []],
     [null, []],
   ])('%j → %j', (cohort, expected) => expect(getAvailableTransitions(cohort)).toEqual(expected));
@@ -82,9 +81,12 @@ describe('Inactivar: ACTIVA → INACTIVA', () => {
   });
 });
 
+it('reactiva una cohorte inactiva con cronograma activo', () => {
+  expect(evaluate(INACTIVE)).toEqual({ allowed: true, nextStatus: 'ACTIVA' });
+});
+
 describe('Transiciones no definidas', () => {
   it.each([
-    ['INACTIVA → ACTIVA', INACTIVE, COHORT_TRANSITION.ACTIVATE],
     ['ACTIVA → ACTIVA', ACTIVE, COHORT_TRANSITION.ACTIVATE],
     ['BORRADOR → INACTIVA', DRAFT, COHORT_TRANSITION.INACTIVATE],
     ['INACTIVA → INACTIVA', INACTIVE, COHORT_TRANSITION.INACTIVATE],

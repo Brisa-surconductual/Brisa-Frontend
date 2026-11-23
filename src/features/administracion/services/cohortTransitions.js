@@ -3,17 +3,8 @@ import { COHORT_STATUS } from '../types/cohortStatus.js';
 import { validateCohortForm, validateCohortSchedule } from './cohortValidation.js';
 
 /*
- * Transiciones de estado de una cohorte (RF-124). Solo dos están
- * definidas:
- *   - BORRADOR → ACTIVA, con la información obligatoria completa y un
- *     cronograma psicoeducativo activo asociado;
- *   - ACTIVA → INACTIVA (retirar la cohorte).
- *
- * PENDIENTE contractual: INACTIVA → ACTIVA, INACTIVA → BORRADOR,
- * ACTIVA → BORRADOR y BORRADOR → INACTIVA no están especificadas y
- * no se permiten.
- *
- * Funciones puras: reciben la cohorte y el catálogo de cronogramas.
+ * RF-124. La interfaz ofrece las transiciones admitidas por el backend.
+ * La regla del cronograma activo también aplica a la reactivación.
  */
 export const COHORT_TRANSITION = Object.freeze({
   ACTIVATE: 'ACTIVATE',
@@ -21,8 +12,12 @@ export const COHORT_TRANSITION = Object.freeze({
 });
 
 const TRANSITIONS = Object.freeze({
-  [COHORT_TRANSITION.ACTIVATE]: Object.freeze({ from: COHORT_STATUS.DRAFT, to: COHORT_STATUS.ACTIVE }),
-  [COHORT_TRANSITION.INACTIVATE]: Object.freeze({ from: COHORT_STATUS.ACTIVE, to: COHORT_STATUS.INACTIVE }),
+  [COHORT_TRANSITION.ACTIVATE]: Object.freeze({
+    from: Object.freeze([COHORT_STATUS.DRAFT, COHORT_STATUS.INACTIVE]), to: COHORT_STATUS.ACTIVE,
+  }),
+  [COHORT_TRANSITION.INACTIVATE]: Object.freeze({
+    from: Object.freeze([COHORT_STATUS.ACTIVE]), to: COHORT_STATUS.INACTIVE,
+  }),
 });
 
 export const TRANSITION_REJECTION = Object.freeze({
@@ -48,7 +43,7 @@ const reject = (reason) => Object.freeze({ allowed: false, reason, message: REJE
 // Transiciones que el estado actual admite (sin validar los datos).
 export function getAvailableTransitions(cohort) {
   return Object.entries(TRANSITIONS)
-    .filter(([, { from }]) => cohort?.status === from)
+    .filter(([, { from }]) => from.includes(cohort?.status))
     .map(([transition]) => transition);
 }
 
@@ -59,7 +54,7 @@ export function getAvailableTransitions(cohort) {
 export function evaluateCohortTransition(cohort, transition, schedules = []) {
   const definition = TRANSITIONS[transition];
 
-  if (!definition || cohort?.status !== definition.from) {
+  if (!definition || !definition.from.includes(cohort?.status)) {
     return reject(TRANSITION_REJECTION.NOT_ALLOWED);
   }
 

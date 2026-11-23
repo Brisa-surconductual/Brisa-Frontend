@@ -89,6 +89,17 @@ describe('useCohortDetail', () => {
     expect(react.setters[SET_NOT_FOUND]).toHaveBeenLastCalledWith(false);
   });
 
+  it('en modo API consulta la cohorte y reserva la gestión de participantes para RF-125', async () => {
+    const cohort = vi.fn().mockResolvedValue(COHORT);
+    const participants = vi.fn();
+    const result = await loadWith({ mode: COHORT_SOURCE_MODE.API, cohort, participants });
+
+    expect(cohort).toHaveBeenCalledWith('c-1');
+    expect(participants).not.toHaveBeenCalled();
+    expect(react.setters[SET_COHORT]).toHaveBeenLastCalledWith(COHORT);
+    expect(result).toMatchObject({ isParticipantsIntegrationPending: true, canManage: false });
+  });
+
   it('presenta los participantes tal como llegan: no recalcula su estado', async () => {
     await loadWith();
 

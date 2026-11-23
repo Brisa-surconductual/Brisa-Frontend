@@ -284,12 +284,20 @@ describe('Detalle de cohorte (RF-125)', () => {
     expect(html).not.toContain('PART-');
   });
 
-  it('con el hook real y sin modo demo, muestra la integración pendiente', () => {
+  it('con el hook real y sin modo demo, carga el detalle de la cohorte', () => {
     vi.stubEnv('DEV', true);
     vi.stubEnv('VITE_M08_DEMO', 'false');
     const html = render(null);
 
-    expect(html).toContain('Integración pendiente');
+    expect(html).toContain('Cargando cohorte...');
     expect(html).not.toContain('PART-');
+  });
+
+  it('muestra la cohorte real con un aviso mientras sus participantes no estén integrados', () => {
+    const html = render({ cohort: COHORT_B, isParticipantsIntegrationPending: true });
+    expect(html).toContain('Cohorte Piloto B');
+    expect(html).toContain('Participantes pendientes de integración');
+    expect(textOf(html)).toContain('ParticipantesNo disponible');
+    expect(html).not.toContain('Esta cohorte aún no tiene participantes');
   });
 });

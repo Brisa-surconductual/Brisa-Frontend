@@ -67,14 +67,19 @@ export function useCohortList({ source = DEFAULT_SOURCE } = {}) {
     loadError,
     isDemo: mode === COHORT_SOURCE_MODE.DEMO,
     isIntegrationPending,
-    // Crear y editar solo cuando hay una fuente que lo admite (hoy, la
-    // demostración); sin integración no hay operaciones ficticias.
+    // La API y la demostración autorizan la gestión en sus propios datos.
     canManage: mode !== COHORT_SOURCE_MODE.PENDING_INTEGRATION,
     retry: () => setAttempt((value) => value + 1),
     // Refleja en el listado una cohorte cambiada (p. ej. su estado).
     replaceCohort: (updated) =>
       setCohorts((current) =>
-        current.map((cohort) => (cohort.id === updated.id ? updated : cohort)),
+        current.map((cohort) => {
+          if (cohort.id !== updated.id) return cohort;
+          if (updated.scheduleName || updated.scheduleId !== cohort.scheduleId || !cohort.scheduleName) {
+            return updated;
+          }
+          return { ...updated, scheduleName: cohort.scheduleName };
+        }),
       ),
   };
 }

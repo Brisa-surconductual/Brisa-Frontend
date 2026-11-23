@@ -178,7 +178,7 @@ describe('Listado de cohortes con el hook real', () => {
     vi.stubEnv('VITE_M08_DEMO', '');
     const html = render();
 
-    expect(html).toContain('Integración pendiente');
+    expect(html).toContain('Cargando cohortes...');
     expect(html).not.toContain('Cohorte Piloto');
     expect(html).not.toContain('Datos de demostración');
   });
@@ -188,7 +188,7 @@ describe('Listado de cohortes con el hook real', () => {
     vi.stubEnv('VITE_M08_DEMO', 'true');
     const html = render();
 
-    expect(html).toContain('Integración pendiente');
+    expect(html).toContain('Cargando cohortes...');
     expect(html).not.toContain('Datos de demostración');
   });
 
