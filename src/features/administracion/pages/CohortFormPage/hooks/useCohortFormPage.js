@@ -171,8 +171,8 @@ export function useCohortFormPage({
       navigate(COHORT_LIST_PATH, {
         state: { cohortNotice: { action: mode, name: saved.name } },
       });
-    } catch {
-      setSubmitError(COHORT_SAVE_ERROR);
+    } catch (error) {
+      setSubmitError(error?.mensaje || COHORT_SAVE_ERROR);
     } finally {
       pending.current = false;
       setIsSubmitting(false);

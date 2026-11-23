@@ -110,12 +110,15 @@ describe('RF-148: límites del módulo administrativo', () => {
     expect(writers.filter(({ code }) => PROTECTED_RESOURCE.test(code)).map(({ name }) => name)).toEqual([]);
   });
 
-  it('limita el acceso HTTP del M08 a la lectura de bitácora y la observación de rechazos', () => {
+  it('limita el acceso HTTP a los adaptadores administrativos integrados', () => {
     const http = SOURCES.filter(({ code }) =>
       /apiClient|from\s+['"]axios['"]|\bfetch\s*\(|XMLHttpRequest|navigator\.sendBeacon|new\s+WebSocket/.test(code),
     );
 
     expect(http.map(({ name }) => name)).toEqual([
+      'api/chatTraceability/fetchParticipantSessions.js',
+      'api/chatTraceability/fetchSessionTraceability.js',
+      'api/cohortesApi.js',
       'api/listAuditRecords.js',
       'api/observeReadOnlyRejections.js',
     ]);

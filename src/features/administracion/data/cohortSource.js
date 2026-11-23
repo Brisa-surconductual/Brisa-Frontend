@@ -1,14 +1,12 @@
 import { COHORT_SOURCE_MODE } from '../types/cohortSourceMode.js';
 import { isCohortDemoEnabled } from '../utils/cohortDemoMode.js';
+import * as api from '../api/cohortesApi.js';
 
 /*
  * Fuente de datos de cohortes y cronogramas que consumen los hooks.
  *
- * Hoy solo existe la fuente de demostración de desarrollo. Sin ella,
- * el modo es PENDING_INTEGRATION: no se consulta ni se guarda nada,
- * porque el M08 aún no está conectado al servidor. Al autorizarse la
- * integración, estas funciones delegarán en adaptadores de `api/` con
- * la misma firma; un error real nunca se responderá con datos ficticios.
+ * La API es la fuente de RF-124. La demostración se activa explícitamente
+ * en desarrollo y mantiene su propio estado.
  */
 const NOT_INTEGRATED = 'La gestión de cohortes aún no está integrada.';
 
@@ -29,31 +27,35 @@ export async function loadDemoSource() {
 export function getCohortSourceMode() {
   return isCohortDemoEnabled()
     ? COHORT_SOURCE_MODE.DEMO
-    : COHORT_SOURCE_MODE.PENDING_INTEGRATION;
+    : COHORT_SOURCE_MODE.API;
+}
+
+function cohortSource() {
+  return isCohortDemoEnabled() ? loadDemoSource() : api;
 }
 
 export async function listCohorts() {
-  return (await loadDemoSource()).listCohorts();
+  return (await cohortSource()).listCohorts();
 }
 
 // Cohorte por identificador, o null si no existe.
 export async function getCohort(id) {
-  return (await loadDemoSource()).getCohort(id);
+  return (await cohortSource()).getCohort(id);
 }
 
 // Catálogo de cronogramas para asociar a una cohorte.
 export async function listSchedules() {
-  return (await loadDemoSource()).listSchedules();
+  return (await cohortSource()).listSchedules();
 }
 
 // `values`: { name, startDate, endDate, scheduleId } ya validados.
 export async function createCohort(values) {
-  return (await loadDemoSource()).createCohort(values);
+  return (await cohortSource()).createCohort(values);
 }
 
 // Devuelve la cohorte actualizada, o null si ya no existe.
 export async function updateCohort(id, values) {
-  return (await loadDemoSource()).updateCohort(id, values);
+  return (await cohortSource()).updateCohort(id, values);
 }
 
 /*
@@ -63,5 +65,5 @@ export async function updateCohort(id, values) {
  * promesa y no cambia nada.
  */
 export async function changeCohortStatus(id, transition) {
-  return (await loadDemoSource()).changeCohortStatus(id, transition);
+  return (await cohortSource()).changeCohortStatus(id, transition);
 }

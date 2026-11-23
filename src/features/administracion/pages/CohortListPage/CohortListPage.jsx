@@ -33,10 +33,9 @@ function getEditPath(cohort) {
   return `${getDetailPath(cohort)}/editar`;
 }
 
-// Sin la palabra «guardada»: en la demostración nada llega al servidor.
 const SAVE_NOTICE_TITLE = Object.freeze({
-  create: 'Cohorte creada temporalmente',
-  edit: 'Cambios aplicados temporalmente',
+  create: 'Cohorte creada',
+  edit: 'Cambios aplicados',
 });
 
 // Acción de estado que ofrece cada transición definida (RF-124).
@@ -55,8 +54,7 @@ const STATUS_SUMMARY = Object.freeze([
 
 /*
  * Consulta de cohortes (RF-124) con acceso a su creación, edición y
- * cambio de estado cuando la fuente lo admite. Una cohorte INACTIVA no
- * ofrece acciones de estado: su reactivación no está definida.
+ * cambio de estado cuando la fuente lo admite.
  */
 export function CohortListPage() {
   const navigate = useNavigate();
@@ -81,7 +79,7 @@ export function CohortListPage() {
     requestInactivation,
     cancelInactivation,
     confirmInactivation,
-  } = useCohortStatusActions({ onCohortChanged: replaceCohort });
+  } = useCohortStatusActions({ onCohortChanged: replaceCohort, isDemo });
 
   const hasCohorts = !isLoading && !loadError && cohorts.length > 0;
 
@@ -93,6 +91,10 @@ export function CohortListPage() {
 
     return {
       ...action,
+      ...(cohort.status === COHORT_STATUS.INACTIVE && {
+        label: 'Reactivar',
+        busyLabel: 'Reactivando...',
+      }),
       busy: busyIds.includes(cohort.id),
       onClick: () =>
         transition === COHORT_TRANSITION.ACTIVATE
@@ -145,7 +147,7 @@ export function CohortListPage() {
         <CohortNotice
           tone="success"
           icon={CircleCheck}
-          title={SAVE_NOTICE_TITLE[saveNotice.action] ?? SAVE_NOTICE_TITLE.edit}
+          title={`${SAVE_NOTICE_TITLE[saveNotice.action] ?? SAVE_NOTICE_TITLE.edit}${isDemo ? ' temporalmente' : ''}`}
           role="status"
         >
           «{saveNotice.name}» ya aparece en el listado.
@@ -275,7 +277,9 @@ export function CohortListPage() {
         <ConfirmationDialog
           open={Boolean(pendingInactivation)}
           title={pendingInactivation ? `¿Inactivar «${pendingInactivation.name}»?` : 'Inactivar cohorte'}
-          description="La cohorte pasará a estado Inactiva. Su reactivación aún no está definida, por lo que no podrás volver a activarla desde esta pantalla. Los cambios son temporales y no se guardan en el servidor."
+          description={isDemo
+            ? 'La cohorte pasará a estado Inactiva. Los cambios son temporales y no se guardan en el servidor.'
+            : 'La cohorte pasará a estado Inactiva. Podrás reactivarla si su cronograma está activo.'}
           confirmText="Inactivar cohorte"
           cancelText="Cancelar"
           onConfirm={confirmInactivation}

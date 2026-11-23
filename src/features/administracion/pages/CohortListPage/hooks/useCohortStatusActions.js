@@ -5,10 +5,9 @@ import { COHORT_TRANSITION } from '../../../services/cohortTransitions.js';
 
 const DEFAULT_SOURCE = Object.freeze({ changeStatus: changeCohortStatus });
 
-// Sin «guardada»: en la demostración nada llega al servidor.
 const SUCCESS = Object.freeze({
-  [COHORT_TRANSITION.ACTIVATE]: Object.freeze({ title: 'Cohorte activada temporalmente', state: 'activa' }),
-  [COHORT_TRANSITION.INACTIVATE]: Object.freeze({ title: 'Cohorte inactivada temporalmente', state: 'inactiva' }),
+  [COHORT_TRANSITION.ACTIVATE]: Object.freeze({ title: 'Cohorte activada', state: 'activa' }),
+  [COHORT_TRANSITION.INACTIVATE]: Object.freeze({ title: 'Cohorte inactivada', state: 'inactiva' }),
 });
 
 const FAILURE_TITLE = Object.freeze({
@@ -28,7 +27,7 @@ export const STATUS_CHANGE_NOT_FOUND_MESSAGE =
  * repiten. Inactivar exige confirmación; una cohorte en proceso no
  * admite otra acción hasta terminar.
  */
-export function useCohortStatusActions({ onCohortChanged, source = DEFAULT_SOURCE } = {}) {
+export function useCohortStatusActions({ onCohortChanged, isDemo = false, source = DEFAULT_SOURCE } = {}) {
   const [busyIds, setBusyIds] = useState([]);
   const [notice, setNotice] = useState(null);
   const [pendingInactivation, setPendingInactivation] = useState(null);
@@ -54,7 +53,11 @@ export function useCohortStatusActions({ onCohortChanged, source = DEFAULT_SOURC
 
       if (result?.ok) {
         const { title, state } = SUCCESS[transition];
-        setNotice({ tone: 'success', title, message: `«${result.cohort.name}» ahora está ${state}.` });
+        setNotice({
+          tone: 'success',
+          title: isDemo ? `${title} temporalmente` : title,
+          message: `«${result.cohort.name}» ahora está ${state}.`,
+        });
       } else {
         setNotice({
           tone: 'warning',
@@ -62,8 +65,12 @@ export function useCohortStatusActions({ onCohortChanged, source = DEFAULT_SOURC
           message: result?.message ?? STATUS_CHANGE_NOT_FOUND_MESSAGE,
         });
       }
-    } catch {
-      setNotice({ tone: 'danger', title: FAILURE_TITLE[transition], message: STATUS_CHANGE_ERROR });
+    } catch (error) {
+      setNotice({
+        tone: 'danger',
+        title: FAILURE_TITLE[transition],
+        message: error?.mensaje || STATUS_CHANGE_ERROR,
+      });
     } finally {
       inFlight.current.delete(cohort.id);
       setBusyIds((current) => current.filter((id) => id !== cohort.id));

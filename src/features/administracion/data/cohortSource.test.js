@@ -17,6 +17,9 @@ import {
   updateCohort,
 } from './cohortSource.js';
 
+const api = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn(), patch: vi.fn() }));
+vi.mock('@/shared/utils/apiClient.jsx', () => ({ apiClient: api }));
+
 // Tiempo real: el almacén se carga con import() dinámico, que no
 // avanza con un reloj simulado. La espera de la demo es de 400 ms.
 function enableDemo(scenario) {
@@ -32,32 +35,99 @@ const NEW_COHORT = Object.freeze({
   scheduleId: 'demo-cronograma-3',
 });
 
+const API_COHORT = {
+  id_cohorte: 'cohorte-real',
+  nombre_cohorte: NEW_COHORT.name,
+  fecha_inicio_programa: NEW_COHORT.startDate,
+  fecha_fin_programa: NEW_COHORT.endDate,
+  id_cronograma: NEW_COHORT.scheduleId,
+  estado: 'BORRADOR',
+  fecha_actualizacion: '2026-11-23T15:00:00.000Z',
+  nombre_cronograma: 'Cronograma vigente',
+};
+
+const API_PAYLOAD = {
+  nombre_cohorte: NEW_COHORT.name,
+  fecha_inicio_programa: NEW_COHORT.startDate,
+  fecha_fin_programa: NEW_COHORT.endDate,
+  id_cronograma: NEW_COHORT.scheduleId,
+};
+
+function apiError(status, codigo, mensaje) {
+  return { response: { status, data: { status, codigo, mensaje } } };
+}
+
 beforeEach(() => {
+  vi.resetAllMocks();
   resetDemoSource();
   resetDemoScenarios(vi);
 });
 
 afterEach(() => vi.unstubAllEnvs());
 
-describe('Fuente de cohortes sin integración', () => {
+describe('Fuente de cohortes conectada al backend', () => {
   it.each([
     ['sin la variable', true, ''],
     ['en producción, aunque exista la variable', false, 'true'],
-  ])('%s: integración pendiente y ninguna operación ficticia', async (_, dev, flag) => {
+  ])('%s: usa la API', async (_, dev, flag) => {
     vi.stubEnv('DEV', dev);
     vi.stubEnv('VITE_M08_DEMO', flag);
 
-    expect(getCohortSourceMode()).toBe(COHORT_SOURCE_MODE.PENDING_INTEGRATION);
-    for (const operation of [
-      () => listCohorts(),
-      () => getCohort('demo-cohorte-a'),
-      () => listSchedules(),
-      () => createCohort(NEW_COHORT),
-      () => updateCohort('demo-cohorte-a', NEW_COHORT),
-      () => changeCohortStatus('demo-cohorte-a', COHORT_TRANSITION.ACTIVATE),
-    ]) {
-      await expect(operation()).rejects.toThrow('no está integrada');
-    }
+    api.get.mockResolvedValueOnce({ data: [API_COHORT] });
+    expect(getCohortSourceMode()).toBe(COHORT_SOURCE_MODE.API);
+    expect(await listCohorts()).toEqual([{
+      ...NEW_COHORT,
+      id: API_COHORT.id_cohorte,
+      status: 'BORRADOR',
+      updatedAt: API_COHORT.fecha_actualizacion,
+      scheduleName: 'Cronograma vigente',
+    }]);
+    expect(api.get).toHaveBeenCalledWith('/admin/cohortes');
+  });
+
+  it('consulta detalle y catálogo, y envía la creación, la edición y el cambio de estado', async () => {
+    api.get.mockResolvedValueOnce({ data: API_COHORT }).mockResolvedValueOnce({
+      data: [{ idCronograma: NEW_COHORT.scheduleId, nombreCronograma: 'Cronograma vigente', estado: 'ACTIVO' }],
+    });
+    api.post.mockResolvedValueOnce({ data: API_COHORT });
+    api.patch.mockResolvedValueOnce({ data: API_COHORT }).mockResolvedValueOnce({
+      data: { ...API_COHORT, estado: 'ACTIVA' },
+    });
+
+    expect(await getCohort(API_COHORT.id_cohorte)).toMatchObject({ id: 'cohorte-real' });
+    expect(await listSchedules()).toEqual([
+      { id: NEW_COHORT.scheduleId, name: 'Cronograma vigente', status: 'ACTIVO' },
+    ]);
+    expect(await createCohort(NEW_COHORT)).toMatchObject({ status: 'BORRADOR' });
+    expect(await updateCohort(API_COHORT.id_cohorte, NEW_COHORT)).toMatchObject({ status: 'BORRADOR' });
+    expect(await changeCohortStatus(API_COHORT.id_cohorte, COHORT_TRANSITION.ACTIVATE))
+      .toMatchObject({ ok: true, cohort: { status: 'ACTIVA' } });
+    expect(api.get.mock.calls).toEqual([['/admin/cohortes/cohorte-real'], ['/cronograma/obtener-cronogramas']]);
+    expect(api.post).toHaveBeenCalledWith('/admin/cohortes', API_PAYLOAD);
+    expect(api.patch.mock.calls).toEqual([
+      ['/admin/cohortes/cohorte-real', API_PAYLOAD],
+      ['/admin/cohortes/cohorte-real', { estado: 'ACTIVA' }],
+    ]);
+  });
+
+  it('actualiza el estado mostrado cuando otro usuario completa primero la transición', async () => {
+    api.patch.mockRejectedValueOnce(apiError(409, 'TRANSICION_COHORTE_INVALIDA', 'Ya está activa.'));
+    api.get.mockResolvedValueOnce({ data: { ...API_COHORT, estado: 'ACTIVA' } });
+
+    expect(await changeCohortStatus(API_COHORT.id_cohorte, COHORT_TRANSITION.ACTIVATE))
+      .toMatchObject({ ok: false, message: 'Ya está activa.', cohort: { status: 'ACTIVA' } });
+    expect(api.get).toHaveBeenCalledWith('/admin/cohortes/cohorte-real');
+  });
+
+  it('distingue una cohorte inexistente de un fallo de API', async () => {
+    api.get.mockRejectedValueOnce(apiError(404, 'COHORTE_NO_ENCONTRADA', 'Cohorte inexistente.'));
+    api.get.mockRejectedValueOnce(apiError(500, 'ERROR_CONSULTA_COHORTE', 'Consulta fallida.'));
+    expect(await getCohort('inexistente')).toBeNull();
+    await expect(listCohorts()).rejects.toMatchObject({
+      status: 500,
+      codigo: 'ERROR_CONSULTA_COHORTE',
+      mensaje: 'Consulta fallida.',
+    });
   });
 });
 
@@ -193,11 +263,12 @@ describe('Cambio de estado en modo de demostración', () => {
     });
   });
 
-  it('una cohorte inactiva no puede reactivarse', async () => {
+  it('reactiva una cohorte inactiva cuando su cronograma está activo', async () => {
     enableDemo();
 
-    expect(await changeCohortStatus('demo-cohorte-c', COHORT_TRANSITION.ACTIVATE)).toMatchObject({
-      ok: false, reason: 'NOT_ALLOWED', cohort: { status: COHORT_STATUS.INACTIVE },
+    await changeCohortStatus('demo-cohorte-b', COHORT_TRANSITION.INACTIVATE);
+    expect(await changeCohortStatus('demo-cohorte-b', COHORT_TRANSITION.ACTIVATE)).toMatchObject({
+      ok: true, cohort: { status: COHORT_STATUS.ACTIVE },
     });
   });
 

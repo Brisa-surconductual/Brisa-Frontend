@@ -146,12 +146,12 @@ describe('Formulario con el hook real', () => {
   it.each([
     ['sin la variable', true, ''],
     ['en producción', false, 'true'],
-  ])('%s no hay formulario ni datos ficticios', (_, dev, flag) => {
+  ])('%s espera el catálogo real antes de mostrar el formulario', (_, dev, flag) => {
     vi.stubEnv('DEV', dev);
     vi.stubEnv('VITE_M08_DEMO', flag);
     const html = render();
 
-    expect(html).toContain('Integración pendiente');
+    expect(html).toContain('Cargando formulario...');
     expect(html).not.toContain('<form');
     expect(html).not.toContain('Modo de demostración');
   });

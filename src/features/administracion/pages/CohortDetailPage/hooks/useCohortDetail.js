@@ -32,6 +32,7 @@ export const PARTICIPANTS_ERROR_MESSAGE =
 export function useCohortDetail({ cohortId, source = DEFAULT_SOURCE } = {}) {
   const [mode] = useState(() => source.getMode());
   const isIntegrationPending = mode === COHORT_SOURCE_MODE.PENDING_INTEGRATION;
+  const isParticipantsIntegrationPending = mode === COHORT_SOURCE_MODE.API;
 
   const [cohort, setCohort] = useState(null);
   const [participants, setParticipants] = useState([]);
@@ -54,7 +55,7 @@ export function useCohortDetail({ cohortId, source = DEFAULT_SOURCE } = {}) {
 
       const [cohortResult, participantsResult] = await Promise.allSettled([
         source.getCohort(cohortId),
-        source.listParticipants(cohortId),
+        isParticipantsIntegrationPending ? [] : source.listParticipants(cohortId),
       ]);
       if (!active) return;
 
@@ -86,7 +87,7 @@ export function useCohortDetail({ cohortId, source = DEFAULT_SOURCE } = {}) {
     return () => {
       active = false;
     };
-  }, [attempt, cohortId, isIntegrationPending, source]);
+  }, [attempt, cohortId, isIntegrationPending, isParticipantsIntegrationPending, source]);
 
   return {
     cohort,
@@ -98,8 +99,9 @@ export function useCohortDetail({ cohortId, source = DEFAULT_SOURCE } = {}) {
     participantsError,
     isDemo: mode === COHORT_SOURCE_MODE.DEMO,
     isIntegrationPending,
+    isParticipantsIntegrationPending,
     // Asignar solo con una fuente que lo admita (hoy, la demostración).
-    canManage: mode !== COHORT_SOURCE_MODE.PENDING_INTEGRATION,
+    canManage: mode === COHORT_SOURCE_MODE.DEMO,
     retry: () => setAttempt((value) => value + 1),
     // Añade (o reemplaza, sin duplicar) los participantes asignados.
     addParticipants: (assigned) =>

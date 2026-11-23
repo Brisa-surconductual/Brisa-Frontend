@@ -65,7 +65,7 @@ describe('Activar una cohorte', () => {
     expect(onCohortChanged).toHaveBeenCalledWith(updated);
     expect(lastNotice()).toEqual({
       tone: 'success',
-      title: 'Cohorte activada temporalmente',
+      title: 'Cohorte activada',
       message: '«Cohorte uno» ahora está activa.',
     });
   });
@@ -157,7 +157,7 @@ describe('Inactivar una cohorte', () => {
     const changeStatus = vi.fn().mockResolvedValue({ ok: true, cohort: updated });
     const onCohortChanged = vi.fn();
 
-    await run({ onCohortChanged, source: { changeStatus } }, { [S.PENDING]: ACTIVE }).confirmInactivation();
+    await run({ isDemo: true, onCohortChanged, source: { changeStatus } }, { [S.PENDING]: ACTIVE }).confirmInactivation();
 
     expect(react.setters[S.PENDING]).toHaveBeenCalledWith(null);
     expect(changeStatus).toHaveBeenCalledWith('c-2', COHORT_TRANSITION.INACTIVATE);

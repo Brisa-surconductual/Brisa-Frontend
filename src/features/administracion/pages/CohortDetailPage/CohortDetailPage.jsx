@@ -99,6 +99,7 @@ function CohortDetail() {
     participantsError,
     isDemo,
     isIntegrationPending,
+    isParticipantsIntegrationPending,
     canManage,
     retry,
     addParticipants,
@@ -193,8 +194,9 @@ function CohortDetail() {
         </div>
 
         <p className="m-0 max-w-[640px] text-[length:var(--font-size-md)] leading-[var(--line-height-normal)] text-[var(--text-secondary)]">
-          Consulta los participantes asociados a la cohorte y su estado
-          administrativo de registro, consentimiento y línea base.
+          {isParticipantsIntegrationPending
+            ? 'Consulta las fechas, el estado y el cronograma de la cohorte.'
+            : 'Consulta los participantes asociados a la cohorte y su estado administrativo de registro, consentimiento y línea base.'}
         </p>
       </header>
 
@@ -229,7 +231,7 @@ function CohortDetail() {
       {isLoading && (
         <div aria-busy="true" className="flex flex-col gap-[var(--space-4)]">
           <p role="status" className="sr-only">
-            Cargando cohorte y participantes...
+            {isParticipantsIntegrationPending ? 'Cargando cohorte...' : 'Cargando cohorte y participantes...'}
           </p>
 
           <div
@@ -292,7 +294,9 @@ function CohortDetail() {
               </SummaryItem>
 
               <SummaryItem icon={UsersRound} label="Participantes">
-                {participantsError ? 'No disponible' : participantCount(participants.length)}
+                {isParticipantsIntegrationPending || participantsError
+                  ? 'No disponible'
+                  : participantCount(participants.length)}
               </SummaryItem>
             </dl>
 
@@ -463,7 +467,13 @@ function CohortDetail() {
               </CohortNotice>
             )}
 
-            {!participantsError && participants.length === 0 && (
+            {isParticipantsIntegrationPending && (
+              <CohortNotice tone="info" icon={PlugZap} title="Participantes pendientes de integración" role="status">
+                La consulta y la asignación de participantes todavía no están disponibles.
+              </CohortNotice>
+            )}
+
+            {!isParticipantsIntegrationPending && !participantsError && participants.length === 0 && (
               <CohortNotice tone="neutral" icon={UsersRound} title="Esta cohorte aún no tiene participantes" role="status">
                 Cuando se asocien participantes a la cohorte, aparecerán aquí.
                 {canAssign

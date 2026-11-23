@@ -93,7 +93,7 @@ describe('Cambio de estado en el almacén temporal', () => {
   it('transición no definida e identificador inexistente', () => {
     const store = createCohortStore({ cohorts: [{ ...DRAFT, status: 'INACTIVA' }], schedules: SCHEDULES });
 
-    expect(store.changeCohortStatus('x-2', COHORT_TRANSITION.ACTIVATE).ok).toBe(false);
+    expect(store.changeCohortStatus('x-2', COHORT_TRANSITION.INACTIVATE).ok).toBe(false);
     expect(store.findCohort('x-2').status).toBe('INACTIVA');
     expect(store.changeCohortStatus('nada', COHORT_TRANSITION.ACTIVATE)).toEqual({
       ok: false, reason: STATUS_CHANGE_NOT_FOUND, cohort: null,
