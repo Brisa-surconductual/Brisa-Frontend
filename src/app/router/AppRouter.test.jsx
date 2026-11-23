@@ -14,6 +14,8 @@ import {
   CohortNotificationsPage,
   CohortDashboard,
   CohortEvolutionPage,
+  ParticipantSessionsPage,
+  SessionTraceabilityPage,
 } from '@/features/administracion/index.js';
 import { USER_ROLE } from '@/features/users/types/authTypes.js';
 import { DASHBOARD_SHORTCUTS } from '@/features/users/pages/PsychologyHomePage/data/psychologyStats.js';
@@ -102,6 +104,9 @@ const ADMIN_PATHS = Object.freeze([
   '/app/administrativo/chat/grupal',
   '/app/administrativo/chat/grupal/f-1',
   '/app/administrativo/chat/arboles',
+  '/app/administrativo/chat/variables',
+  '/app/administrativo/chat/participantes/P-1A2B3C4D/sesiones',
+  '/app/administrativo/chat/participantes/P-1A2B3C4D/sesiones/00000000-0000-4000-8000-000000000001/trazabilidad',
 ]);
 
 describe('Rutas administrativas protegidas', () => {
@@ -148,6 +153,21 @@ describe('Rutas administrativas protegidas', () => {
     expect(
       match('/app/administrativo/cronograma').at(-1).route.element.type,
     ).toBe(ScheduleManagementPage);
+  });
+
+  it('RF-38: las sesiones y la trazabilidad montan su página con código A7 e id de sesión', () => {
+    const sessions = match('/app/administrativo/chat/participantes/P-1A2B3C4D/sesiones').at(-1);
+    const trace = match(
+      '/app/administrativo/chat/participantes/P-1A2B3C4D/sesiones/00000000-0000-4000-8000-000000000001/trazabilidad',
+    ).at(-1);
+
+    expect(sessions.route.element.type).toBe(ParticipantSessionsPage);
+    expect(sessions.params).toEqual({ codigoParticipante: 'P-1A2B3C4D' });
+    expect(trace.route.element.type).toBe(SessionTraceabilityPage);
+    expect(trace.params).toEqual({
+      codigoParticipante: 'P-1A2B3C4D',
+      idSesion: '00000000-0000-4000-8000-000000000001',
+    });
   });
 
   it('el listado de cohortes (M08) se declara una sola vez y monta su página', () => {
@@ -451,7 +471,9 @@ describe('Rutas sin cambios', () => {
             .replace('/c-1/', '/:contentId/')
             .replace('/s-1/unidades/u-1', '/:scheduleId/unidades/:unitId')
             .replace('/s-1/', '/:idSchedule/')
-            .replace('/grupal/f-1', '/grupal/:flowId'),
+            .replace('/grupal/f-1', '/grupal/:flowId')
+            .replace('/participantes/P-1A2B3C4D/', '/participantes/:codigoParticipante/')
+            .replace('/sesiones/00000000-0000-4000-8000-000000000001/', '/sesiones/:idSesion/'),
         ),
         '*',
       ].sort(),

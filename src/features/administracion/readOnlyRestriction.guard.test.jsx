@@ -90,7 +90,8 @@ describe('RF-148: límites del módulo administrativo', () => {
    * (E9-D1: /cohortes/:id/seguimiento), declaradas aquí una a una; esos
    * archivos no pueden contener HTTP. Cualquier otra referencia falla.
    */
-  const READ_ONLY_REFERENCES = Object.freeze(['utils/cohortRoutes.js']);
+  // RF-38: rutas de la interfaz de consulta de la trazabilidad del chat.
+  const READ_ONLY_REFERENCES = Object.freeze(['utils/chatTraceabilityRoutes.js', 'utils/cohortRoutes.js']);
 
   it('solo los archivos de consulta autorizados hacen referencia a M02, M03, M05, M06 o M07', () => {
     const referencing = SOURCES.filter(({ code }) => PROTECTED_RESOURCE.test(code));
@@ -110,17 +111,30 @@ describe('RF-148: límites del módulo administrativo', () => {
   });
 
   /*
-   * INVARIANTE TEMPORAL: hoy el M08 no tiene integración HTTP. Cuando se
-   * autoricen los adaptadores de cohortes, participantes o auditoría,
-   * esta prueba deberá sustituirse por la lista de recursos permitidos;
-   * la regla permanente anterior seguirá vigente.
+   * Lista de adaptadores HTTP permitidos (sustituye a la invariante
+   * temporal «el M08 aún no hace ninguna petición HTTP»). La primera
+   * integración autorizada es RF-38: dos consultas GET de solo lectura a
+   * los endpoints administrativos del chat. Cohortes, participantes y
+   * auditoría siguen sin HTTP. Añadir un adaptador exige declararlo aquí;
+   * la regla permanente anterior sigue vigente.
    */
-  it('invariante temporal: el M08 aún no hace ninguna petición HTTP', () => {
+  const HTTP_ADAPTERS = Object.freeze([
+    'api/chatTraceability/fetchParticipantSessions.js',
+    'api/chatTraceability/fetchSessionTraceability.js',
+  ]);
+
+  it('solo los adaptadores autorizados de api/ hacen peticiones HTTP, y solo de lectura', () => {
     const http = SOURCES.filter(({ code }) =>
       /apiClient|from\s+['"]axios['"]|\bfetch\s*\(|XMLHttpRequest|navigator\.sendBeacon|new\s+WebSocket/.test(code),
     );
 
-    expect(http.map(({ name }) => name)).toEqual([]);
+    expect(http.map(({ name }) => name).sort()).toEqual([...HTTP_ADAPTERS].sort());
+    for (const { path, code } of http) {
+      expect(path.startsWith(API_DIR + sep)).toBe(true);
+      expect(code).not.toMatch(HTTP_WRITE);
+      expect(code).toMatch(/apiClient\.get\(\s*`\$\{CHAT\}\/admin\//);
+      expect(code).not.toMatch(/\bfetch\s*\(|XMLHttpRequest|sendBeacon|WebSocket/);
+    }
   });
 
   it('el traductor de solo lectura no está conectado a las operaciones permitidas de cohortes y participantes', () => {
