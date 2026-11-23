@@ -36,6 +36,7 @@ const NO_CODE = 'Código no disponible';
 export function useParticipantAssignment({
   cohortId,
   enabled = false,
+  usesParticipantCode = false,
   onAssigned = () => {},
   source = DEFAULT_SOURCE,
 } = {}) {
@@ -183,14 +184,15 @@ export function useParticipantAssignment({
         setSelectionError(ASSIGNMENT_ERROR_MESSAGE[ASSIGNMENT_ERROR.EMPTY_SELECTION]);
       } else if (response?.error === ASSIGNMENT_ERROR.CONFLICT) {
         // Nada se asignó; el catálogo se vuelve a consultar.
-        setIssues(Array.isArray(response.issues) ? response.issues : []);
-        setRequestError(ASSIGNMENT_ERROR_MESSAGE[ASSIGNMENT_ERROR.CONFLICT]);
+        const conflicts = Array.isArray(response.issues) ? response.issues : [];
+        setIssues(conflicts);
+        setRequestError((conflicts.length === 0 && response.mensaje) || ASSIGNMENT_ERROR_MESSAGE[ASSIGNMENT_ERROR.CONFLICT]);
         setCatalogAttempt((value) => value + 1);
       } else {
-        setRequestError(ASSIGNMENT_ERROR_MESSAGE[response?.error] ?? ASSIGNMENT_STORAGE_ERROR);
+        setRequestError(response?.mensaje || (ASSIGNMENT_ERROR_MESSAGE[response?.error] ?? ASSIGNMENT_STORAGE_ERROR));
       }
-    } catch {
-      setRequestError(ASSIGNMENT_STORAGE_ERROR);
+    } catch (error) {
+      setRequestError(error?.mensaje || ASSIGNMENT_STORAGE_ERROR);
     } finally {
       inFlight.current = false;
       setIsSubmitting(false);
@@ -201,7 +203,7 @@ export function useParticipantAssignment({
   const codeOf = (id) =>
     candidates.find((candidate) => candidate.id === id)?.code ??
     issues.find(({ participantId }) => participantId === id)?.code ??
-    NO_CODE;
+    (usesParticipantCode ? id : NO_CODE);
 
   return {
     canAssign: enabled,

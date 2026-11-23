@@ -22,6 +22,7 @@ function selectedLabel(count) {
 }
 
 export function ParticipantAssignmentPanel({
+  isDemo = false,
   headingRef,
   available,
   unavailable,
@@ -227,10 +228,12 @@ export function ParticipantAssignmentPanel({
             </div>
           )}
 
-          <p className="m-0 inline-flex items-start gap-[var(--space-2)] text-[length:var(--font-size-xs)] text-[var(--text-muted)]">
-            <FlaskConical size={14} strokeWidth={1.8} className="mt-[2px] shrink-0" aria-hidden="true" />
-            Los cambios son temporales y no se guardan en el servidor.
-          </p>
+          {isDemo && (
+            <p className="m-0 inline-flex items-start gap-[var(--space-2)] text-[length:var(--font-size-xs)] text-[var(--text-muted)]">
+              <FlaskConical size={14} strokeWidth={1.8} className="mt-[2px] shrink-0" aria-hidden="true" />
+              Los cambios son temporales y no se guardan en el servidor.
+            </p>
+          )}
 
           <div className="flex flex-col-reverse gap-[var(--space-2)] sm:flex-row sm:justify-end">
             <Button variant="secondary" onClick={onCancel} disabled={isSubmitting} className="min-h-[44px]">

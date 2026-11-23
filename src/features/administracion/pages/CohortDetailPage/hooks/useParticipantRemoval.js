@@ -32,6 +32,7 @@ export function useParticipantRemoval({
   cohortId,
   cohortName = '',
   enabled = false,
+  isDemo = false,
   onRemoved = () => {},
   onStale = () => {},
   source = DEFAULT_SOURCE,
@@ -60,18 +61,20 @@ export function useParticipantRemoval({
       const result = await source.remove(cohortId, participant.id);
 
       if (result?.ok) {
-        onRemoved(participant.id);
+        onRemoved(participant.id, result.removed);
         setNotice({
           tone: 'success',
-          title: 'Participante retirado temporalmente',
-          message: `«${code}» ya no forma parte de «${cohortName}». Los cambios son temporales y no se guardan en el servidor.`,
+          title: isDemo ? 'Participante retirado temporalmente' : 'Participante retirado',
+          message: isDemo
+            ? `«${code}» ya no forma parte de «${cohortName}». Los cambios son temporales y no se guardan en el servidor.`
+            : `«${code}» quedó inactivo en «${cohortName}».`,
         });
       } else {
         if (STALE_ERRORS.includes(result?.error)) onStale();
-        setNotice({ tone: 'warning', title: 'No se retiró al participante', message: getRemovalErrorMessage(result?.error) });
+        setNotice({ tone: 'warning', title: 'No se retiró al participante', message: result?.mensaje || getRemovalErrorMessage(result?.error) });
       }
-    } catch {
-      setNotice({ tone: 'danger', title: 'No se retiró al participante', message: REMOVAL_STORAGE_ERROR });
+    } catch (error) {
+      setNotice({ tone: 'danger', title: 'No se retiró al participante', message: error?.mensaje || REMOVAL_STORAGE_ERROR });
     } finally {
       inFlight.current.delete(participant.id);
       setBusyIds((current) => current.filter((id) => id !== participant.id));

@@ -121,6 +121,7 @@ describe('RF-148: límites del módulo administrativo', () => {
       'api/cohortesApi.js',
       'api/listAuditRecords.js',
       'api/observeReadOnlyRejections.js',
+      'api/participantesCohorteApi.js',
     ]);
     const { code } = http.find(({ name }) => name === 'api/observeReadOnlyRejections.js');
     expect(code).toContain('apiClient.interceptors.response');

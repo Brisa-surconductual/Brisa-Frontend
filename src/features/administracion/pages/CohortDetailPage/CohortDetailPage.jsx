@@ -30,6 +30,7 @@ import { ParticipantAssignmentPanel } from '../../components/ParticipantAssignme
 import { ParticipantAssignmentResult } from '../../components/ParticipantAssignmentResult/index.js';
 import { ParticipantCard } from '../../components/ParticipantCard/index.js';
 import { PARTICIPATION_STATUS } from '../../types/participantStatus.js';
+import { COHORT_STATUS } from '../../types/cohortStatus.js';
 import {
   getCohortAggregatePath,
   getCohortNarrativePath,
@@ -99,7 +100,6 @@ function CohortDetail() {
     participantsError,
     isDemo,
     isIntegrationPending,
-    isParticipantsIntegrationPending,
     canManage,
     retry,
     addParticipants,
@@ -110,6 +110,7 @@ function CohortDetail() {
   const showCohort = Boolean(cohort) && !isLoading;
   // Sin la lista actual no se ofrece asignar ni retirar.
   const canManageParticipants = Boolean(canManage) && showCohort && !participantsError;
+  const needsActivation = canManageParticipants && !isDemo && cohort.status !== COHORT_STATUS.ACTIVE;
 
   const {
     canAssign,
@@ -136,7 +137,8 @@ function CohortDetail() {
     dismissResult,
   } = useParticipantAssignment({
     cohortId: idCohorte ?? null,
-    enabled: canManageParticipants,
+    enabled: canManageParticipants && !needsActivation,
+    usesParticipantCode: !isDemo,
     onAssigned: (assigned) => {
       addParticipants(assigned);
       // El aviso de un retiro anterior ya no describe la situación actual.
@@ -158,8 +160,9 @@ function CohortDetail() {
     cohortId: idCohorte ?? null,
     cohortName: title,
     enabled: canManageParticipants,
-    onRemoved: (participantId) => {
-      removeParticipant(participantId);
+    isDemo,
+    onRemoved: (participantId, updated) => {
+      removeParticipant(participantId, updated);
       // El resultado de una asignación anterior ya no está vigente.
       dismissResult();
       // El catálogo abierto ya no refleja la nueva situación.
@@ -194,9 +197,7 @@ function CohortDetail() {
         </div>
 
         <p className="m-0 max-w-[640px] text-[length:var(--font-size-md)] leading-[var(--line-height-normal)] text-[var(--text-secondary)]">
-          {isParticipantsIntegrationPending
-            ? 'Consulta las fechas, el estado y el cronograma de la cohorte.'
-            : 'Consulta los participantes asociados a la cohorte y su estado administrativo de registro, consentimiento y línea base.'}
+          Consulta los participantes asociados a la cohorte y sus estados de registro, consentimiento y línea base.
         </p>
       </header>
 
@@ -231,7 +232,7 @@ function CohortDetail() {
       {isLoading && (
         <div aria-busy="true" className="flex flex-col gap-[var(--space-4)]">
           <p role="status" className="sr-only">
-            {isParticipantsIntegrationPending ? 'Cargando cohorte...' : 'Cargando cohorte y participantes...'}
+            Cargando cohorte y participantes...
           </p>
 
           <div
@@ -294,7 +295,7 @@ function CohortDetail() {
               </SummaryItem>
 
               <SummaryItem icon={UsersRound} label="Participantes">
-                {isParticipantsIntegrationPending || participantsError
+                {participantsError
                   ? 'No disponible'
                   : participantCount(participants.length)}
               </SummaryItem>
@@ -414,6 +415,12 @@ function CohortDetail() {
                 </Button>
               )}
 
+              {needsActivation && (
+                <p className="m-0 text-[length:var(--font-size-sm)] text-[var(--text-secondary)]">
+                  Activa la cohorte para asignar participantes.
+                </p>
+              )}
+
               <p className="m-0 inline-flex items-start gap-[var(--space-2)] text-[length:var(--font-size-sm)] text-[var(--text-secondary)]">
                 <ShieldCheck size={16} strokeWidth={1.8} className="mt-[2px] shrink-0" aria-hidden="true" />
                 Solo se muestran códigos seudonimizados y estados administrativos.
@@ -424,6 +431,7 @@ function CohortDetail() {
 
             {canAssign && isAssigning && (
               <ParticipantAssignmentPanel
+                isDemo={isDemo}
                 headingRef={headingRef}
                 available={available}
                 unavailable={unavailable}
@@ -444,6 +452,7 @@ function CohortDetail() {
 
             {assignmentResult && (
               <ParticipantAssignmentResult
+                isDemo={isDemo}
                 ref={resultRef}
                 assigned={assignmentResult}
                 onDismiss={dismissResult}
@@ -467,18 +476,10 @@ function CohortDetail() {
               </CohortNotice>
             )}
 
-            {isParticipantsIntegrationPending && (
-              <CohortNotice tone="info" icon={PlugZap} title="Participantes pendientes de integración" role="status">
-                La consulta y la asignación de participantes todavía no están disponibles.
-              </CohortNotice>
-            )}
-
-            {!isParticipantsIntegrationPending && !participantsError && participants.length === 0 && (
+            {!participantsError && participants.length === 0 && (
               <CohortNotice tone="neutral" icon={UsersRound} title="Esta cohorte aún no tiene participantes" role="status">
                 Cuando se asocien participantes a la cohorte, aparecerán aquí.
-                {canAssign
-                  ? ' Usa «Asignar participantes» para incorporarlos.'
-                  : ' La asignación de participantes todavía no está disponible.'}
+                {canAssign && ' Usa «Asignar participantes» para incorporarlos.'}
               </CohortNotice>
             )}
 
@@ -489,7 +490,7 @@ function CohortDetail() {
                     <ParticipantCard
                       participant={participant}
                       removeAction={
-                        canRemove && participant.id
+                        canRemove && participant.id && (isDemo || participant.participationStatus !== PARTICIPATION_STATUS.INACTIVE)
                           ? {
                               busy: removingIds.includes(participant.id),
                               onClick: () => requestRemoval(participant),
@@ -509,7 +510,9 @@ function CohortDetail() {
         <ConfirmationDialog
           open={Boolean(pendingRemoval)}
           title={`¿Retirar a «${pendingCode}» de «${title}»?`}
-          description="El participante dejará de formar parte de esta cohorte. No se elimina del sistema ni cambian su registro, consentimiento o línea base, ni otras cohortes. Los cambios son temporales y no se guardan en el servidor."
+          description={isDemo
+            ? 'El participante dejará de formar parte de esta cohorte. No se elimina del sistema ni cambian su registro, consentimiento o línea base, ni otras cohortes. Los cambios son temporales y no se guardan en el servidor.'
+            : 'Su membresía pasará a Inactivo y seguirá visible en la cohorte.'}
           confirmText="Retirar participante"
           cancelText="Cancelar"
           onConfirm={confirmRemoval}

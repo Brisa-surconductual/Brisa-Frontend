@@ -89,15 +89,26 @@ describe('useCohortDetail', () => {
     expect(react.setters[SET_NOT_FOUND]).toHaveBeenLastCalledWith(false);
   });
 
-  it('en modo API consulta la cohorte y reserva la gestión de participantes para RF-125', async () => {
+  it('en modo API consulta la cohorte y sus participantes y habilita la gestión', async () => {
     const cohort = vi.fn().mockResolvedValue(COHORT);
-    const participants = vi.fn();
+    const participants = vi.fn().mockResolvedValue(PARTICIPANTS);
     const result = await loadWith({ mode: COHORT_SOURCE_MODE.API, cohort, participants });
 
     expect(cohort).toHaveBeenCalledWith('c-1');
-    expect(participants).not.toHaveBeenCalled();
+    expect(participants).toHaveBeenCalledWith('c-1');
     expect(react.setters[SET_COHORT]).toHaveBeenLastCalledWith(COHORT);
-    expect(result).toMatchObject({ isParticipantsIntegrationPending: true, canManage: false });
+    expect(react.setters[SET_PARTICIPANTS]).toHaveBeenLastCalledWith(PARTICIPANTS);
+    expect(result).toMatchObject({ isDemo: false, canManage: true });
+  });
+
+  it('conserva la membresía retirada con el estado que devuelve la API', () => {
+    const result = useCohortDetail({ cohortId: 'c-1', source: source({ mode: COHORT_SOURCE_MODE.API }) });
+    const retired = { ...PARTICIPANTS[0], participationStatus: 'INACTIVO' };
+
+    result.removeParticipant(retired.id, retired);
+
+    const [update] = react.setters[SET_PARTICIPANTS].mock.lastCall;
+    expect(update(PARTICIPANTS)).toEqual([retired, PARTICIPANTS[1]]);
   });
 
   it('presenta los participantes tal como llegan: no recalcula su estado', async () => {

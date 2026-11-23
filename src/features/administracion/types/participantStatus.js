@@ -16,10 +16,7 @@ export const PARTICIPATION_STATUS = Object.freeze({
 });
 
 /*
- * estado_registro según RF-125. PENDIENTE de confirmar: M01 usa otros
- * valores (PENDIENTE_CONSENTIMIENTO, PENDIENTE_REVISION,
- * REGISTRO_COMPLETO) y la correspondencia entre ambos no está
- * definida. No se traduce aquí ningún valor de M01.
+ * Estados de registro ya normalizados por RF-125 para el panel.
  */
 export const REGISTRATION_STATUS = Object.freeze({
   PENDING: 'PENDIENTE',
@@ -27,14 +24,14 @@ export const REGISTRATION_STATUS = Object.freeze({
   INCOMPLETE: 'INCOMPLETO',
 });
 
-// estado_consentimiento según RF-125. PENDIENTE de confirmar con el backend.
+// estado_consentimiento según RF-125.
 export const CONSENT_STATUS = Object.freeze({
   ACCEPTED: 'ACEPTADO',
   NOT_ACCEPTED: 'NO_ACEPTADO',
   PENDING: 'PENDIENTE',
 });
 
-// estado_linea_base según RF-125. PENDIENTE de confirmar con el backend.
+// estado_linea_base según RF-125.
 export const BASELINE_STATUS = Object.freeze({
   REGISTERED: 'REGISTRADA',
   NOT_REGISTERED: 'NO_REGISTRADA',

@@ -5,9 +5,9 @@ import { ParticipantStatusBadge } from '../ParticipantStatusBadge/index.js';
 /*
  * Resultado de una asignación (RF-125): cada participante con el
  * estado y los motivos que informó la fuente, sin reinterpretarlos.
- * Recibe el foco al aparecer. Nunca afirma un registro definitivo.
+ * Recibe el foco al aparecer.
  */
-export function ParticipantAssignmentResult({ assigned, ref, onDismiss }) {
+export function ParticipantAssignmentResult({ assigned, isDemo = false, ref, onDismiss }) {
   const count = assigned.length;
 
   return (
@@ -21,10 +21,11 @@ export function ParticipantAssignmentResult({ assigned, ref, onDismiss }) {
         <p className="m-0 flex items-start gap-[var(--space-3)]">
           <CircleCheck size={20} strokeWidth={1.8} className="mt-[2px] shrink-0" aria-hidden="true" />
           <span>
-            <strong className="block">Participantes asignados temporalmente</strong>
-            {count} {count === 1 ? 'participante se incorporó' : 'participantes se incorporaron'} con
-            el estado que informó la fuente de demostración. Los cambios son
-            temporales y no se guardan en el servidor.
+            <strong className="block">{isDemo ? 'Participantes asignados temporalmente' : 'Asignación completada'}</strong>
+            {count} {count === 1 ? 'participante se incorporó' : 'participantes se incorporaron'}
+            {isDemo
+              ? ' con el estado que informó la fuente de demostración. Los cambios son temporales y no se guardan en el servidor.'
+              : ' a la cohorte.'}
           </span>
         </p>
 

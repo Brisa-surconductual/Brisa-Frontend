@@ -111,14 +111,14 @@ describe('Acción «Retirar» (RF-125)', () => {
       enabled: true,
       onStale: DETAIL.retry,
     });
-    removal.args.onRemoved('demo-participante-1');
-    expect(DETAIL.removeParticipant).toHaveBeenCalledWith('demo-participante-1');
+    removal.args.onRemoved('demo-participante-1', PARTICIPANTS_B[0]);
+    expect(DETAIL.removeParticipant).toHaveBeenCalledWith('demo-participante-1', PARTICIPANTS_B[0]);
     // E10: el resultado de una asignación anterior deja de mostrarse.
     expect(assignment.dismissResult).toHaveBeenCalledTimes(1);
   });
 
   it.each([
-    ['sin modo demo', { canManage: false }],
+    ['si la gestión no está disponible', { canManage: false }],
     ['si falló la lista', { participantsError: 'No pudimos cargar los participantes.' }],
   ])('%s no se habilita el retiro', (_, detailChanges) => {
     render({ detailChanges, removalChanges: { canRemove: false } });
@@ -126,11 +126,20 @@ describe('Acción «Retirar» (RF-125)', () => {
     expect(removal.args.enabled).toBe(false);
   });
 
-  it('sin modo demo (hook real) no hay botón Retirar ni diálogo', () => {
+  it('sin gestión (hook real) no hay botón Retirar ni diálogo', () => {
     const html = render({ detailChanges: { canManage: false }, realRemoval: true });
 
     expect(html).not.toContain('Retirar');
     expect(html).not.toContain('<dialog');
+  });
+
+  it('mantiene la tarjeta inactiva sin botón de retiro en el modo API', () => {
+    const retired = { ...PARTICIPANTS_B[0], participationStatus: 'INACTIVO' };
+    const html = render({ detailChanges: { isDemo: false, participants: [retired, PARTICIPANTS_B[1]] } });
+
+    expect(textOf(cardOf(html, retired.code))).toContain('Inactivo');
+    expect(cardOf(html, retired.code)).not.toContain('Retirar');
+    expect(cardOf(html, PARTICIPANTS_B[1].code)).toContain('Retirar');
   });
 
   it('el participante en proceso muestra «Retirando...» y bloquea su botón; los demás siguen igual', () => {

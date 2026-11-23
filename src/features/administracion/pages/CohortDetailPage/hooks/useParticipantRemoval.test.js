@@ -111,13 +111,13 @@ describe('useParticipantRemoval: resultado', () => {
   it('éxito: retira por identificador, refleja el cambio y enfoca un aviso temporal', async () => {
     const source = removeWith({ ok: true, removed: PARTICIPANT });
     const onRemoved = vi.fn();
-    const result = renderHookWith(useParticipantRemoval, { source, onRemoved }, { [PENDING]: PARTICIPANT });
+    const result = renderHookWith(useParticipantRemoval, { source, onRemoved, isDemo: true }, { [PENDING]: PARTICIPANT });
 
     await result.confirmRemoval();
 
     expect(react.setters[PENDING]).toHaveBeenCalledWith(null);
     expect(source.remove).toHaveBeenCalledWith('c-1', 'p-3');
-    expect(onRemoved).toHaveBeenCalledWith('p-3');
+    expect(onRemoved).toHaveBeenCalledWith('p-3', PARTICIPANT);
     expect(lastNotice()).toEqual({
       tone: 'success',
       title: 'Participante retirado temporalmente',

@@ -128,13 +128,23 @@ describe('Acceso a la asignación (RF-125)', () => {
   });
 
   it.each([
-    ['sin modo demo', { canManage: false }],
+    ['si la gestión no está disponible', { canManage: false }],
     ['si falló la lista de participantes', { participantsError: 'No pudimos cargar los participantes.' }],
     ['mientras carga', { isLoading: true }],
   ])('%s no habilita la asignación', (_, detailChanges) => {
     render({ detailChanges, assignmentChanges: { canAssign: false } });
 
     expect(assignment.args.enabled).toBe(false);
+  });
+
+  it.each(['BORRADOR', 'INACTIVA'])('pide activar una cohorte %s antes de asignar por API', (status) => {
+    const html = render({
+      detailChanges: { isDemo: false, cohort: { ...COHORT_B, status } },
+      assignmentChanges: { canAssign: false },
+    });
+
+    expect(assignment.args.enabled).toBe(false);
+    expect(html).toContain('Activa la cohorte para asignar participantes.');
   });
 
   it('sin asignación disponible no hay botón ni panel', () => {
