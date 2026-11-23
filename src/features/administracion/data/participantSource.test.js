@@ -14,6 +14,9 @@ import {
 } from './participantSource.js';
 import { REMOVAL_ERROR } from '../types/participantRemoval.js';
 
+const transport = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn(), delete: vi.fn() }));
+vi.mock('@/shared/utils/apiClient.jsx', () => ({ apiClient: transport }));
+
 // Tiempo real: la demostración se carga con import() dinámico.
 function enableDemo(scenario) {
   vi.stubEnv('DEV', true);
@@ -37,34 +40,103 @@ const PILOT_B_EXTRA = Array.from(
   (_, index) => `PART-${String(15 + index).padStart(4, '0')}`,
 );
 
-let fetchSpy;
-
 beforeEach(() => {
+  vi.resetAllMocks();
   resetDemoSource();
   resetDemoScenarios(vi);
-  fetchSpy = vi.fn(() => Promise.reject(new Error('Sin red en las pruebas')));
-  vi.stubGlobal('fetch', fetchSpy);
 });
 
-afterEach(() => {
-  // Ninguna consulta de participantes del M08 hace peticiones HTTP.
-  expect(fetchSpy).not.toHaveBeenCalled();
-  vi.unstubAllEnvs();
-  vi.unstubAllGlobals();
-});
+afterEach(() => vi.unstubAllEnvs());
 
-describe('Fuente de participantes sin integración', () => {
+describe('Fuente de participantes conectada a la API', () => {
+  const id = 'cohorte-real';
+  const path = `/admin/cohortes/${id}/participantes`;
+  const code = 'P-12AB34CD';
+  const row = {
+    codigo_participante: code,
+    estado: 'PENDIENTE_VALIDACION',
+    estado_registro: 'COMPLETO',
+    estado_consentimiento: 'ACEPTADO',
+    estado_linea_base: 'NO_REGISTRADA',
+    motivos_pendiente: ['LINEA_BASE_NO_REGISTRADA'],
+    correo_electronico: 'ignorar@example.invalid',
+    id_usuario: 'identificador-interno',
+  };
+
+  function error(status, codigo, detalles) {
+    return { response: { status, data: { codigo, mensaje: 'Error del servidor', detalles } } };
+  }
+
   it.each([
     ['sin la variable', true, ''],
     ['en producción, aunque exista la variable', false, 'true'],
-  ])('%s: rechaza la consulta y no devuelve datos ficticios', async (_, dev, flag) => {
+  ])('%s: consulta las membresías reales y conserva solo los campos del contrato', async (_, dev, flag) => {
     vi.stubEnv('DEV', dev);
     vi.stubEnv('VITE_M08_DEMO', flag);
 
-    await expect(listCohortParticipants('demo-cohorte-b')).rejects.toThrow('no está integrada');
-    await expect(listAvailableParticipants('demo-cohorte-b')).rejects.toThrow('no está integrada');
-    await expect(assignParticipants('demo-cohorte-b', ['demo-candidato-9'])).rejects.toThrow('no está integrada');
-    await expect(removeCohortParticipant('demo-cohorte-b', 'demo-participante-1')).rejects.toThrow('no está integrada');
+    transport.get.mockResolvedValueOnce({ data: [row] });
+    expect(await listCohortParticipants(id)).toEqual([{
+      id: code,
+      code,
+      cohortId: id,
+      participationStatus: 'PENDIENTE_VALIDACION',
+      registrationStatus: 'COMPLETO',
+      consentStatus: 'ACEPTADO',
+      baselineStatus: 'NO_REGISTRADA',
+      pendingReasons: ['La línea base aún no está registrada.'],
+    }]);
+    expect(transport.get).toHaveBeenCalledWith(path);
+  });
+
+  it('consulta elegibles, asigna por código y refleja el retiro confirmado por la API', async () => {
+    transport.get.mockResolvedValueOnce({ data: [{ codigo_participante: code }] });
+    transport.post.mockResolvedValueOnce({ data: [row] });
+    transport.delete.mockResolvedValueOnce({ data: { ...row, estado: 'INACTIVO', motivos_pendiente: [] } });
+
+    expect(await listAvailableParticipants(id)).toEqual([{ id: code, code, issue: null }]);
+    expect(await assignParticipants(id, [code])).toMatchObject({
+      ok: true, assigned: [{ id: code, participationStatus: 'PENDIENTE_VALIDACION' }],
+    });
+    expect(await removeCohortParticipant(id, code)).toMatchObject({
+      ok: true, removed: { id: code, participationStatus: 'INACTIVO' },
+    });
+    expect(transport.get).toHaveBeenCalledWith(`${path}/elegibles`);
+    expect(transport.post).toHaveBeenCalledWith(path, { codigos_participante: [code] });
+    expect(transport.delete).toHaveBeenCalledWith(`${path}/${code}`);
+  });
+
+  it.each([
+    ['PARTICIPANTE_YA_ASIGNADO', ASSIGNMENT_ISSUE.ALREADY_ASSIGNED],
+    ['PARTICIPANTE_EN_OTRA_COHORTE_ACTIVA', ASSIGNMENT_ISSUE.ASSIGNED_TO_ACTIVE_COHORT],
+  ])('mapea el conflicto %s mediante el código seudónimo informado', async (codigo, issue) => {
+    transport.post.mockRejectedValueOnce(error(409, codigo, { codigo_participante: code }));
+    expect(await assignParticipants(id, [code])).toMatchObject({
+      ok: false, error: ASSIGNMENT_ERROR.CONFLICT, issues: [{ participantId: code, code, issue }],
+    });
+  });
+
+  it('distingue una cohorte inexistente, una membresía obsoleta y un fallo del backend', async () => {
+    transport.get.mockRejectedValueOnce(error(404, 'COHORTE_NO_ENCONTRADA'));
+    transport.get.mockRejectedValueOnce(error(500, 'ERROR_REGISTRO_AUDITORIA'));
+    transport.delete.mockRejectedValueOnce(error(404, 'PARTICIPANTE_NO_ASIGNADO'));
+
+    expect(await listCohortParticipants(id)).toBeNull();
+    await expect(listAvailableParticipants(id)).rejects.toMatchObject({ status: 500, codigo: 'ERROR_REGISTRO_AUDITORIA' });
+    expect(await removeCohortParticipant(id, code)).toMatchObject({ ok: false, error: REMOVAL_ERROR.NOT_ASSOCIATED });
+  });
+
+  it('presenta un código que dejó de existir como catálogo desactualizado', async () => {
+    transport.post.mockRejectedValueOnce(error(404, 'PARTICIPANTE_NO_ENCONTRADO'));
+    expect(await assignParticipants(id, [code])).toMatchObject({
+      ok: false, error: ASSIGNMENT_ERROR.CONFLICT, issues: [], mensaje: 'Error del servidor',
+    });
+  });
+
+  it('rechaza una respuesta incompleta para evitar actualizar la vista con datos parciales', async () => {
+    transport.post.mockResolvedValueOnce({ data: [] });
+    await expect(assignParticipants(id, [code])).rejects.toThrow('lote completo');
+    transport.get.mockResolvedValueOnce({ data: [{ codigo_participante: 'persona@example.invalid' }] });
+    await expect(listAvailableParticipants(id)).rejects.toThrow('código de participante válido');
   });
 });
 
@@ -77,6 +149,7 @@ describe('Fuente de participantes en modo de demostración', () => {
     expect(codes(participants)).toEqual(['PART-0001', 'PART-0002', 'PART-0003', 'PART-0004', 'PART-0005', 'PART-0006', ...PILOT_B_EXTRA]);
     expect(participants.every(({ cohortId }) => cohortId === 'demo-cohorte-b')).toBe(true);
     expect(codes(await listCohortParticipants('demo-cohorte-c'))).toEqual(['PART-0007', 'PART-0008']);
+    expect(transport.get).not.toHaveBeenCalled();
   });
 
   it('una cohorte sin participantes devuelve una lista vacía', async () => {

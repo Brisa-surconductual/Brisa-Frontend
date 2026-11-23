@@ -32,7 +32,6 @@ export const PARTICIPANTS_ERROR_MESSAGE =
 export function useCohortDetail({ cohortId, source = DEFAULT_SOURCE } = {}) {
   const [mode] = useState(() => source.getMode());
   const isIntegrationPending = mode === COHORT_SOURCE_MODE.PENDING_INTEGRATION;
-  const isParticipantsIntegrationPending = mode === COHORT_SOURCE_MODE.API;
 
   const [cohort, setCohort] = useState(null);
   const [participants, setParticipants] = useState([]);
@@ -55,7 +54,7 @@ export function useCohortDetail({ cohortId, source = DEFAULT_SOURCE } = {}) {
 
       const [cohortResult, participantsResult] = await Promise.allSettled([
         source.getCohort(cohortId),
-        isParticipantsIntegrationPending ? [] : source.listParticipants(cohortId),
+        source.listParticipants(cohortId),
       ]);
       if (!active) return;
 
@@ -87,7 +86,7 @@ export function useCohortDetail({ cohortId, source = DEFAULT_SOURCE } = {}) {
     return () => {
       active = false;
     };
-  }, [attempt, cohortId, isIntegrationPending, isParticipantsIntegrationPending, source]);
+  }, [attempt, cohortId, isIntegrationPending, source]);
 
   return {
     cohort,
@@ -99,9 +98,7 @@ export function useCohortDetail({ cohortId, source = DEFAULT_SOURCE } = {}) {
     participantsError,
     isDemo: mode === COHORT_SOURCE_MODE.DEMO,
     isIntegrationPending,
-    isParticipantsIntegrationPending,
-    // Asignar solo con una fuente que lo admita (hoy, la demostración).
-    canManage: mode === COHORT_SOURCE_MODE.DEMO,
+    canManage: !isIntegrationPending,
     retry: () => setAttempt((value) => value + 1),
     // Añade (o reemplaza, sin duplicar) los participantes asignados.
     addParticipants: (assigned) =>
@@ -109,8 +106,9 @@ export function useCohortDetail({ cohortId, source = DEFAULT_SOURCE } = {}) {
         ...current.filter(({ id }) => !assigned.some((participant) => participant.id === id)),
         ...assigned,
       ]),
-    // Quita de la lista al participante que la fuente ya retiró.
-    removeParticipant: (participantId) =>
-      setParticipants((current) => current.filter(({ id }) => id !== participantId)),
+    removeParticipant: (participantId, updated) =>
+      setParticipants((current) => mode === COHORT_SOURCE_MODE.API
+        ? current.map((participant) => participant.id === participantId ? updated : participant)
+        : current.filter(({ id }) => id !== participantId)),
   };
 }

@@ -289,15 +289,14 @@ describe('Detalle de cohorte (RF-125)', () => {
     vi.stubEnv('VITE_M08_DEMO', 'false');
     const html = render(null);
 
-    expect(html).toContain('Cargando cohorte...');
+    expect(html).toContain('Cargando cohorte y participantes...');
     expect(html).not.toContain('PART-');
   });
 
-  it('muestra la cohorte real con un aviso mientras sus participantes no estén integrados', () => {
-    const html = render({ cohort: COHORT_B, isParticipantsIntegrationPending: true });
+  it('muestra un estado vacío cuando la API devolvió una cohorte sin participantes', () => {
+    const html = render({ cohort: COHORT_B, participants: [], isDemo: false });
     expect(html).toContain('Cohorte Piloto B');
-    expect(html).toContain('Participantes pendientes de integración');
-    expect(textOf(html)).toContain('ParticipantesNo disponible');
-    expect(html).not.toContain('Esta cohorte aún no tiene participantes');
+    expect(textOf(html)).toContain('Participantes0 participantes');
+    expect(html).toContain('Esta cohorte aún no tiene participantes');
   });
 });
