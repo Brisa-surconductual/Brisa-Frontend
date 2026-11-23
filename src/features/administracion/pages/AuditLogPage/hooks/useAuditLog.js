@@ -4,7 +4,6 @@ import { getAuditSourceMode, listAuditRecords } from '../../../data/auditSource.
 import { toAuditEntries } from '../../../services/auditEntry.js';
 import { AUDIT_QUERY_ERROR, AUDIT_SOURCE_MODE } from '../../../types/auditSource.js';
 
-// Fuente actual; estable entre renders para no repetir la consulta.
 const DEFAULT_SOURCE = Object.freeze({
   getMode: getAuditSourceMode,
   list: listAuditRecords,
@@ -13,62 +12,68 @@ const DEFAULT_SOURCE = Object.freeze({
 export const AUDIT_LOG_ERROR_MESSAGE =
   'No pudimos cargar los registros de auditoría. Intenta nuevamente.';
 
-/*
- * Consulta de la bitácora de auditoría (RF-123), de solo lectura.
- * Presenta los registros en el orden recibido, ya reducidos a los
- * campos permitidos (services/auditEntry.js). Distingue carga, error,
- * acceso denegado (por código estructurado, no por texto), lista vacía
- * e integración pendiente; un fallo nunca se reemplaza por registros
- * ficticios. `source` permite sustituir la fuente sin cambiar la página.
- */
 export function useAuditLog({ source = DEFAULT_SOURCE } = {}) {
   const [mode] = useState(() => source.getMode());
-  const isIntegrationPending = mode === AUDIT_SOURCE_MODE.PENDING_INTEGRATION;
-
   const [entries, setEntries] = useState([]);
-  const [isLoading, setIsLoading] = useState(!isIntegrationPending);
+  const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [isDenied, setIsDenied] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const [cursor, setCursor] = useState(null);
+  const [nextCursor, setNextCursor] = useState(null);
+  const [isSessionExpired, setIsSessionExpired] = useState(false);
 
   useEffect(() => {
-    if (isIntegrationPending) return undefined;
-
-    let active = true;
+    const controller = new AbortController();
 
     async function fetchRecords() {
       setIsLoading(true);
       setLoadError('');
       setIsDenied(false);
+      setIsSessionExpired(false);
 
       try {
-        const records = await source.list();
-        if (active) setEntries(toAuditEntries(records));
-      } catch (error) {
-        if (!active) return;
+        const page = await source.list({ cursor, signal: controller.signal });
+        if (controller.signal.aborted) return;
 
-        setEntries([]);
-        if (error?.code === AUDIT_QUERY_ERROR.ACCESS_DENIED) setIsDenied(true);
+        const records = toAuditEntries(page.records);
+        if (cursor === null) setEntries(records);
+        else setEntries((previous) => [...previous, ...records]);
+
+        setNextCursor(page.nextCursor);
+      } catch (error) {
+        if (controller.signal.aborted) return;
+
+        const denied = error?.code === AUDIT_QUERY_ERROR.ACCESS_DENIED;
+        const expired = error?.code === AUDIT_QUERY_ERROR.SESSION_EXPIRED;
+        if (cursor === null || denied || expired) setEntries([]);
+        if (denied) setIsDenied(true);
+        else if (expired) setIsSessionExpired(true);
         else setLoadError(AUDIT_LOG_ERROR_MESSAGE);
       } finally {
-        if (active) setIsLoading(false);
+        if (!controller.signal.aborted) setIsLoading(false);
       }
     }
 
     void fetchRecords();
 
-    return () => {
-      active = false;
-    };
-  }, [attempt, isIntegrationPending, source]);
+    return () => controller.abort();
+  }, [attempt, cursor, source]);
 
   return {
     entries,
-    isLoading,
+    isLoading: isLoading && cursor === null,
+    isLoadingMore: isLoading && cursor !== null,
     loadError,
     isDenied,
     isDemo: mode === AUDIT_SOURCE_MODE.DEMO,
-    isIntegrationPending,
+    isSessionExpired,
+    hasMore: nextCursor !== null,
     retry: () => setAttempt((value) => value + 1),
+    loadMore: () => {
+      if (nextCursor && !isLoading && !loadError && !isDenied && !isSessionExpired) {
+        setCursor(nextCursor);
+      }
+    },
   };
 }

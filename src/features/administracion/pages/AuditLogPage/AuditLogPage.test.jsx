@@ -21,7 +21,10 @@ const BASE = Object.freeze({
   loadError: '',
   isDenied: false,
   isDemo: false,
-  isIntegrationPending: false,
+  isSessionExpired: false,
+  isLoadingMore: false,
+  hasMore: false,
+  loadMore: vi.fn(),
   retry: vi.fn(),
 });
 
@@ -124,19 +127,23 @@ describe('Pantalla de auditoría (RF-123)', () => {
     );
   });
 
-  it('integración pendiente: lo indica y no muestra registros ni el aviso de demostración', () => {
-    const html = render({ isIntegrationPending: true });
+  it('ofrece paginación cuando el servidor tiene más registros', () => {
+    const entries = toAuditEntries(DEMO_AUDIT_RECORDS);
+    expect(textOf(render({ entries, hasMore: true }))).toContain('Cargar más registros');
+    expect(render({ entries, hasMore: true, isLoadingMore: true })).toMatch(/<button[^>]*disabled/);
+  });
 
-    expect(html).toMatch(/role="status"[\s\S]*Integración pendiente/);
-    expect(html).not.toContain('Registros de demostración');
+  it('muestra la sesión vencida y oculta registros que ya no se pueden consultar', () => {
+    const html = render({ isSessionExpired: true, entries: toAuditEntries(DEMO_AUDIT_RECORDS) });
+    expect(textOf(html)).toContain('Vuelve a iniciar sesión');
     expect(html).not.toContain('<article');
   });
 
-  it('con el hook real y sin modo demo, muestra la integración pendiente', () => {
+  it('con el hook real y sin modo demo, muestra el estado de carga', () => {
     vi.stubEnv('DEV', true);
     vi.stubEnv('VITE_M08_DEMO', 'false');
 
-    expect(render(null)).toContain('Integración pendiente');
+    expect(render(null)).toContain('Cargando registros de auditoría');
   });
 });
 

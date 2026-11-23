@@ -8,9 +8,8 @@
  * datos clínicos o de consumo, cuerpos de solicitud o user-agent. Su
  * exposición futura requiere contrato y autorización específicos.
  *
- * Correspondencia PROVISIONAL con RF-123: id ← id_auditoria,
- * action ← accion_realizada, resource ← recurso_afectado,
- * timestamp ← marca_temporal, status ← estado_accion.
+ * El adaptador HTTP proyecta el contrato RF-123. Aquí se mantiene la
+ * misma lista de campos para las fuentes HTTP y de demostración.
  */
 const asText = (value) => (typeof value === 'string' ? value : '');
 

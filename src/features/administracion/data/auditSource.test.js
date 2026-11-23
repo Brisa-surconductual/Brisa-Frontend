@@ -17,32 +17,56 @@ function enableDemo(scenario) {
   if (scenario) vi.stubEnv('VITE_M08_AUDIT_SCENARIO', scenario);
 }
 
-let fetchSpy;
+const api = vi.hoisted(() => ({ get: vi.fn() }));
+vi.mock('@/shared/utils/apiClient.jsx', () => ({ apiClient: api }));
 
 beforeEach(() => {
   resetDemoSource();
   resetDemoScenarios(vi);
-  fetchSpy = vi.fn(() => Promise.reject(new Error('Sin red en las pruebas')));
-  vi.stubGlobal('fetch', fetchSpy);
+  api.get.mockReset();
 });
 
 afterEach(() => {
-  // La consulta de auditoría no hace peticiones HTTP.
-  expect(fetchSpy).not.toHaveBeenCalled();
+  if (getAuditSourceMode() === AUDIT_SOURCE_MODE.DEMO) expect(api.get).not.toHaveBeenCalled();
   vi.unstubAllEnvs();
-  vi.unstubAllGlobals();
 });
 
-describe('Fuente de auditoría sin integración', () => {
+describe('Fuente de auditoría conectada', () => {
   it.each([
     ['sin la variable', true, ''],
     ['en producción, aunque exista la variable', false, 'true'],
-  ])('%s: integración pendiente y ningún registro ficticio', async (_, dev, flag) => {
+  ])('%s: usa la API y proyecta los campos permitidos', async (_, dev, flag) => {
     vi.stubEnv('DEV', dev);
     vi.stubEnv('VITE_M08_DEMO', flag);
 
-    expect(getAuditSourceMode()).toBe(AUDIT_SOURCE_MODE.PENDING_INTEGRATION);
-    await expect(listAuditRecords()).rejects.toThrow('no está integrada');
+    api.get.mockResolvedValue({
+      data: {
+        data: [{ id_auditoria: 'entrada', accion: 'ACCESO_MODULO', recurso_afectado: 'Bitácora',
+          marca_temporal: '2026-11-23T12:00:00Z', estado_accion: 'EXITOSA', direccion_ip: '192.0.2.1', id_recurso: 'privado' }],
+        meta: { hay_mas: true, siguiente_cursor: 'siguiente' },
+      },
+    });
+    expect(getAuditSourceMode()).toBe(AUDIT_SOURCE_MODE.API);
+    await expect(listAuditRecords({ cursor: 'actual' })).resolves.toEqual({
+      records: [{ id: 'entrada', action: 'ACCESO_MODULO', resource: 'Bitácora',
+        timestamp: '2026-11-23T12:00:00Z', status: 'EXITOSA' }],
+      nextCursor: 'siguiente',
+    });
+    expect(api.get).toHaveBeenCalledWith('/administrativo/auditoria', {
+      params: { antes_de: 'actual' },
+      signal: undefined,
+    });
+  });
+  it.each([[401, AUDIT_QUERY_ERROR.SESSION_EXPIRED], [403, AUDIT_QUERY_ERROR.ACCESS_DENIED], [500, 'ERROR_REGISTRO_AUDITORIA']])(
+    'trata %i como un fallo estructurado sin recurrir a la demostración', async (status, code) => {
+      api.get.mockRejectedValue({ response: { status, data: { codigo: 'ERROR_REGISTRO_AUDITORIA' } } });
+      await expect(listAuditRecords()).rejects.toMatchObject({ code });
+    },
+  );
+
+  it('rechaza un cursor que no avanza', async () => {
+    api.get.mockResolvedValue({ data: { data: [], meta: { hay_mas: true, siguiente_cursor: 'actual' } } });
+    await expect(listAuditRecords({ cursor: 'actual' })).rejects.toThrow('página inválida');
   });
 });
 
@@ -52,14 +76,14 @@ describe('Fuente de auditoría en modo de demostración', () => {
     const start = Date.now();
 
     expect(getAuditSourceMode()).toBe(AUDIT_SOURCE_MODE.DEMO);
-    expect(await listAuditRecords()).toEqual(DEMO_AUDIT_RECORDS);
+    expect(await listAuditRecords()).toEqual({ records: DEMO_AUDIT_RECORDS, nextCursor: null });
     expect(Date.now() - start).toBeGreaterThanOrEqual(AUDIT_DEMO_DELAY_MS - 20);
   });
 
   it('vacia: lista vacía', async () => {
     enableDemo('vacia');
 
-    expect(await listAuditRecords()).toEqual([]);
+    expect(await listAuditRecords()).toEqual({ records: [], nextCursor: null });
   });
 
   it('error: rechaza sin registros de reemplazo ni código de acceso', async () => {
@@ -92,7 +116,7 @@ describe('Fuente de auditoría en modo de demostración', () => {
     enableDemo();
     vi.stubEnv('VITE_M08_DEMO_SCENARIO', 'error');
 
-    expect(await listAuditRecords()).toEqual(DEMO_AUDIT_RECORDS);
+    expect(await listAuditRecords()).toEqual({ records: DEMO_AUDIT_RECORDS, nextCursor: null });
   });
 
   it('las operaciones de cohortes y participantes no generan registros de auditoría', async () => {
@@ -102,6 +126,6 @@ describe('Fuente de auditoría en modo de demostración', () => {
     await assignParticipants(created.id, ['demo-candidato-9']);
     await removeCohortParticipant('demo-cohorte-b', 'demo-participante-1');
 
-    expect(await listAuditRecords()).toEqual(DEMO_AUDIT_RECORDS);
+    expect(await listAuditRecords()).toEqual({ records: DEMO_AUDIT_RECORDS, nextCursor: null });
   });
 });
