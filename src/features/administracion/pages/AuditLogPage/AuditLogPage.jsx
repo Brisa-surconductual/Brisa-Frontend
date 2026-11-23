@@ -1,7 +1,6 @@
 import {
   AlertTriangle,
   FlaskConical,
-  PlugZap,
   RefreshCw,
   ScrollText,
   ShieldCheck,
@@ -23,9 +22,12 @@ import { useAuditLog } from './hooks/useAuditLog.js';
  * en useAuditLog.
  */
 export function AuditLogPage() {
-  const { entries, isLoading, loadError, isDenied, isDemo, isIntegrationPending, retry } = useAuditLog();
+  const {
+    entries, isLoading, isLoadingMore, loadError, isDenied, isDemo,
+    isSessionExpired, hasMore, retry, loadMore,
+  } = useAuditLog();
 
-  const hasEntries = !isLoading && !loadError && !isDenied && entries.length > 0;
+  const hasEntries = !isLoading && !isDenied && !isSessionExpired && entries.length > 0;
 
   return (
     <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-[var(--space-6)] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]">
@@ -58,13 +60,7 @@ export function AuditLogPage() {
         </CohortNotice>
       )}
 
-      {isIntegrationPending ? (
-        <CohortNotice tone="info" icon={PlugZap} title="Integración pendiente" role="status">
-          La consulta de la bitácora todavía no está conectada al servidor.
-          Cuando se integre, aquí aparecerán los registros autorizados.
-        </CohortNotice>
-      ) : (
-        <section aria-labelledby="registros-auditoria" aria-busy={isLoading} className="flex flex-col gap-[var(--space-4)]">
+        <section aria-labelledby="registros-auditoria" aria-busy={isLoading || isLoadingMore} className="flex flex-col gap-[var(--space-4)]">
           <div className="flex flex-wrap items-baseline justify-between gap-[var(--space-2)]">
             <h2 id="registros-auditoria" className="m-0 text-[length:var(--font-size-lg)] font-extrabold text-[var(--text-primary)]">
               Registros
@@ -100,11 +96,17 @@ export function AuditLogPage() {
             </CohortNotice>
           )}
 
+          {!isLoading && isSessionExpired && (
+            <CohortNotice tone="warning" icon={ShieldX} title="Sesión vencida" role="alert">
+              Vuelve a iniciar sesión para consultar la bitácora.
+            </CohortNotice>
+          )}
+
           {!isLoading && loadError && (
             <CohortNotice
               tone="danger"
               icon={AlertTriangle}
-              title="Registros no disponibles"
+              title={entries.length ? 'No se pudieron cargar más registros' : 'Registros no disponibles'}
               role="alert"
               action={
                 <Button variant="secondary" onClick={retry}>
@@ -117,7 +119,7 @@ export function AuditLogPage() {
             </CohortNotice>
           )}
 
-          {!isLoading && !loadError && !isDenied && entries.length === 0 && (
+          {!isLoading && !loadError && !isDenied && !isSessionExpired && entries.length === 0 && (
             <CohortNotice tone="neutral" icon={ScrollText} title="Aún no hay registros de auditoría" role="status">
               Cuando se registren accesos o acciones del módulo administrativo,
               aparecerán en esta consulta.
@@ -133,8 +135,14 @@ export function AuditLogPage() {
               ))}
             </ol>
           )}
+          {hasEntries && hasMore && !loadError && (
+            <div className="self-start">
+              <Button variant="secondary" onClick={loadMore} disabled={isLoadingMore}>
+                {isLoadingMore ? 'Cargando más registros…' : 'Cargar más registros'}
+              </Button>
+            </div>
+          )}
         </section>
-      )}
     </div>
   );
 }
