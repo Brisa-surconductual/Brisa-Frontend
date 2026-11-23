@@ -109,26 +109,29 @@ describe('RF-148: límites del módulo administrativo', () => {
     expect(writers.filter(({ code }) => PROTECTED_RESOURCE.test(code)).map(({ name }) => name)).toEqual([]);
   });
 
-  /*
-   * INVARIANTE TEMPORAL: hoy el M08 no tiene integración HTTP. Cuando se
-   * autoricen los adaptadores de cohortes, participantes o auditoría,
-   * esta prueba deberá sustituirse por la lista de recursos permitidos;
-   * la regla permanente anterior seguirá vigente.
-   */
-  it('invariante temporal: el M08 aún no hace ninguna petición HTTP', () => {
+  it('limita el acceso HTTP del M08 a la lectura de bitácora y la observación de rechazos', () => {
     const http = SOURCES.filter(({ code }) =>
       /apiClient|from\s+['"]axios['"]|\bfetch\s*\(|XMLHttpRequest|navigator\.sendBeacon|new\s+WebSocket/.test(code),
     );
 
-    expect(http.map(({ name }) => name)).toEqual([]);
+    expect(http.map(({ name }) => name)).toEqual([
+      'api/listAuditRecords.js',
+      'api/observeReadOnlyRejections.js',
+    ]);
+    const { code } = http.find(({ name }) => name === 'api/observeReadOnlyRejections.js');
+    expect(code).toContain('apiClient.interceptors.response');
+    expect(code).not.toMatch(/apiClient\s*\(|apiClient\.(?:get|head|options|request)\s*\(/);
   });
 
-  it('el traductor de solo lectura no está conectado a las operaciones permitidas de cohortes y participantes', () => {
+  it('el traductor de solo lectura se usa en la observación HTTP y el aviso', () => {
     const users = SOURCES.filter(({ name, code }) =>
       /readOnlyRestriction/.test(code) && !/readOnlyRestriction\.js$/.test(name),
     ).map(({ name }) => name);
 
-    expect(users).toEqual(['components/ReadOnlyNotice/ReadOnlyNotice.jsx']);
+    expect(users).toEqual([
+      'api/observeReadOnlyRejections.js',
+      'components/ReadOnlyNotice/ReadOnlyNotice.jsx',
+    ]);
   });
 });
 
