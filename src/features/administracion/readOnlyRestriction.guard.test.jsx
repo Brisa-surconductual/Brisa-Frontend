@@ -90,7 +90,8 @@ describe('RF-148: límites del módulo administrativo', () => {
    * (E9-D1: /cohortes/:id/seguimiento), declaradas aquí una a una; esos
    * archivos no pueden contener HTTP. Cualquier otra referencia falla.
    */
-  const READ_ONLY_REFERENCES = Object.freeze(['utils/cohortRoutes.js']);
+  // RF-38: rutas de la interfaz de consulta de la trazabilidad del chat.
+  const READ_ONLY_REFERENCES = Object.freeze(['utils/chatTraceabilityRoutes.js', 'utils/cohortRoutes.js']);
 
   it('solo los archivos de consulta autorizados hacen referencia a M02, M03, M05, M06 o M07', () => {
     const referencing = SOURCES.filter(({ code }) => PROTECTED_RESOURCE.test(code));

@@ -26,6 +26,12 @@ export { CohortNotificationsPage } from './pages/CohortNotificationsPage/index.j
 
 export { CohortEvolutionPage } from './pages/CohortEvolutionPage/index.js';
 
+// Trazabilidad administrativa de sesiones del chat (RF-38, M03 → M08).
+
+export { ParticipantSessionsPage } from './pages/ParticipantSessionsPage/index.js';
+
+export { SessionTraceabilityPage } from './pages/SessionTraceabilityPage/index.js';
+
 // Panel principal de la cohorte activa (RF-140), montado en la pantalla
 // de aterrizaje administrativa por app/router.
 

@@ -471,6 +471,7 @@ Leyenda de estado: **Cubierto** (UI + contrato + pruebas) · **Parcial** (falta 
 | RF-140 | Dashboard principal | `administracion` · `CohortDashboard`, montado en `PsychologyHomePage` (`/app/administrativo`) | Parcial: solo frontend con datos de demostración (ver nota) |
 | RF-141 | Evolución temporal de indicadores por unidad del cronograma | `administracion` · `CohortEvolutionPage` (`/app/administrativo/cohortes/:idCohorte/evolucion`) | Parcial: solo frontend con datos de demostración (ver nota) |
 | RF-144 | Exportación CSV de indicadores agregados de la cohorte activa | `administracion` · `CohortExportButton` en `CohortDetailPage` | Parcial: solo demostración; endpoint y auditoría pendientes (ver nota) |
+| RF-38 | Trazabilidad de la interacción conversacional (consulta administrativa) | `administracion` · `ParticipantSessionsPage`, `SessionTraceabilityPage` (`/app/administrativo/chat/participantes/:codigoParticipante/sesiones[/:idSesion/trazabilidad]`) | Parcial: integración HTTP real implementada y probada con HTTP simulado; verificación contra el backend desplegado y código A7 de M08 pendientes (ver nota) |
 
 Nota RF-24 / RF-31 (terapia completada): un estudiante completa una sola vez cada árbol publicado (flujo y versión). Si `POST /chat/sesiones/iniciar` responde con `sesion.estado_actual = 'COMPLETADA'` (con `reanudada: false`), el backend no creó otra sesión: devuelve la sesión completada del árbol vigente con su nodo final e `historial_reciente`. `ChatEntryPage` muestra entonces «¡Has terminado tu terapia!», indica que las respuestas quedaron guardadas y que podrá comenzar otra conversación cuando se publique un nuevo árbol para su modalidad y perfil; no ofrece «Comenzar» ni «Continuar», solo «Ver conversación» (consulta de solo lectura en `ChatConversationPage`) y «Volver al inicio». El estado `COMPLETADA` prevalece sobre `reanudada`.
 
@@ -539,6 +540,64 @@ Nota RF-144 (exportación CSV): el botón «Exportar indicadores CSV» del detal
 - **Datos faltantes:** RF-132 es obligatorio (sin consolidar: 422 de FA3; con error: 500 de FA5). Si RF-134 no está disponible se exporta igualmente, con su estado `NO_DISPONIBLE` y sus valores «No disponible». Una vista desactualizada se exporta indicándolo en su columna de estado. La cohorte debe estar ACTIVA (422 de FA2). FA1 usa el 403 oficial.
 - **Auditoría y FA4:** en la demostración, la auditoría es simulada: si falla, la descarga se bloquea, pero no persiste nada y no cumple RF-123. Pedir `include_pii` o inyectar campos personales no cambia el CSV.
 - **Pendiente con el backend:** `GET /admin/cohortes/:id/exportacion.csv` con DTO de lista blanca (el frontend no debe ver datos crudos), auditoría síncrona previa al envío con usuario, sesión, IP, cohorte, estado, nombre y tamaño del archivo (también para intentos fallidos y denegados), respuesta 200 con CSV sanitizado y alerta en logs ante FA4, y confirmar el tipo del identificador de la cohorte (Integer en el Excel, UUID en el sistema).
+
+Nota RF-38 (trazabilidad administrativa de sesiones del chat; rama `feat/m03-rf38-trazabilidad-frontend-juan`; contrato del backend `Brisa-Backend/docs/CONTRATO_HU_TRAZABILIDAD_SESION.md`, PR #74, versión de la rama `feat/m03-rf38-trazabilidad-admin-juan`): interfaz de M08 para que Psicología consulte, en solo lectura, las sesiones conversacionales de un participante y la trazabilidad de cada una. Es la primera integración HTTP real del M08: no usa fuentes de demostración ni sustituye errores por datos ficticios.
+
+- **Rutas:** `/app/administrativo/chat/participantes/:codigoParticipante/sesiones` (`ParticipantSessionsPage`) y `/app/administrativo/chat/participantes/:codigoParticipante/sesiones/:idSesion/trazabilidad` (`SessionTraceabilityPage`), dentro de `RequireAuth(ADMINISTRATIVO)` → `AdminLayout`. La sección activa del menú es «Chat». Los enlaces se construyen con `utils/chatTraceabilityRoutes.js`, que valida el código A7 y el UUID; con un identificador inválido no hay enlace.
+- **Consumo HTTP** (`api/chatTraceability/`, `apiClient` con cookie y `toApiError`):
+  - `GET /chat/admin/participantes/{codigo}/sesiones` con `limite=20` y `cursor`. El cursor se envía tal cual, sin decodificarlo.
+  - `GET /chat/admin/sesiones/{id}/trazabilidad?codigo_participante=…`, siempre con el código, para que el backend compruebe la pertenencia de la sesión.
+  - Solo GET. No hay `X-Request-Id`, porque el generador vive en la feature `chat` y las features no se importan entre sí.
+  - La auditoría RF-123 la hace el backend; el frontend no la duplica.
+- **Validación y normalización** (servicios puros):
+  - `participantSessionsResponse.js` y `sessionTraceResponse.js` aplican listas explícitas de campos.
+  - Comprueban que `id_participante` (y `id_sesion` en la trazabilidad) sean los pedidos; si no, el estado es `MISMATCH` y no se muestra nada.
+  - Una estructura inválida o una secuencia repetida dan `INVALID_RESPONSE`, sin datos parciales.
+  - `total` no se confunde con los elementos cargados, y las sesiones SOS se conservan.
+  - Los registros se ordenan por `secuencia` ascendente.
+  - Solo un registro `VERIFICADO` sin motivo conserva `tipo_nodo`, `texto_nodo` y `etiqueta_respuesta`. Un `NO_VERIFICABLE`, o un valor desconocido, los descarta aunque lleguen.
+- **Presentación:**
+  - **Listado:** tarjetas con modalidad y estado (texto, ícono y color) y fechas en hora de Colombia dentro de `<time>`. El UUID es secundario. Muestra «Mostrando N de total» y «Cargar más sesiones» mientras haya `siguiente_cursor`.
+  - **Trazabilidad:** línea de tiempo vertical (`<ol>`) con:
+    - número de interacción y fecha;
+    - contenido verificado con su texto exacto, o una advertencia con el motivo traducido y su código, sin texto;
+    - tipo de entrada y valor registrado sin modificar (texto, número, booleano, lista, objeto como JSON, o `null`);
+    - etiquetas como explicación adicional;
+    - `CONTINUAR` con `null` presentado como avance sin respuesta;
+    - «Fin del flujo conversacional» si `id_nodo_destino` es `null`;
+    - datos técnicos plegados.
+  - Todo se pinta como texto con React, sin `dangerouslySetInnerHTML`.
+- **Errores** (por estado HTTP y `codigo`, nunca por texto; ADR-0004):
+
+  | Estado HTTP | Comportamiento |
+  | --- | --- |
+  | 400 | Solicitud no válida |
+  | 401 | Redirige a `/login`, como el chat |
+  | 403 | Acceso denegado |
+  | 404 `PARTICIPANTE_NO_ENCONTRADO` | Participante no encontrado |
+  | 404 `SESION_NO_ENCONTRADA` | Sesión no encontrada o no vinculada |
+  | 422 `HISTORIAL_INCONSISTENTE` | Historial no mostrado |
+  | 5xx | Consulta no disponible |
+  | Sin conexión | Texto D2 |
+
+  - Se muestra el `mensaje` del backend si llega. «Reintentar» solo aparece sin respuesta, ante un 5xx o una respuesta inválida, y siempre por acción del usuario.
+  - Un 401 o 403 al cargar más bloquea también lo ya mostrado. Otro error conserva lo cargado y ofrece reintento.
+- **Privacidad:**
+  - **Sin persistencia:** nada se guarda en `localStorage`, `sessionStorage` ni IndexedDB, no hay `console`, la URL lleva solo el código A7 y el UUID, y no hay precarga de otras sesiones.
+  - **Peticiones canceladas:** cada página se vuelve a montar por participante y sesión, cancela su petición (`AbortController`) y descarta respuestas tardías.
+  - **PWA:** sin `runtimeCaching`, solo precachea el app shell (C-PWA-2), y el backend responde `no-store`.
+  - **Sin escritura ni descarga:** no hay edición, eliminación, reenvío, descarga ni exportación.
+- **Dependencia del código A7 (M08):**
+  - Ninguna fuente real de M08 entrega hoy el código A7 auténtico. La ficha RF-128 está en «integración pendiente» y su demostración usa códigos ficticios `PART-XXXX`.
+  - La referencia `seg-…` de la ruta es opaca y no se convierte en código.
+  - `ParticipantSessionsLink` en la ficha solo aparece con un participante confirmado, una fuente real (ni demostración ni integración pendiente) y un código con formato `P-` y 8 hexadecimales. Hoy no se muestra en ningún modo.
+  - **Lo que debe suministrar la fuente real de la ficha:** el campo `code` con el seudónimo A7 de `administrativo.seudonimos_participante` del mismo participante consultado, autorizado y aislado como el resto de la ficha. Hasta entonces, las páginas solo son accesibles escribiendo la ruta con un código A7.
+- **RF-148:** `readOnlyRestriction.guard.test.jsx` sustituye la invariante temporal «el M08 aún no hace ninguna petición HTTP» por una lista explícita de adaptadores permitidos, como preveía. Solo están los dos de RF-38: en `api/`, solo `apiClient.get` y hacia `/chat/admin/`. Las reglas permanentes contra escrituras siguen vigentes, y `utils/chatTraceabilityRoutes.js` se declara como referencia de consulta.
+- **Estado:**
+  - **Implementado:** lo anterior.
+  - **Verificado con pruebas automatizadas** (Vitest en `node`, HTTP simulado): servicios, adaptadores, hooks (paginación, cancelación, respuestas tardías, reintento), páginas, línea de tiempo, enlace de la ficha y rutas protegidas.
+  - **Pendiente:** integración real contra el backend desplegado con una sesión administrativa de prueba (no se ejecutó: el PR #74 no está integrado y no había un ambiente autorizado), revisión visual en navegador (360, 768, 1024 y 1440 px) y fuente auténtica del código A7.
+  - **Limitaciones:** al volver de la trazabilidad, el listado se vuelve a pedir desde la primera página. Las interacciones de teclado y foco no tienen prueba automática (ADR-0002).
 
 Nota: en el Excel hay códigos duplicados o irregulares (RF-75 aparece en M05 y M07; `RF93` sin guion; RF-146 no aparece; títulos vacíos en RF-54, RF-55, RF-89, RF-90, RF-92; RF-109 y RF-110 con el mismo título). Se registran como **aclaraciones pendientes** (sección 7) y no se resuelven por suposición.
 
@@ -664,3 +723,4 @@ Aplicar SDD retroactivamente a todo el código sería inviable. Se adopta así:
 | v0.4 | 2026-11-22 | RF-39: trazabilidad del evento de sesión finalizada hacia M05 (backend revisado por lectura, comportamiento frontend existente e integración pendiente de validación). |
 | v0.5 | 2026-11-22 | RF-39B: trazabilidad del perfil clínico vigente para M05 (backend revisado por lectura, consumidor de prueba validado sin base de datos y verificación de la vista pendiente). |
 | v0.6 | 2026-11-22 | M08 Etapa 2: notas de RF-132, RF-133, RF-134, RF-140, RF-141 y RF-144 (solo frontend con datos de demostración), filas en la matriz de trazabilidad, coherencia de los datos de la Cohorte Piloto B y pendientes de integración con el backend. |
+| v0.7 | 2026-11-23 | RF-38: interfaz administrativa de trazabilidad de sesiones del chat (listado por seudónimo A7 y línea de tiempo), primera integración HTTP del M08, guarda RF-148 con lista de adaptadores permitidos y dependencia del código A7 auténtico de M08. |

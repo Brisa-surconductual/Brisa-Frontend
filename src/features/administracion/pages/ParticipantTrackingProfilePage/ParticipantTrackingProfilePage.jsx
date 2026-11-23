@@ -27,6 +27,7 @@ import { CohortNotice } from '../../components/CohortNotice/index.js';
 import { ConsumptionTrendBadge } from '../../components/ConsumptionTrendBadge/index.js';
 import { NarrativeProgressSection } from '../../components/NarrativeProgressSection/index.js';
 import { NotificationInteractionSection } from '../../components/NotificationInteractionSection/index.js';
+import { ParticipantSessionsLink } from '../../components/ParticipantSessionsLink/index.js';
 import { ProfileIndicator } from '../../components/ProfileIndicator/index.js';
 import { ReadOnlyNotice } from '../../components/ReadOnlyNotice/index.js';
 import { SectionErrorBoundary } from '../../components/SectionErrorBoundary/index.js';
@@ -34,7 +35,7 @@ import { StaleBadge, StaleDataNotice } from '../../components/StaleDataNotice/in
 import { TemporalLocationSection } from '../../components/TemporalLocationSection/index.js';
 import { isStale } from '../../services/dataFreshness.js';
 import { allowsDependentSections } from '../../services/profileSectionGate.js';
-import { getCohortTrackingPath } from '../../utils/cohortRoutes.js';
+import { getCohortTrackingPath, getParticipantTrackingPath } from '../../utils/cohortRoutes.js';
 import { formatAuditTimestamp } from '../../utils/formatAuditTimestamp.js';
 
 import { useAlertHistory } from './hooks/useAlertHistory.js';
@@ -127,6 +128,9 @@ function ParticipantTrackingProfile({ cohortId, reference }) {
   const updatedLabel = showProfile ? formatAuditTimestamp(profile.updatedAt) : null;
   const participantConfirmed = !isLoading && (status === PROFILE_STATUS.READY || status === PROFILE_STATUS.NO_PROFILE);
   const showCode = participantConfirmed && code;
+  // RF-38: acceso a las sesiones del chat solo con un código de una fuente
+  // real (nunca la demostración ni la referencia opaca de la ruta).
+  const authenticCode = participantConfirmed && !isDemo && !isIntegrationPending;
   // RF-149: la ficha degradada se muestra con su advertencia.
   const profileStale = participantConfirmed && isStale(freshness);
   // Las demás secciones se consultan salvo denegación o problema de identidad.
@@ -178,6 +182,12 @@ function ParticipantTrackingProfile({ cohortId, reference }) {
           que expone el módulo de seguimiento.
         </p>
       </header>
+
+      <ParticipantSessionsLink
+        participantCode={code}
+        authentic={authenticCode}
+        returnTo={cohortId && reference ? getParticipantTrackingPath(cohortId, reference) : null}
+      />
 
       {!isIntegrationPending && (
         <ReadOnlyNotice>
