@@ -155,6 +155,7 @@ describe('Registro de auditoría', () => {
     ['CONSULTA_PARTICIPANTE', 'Consulta de participante'],
     ['EXPORTACION_DATOS', 'Exportación de datos'],
     ['CONFIGURACION_UMBRALES', 'Configuración de umbrales'],
+    ['INTENTO_ESCRITURA_BLOQUEADO', 'Intento de escritura bloqueado'],
   ])('%s se presenta como «%s»', (action, label) => {
     const html = card({ id: 'x', action, resource: 'R', timestamp: '2026-03-09T14:32:05Z', status: 'EXITOSA' });
 

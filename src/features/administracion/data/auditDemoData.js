@@ -60,8 +60,8 @@ export const DEMO_AUDIT_RECORDS = Object.freeze([
   }),
   Object.freeze({
     id: 'demo-auditoria-5',
-    action: AUDIT_ACTION.PARTICIPANT_QUERY,
-    resource: 'Historial de alertas de un participante',
+    action: AUDIT_ACTION.BLOCKED_WRITE_ATTEMPT,
+    resource: 'Sesión de chat',
     timestamp: '2026-03-07T12:00:00.000Z',
     status: AUDIT_STATUS.DENIED,
   }),

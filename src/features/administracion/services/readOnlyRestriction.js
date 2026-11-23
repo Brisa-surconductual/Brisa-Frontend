@@ -12,13 +12,11 @@ import {
  *   - un estado HTTP verificable igual a 403, en `error.response.status`
  *     o `error.status` (si ambos existen y difieren, no es verificable);
  *   - el código ESCRITURA_NO_PERMITIDA, en `error.response.data.codigo`
- *     (cuerpo del servidor) o, si el servidor no envía código, en
- *     `error.code`. El cuerpo del servidor manda: axios rellena
- *     `error.code` con sus propios códigos (p. ej. ERR_BAD_REQUEST).
+ *     (cuerpo del servidor), en `error.codigo` tras normalizarlo con
+ *     `toApiError` o en `error.code` para adaptadores anteriores.
  *
  * Un 403 de CSRF o de acceso al módulo (RF-122), un código sin estado
- * o un mensaje que mencione el código no cuentan. Las variantes
- * admitidas son PROVISIONALES hasta confirmar la forma de ErrorApi.
+ * o un mensaje que mencione el código no cuentan.
  */
 function statusOf(error) {
   const fromResponse = error?.response?.status;
@@ -37,7 +35,8 @@ function codeOf(error) {
     return typeof fromBody === 'string' ? fromBody : null;
   }
 
-  return typeof error?.code === 'string' ? error.code : null;
+  const direct = error?.codigo ?? error?.code;
+  return typeof direct === 'string' ? direct : null;
 }
 
 export function isReadOnlyRejection(error) {

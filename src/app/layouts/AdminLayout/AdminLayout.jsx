@@ -4,6 +4,7 @@ import { LogOut, Menu, X } from 'lucide-react';
 
 import { useAuth } from '@/app/providers/index.js';
 
+import { ReadOnlyFeedback } from '@/features/administracion/components/ReadOnlyNotice/index.js';
 import { getRoleLabel } from '@/features/users/types/authTypes.js';
 
 import { BrisaLogo } from '@/shared/components/brand/BrisaLogo/index.js';
@@ -236,6 +237,7 @@ export function AdminLayout() {
         </header>
 
         <main id={CONTENT_ID} tabIndex={-1} className="min-w-0 flex-1 focus:outline-none">
+          <ReadOnlyFeedback key={location.key} />
           <Outlet />
         </main>
       </div>

@@ -9,12 +9,13 @@ import {
 import { DEMO_AUDIT_RECORDS } from './auditDemoData.js';
 
 describe('Catálogos de auditoría (RF-123)', () => {
-  it('las acciones son exactamente las cuatro de RF-123', () => {
+  it('reconoce las acciones de RF-123 y el bloqueo de RF-148', () => {
     expect(Object.values(AUDIT_ACTION)).toEqual([
       'ACCESO_MODULO',
       'CONSULTA_PARTICIPANTE',
       'EXPORTACION_DATOS',
       'CONFIGURACION_UMBRALES',
+      'INTENTO_ESCRITURA_BLOQUEADO',
     ]);
     expect(Object.isFrozen(AUDIT_ACTION)).toBe(true);
   });
@@ -25,7 +26,7 @@ describe('Catálogos de auditoría (RF-123)', () => {
 });
 
 describe('Registros ficticios de auditoría', () => {
-  it('cubren las cuatro acciones, una no clasificada y los tres estados', () => {
+  it('cubren las acciones conocidas, una no clasificada y los tres estados', () => {
     const actions = new Set(DEMO_AUDIT_RECORDS.map(({ action }) => action));
 
     for (const action of Object.values(AUDIT_ACTION)) expect(actions.has(action)).toBe(true);

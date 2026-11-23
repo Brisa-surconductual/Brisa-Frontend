@@ -110,39 +110,29 @@ describe('RF-148: límites del módulo administrativo', () => {
     expect(writers.filter(({ code }) => PROTECTED_RESOURCE.test(code)).map(({ name }) => name)).toEqual([]);
   });
 
-  /*
-   * Lista de adaptadores HTTP permitidos (sustituye a la invariante
-   * temporal «el M08 aún no hace ninguna petición HTTP»). La primera
-   * integración autorizada es RF-38: dos consultas GET de solo lectura a
-   * los endpoints administrativos del chat. Cohortes, participantes y
-   * auditoría siguen sin HTTP. Añadir un adaptador exige declararlo aquí;
-   * la regla permanente anterior sigue vigente.
-   */
-  const HTTP_ADAPTERS = Object.freeze([
-    'api/chatTraceability/fetchParticipantSessions.js',
-    'api/chatTraceability/fetchSessionTraceability.js',
-  ]);
-
-  it('solo los adaptadores autorizados de api/ hacen peticiones HTTP, y solo de lectura', () => {
+  it('limita el acceso HTTP del M08 a la lectura de bitácora y la observación de rechazos', () => {
     const http = SOURCES.filter(({ code }) =>
       /apiClient|from\s+['"]axios['"]|\bfetch\s*\(|XMLHttpRequest|navigator\.sendBeacon|new\s+WebSocket/.test(code),
     );
 
-    expect(http.map(({ name }) => name).sort()).toEqual([...HTTP_ADAPTERS].sort());
-    for (const { path, code } of http) {
-      expect(path.startsWith(API_DIR + sep)).toBe(true);
-      expect(code).not.toMatch(HTTP_WRITE);
-      expect(code).toMatch(/apiClient\.get\(\s*`\$\{CHAT\}\/admin\//);
-      expect(code).not.toMatch(/\bfetch\s*\(|XMLHttpRequest|sendBeacon|WebSocket/);
-    }
+    expect(http.map(({ name }) => name)).toEqual([
+      'api/listAuditRecords.js',
+      'api/observeReadOnlyRejections.js',
+    ]);
+    const { code } = http.find(({ name }) => name === 'api/observeReadOnlyRejections.js');
+    expect(code).toContain('apiClient.interceptors.response');
+    expect(code).not.toMatch(/apiClient\s*\(|apiClient\.(?:get|head|options|request)\s*\(/);
   });
 
-  it('el traductor de solo lectura no está conectado a las operaciones permitidas de cohortes y participantes', () => {
+  it('el traductor de solo lectura se usa en la observación HTTP y el aviso', () => {
     const users = SOURCES.filter(({ name, code }) =>
       /readOnlyRestriction/.test(code) && !/readOnlyRestriction\.js$/.test(name),
     ).map(({ name }) => name);
 
-    expect(users).toEqual(['components/ReadOnlyNotice/ReadOnlyNotice.jsx']);
+    expect(users).toEqual([
+      'api/observeReadOnlyRejections.js',
+      'components/ReadOnlyNotice/ReadOnlyNotice.jsx',
+    ]);
   });
 });
 

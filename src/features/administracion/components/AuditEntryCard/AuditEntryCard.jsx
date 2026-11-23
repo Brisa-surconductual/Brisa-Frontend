@@ -3,6 +3,7 @@ import {
   Clock,
   FileDown,
   LogIn,
+  LockKeyhole,
   SlidersHorizontal,
   UserSearch,
 } from 'lucide-react';
@@ -23,6 +24,7 @@ const ACTION_PRESENTATION = Object.freeze({
   [AUDIT_ACTION.PARTICIPANT_QUERY]: Object.freeze({ label: 'Consulta de participante', Icon: UserSearch }),
   [AUDIT_ACTION.DATA_EXPORT]: Object.freeze({ label: 'Exportación de datos', Icon: FileDown }),
   [AUDIT_ACTION.THRESHOLD_CONFIGURATION]: Object.freeze({ label: 'Configuración de umbrales', Icon: SlidersHorizontal }),
+  [AUDIT_ACTION.BLOCKED_WRITE_ATTEMPT]: Object.freeze({ label: 'Intento de escritura bloqueado', Icon: LockKeyhole }),
 });
 
 const TIME_ZONE_LABEL = 'hora de Colombia';
