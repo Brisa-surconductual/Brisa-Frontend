@@ -71,7 +71,7 @@ async function readList(path, mapRow) {
     throw problem;
   }
   if (!Array.isArray(data)) throw new Error('El listado de participantes no es válido.');
-  return data.map(mapRow);
+  return data.map((row) => mapRow(row));
 }
 
 export function listCohortParticipants(cohortId) {
