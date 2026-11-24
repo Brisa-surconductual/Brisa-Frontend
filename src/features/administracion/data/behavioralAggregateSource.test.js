@@ -14,6 +14,9 @@ import {
 } from './behavioralAggregateSource.js';
 import { resetDemoScenarios } from './demoScenarioTestEnv.js';
 
+const transport = vi.hoisted(() => ({ get: vi.fn() }));
+vi.mock('@/shared/utils/apiClient.jsx', () => ({ apiClient: transport }));
+
 // Tiempo real: la demostración se carga con import() dinámico.
 function enableDemo(scenario) {
   vi.stubEnv('DEV', true);
@@ -27,43 +30,100 @@ const view = async (cohortId = 'demo-cohorte-b') =>
     cohortId,
   );
 
-let fetchSpy;
-let xhrSpy;
-
 beforeEach(() => {
   resetDemoScenarios(vi);
-  fetchSpy = vi.fn(() => Promise.reject(new Error('Sin red en las pruebas')));
-  xhrSpy = vi.fn();
-  vi.stubGlobal('fetch', fetchSpy);
-  vi.stubGlobal('XMLHttpRequest', xhrSpy);
+  transport.get.mockReset();
 });
 
-afterEach(() => {
-  // La vista agregada no hace peticiones HTTP ni contacta servicios.
-  expect(fetchSpy).not.toHaveBeenCalled();
-  expect(xhrSpy).not.toHaveBeenCalled();
-  vi.unstubAllEnvs();
-  vi.unstubAllGlobals();
-});
+afterEach(() => vi.unstubAllEnvs());
 
-describe('Puerto de la vista agregada sin integración (RF-132)', () => {
+describe('Fuente real de RF-132', () => {
+  const id = 'cohorte-real';
+  const timestamp = '2026-11-23T11:10:00.000Z';
+  const disponible = {
+    id_cohorte: id,
+    estado: 'DISPONIBLE',
+    estado_agregacion: 'ACTUALIZADO',
+    ultimo_timestamp_disponible: timestamp,
+    motivo_sin_datos: null,
+    mensaje: null,
+    datos: { total_usuarios_activos: 3, tasa_adherencia_promedio: 0.7342184, id_usuario: 'interno' },
+  };
+  const desactualizada = {
+    ...disponible,
+    estado: 'DESACTUALIZADA',
+    estado_agregacion: 'ERROR_ACTUALIZACION',
+  };
+  const sinRespaldo = {
+    ...desactualizada,
+    estado: 'NO_DISPONIBLE',
+    ultimo_timestamp_disponible: null,
+    datos: null,
+  };
+  const error = (status, data) => ({ response: { status, data } });
+
   it.each([
     ['sin la variable', true, ''],
     ['en producción, aunque exista la variable', false, 'true'],
   ])(
-    '%s: integración pendiente y ningún dato ficticio',
+    '%s: consulta únicamente el endpoint del backend',
     async (_, dev, flag) => {
       vi.stubEnv('DEV', dev);
       vi.stubEnv('VITE_M08_DEMO', flag);
 
-      expect(getAggregateSourceMode()).toBe(
-        AGGREGATE_SOURCE_MODE.PENDING_INTEGRATION,
-      );
-      await expect(getBehavioralAggregate('demo-cohorte-b')).rejects.toThrow(
-        'no está integrada',
-      );
+      transport.get.mockResolvedValueOnce({ data: disponible });
+      expect(getAggregateSourceMode()).toBe(AGGREGATE_SOURCE_MODE.API);
+      const result = await view(id);
+      expect(transport.get).toHaveBeenCalledWith(`/admin/cohortes/${id}/vista-agregada`);
+      expect(result).toMatchObject({
+        status: S.READY,
+        data: { activeUsers: 3, averageAdherence: 0.7342184 },
+      });
+      expect(result.data).not.toHaveProperty('id_usuario');
     },
   );
+
+  it.each([
+    ['PENDIENTE', 'SIN_CONSOLIDAR', S.NOT_CONSOLIDATED],
+    ['ACTUALIZADO', 'AGREGADO_SUPRIMIDO', S.SUPPRESSED],
+  ])('interpreta la respuesta 200 con motivo %s/%s', async (estado_agregacion, motivo_sin_datos, status) => {
+    transport.get.mockResolvedValueOnce({
+      data: { ...sinRespaldo, estado_agregacion, motivo_sin_datos },
+    });
+    expect(await view(id)).toMatchObject({ status, data: null });
+  });
+
+  it('lee el cuerpo 503 y conserva el respaldo y su fecha', async () => {
+    transport.get.mockRejectedValueOnce(error(503, desactualizada));
+    expect(await view(id)).toMatchObject({
+      status: S.STALE,
+      lastAvailableAt: timestamp,
+      data: { activeUsers: 3, averageAdherence: 0.7342184 },
+    });
+  });
+
+  it('distingue el 503 de RF-132 sin respaldo de un error de infraestructura', async () => {
+    transport.get.mockRejectedValueOnce(error(503, sinRespaldo));
+    transport.get.mockRejectedValueOnce(error(503, '<html>Servicio no disponible</html>'));
+    expect(await view(id)).toMatchObject({ status: S.UNAVAILABLE, data: null });
+    await expect(getBehavioralAggregate(id)).rejects.toMatchObject({ status: 503 });
+  });
+
+  it('descarta un respaldo que declara una cohorte diferente', async () => {
+    transport.get.mockRejectedValueOnce(error(503, { ...desactualizada, id_cohorte: 'otra-cohorte' }));
+    expect(await view(id)).toMatchObject({ status: S.INCONSISTENT, data: null });
+  });
+
+  it('reconoce el 404 de cohorte activa y conserva el diagnóstico del servidor', async () => {
+    transport.get.mockRejectedValueOnce(error(404, {
+      codigo: 'COHORTE_ACTIVA_NO_ENCONTRADA', mensaje: 'La cohorte no está activa.',
+    }));
+    transport.get.mockRejectedValueOnce(error(404, { codigo: 'RUTA_NO_ENCONTRADA' }));
+    await expect(getBehavioralAggregate(id)).rejects.toMatchObject({
+      code: AGGREGATE_QUERY_ERROR.COHORT_NOT_FOUND, mensaje: 'La cohorte no está activa.',
+    });
+    await expect(getBehavioralAggregate(id)).rejects.toMatchObject({ status: 404, codigo: 'RUTA_NO_ENCONTRADA' });
+  });
 });
 
 describe('Puerto de la vista agregada en demostración (RF-132)', () => {
@@ -75,6 +135,7 @@ describe('Puerto de la vista agregada en demostración (RF-132)', () => {
   it('datos disponibles: la vista de la cohorte pedida, sin campos individuales', async () => {
     enableDemo();
     const raw = await getBehavioralAggregate('demo-cohorte-b');
+    expect(transport.get).not.toHaveBeenCalled();
     const result = interpretBehavioralAggregate(raw, 'demo-cohorte-b');
 
     // La fuente ficticia incluye campos individuales a propósito...

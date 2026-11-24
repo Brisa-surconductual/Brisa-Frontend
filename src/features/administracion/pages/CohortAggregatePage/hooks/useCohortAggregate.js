@@ -9,7 +9,7 @@ import {
   aggregateStatusFromError,
   interpretBehavioralAggregate,
 } from '../../../services/behavioralAggregateResponse.js';
-import { AGGREGATE_SOURCE_MODE } from '../../../types/behavioralAggregate.js';
+import { AGGREGATE_SOURCE_MODE, AGGREGATE_VIEW_STATUS } from '../../../types/behavioralAggregate.js';
 
 // Fuente actual; estable entre renders para no repetir la consulta.
 const DEFAULT_SOURCE = Object.freeze({
@@ -73,8 +73,11 @@ export function useCohortAggregate({ cohortId, source = DEFAULT_SOURCE } = {}) {
         );
         if (active) setView(interpreted);
       } catch (error) {
-        if (active)
-          setView({ status: aggregateStatusFromError(error), data: null });
+        if (active) {
+          const status = aggregateStatusFromError(error);
+          const message = status === AGGREGATE_VIEW_STATUS.NOT_FOUND ? error?.mensaje : null;
+          setView({ status, data: null, ...(message && { message }) });
+        }
       } finally {
         if (active) setIsLoading(false);
       }

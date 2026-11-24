@@ -1,6 +1,5 @@
 // Vista agregada conductual de una cohorte (RF-132, datos de M05 conforme
-// a RF-78). Valores del contrato de referencia suministrado para la
-// Etapa 2; el contrato productivo con el backend sigue sin definirse.
+// a RF-78).
 
 // `estado` de la respuesta.
 export const AGGREGATE_VIEW_STATE = Object.freeze({
@@ -50,6 +49,7 @@ export const AGGREGATE_QUERY_ERROR = Object.freeze({
 
 // Origen de los datos que ve la interfaz.
 export const AGGREGATE_SOURCE_MODE = Object.freeze({
+  API: 'API',
   DEMO: 'DEMO',
   PENDING_INTEGRATION: 'PENDING_INTEGRATION',
 });
