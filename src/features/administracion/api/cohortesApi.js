@@ -78,6 +78,20 @@ export async function listSchedules() {
   }));
 }
 
+export async function listScheduleUnits(scheduleId) {
+  const rows = await responseData(
+    apiClient.get(`/cronograma/obtener-unidades-temporales/${encodeURIComponent(scheduleId)}`),
+  );
+  if (!Array.isArray(rows)) {
+    throw new Error('El catálogo de unidades temporales no es válido.');
+  }
+  return rows.map((unit) => ({
+    id_unidad_temporal: unit?.idUnidadTemporal,
+    etiqueta: unit?.nombreUnidadTemporal,
+    orden: unit?.orden,
+  }));
+}
+
 export async function createCohort(values) {
   return toCohort(await responseData(apiClient.post(COHORTES, toPayload(values))));
 }

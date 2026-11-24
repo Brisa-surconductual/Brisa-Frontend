@@ -12,9 +12,11 @@ import {
   interpretCohortEvolution,
 } from '../../../services/cohortEvolutionResponse.js';
 import { AGGREGATE_SOURCE_MODE } from '../../../types/behavioralAggregate.js';
-import { EVOLUTION_QUERY_TIMEOUT_MS } from '../../../types/cohortEvolution.js';
+import {
+  EVOLUTION_MIN_UNITS,
+  EVOLUTION_QUERY_TIMEOUT_MS,
+} from '../../../types/cohortEvolution.js';
 
-// Fuente actual; estable entre renders para no repetir la consulta.
 const DEFAULT_SOURCE = Object.freeze({
   getMode: getEvolutionSourceMode,
   getCohort,
@@ -22,19 +24,6 @@ const DEFAULT_SOURCE = Object.freeze({
   getEvolution: getCohortEvolution,
 });
 
-/*
- * Evolución temporal de una cohorte (RF-141), solo consulta.
- *
- * Pide a la vez el catálogo de unidades del cronograma y la serie, cada
- * uno con su tiempo límite. Aquí se usa Promise.all A PROPÓSITO: RF-141
- * exige una serie completa y coherente, así que si cualquiera de las dos
- * consultas falla no se presenta nada (ni una serie parcial ni datos
- * conservados en caché, a diferencia del panel RF-140).
- *
- * `filters` queda preparado para RF-135 (aún no existe): se reenvía a la
- * fuente en cada consulta y no se guarda. La página se monta de nuevo al
- * cambiar de cohorte (key), así que nunca quedan datos de otra.
- */
 export function useCohortEvolution({
   cohortId,
   filters = null,
@@ -42,57 +31,49 @@ export function useCohortEvolution({
   timeoutMs = EVOLUTION_QUERY_TIMEOUT_MS,
 } = {}) {
   const [mode] = useState(() => source.getMode());
-  const isIntegrationPending =
-    mode === AGGREGATE_SOURCE_MODE.PENDING_INTEGRATION;
-
   const [cohort, setCohort] = useState(null);
   const [view, setView] = useState(null);
-  const [isLoading, setIsLoading] = useState(!isIntegrationPending);
+  const [isLoading, setIsLoading] = useState(true);
   const [attempt, setAttempt] = useState(0);
 
-  // Nombre de la cohorte para identificarla (no son datos de participantes).
   useEffect(() => {
-    if (isIntegrationPending) return undefined;
-
     let active = true;
-
-    source.getCohort(cohortId).then(
+    // El detalle identifica la cohorte de la cabecera y su cronograma.
+    const cohortRequest = withTimeout(
+      Promise.resolve().then(() => source.getCohort(cohortId)),
+      timeoutMs,
+    ).then((value) => (value?.id === cohortId ? value : null));
+    void cohortRequest.then(
       (value) => {
-        if (active) setCohort(value?.id === cohortId ? value : null);
+        if (active) setCohort(value);
       },
       () => {
         if (active) setCohort(null);
       },
     );
 
-    return () => {
-      active = false;
-    };
-  }, [attempt, cohortId, isIntegrationPending, source]);
-
-  useEffect(() => {
-    if (isIntegrationPending) return undefined;
-
-    let active = true;
-
     async function load() {
       setIsLoading(true);
       setView(null);
 
       try {
-        const [catalog, response] = await Promise.all([
-          withTimeout(
-            Promise.resolve().then(() => source.getUnits(cohortId)),
-            timeoutMs,
+        const response = await withTimeout(
+          Promise.resolve().then(() =>
+            source.getEvolution(cohortId, { filters }),
           ),
-          withTimeout(
-            Promise.resolve().then(() =>
-              source.getEvolution(cohortId, { filters }),
-            ),
+          timeoutMs,
+        );
+        const ids = response?.serie_unidades_temporales;
+        let catalog = [];
+        // El catálogo solo es necesario cuando se van a presentar las unidades.
+        if (active && Array.isArray(ids) && ids.length >= EVOLUTION_MIN_UNITS) {
+          const currentCohort = await cohortRequest;
+          if (!active) return;
+          catalog = await withTimeout(
+            source.getUnits(cohortId, currentCohort),
             timeoutMs,
-          ),
-        ]);
-
+          );
+        }
         if (active) {
           setView(interpretCohortEvolution(response, catalog, cohortId));
         }
@@ -106,18 +87,16 @@ export function useCohortEvolution({
     }
 
     void load();
-
     return () => {
       active = false;
     };
-  }, [attempt, cohortId, filters, isIntegrationPending, source, timeoutMs]);
+  }, [attempt, cohortId, filters, source, timeoutMs]);
 
   return {
     cohort,
     view,
     isLoading,
     isDemo: mode === AGGREGATE_SOURCE_MODE.DEMO,
-    isIntegrationPending,
     retry: () => setAttempt((value) => value + 1),
   };
 }

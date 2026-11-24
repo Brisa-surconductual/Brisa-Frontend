@@ -25,7 +25,11 @@ function isDegradedView(data) {
   );
 }
 
-async function getCohortAggregateFromApi(cohortId, path) {
+async function getCohortAggregateFromApi(
+  cohortId,
+  path,
+  { acceptBackup = true } = {},
+) {
   try {
     const { data } = await apiClient.get(
       `/admin/cohortes/${encodeURIComponent(cohortId)}/${path}`,
@@ -34,7 +38,11 @@ async function getCohortAggregateFromApi(cohortId, path) {
   } catch (error) {
     const response = error?.response;
     // Las vistas agregadas conservan la envoltura en 503. El intérprete valida la cohorte.
-    if (response?.status === 503 && isDegradedView(response.data))
+    if (
+      acceptBackup &&
+      response?.status === 503 &&
+      isDegradedView(response.data)
+    )
       return response.data;
 
     const problem = toApiError(error);
@@ -60,4 +68,10 @@ export function getNarrativeAggregateFromApi(cohortId) {
 
 export function getNotificationAggregateFromApi(cohortId) {
   return getCohortAggregateFromApi(cohortId, 'vistas/notificaciones');
+}
+
+export function getCohortEvolutionFromApi(cohortId) {
+  return getCohortAggregateFromApi(cohortId, 'evolucion', {
+    acceptBackup: false,
+  });
 }

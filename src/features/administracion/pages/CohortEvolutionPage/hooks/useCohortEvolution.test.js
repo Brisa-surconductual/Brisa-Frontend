@@ -40,8 +40,12 @@ const RESPONSE = Object.freeze({
 
 function source(changes = {}) {
   return {
-    getMode: () => AGGREGATE_SOURCE_MODE.DEMO,
-    getCohort: vi.fn().mockResolvedValue({ id: 'c-1', name: 'Cohorte' }),
+    getMode: () => AGGREGATE_SOURCE_MODE.API,
+    getCohort: vi.fn().mockResolvedValue({
+      id: 'c-1',
+      name: 'Cohorte',
+      scheduleId: 'schedule-1',
+    }),
     getUnits: vi.fn().mockResolvedValue(DEMO_SCHEDULE_1_UNITS),
     getEvolution: vi.fn().mockResolvedValue(RESPONSE),
     ...changes,
@@ -66,7 +70,11 @@ describe('useCohortEvolution (RF-141)', () => {
     useCohortEvolution({ cohortId: 'c-1', source: fuente });
     await flush();
 
-    expect(fuente.getUnits).toHaveBeenCalledWith('c-1');
+    expect(fuente.getCohort).toHaveBeenCalledExactlyOnceWith('c-1');
+    expect(fuente.getUnits).toHaveBeenCalledExactlyOnceWith(
+      'c-1',
+      expect.objectContaining({ scheduleId: 'schedule-1' }),
+    );
     expect(fuente.getEvolution).toHaveBeenCalledWith('c-1', { filters: null });
     expect(lastView()).toMatchObject({ status: S.READY });
     expect(lastView().units.map(({ label }) => label)).toEqual([
@@ -86,12 +94,16 @@ describe('useCohortEvolution (RF-141)', () => {
 
   it('si M05 no responde, ninguna serie parcial', async () => {
     const fuente = source({
-      getEvolution: vi.fn().mockRejectedValue({ code: 'M05_UNAVAILABLE' }),
+      getEvolution: vi.fn().mockRejectedValue({
+        status: 503,
+        codigo: 'SEGUIMIENTO_NO_DISPONIBLE',
+      }),
     });
     useCohortEvolution({ cohortId: 'c-1', source: fuente });
     await flush();
 
     expect(lastView()).toEqual({ status: S.UNAVAILABLE, units: [] });
+    expect(fuente.getUnits).not.toHaveBeenCalled();
   });
 
   it('si falla el catálogo de unidades, tampoco hay serie', async () => {
@@ -122,15 +134,28 @@ describe('useCohortEvolution (RF-141)', () => {
     expect(react.setters[VIEW].mock.calls[0][0]).toBeNull();
   });
 
-  it('con la integración pendiente no consulta nada', async () => {
+  it('con una sola unidad muestra el estado funcional aunque falle el detalle de cohorte', async () => {
     const fuente = source({
-      getMode: () => AGGREGATE_SOURCE_MODE.PENDING_INTEGRATION,
+      getCohort: vi
+        .fn()
+        .mockRejectedValue(new Error('No se pudo cargar el detalle')),
+      getEvolution: vi.fn().mockResolvedValue({
+        ...RESPONSE,
+        serie_unidades_temporales: [IDS[0]],
+        serie_adherencia_promedio: [null],
+        serie_nivel_progreso_distribucion: [{}],
+        serie_craving_promedio: [null],
+        unidades_con_datos_insuficientes: [IDS[0]],
+      }),
     });
     const result = useCohortEvolution({ cohortId: 'c-1', source: fuente });
     await flush();
 
-    expect(result.isIntegrationPending).toBe(true);
-    expect(fuente.getEvolution).not.toHaveBeenCalled();
+    expect(result.isLoading).toBe(true);
+    expect(lastView()).toMatchObject({
+      status: S.INSUFFICIENT_UNITS,
+      units: [],
+    });
     expect(fuente.getUnits).not.toHaveBeenCalled();
   });
 });
