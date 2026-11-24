@@ -459,7 +459,7 @@ Leyenda de estado: **Cubierto** (UI + contrato + pruebas) · **Parcial** (falta 
 | RF-25C | Consulta de árboles personalizados | `chat` · `PersonalizedTreesPage` | Parcial: solo consulta, sin HTTP |
 | RF-26 a RF-29 | Mensajes, entradas estructuradas, validación, transición | `chat` (`types/`, `services/`) | Pendiente |
 | RF-30 a RF-35 | Persistencia, estado, recuperación, multimedia, offline, sincronización | `chat` | Pendiente |
-| RF-43 | Botón SOS Craving | `chat` | Pendiente (esbozo en contrato) |
+| RF-43 | Botón SOS Craving | `chat` · `SosButton` (global en `StudentLayout`), `SosInterventionPage` (`/app/estudiante/sos`), `services/sos/` | Parcial: MVP frontend implementado y probado con HTTP simulado; integración contra el backend desplegado y medición de < 300 ms en navegador pendientes (ver nota) |
 | RF-40 a RF-52, RF-103 | Diario | `diario` (por crear) | Pendiente |
 | RF-53 a RF-83 | Seguimiento | `seguimiento` (por crear) | Pendiente / mayormente backend |
 | RF-104 a RF-121 | Gamificación y storytelling (usa `--accent-*`) | `gamificacion` (por crear) | Pendiente |
@@ -599,6 +599,70 @@ Nota RF-38 (trazabilidad administrativa de sesiones del chat; rama `feat/m03-rf3
   - **Pendiente:** integración real contra el backend desplegado con una sesión administrativa de prueba (no se ejecutó: el PR #74 no está integrado y no había un ambiente autorizado), revisión visual en navegador (360, 768, 1024 y 1440 px) y fuente auténtica del código A7.
   - **Limitaciones:** al volver de la trazabilidad, el listado se vuelve a pedir desde la primera página. Las interacciones de teclado y foco no tienen prueba automática (ADR-0002).
 
+Nota RF-43 (botón SOS «Tengo ganas de vapear», MVP; rama `feat/m03-rf43-sos-craving-juan`; contrato del backend `Brisa-Backend/docs/CONTRATO_RF43_SOS_CRAVING.md`, estado BORRADOR, rama `develop`): el estudiante abre con un toque una intervención breve de autorregulación. El backend fija el límite, decide el estado final y registra la duración.
+
+- **Botón global:** `components/SosButton` se monta una sola vez en `StudentLayout`. Por eso solo existe bajo la guarda `ESTUDIANTE`: nunca aparece para administrativos ni sin sesión.
+  - En móvil flota sobre la barra inferior sin taparla, y `main` reserva su alto para no cubrir el final de la página.
+  - Lleva el texto visible «Tengo ganas de vapear», ícono `LifeBuoy` y foco visible.
+  - No se muestra dentro de `/app/estudiante/sos`.
+  - Un toque, sin confirmación: el `POST /chat/sos/activar` sale en el mismo evento y la pantalla SOS se abre de inmediato en estado «Abriendo…».
+  - El doble toque se bloquea con un candado síncrono y con el almacén `services/sos/intervencionSosActual.js`, que guarda una intervención por pestaña y solo en memoria. Con una intervención en curso, otro toque vuelve a ella sin activar otra.
+  - Al desmontarse el layout (cierre de sesión) la intervención se descarta.
+- **Apariencia y arrastre del botón:** el botón es rojo (`#C62828`, tokens `--sos-*` en `tokens.css`), con texto e ícono blancos (5,6:1) y estados de hover, active, foco y deshabilitado. No cambia la paleta de los demás botones.
+  - Se arrastra con Pointer Events (mouse, toque y lápiz). Un desplazamiento de menos de 8 px es un toque y activa el SOS; uno mayor es un arrastre que mueve el botón y anula el `click` que le sigue.
+  - Al soltarlo se ajusta al borde horizontal más cercano.
+  - Queda siempre dentro de la pantalla, sin tapar el encabezado ni la barra inferior móvil (`data-sos-limite`) y respetando las áreas seguras.
+  - La posición se recalcula al cambiar el tamaño o la orientación de la pantalla y se conserva en memoria al navegar.
+  - Con el teclado, las flechas lo mueven; Enter y Espacio siguen activándolo.
+  - Por debajo de 340 px el texto queda solo para el lector de pantalla.
+  - Lógica pura en `components/SosButton/posicionSosButton.js`; medición del DOM en `useSosButtonPosition.js`.
+- **Contexto de origen:** `services/sos/contextoOrigenSos.js` arma `{ modulo, ruta, estado: null }`.
+  - `modulo` se deduce de la ruta (`CHAT`, `CONTENIDO`, `CRONOGRAMA`, `DIARIO`, `PERFIL` u `OTRO`).
+  - `ruta` es la ruta interna con su consulta, sin fragmento.
+  - `estado` va siempre `null`: ninguna pantalla del estudiante expone hoy un estado restaurable (borradores, paso o desplazamiento). Restaurarlo exigiría cambios en otros módulos, fuera del alcance.
+  - Nunca se envían respuestas, datos personales ni tokens.
+- **Intervención:** `services/sos/controladorSos.js` es una máquina de estados sin React, con la API y el reloj inyectables. La página `SosInterventionPage` solo se suscribe a ella.
+  - Reutiliza `ChatNodeMessage`, `NodeInputForm`, `crearCuerpo` (cuerpo RF-30 completo: `id_interaccion`, `secuencia`, `tipo_entrada`, `valor`, hora y conectividad), `mapNodoActual`, `enviarRespuesta` y `obtenerNodoActual`. El motor del chat normal no cambia.
+  - Tras cada respuesta se pide el nodo actual de la sesión SOS (RF-26).
+- **Cuenta regresiva:** `services/sos/tiempoSos.js`. La duración sale de `fin_maximo_servidor − inicio_servidor`; el cliente nunca supone 60 s.
+  - La cuenta se ancla al envío del POST: se descuenta la latencia y el tiempo mostrado nunca supera al del servidor.
+  - Solo se usan duraciones, no la hora absoluta del dispositivo, así que el desfase del reloj local no influye.
+  - El tiempo transcurrido es el mayor entre el reloj monotónico y el de pared. Así funciona con la pestaña oculta, con el equipo suspendido y con un cambio de hora.
+  - La cuenta se recalcula cada 250 ms y al volver a la pestaña (`visibilitychange`, `pageshow` y `focus`).
+  - Agotado el tiempo no se envían más respuestas y se pide el cierre `TIEMPO_AGOTADO` una sola vez.
+- **Cierre obligatorio:** `POST /chat/sos/:id_intervencion/finalizar`. Se pide una sola vez por intervención.
+  - Motivos: `COMPLETADA` al presentarse el nodo final, o cuando la respuesta confirma `estado_sesion: COMPLETADA` aunque el último nodo no se pueda pedir; `CERRADA_POR_USUARIO` con «Terminar el ejercicio»; `TIEMPO_AGOTADO` al agotarse la cuenta o con 409 `TIEMPO_AGOTADO` al responder.
+  - Se muestran `estado` y `duracion_segundos` tal cual: el cliente no calcula ni sobrescribe la duración.
+  - Con 409 `INTERVENCION_FINALIZADA` o 404 `INTERVENCION_NO_ENCONTRADA` se muestra «No pudimos confirmar cómo terminó el ejercicio.» y el mensaje del backend. No se inventa un cierre exitoso.
+  - Sin conexión o con 5xx se ofrece reintentar con el mismo motivo.
+  - Una respuesta que llega con la intervención ya cerrada se descarta.
+- **Recursos de apoyo:** al terminar, o si falla el cierre, se muestran los `recursos_apoyo` recibidos al activar, sin agregar nombres ni números propios. Solo un número marcable lleva enlace `tel:` (con `aria-label`); `POR_CONFIRMAR` u otro texto se muestra sin enlace.
+- **Retorno:** `services/sos/retornoSos.js`. Manda lo que devuelve el cierre (`contexto_retorno`, `sesion_pausada`); si no llegó, se usa lo conocido de la activación.
+  - Toda ruta se valida: debe ser interna de `/app/estudiante`, sin `//`, `\`, `..` ni fragmento, y nunca la propia pantalla SOS. En otro caso se vuelve al inicio del estudiante.
+  - Si el estudiante venía del chat y había una sesión pausada, se llama a `POST /chat/sesiones/iniciar` (RF-32) y se comprueba que sea la misma sesión y el mismo `id_nodo_actual`. Si coinciden, se abre con los datos en memoria (`recordarInicioSesion`); si no, se avisa antes de abrir la que entregó el backend.
+  - Desde otro módulo se restaura su ruta y la sesión sigue en pausa hasta que RF-32 la retome. Sin sesión previa no se crea ninguna.
+- **Errores y privacidad:** se decide por `status` y `codigo` y se muestra el `mensaje` del backend (ADR-0004).
+  - Ante un 401 se redirige a `/login`.
+  - 403 `CSRF_INVALIDO`, 404 `SIN_FLUJO_SOS` y 409 `INTERVENCION_EN_CURSO` se muestran sin reintento automático. El 409 explica que el ejercicio no se puede continuar en esa pestaña.
+  - Sin conexión o con 5xx se puede reintentar.
+  - Un 400 al responder deja el formulario editable; la siguiente respuesta lleva otro `id_interaccion`.
+  - Otros conflictos al responder bloquean las respuestas y solo queda cerrar.
+  - Nada se guarda en `localStorage`, `sessionStorage` ni en el historial del navegador, y no hay `console.log`. No se muestra el perfil clínico.
+- **Medición (objetivo < 300 ms):** `services/sos/medicionSos.js` registra marcas de User Timing para «toque → interfaz SOS visible» (`brisa-sos:toque-a-interfaz`, medida en el siguiente cuadro con `requestAnimationFrame`) y «toque → nodo real del backend» (`brisa-sos:toque-a-nodo`). Para leerlas en DevTools: `performance.getEntriesByType('measure').filter((m) => m.name.startsWith('brisa-sos:'))`. **No se ha medido todavía en un navegador.**
+- **Huecos del contrato (aclaraciones pendientes):**
+  1. No hay un endpoint para recuperar una intervención en curso. Tras F5 o en otra pestaña, la activación responde 409 `INTERVENCION_EN_CURSO` solo con `id_intervencion` y `fin_maximo_servidor`, sin `id_sesion_sos`, nodo ni recursos, así que el ejercicio no se puede continuar. Termina con el cierre automático del backend (`EXPIRADA`).
+  2. El 404 `SIN_FLUJO_SOS` no trae `recursos_apoyo`: en ese caso solo se muestra el mensaje del backend.
+  3. Tras un fallo de red en la activación, el reintento puede recibir 409 si el primer POST sí llegó (mismo caso que 1).
+  4. Si el nodo inicial del flujo ya es terminal, el cierre `COMPLETADA` queda `INCOMPLETA`: la función SQL exige que la sesión SOS esté `COMPLETADA`, y eso solo ocurre al responder.
+  5. Según el contrato, hasta regenerar el cliente Prisma, `GET /chat/sesiones/:id/nodo-actual` podría no leer sesiones con `modalidad = SOS`. Hay que confirmarlo en el ambiente integrado.
+  6. `/iniciar` puede devolver otra sesión o recuperar el puntero desde el historial. El frontend lo detecta y avisa, pero no puede impedir que el backend cree una sesión nueva.
+  7. Si el estudiante sale de la pantalla SOS a mitad del ejercicio, la cuenta no corre fuera de ella. Al volver con el botón se cierra como `TIEMPO_AGOTADO` si ya venció, o la cierra el backend.
+- **Estado:**
+  - **Implementado:** lo anterior.
+  - **Verificado con pruebas automatizadas** (Vitest en `node`, HTTP simulado): adaptadores, controlador (activación, RF-30, nodo final y `COMPLETADA`, cierre anticipado, expiración, latencia, desfase y suspensión, respuestas tardías, 400, 401, 404, 409 y red), almacén, retorno y reanudación, botón, página, layouts y router.
+  - **Pendiente:** integración contra el backend desplegado con un estudiante de prueba. Incluye activar a mitad de sesión y recuperar el mismo nodo, completar dentro de 60 s, y cerrar hacia los 15 s comprobando `INCOMPLETA` y la duración real. También queda pendiente la medición de < 300 ms en navegador y la revisión visual (360, 768 y 1024 px).
+  - **Limitaciones:** el hook de la página no tiene prueba propia (ADR-0002, sin DOM). Su lógica está en servicios probados.
+
 Nota: en el Excel hay códigos duplicados o irregulares (RF-75 aparece en M05 y M07; `RF93` sin guion; RF-146 no aparece; títulos vacíos en RF-54, RF-55, RF-89, RF-90, RF-92; RF-109 y RF-110 con el mismo título). Se registran como **aclaraciones pendientes** (sección 7) y no se resuelven por suposición.
 
 ---
@@ -724,3 +788,5 @@ Aplicar SDD retroactivamente a todo el código sería inviable. Se adopta así:
 | v0.5 | 2026-11-22 | RF-39B: trazabilidad del perfil clínico vigente para M05 (backend revisado por lectura, consumidor de prueba validado sin base de datos y verificación de la vista pendiente). |
 | v0.6 | 2026-11-22 | M08 Etapa 2: notas de RF-132, RF-133, RF-134, RF-140, RF-141 y RF-144 (solo frontend con datos de demostración), filas en la matriz de trazabilidad, coherencia de los datos de la Cohorte Piloto B y pendientes de integración con el backend. |
 | v0.7 | 2026-11-23 | RF-38: interfaz administrativa de trazabilidad de sesiones del chat (listado por seudónimo A7 y línea de tiempo), primera integración HTTP del M08, guarda RF-148 con lista de adaptadores permitidos y dependencia del código A7 auténtico de M08. |
+| v0.8 | 2026-11-23 | RF-43: botón SOS global del estudiante, pantalla de intervención con cuenta regresiva del servidor, cierre obligatorio por motivo, recursos de apoyo, retorno a la actividad anterior y huecos del contrato. |
+| v0.9 | 2026-11-23 | RF-43: botón SOS rojo con token propio y arrastrable (puntero y teclado), con ajuste al borde y límites de pantalla. |

@@ -10,3 +10,4 @@ export * from './tipoBloque.js';
 export * from './estadoRender.js';
 export * from './operacionOffline.js';
 export * from './sincronizacion.js';
+export * from './sos.js';

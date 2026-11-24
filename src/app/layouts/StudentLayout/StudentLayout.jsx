@@ -1,6 +1,7 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { LogOut } from 'lucide-react';
 
+import { SosButton } from '@/features/chat/components/SosButton/index.js';
 import { BrisaLogo } from '@/shared/components/brand/BrisaLogo/index.js';
 import { useLogoutHandler } from '@/shared/hooks/useLogoutHandler.jsx';
 
@@ -55,6 +56,8 @@ function StudentBottomBar({ activeSection }) {
   return (
     <nav
       aria-label="Navegación del estudiante"
+      // RF-43: límite inferior del botón SOS arrastrable (solo en móvil).
+      data-sos-limite="inferior"
       className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--surface-border)] bg-[var(--surface-card)] pb-[env(safe-area-inset-bottom)] md:hidden"
     >
       <ul className={`m-0 grid list-none grid-cols-2 p-0 ${BOTTOM_BAR_HEIGHT}`}>
@@ -102,7 +105,8 @@ export function StudentLayout() {
         Saltar al contenido
       </a>
 
-      <header className="sticky top-0 z-30 border-b border-[var(--surface-border)] bg-[var(--surface-card)]">
+      {/* RF-43: el botón SOS arrastrable no puede tapar el encabezado. */}
+      <header data-sos-limite="superior" className="sticky top-0 z-30 border-b border-[var(--surface-border)] bg-[var(--surface-card)]">
         <div className="mx-auto flex min-h-[64px] w-full max-w-[1040px] items-center gap-[var(--space-4)] px-[var(--space-4)] md:min-h-[72px] md:px-[var(--space-6)]">
           <BrisaLogo />
 
@@ -127,7 +131,14 @@ export function StudentLayout() {
         className="mx-auto w-full max-w-[1040px] flex-1 px-[var(--space-4)] pt-[var(--space-6)] pb-[calc(64px+env(safe-area-inset-bottom)+var(--space-6))] focus:outline-none md:px-[var(--space-6)] md:pt-[var(--space-8)] md:pb-[var(--space-10)]"
       >
         <Outlet />
+
+        {/* RF-43: hueco del botón SOS flotante, para que no tape el final
+            de la página (p. ej. el botón «Continuar» del chat). */}
+        <div aria-hidden="true" className="h-[64px] md:h-[72px]" />
       </main>
+
+      {/* RF-43: botón SOS global del estudiante. */}
+      <SosButton />
 
       <StudentBottomBar activeSection={activeSection} />
     </div>
