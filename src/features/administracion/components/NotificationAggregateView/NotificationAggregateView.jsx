@@ -2,21 +2,14 @@ import {
   AlertTriangle,
   BellOff,
   ClockAlert,
-  CloudOff,
-  EyeOff,
   Hourglass,
   Info,
   Lock,
   MailCheck,
   MailOpen,
   MousePointerClick,
-  RefreshCw,
-  SearchX,
   Send,
-  ShieldAlert,
 } from 'lucide-react';
-
-import { Button } from '@/shared/components/ui/Button/index.js';
 
 import {
   AGGREGATE_VIEW_STATUS,
@@ -24,6 +17,7 @@ import {
 } from '../../types/behavioralAggregate.js';
 import { formatAuditTimestamp } from '../../utils/formatAuditTimestamp.js';
 import { AggregateMetric } from '../AggregateMetric/index.js';
+import { AggregateViewNotice } from '../AggregateViewNotice/AggregateViewNotice.jsx';
 import { CohortNotice } from '../CohortNotice/index.js';
 import { StaleDataNotice } from '../StaleDataNotice/index.js';
 
@@ -42,6 +36,9 @@ import { StaleDataNotice } from '../StaleDataNotice/index.js';
 
 // Textos de RF-134 cuando la fuente no envía `mensaje`.
 const DEFAULT_TEXT = Object.freeze({
+  pendingTitle: 'Métricas aún no consolidadas',
+  unavailableTitle: 'Vista de notificaciones no disponible',
+  errorTitle: 'No pudimos cargar la vista de notificaciones',
   NOT_CONSOLIDATED:
     'La cohorte todavía no cuenta con métricas de efectividad de notificaciones consolidadas. La vista se mostrará cuando existan envíos registrados en la cohorte.',
   UNAVAILABLE:
@@ -59,15 +56,6 @@ const COUNT_FORMAT = new Intl.NumberFormat('es-CO', {
 const RATE_FORMAT = new Intl.NumberFormat('es-CO', {
   maximumFractionDigits: 20,
 });
-
-function RetryButton({ onRetry }) {
-  return (
-    <Button variant="secondary" onClick={onRetry}>
-      <RefreshCw size={14} strokeWidth={2} aria-hidden="true" />
-      Reintentar
-    </Button>
-  );
-}
 
 function GroupTitle({ children }) {
   return (
@@ -249,82 +237,7 @@ export function NotificationAggregateView({ view, isDemo, onRetry }) {
         </>
       );
 
-    case AGGREGATE_VIEW_STATUS.NOT_CONSOLIDATED:
-      return (
-        <CohortNotice
-          tone="neutral"
-          icon={Hourglass}
-          title="Métricas aún no consolidadas"
-          role="status"
-        >
-          {message ?? DEFAULT_TEXT.NOT_CONSOLIDATED}
-        </CohortNotice>
-      );
-
-    case AGGREGATE_VIEW_STATUS.SUPPRESSED:
-      return (
-        <CohortNotice
-          tone="neutral"
-          icon={EyeOff}
-          title="Vista no mostrada por privacidad"
-          role="status"
-        >
-          {message ?? DEFAULT_TEXT.SUPPRESSED}
-        </CohortNotice>
-      );
-
-    case AGGREGATE_VIEW_STATUS.UNAVAILABLE:
-      return (
-        <CohortNotice
-          tone="warning"
-          icon={CloudOff}
-          title="Vista de notificaciones no disponible"
-          role="alert"
-          action={<RetryButton onRetry={onRetry} />}
-        >
-          {DEFAULT_TEXT.UNAVAILABLE}
-        </CohortNotice>
-      );
-
-    case AGGREGATE_VIEW_STATUS.INCONSISTENT:
-      return (
-        <CohortNotice
-          tone="danger"
-          icon={ShieldAlert}
-          title="Vista no mostrada"
-          role="alert"
-          action={<RetryButton onRetry={onRetry} />}
-        >
-          La información recibida no corresponde a la cohorte solicitada. Por
-          seguridad no se muestra.
-        </CohortNotice>
-      );
-
-    case AGGREGATE_VIEW_STATUS.NOT_FOUND:
-      return (
-        <CohortNotice
-          tone="neutral"
-          icon={SearchX}
-          title={
-            message ? 'Cohorte activa no disponible' : 'Cohorte no encontrada'
-          }
-          role="alert"
-        >
-          {message ?? 'La cohorte solicitada no existe en el sistema.'}
-        </CohortNotice>
-      );
-
     default:
-      return (
-        <CohortNotice
-          tone="danger"
-          icon={AlertTriangle}
-          title="No pudimos cargar la vista de notificaciones"
-          role="alert"
-          action={<RetryButton onRetry={onRetry} />}
-        >
-          {DEFAULT_TEXT.ERROR}
-        </CohortNotice>
-      );
+      return <AggregateViewNotice view={view} copy={DEFAULT_TEXT} onRetry={onRetry} />;
   }
 }

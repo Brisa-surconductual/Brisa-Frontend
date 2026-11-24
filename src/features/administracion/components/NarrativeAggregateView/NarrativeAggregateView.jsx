@@ -2,20 +2,13 @@ import {
   AlertTriangle,
   Award,
   ClockAlert,
-  CloudOff,
-  EyeOff,
   GraduationCap,
   Hourglass,
   Info,
   Lock,
-  RefreshCw,
-  SearchX,
-  ShieldAlert,
   Trophy,
   UsersRound,
 } from 'lucide-react';
-
-import { Button } from '@/shared/components/ui/Button/index.js';
 
 import {
   AGGREGATE_VIEW_STATUS,
@@ -24,6 +17,7 @@ import {
 import { NARRATIVE_PHASE } from '../../types/narrativeAggregate.js';
 import { formatAuditTimestamp } from '../../utils/formatAuditTimestamp.js';
 import { AggregateMetric } from '../AggregateMetric/index.js';
+import { AggregateViewNotice } from '../AggregateViewNotice/AggregateViewNotice.jsx';
 import { CohortNotice } from '../CohortNotice/index.js';
 import { StaleDataNotice } from '../StaleDataNotice/index.js';
 
@@ -39,6 +33,9 @@ import { StaleDataNotice } from '../StaleDataNotice/index.js';
 
 // Textos de RF-133 cuando la fuente no envía `mensaje`.
 const DEFAULT_TEXT = Object.freeze({
+  pendingTitle: 'Progresión narrativa aún no consolidada',
+  unavailableTitle: 'Vista narrativa no disponible',
+  errorTitle: 'No pudimos cargar la vista narrativa',
   NOT_CONSOLIDATED:
     'La cohorte todavía no cuenta con progresión narrativa consolidada. La vista se mostrará cuando existan perfiles narrativos activos en la cohorte.',
   UNAVAILABLE:
@@ -58,15 +55,6 @@ const PHASE_LABEL = Object.freeze({
 const COUNT_FORMAT = new Intl.NumberFormat('es-CO', {
   maximumFractionDigits: 0,
 });
-
-function RetryButton({ onRetry }) {
-  return (
-    <Button variant="secondary" onClick={onRetry}>
-      <RefreshCw size={14} strokeWidth={2} aria-hidden="true" />
-      Reintentar
-    </Button>
-  );
-}
 
 function GroupTitle({ children }) {
   return (
@@ -276,82 +264,7 @@ export function NarrativeAggregateView({ view, isDemo, onRetry }) {
         </>
       );
 
-    case AGGREGATE_VIEW_STATUS.NOT_CONSOLIDATED:
-      return (
-        <CohortNotice
-          tone="neutral"
-          icon={Hourglass}
-          title="Progresión narrativa aún no consolidada"
-          role="status"
-        >
-          {message ?? DEFAULT_TEXT.NOT_CONSOLIDATED}
-        </CohortNotice>
-      );
-
-    case AGGREGATE_VIEW_STATUS.SUPPRESSED:
-      return (
-        <CohortNotice
-          tone="neutral"
-          icon={EyeOff}
-          title="Vista no mostrada por privacidad"
-          role="status"
-        >
-          {message ?? DEFAULT_TEXT.SUPPRESSED}
-        </CohortNotice>
-      );
-
-    case AGGREGATE_VIEW_STATUS.UNAVAILABLE:
-      return (
-        <CohortNotice
-          tone="warning"
-          icon={CloudOff}
-          title="Vista narrativa no disponible"
-          role="alert"
-          action={<RetryButton onRetry={onRetry} />}
-        >
-          {DEFAULT_TEXT.UNAVAILABLE}
-        </CohortNotice>
-      );
-
-    case AGGREGATE_VIEW_STATUS.INCONSISTENT:
-      return (
-        <CohortNotice
-          tone="danger"
-          icon={ShieldAlert}
-          title="Vista no mostrada"
-          role="alert"
-          action={<RetryButton onRetry={onRetry} />}
-        >
-          La información recibida no corresponde a la cohorte solicitada. Por
-          seguridad no se muestra.
-        </CohortNotice>
-      );
-
-    case AGGREGATE_VIEW_STATUS.NOT_FOUND:
-      return (
-        <CohortNotice
-          tone="neutral"
-          icon={SearchX}
-          title={
-            message ? 'Cohorte activa no disponible' : 'Cohorte no encontrada'
-          }
-          role="alert"
-        >
-          {message ?? 'La cohorte solicitada no existe en el sistema.'}
-        </CohortNotice>
-      );
-
     default:
-      return (
-        <CohortNotice
-          tone="danger"
-          icon={AlertTriangle}
-          title="No pudimos cargar la vista narrativa"
-          role="alert"
-          action={<RetryButton onRetry={onRetry} />}
-        >
-          {DEFAULT_TEXT.ERROR}
-        </CohortNotice>
-      );
+      return <AggregateViewNotice view={view} copy={DEFAULT_TEXT} onRetry={onRetry} />;
   }
 }

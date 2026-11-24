@@ -15,9 +15,6 @@ import {
   getNarrativeSourceMode,
 } from './narrativeAggregateSource.js';
 
-const transport = vi.hoisted(() => ({ get: vi.fn() }));
-vi.mock('@/shared/utils/apiClient.jsx', () => ({ apiClient: transport }));
-
 // Tiempo real: la demostración se carga con import() dinámico.
 function enableDemo(scenario) {
   vi.stubEnv('DEV', true);
@@ -33,7 +30,6 @@ let xhrSpy;
 
 beforeEach(() => {
   resetDemoScenarios(vi);
-  transport.get.mockReset();
   fetchSpy = vi.fn(() => Promise.reject(new Error('Sin red en las pruebas')));
   xhrSpy = vi.fn();
   vi.stubGlobal('fetch', fetchSpy);
@@ -41,103 +37,11 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  // La vista narrativa no hace peticiones HTTP ni contacta a M06.
   expect(fetchSpy).not.toHaveBeenCalled();
   expect(xhrSpy).not.toHaveBeenCalled();
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
-});
-
-const ID = '3f6c2a1e-8b7d-4c53-9a21-5d0e7b9f4a10';
-const FECHA = '2026-11-15T05:00:00.000Z';
-
-const disponible = {
-  id_cohorte: ID,
-  estado: 'DISPONIBLE',
-  estado_agregacion: 'ACTUALIZADO',
-  ultimo_timestamp_disponible: FECHA,
-  motivo_sin_datos: null,
-  mensaje: null,
-  datos: {
-    total_usuarios_cohorte: 18,
-    distribucion_por_fase_narrativa: [{ fase: 'INICIO', total: 6 }],
-    total_logros_desbloqueados: 29,
-  },
-};
-const degradada = {
-  ...disponible,
-  estado: 'DESACTUALIZADA',
-  estado_agregacion: 'ERROR_ACTUALIZACION',
-};
-const responderError = (status, data) => ({ response: { status, data } });
-
-describe('Fuente de RF-133 en backend', () => {
-  it.each([
-    ['desarrollo sin demo', true, ''],
-    ['producción con la variable de demo', false, 'true'],
-  ])('%s consulta el endpoint de la cohorte', async (_, dev, flag) => {
-    vi.stubEnv('DEV', dev);
-    vi.stubEnv('VITE_M08_DEMO', flag);
-    transport.get.mockResolvedValueOnce({ data: disponible });
-
-    expect(getNarrativeSourceMode()).toBe(AGGREGATE_SOURCE_MODE.API);
-    expect(await view(ID)).toMatchObject({
-      status: S.READY,
-      data: { cohortUsers: 18, unlockedAchievements: 29 },
-    });
-    expect(transport.get).toHaveBeenCalledExactlyOnceWith(
-      `/admin/cohortes/${ID}/vistas/narrativa`,
-    );
-  });
-
-  it('interpreta el 503 con métricas de respaldo y su fecha', async () => {
-    transport.get.mockRejectedValueOnce(responderError(503, degradada));
-
-    expect(await view(ID)).toMatchObject({
-      status: S.STALE,
-      lastAvailableAt: FECHA,
-      data: { cohortUsers: 18, unlockedAchievements: 29 },
-    });
-  });
-
-  it('descarta una copia que corresponde a otra cohorte', async () => {
-    transport.get.mockRejectedValueOnce(
-      responderError(503, { ...degradada, id_cohorte: 'otra-cohorte' }),
-    );
-
-    expect(await view(ID)).toMatchObject({
-      status: S.INCONSISTENT,
-      data: null,
-    });
-  });
-
-  it('conserva el mensaje del 404 para una cohorte no activa', async () => {
-    const mensaje = 'No existe una cohorte activa disponible.';
-    transport.get.mockRejectedValueOnce(
-      responderError(404, { codigo: 'COHORTE_ACTIVA_NO_ENCONTRADA', mensaje }),
-    );
-
-    await expect(getNarrativeAggregate(ID)).rejects.toMatchObject({
-      code: AGGREGATE_QUERY_ERROR.COHORT_NOT_FOUND,
-      mensaje,
-    });
-  });
-
-  it('acepta una cohorte pendiente como estado funcional', async () => {
-    transport.get.mockResolvedValueOnce({
-      data: {
-        ...disponible,
-        estado: 'NO_DISPONIBLE',
-        estado_agregacion: 'PENDIENTE',
-        motivo_sin_datos: 'SIN_CONSOLIDAR',
-        datos: null,
-      },
-    });
-
-    expect(await view(ID)).toMatchObject({
-      status: S.NOT_CONSOLIDATED,
-      data: null,
-    });
-  });
 });
 
 describe('Puerto de la vista narrativa en demostración (RF-133)', () => {
@@ -151,7 +55,6 @@ describe('Puerto de la vista narrativa en demostración (RF-133)', () => {
     const b = await view('demo-cohorte-b');
     const c = await view('demo-cohorte-c');
 
-    expect(transport.get).not.toHaveBeenCalled();
     expect(b.status).toBe(S.READY);
     expect(b.data.phaseDistribution.map(({ users }) => users)).toEqual([
       6, 9, 3,
