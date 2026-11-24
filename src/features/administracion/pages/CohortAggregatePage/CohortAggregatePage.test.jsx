@@ -272,12 +272,13 @@ describe('Vista agregada conductual (RF-132): cohorte', () => {
     );
   });
 
-  it('sin el modo demostración no consulta nada y no muestra datos', () => {
+  it('sin el modo demostración inicia la carga de la vista real', () => {
     vi.stubEnv('DEV', true);
     vi.stubEnv('VITE_M08_DEMO', '');
     const html = render(null);
 
-    expect(html).toContain('Integración pendiente');
+    expect(html).toContain('Cargando la vista agregada...');
+    expect(html).not.toContain('Datos de demostración');
     expect(html).not.toContain('Participantes activos');
   });
 });
