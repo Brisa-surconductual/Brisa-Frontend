@@ -57,6 +57,16 @@
   --info-text: #1e6fa8;
   --info-border: #a8cbe6;
 
+  /* RF-43: botón SOS «Tengo ganas de vapear». Rojo propio para que se
+     distinga de los demás botones; no altera --danger ni la marca.
+     Blanco sobre #c62828: 5.6:1 (AA). */
+  --sos-bg: #c62828;
+  --sos-bg-hover: #b71c1c;
+  --sos-bg-active: #8e1414;
+  --sos-bg-disabled: #d98c8c;
+  --sos-text: #ffffff;
+  --sos-focus-ring: #8e1414;
+
   /* Superficies */
   --surface-bg: var(--neutral-50);
   --surface-card: var(--neutral-0);
@@ -226,6 +236,11 @@
   --info-bg: #0e2233;
   --info-text: #9bc8e8;
   --info-border: #1f4566;
+
+  /* RF-43: el rojo del SOS se conserva; el anillo de foco se aclara para
+     contrastar con el fondo oscuro. */
+  --sos-focus-ring: #ff8a80;
+  --sos-bg-disabled: #7a3030;
 
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 35%);
   --shadow-md: 0 2px 8px rgb(0 0 0 / 45%);

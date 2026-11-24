@@ -34,6 +34,12 @@ function activeLinks(html) {
 }
 
 describe('Layout administrativo', () => {
+  it('RF-43: no muestra el botón SOS del estudiante', () => {
+    const html = render('/app/administrativo');
+
+    expect(html).not.toContain('Tengo ganas de vapear');
+  });
+
   it('muestra el contenido de la página dentro del área principal', () => {
     const html = render('/app/administrativo');
 

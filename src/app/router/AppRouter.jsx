@@ -13,6 +13,7 @@ import {
   TaxonomyVariablesPage,
   ProgramModalityScreen,
   PersonalizedTreesScreen,
+  SosInterventionPage,
 } from '@/features/chat/index.js';
 import {
   BaselinePage,
@@ -186,6 +187,12 @@ export function AppRouter() {
                 <Route
                   path="estudiante/chat/demo-sin-conexion"
                   element={<ChatOfflineDemoPage />}
+                />
+
+                {/* RF-43: intervención SOS «Tengo ganas de vapear». */}
+                <Route
+                  path="estudiante/sos"
+                  element={<SosInterventionPage />}
                 />
               </Route>
             </Route>

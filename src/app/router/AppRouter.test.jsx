@@ -376,6 +376,8 @@ describe('Layout del estudiante en el router', () => {
   const STUDENT_PATHS = [
     '/app/estudiante',
     '/app/estudiante/cronograma/contenido-vigente',
+    // RF-43: la intervención SOS solo existe para el estudiante.
+    '/app/estudiante/sos',
   ];
 
   function chain(pathname) {
@@ -408,6 +410,12 @@ describe('Layout del estudiante en el router', () => {
     for (const pathname of ADMIN_PATHS) {
       expect(chain(pathname)).not.toContain(StudentLayout);
     }
+  });
+
+  it('RF-43: la intervención SOS no existe en el área administrativa ni sin sesión', () => {
+    expect(chain('/app/administrativo/sos')).not.toContain(StudentLayout);
+    expect(match('/app/administrativo/sos').at(-1).route.path).toBe('*');
+    expect(match('/sos').at(-1).route.path).toBe('*');
   });
 
   it('cada enlace del estudiante lleva a una ruta existente con su layout', () => {
@@ -463,6 +471,7 @@ describe('Rutas sin cambios', () => {
         '/app/estudiante/chat/sin-conexion/:idSesion',
         '/app/estudiante/chat/demo-sin-conexion',
         '/app/estudiante/cronograma/contenido-vigente',
+        '/app/estudiante/sos',
         ...ADMIN_PATHS.map((path) =>
           path
             .replace(/\/cohortes\/co-1(?=\/|$)/, '/cohortes/:idCohorte')

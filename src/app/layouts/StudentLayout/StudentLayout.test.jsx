@@ -115,6 +115,33 @@ describe('Layout del estudiante', () => {
     expect(html).toContain('pb-[calc(64px+env(safe-area-inset-bottom)+var(--space-6))]');
   });
 
+  it.each([
+    '/app/estudiante',
+    '/app/estudiante/cronograma/contenido-vigente',
+    '/app/estudiante/chat/sesion/abc',
+  ])('RF-43: %s muestra un único botón SOS, fuera de la navegación', (path) => {
+    const html = render(path);
+    const botones = [...html.matchAll(/<button[^>]*>[\s\S]*?<\/button>/g)]
+      .map(([b]) => b)
+      .filter((b) => b.includes('Tengo ganas de vapear'));
+
+    expect(botones).toHaveLength(1);
+    expect(botones[0]).toContain('type="button"');
+    // Flota sobre la barra inferior móvil sin taparla.
+    expect(botones[0]).toContain('bottom-[calc(64px+env(safe-area-inset-bottom)+var(--space-3))]');
+    expect(navBlocks(html).join('')).not.toContain('Tengo ganas de vapear');
+  });
+
+  it('RF-43: marca el encabezado y la barra inferior como límites del botón arrastrable', () => {
+    const html = render('/app/estudiante');
+
+    expect(html).toMatch(/<header data-sos-limite="superior"/);
+    expect(html).toMatch(/<nav[^>]*data-sos-limite="inferior"[^>]*md:hidden/);
+  });
+
+  it('RF-43: dentro de la intervención SOS no se muestra otro botón', () =>
+    expect(render('/app/estudiante/sos')).not.toContain('Tengo ganas de vapear'));
+
   it('ofrece un enlace para saltar al contenido', () =>
     expect(render('/app/estudiante')).toContain('href="#contenido-estudiante"'));
 });
