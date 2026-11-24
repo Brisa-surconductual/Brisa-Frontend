@@ -87,18 +87,26 @@ describe('RF-148: límites del módulo administrativo', () => {
   /*
    * RF-148 permite CONSULTAR datos de esos módulos (RF-142). Las únicas
    * referencias admitidas son las rutas de la interfaz de consulta
-   * (E9-D1: /cohortes/:id/seguimiento), declaradas aquí una a una; esos
-   * archivos no pueden contener HTTP. Cualquier otra referencia falla.
+   * y el adaptador de vistas agregadas que lee desde /admin/cohortes.
+   * Los archivos de rutas no pueden hacer peticiones HTTP.
    */
-  // RF-38: rutas de la interfaz de consulta de la trazabilidad del chat.
-  const READ_ONLY_REFERENCES = Object.freeze(['utils/chatTraceabilityRoutes.js', 'utils/cohortRoutes.js']);
+  const READ_ONLY_REFERENCES = Object.freeze([
+    'api/vistasAgregadasApi.js',
+    'utils/chatTraceabilityRoutes.js',
+    'utils/cohortRoutes.js',
+  ]);
 
   it('solo los archivos de consulta autorizados hacen referencia a M02, M03, M05, M06 o M07', () => {
     const referencing = SOURCES.filter(({ code }) => PROTECTED_RESOURCE.test(code));
 
     expect(referencing.map(({ name }) => name)).toEqual(READ_ONLY_REFERENCES);
-    for (const { code } of referencing) {
+    for (const { name, code } of referencing) {
       expect(code).not.toMatch(HTTP_WRITE);
+      if (name === 'api/vistasAgregadasApi.js') {
+        expect(code).toContain('apiClient.get(');
+        expect(code).toContain('/admin/cohortes/');
+        continue;
+      }
       expect(code).not.toMatch(/apiClient|from\s+['"]axios['"]|\bfetch\s*\(/);
     }
   });
@@ -122,7 +130,7 @@ describe('RF-148: límites del módulo administrativo', () => {
       'api/listAuditRecords.js',
       'api/observeReadOnlyRejections.js',
       'api/participantesCohorteApi.js',
-      'api/vistaAgregadaConductualApi.js',
+      'api/vistasAgregadasApi.js',
     ]);
     const { code } = http.find(({ name }) => name === 'api/observeReadOnlyRejections.js');
     expect(code).toContain('apiClient.interceptors.response');

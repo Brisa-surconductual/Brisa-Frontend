@@ -1,20 +1,13 @@
 import {
   AlertTriangle,
   ClockAlert,
-  CloudOff,
-  EyeOff,
   Hourglass,
   Info,
   Lock,
   MoonStar,
-  RefreshCw,
-  SearchX,
-  ShieldAlert,
   UsersRound,
   Waves,
 } from 'lucide-react';
-
-import { Button } from '@/shared/components/ui/Button/index.js';
 
 import {
   AGGREGATE_VIEW_STATUS,
@@ -23,6 +16,7 @@ import {
 } from '../../types/behavioralAggregate.js';
 import { formatAuditTimestamp } from '../../utils/formatAuditTimestamp.js';
 import { AggregateMetric } from '../AggregateMetric/index.js';
+import { AggregateViewNotice } from '../AggregateViewNotice/AggregateViewNotice.jsx';
 import { CohortNotice } from '../CohortNotice/index.js';
 import { StaleDataNotice } from '../StaleDataNotice/index.js';
 
@@ -39,6 +33,10 @@ import { StaleDataNotice } from '../StaleDataNotice/index.js';
 
 // Textos de RF-132 cuando la fuente no envía `mensaje`.
 const DEFAULT_TEXT = Object.freeze({
+  pendingTitle: 'Indicadores aún no consolidados',
+  unavailableTitle: 'Vista agregada no disponible',
+  errorTitle: 'Vista agregada no disponible',
+  ERROR: 'No pudimos cargar la vista agregada de la cohorte. Intenta nuevamente.',
   NOT_CONSOLIDATED:
     'La cohorte todavía no cuenta con indicadores consolidados. La vista se mostrará cuando el módulo de seguimiento complete su primer ciclo de consolidación.',
   UNAVAILABLE:
@@ -63,15 +61,6 @@ const RATE_FORMAT = new Intl.NumberFormat('es-CO', {
 });
 
 const hasPending = (value) => Number.isInteger(value) && value > 0;
-
-function RetryButton({ onRetry, label }) {
-  return (
-    <Button variant="secondary" onClick={onRetry}>
-      <RefreshCw size={14} strokeWidth={2} aria-hidden="true" />
-      {label}
-    </Button>
-  );
-}
 
 function GroupTitle({ children }) {
   return (
@@ -232,7 +221,6 @@ function AggregateData({ data, aggregationState, isDemo }) {
 
 export function BehavioralAggregateView({ view, isDemo, onRetry }) {
   const status = view?.status;
-  const message = view?.message;
 
   switch (status) {
     case AGGREGATE_VIEW_STATUS.READY:
@@ -252,80 +240,7 @@ export function BehavioralAggregateView({ view, isDemo, onRetry }) {
         </>
       );
 
-    case AGGREGATE_VIEW_STATUS.NOT_CONSOLIDATED:
-      return (
-        <CohortNotice
-          tone="neutral"
-          icon={Hourglass}
-          title="Indicadores aún no consolidados"
-          role="status"
-        >
-          {message ?? DEFAULT_TEXT.NOT_CONSOLIDATED}
-        </CohortNotice>
-      );
-
-    case AGGREGATE_VIEW_STATUS.SUPPRESSED:
-      return (
-        <CohortNotice
-          tone="neutral"
-          icon={EyeOff}
-          title="Vista no mostrada por privacidad"
-          role="status"
-        >
-          {message ?? DEFAULT_TEXT.SUPPRESSED}
-        </CohortNotice>
-      );
-
-    case AGGREGATE_VIEW_STATUS.UNAVAILABLE:
-      return (
-        <CohortNotice
-          tone="warning"
-          icon={CloudOff}
-          title="Vista agregada no disponible"
-          role="alert"
-          action={<RetryButton onRetry={onRetry} label="Reintentar" />}
-        >
-          {DEFAULT_TEXT.UNAVAILABLE}
-        </CohortNotice>
-      );
-
-    case AGGREGATE_VIEW_STATUS.INCONSISTENT:
-      return (
-        <CohortNotice
-          tone="danger"
-          icon={ShieldAlert}
-          title="Vista no mostrada"
-          role="alert"
-          action={<RetryButton onRetry={onRetry} label="Reintentar" />}
-        >
-          La información recibida no corresponde a la cohorte solicitada. Por
-          seguridad no se muestra.
-        </CohortNotice>
-      );
-
-    case AGGREGATE_VIEW_STATUS.NOT_FOUND:
-      return (
-        <CohortNotice
-          tone="neutral"
-          icon={SearchX}
-          title={message ? 'Cohorte activa no disponible' : 'Cohorte no encontrada'}
-          role="alert"
-        >
-          {message ?? 'La cohorte solicitada no existe en el sistema.'}
-        </CohortNotice>
-      );
-
     default:
-      return (
-        <CohortNotice
-          tone="danger"
-          icon={AlertTriangle}
-          title="Vista agregada no disponible"
-          role="alert"
-          action={<RetryButton onRetry={onRetry} label="Reintentar" />}
-        >
-          No pudimos cargar la vista agregada de la cohorte. Intenta nuevamente.
-        </CohortNotice>
-      );
+      return <AggregateViewNotice view={view} copy={DEFAULT_TEXT} onRetry={onRetry} />;
   }
 }

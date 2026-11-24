@@ -269,13 +269,4 @@ describe('Vista narrativa agregada (RF-133): cohorte', () => {
       'href="/app/administrativo/cohortes/demo-cohorte-c"',
     );
   });
-
-  it('sin el modo demostración no consulta nada y no muestra datos', () => {
-    vi.stubEnv('DEV', true);
-    vi.stubEnv('VITE_M08_DEMO', '');
-    const html = render(null);
-
-    expect(html).toContain('Integración pendiente');
-    expect(html).not.toContain('Logros desbloqueados');
-  });
 });

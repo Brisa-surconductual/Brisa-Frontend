@@ -54,26 +54,6 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe('Puerto de la vista de notificaciones sin integración (RF-134)', () => {
-  it.each([
-    ['sin la variable', true, ''],
-    ['en producción, aunque exista la variable', false, 'true'],
-  ])(
-    '%s: integración pendiente y ningún dato ficticio',
-    async (_, dev, flag) => {
-      vi.stubEnv('DEV', dev);
-      vi.stubEnv('VITE_M08_DEMO', flag);
-
-      expect(getNotificationAggregateSourceMode()).toBe(
-        AGGREGATE_SOURCE_MODE.PENDING_INTEGRATION,
-      );
-      await expect(getNotificationAggregate('demo-cohorte-b')).rejects.toThrow(
-        'no está integrada',
-      );
-    },
-  );
-});
-
 describe('Puerto de la vista de notificaciones en demostración (RF-134)', () => {
   it('modo demostración solo en desarrollo con la variable activa', () => {
     enableDemo();
@@ -253,7 +233,7 @@ describe('Mock de notificaciones fuera del build de producción (RF-134)', () =>
     );
     expect(facade).not.toMatch(/^import .*notificationAggregateDemo/m);
     expect(facade).toMatch(
-      /if \(!\(import\.meta\.env\.DEV && import\.meta\.env\.VITE_M08_DEMO === 'true'\)\) \{[\s\S]*?throw[\s\S]*?\}\s*return import\('\.\/notificationAggregateDemoSource\.js'\);/,
+      /if \(import\.meta\.env\.DEV && import\.meta\.env\.VITE_M08_DEMO === 'true'\) \{\s*const demo = await import\('\.\/notificationAggregateDemoSource\.js'\);/,
     );
   });
 });
