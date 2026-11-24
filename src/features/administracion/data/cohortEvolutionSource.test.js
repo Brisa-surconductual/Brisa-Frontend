@@ -4,7 +4,10 @@ import { fileURLToPath } from 'node:url';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { interpretCohortEvolution } from '../services/cohortEvolutionResponse.js';
+import {
+  evolutionStatusFromError,
+  interpretCohortEvolution,
+} from '../services/cohortEvolutionResponse.js';
 import { AGGREGATE_SOURCE_MODE } from '../types/behavioralAggregate.js';
 import { EVOLUTION_STATUS as S } from '../types/cohortEvolution.js';
 import {
@@ -12,7 +15,11 @@ import {
   getEvolutionSourceMode,
   getScheduleUnits,
 } from './cohortEvolutionSource.js';
+import { getCohort } from './cohortSource.js';
 import { resetDemoScenarios } from './demoScenarioTestEnv.js';
+
+const transport = vi.hoisted(() => ({ get: vi.fn() }));
+vi.mock('@/shared/utils/apiClient.jsx', () => ({ apiClient: transport }));
 
 // Tiempo real: la demostración se carga con import() dinámico.
 function enableDemo(scenario) {
@@ -34,6 +41,8 @@ let xhrSpy;
 
 beforeEach(() => {
   resetDemoScenarios(vi);
+  vi.stubEnv('VITE_M08_DEMO', '');
+  transport.get.mockReset();
   fetchSpy = vi.fn(() => Promise.reject(new Error('Sin red en las pruebas')));
   xhrSpy = vi.fn();
   vi.stubGlobal('fetch', fetchSpy);
@@ -41,34 +50,138 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  // La evolución no hace peticiones HTTP ni contacta a M05.
+  // Las consultas pasan por el cliente HTTP simulado.
   expect(fetchSpy).not.toHaveBeenCalled();
   expect(xhrSpy).not.toHaveBeenCalled();
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
 });
 
-describe('Evolución temporal sin integración (RF-141)', () => {
+describe('Evolución temporal desde el backend (RF-141)', () => {
+  const id = '3f6c2a1e-8b7d-4c53-9a21-5d0e7b9f4a10';
+  const scheduleId = 'e8ad0743-eaf9-4288-83b3-697e89b1099d';
+  const path = `/admin/cohortes/${id}`;
+  const unitsPath = `/cronograma/obtener-unidades-temporales/${scheduleId}`;
+
   it.each([
     ['sin la variable', true, ''],
     ['en producción, aunque exista la variable', false, 'true'],
   ])(
-    '%s: integración pendiente y ningún dato ficticio',
+    '%s consulta el backend y usa los nombres oficiales',
     async (_, dev, flag) => {
       vi.stubEnv('DEV', dev);
       vi.stubEnv('VITE_M08_DEMO', flag);
 
-      expect(getEvolutionSourceMode()).toBe(
-        AGGREGATE_SOURCE_MODE.PENDING_INTEGRATION,
-      );
-      await expect(getCohortEvolution('demo-cohorte-b')).rejects.toThrow(
-        'no está integrada',
-      );
-      await expect(getScheduleUnits('demo-cohorte-b')).rejects.toThrow(
-        'no está integrada',
-      );
+      transport.get
+        .mockResolvedValueOnce({
+          data: {
+            id_cohorte: id,
+            id_cronograma: scheduleId,
+            nombre_cohorte: 'Cohorte RF-141',
+            fecha_inicio_programa: '2026-11-01',
+            fecha_fin_programa: '2026-11-30',
+            estado: 'ACTIVA',
+          },
+        })
+        .mockResolvedValueOnce({
+          data: {
+            id_cohorte: id,
+            serie_unidades_temporales: ['u1', 'u2', 'u3'],
+            serie_adherencia_promedio: [0, null, 0.75],
+            serie_nivel_progreso_distribucion: [
+              { INICIAL: 1 },
+              {},
+              { EN_AVANCE: 2 },
+            ],
+            serie_craving_promedio: [3, null, 0],
+            unidades_con_datos_insuficientes: ['u2'],
+            fecha_actualizacion: '2026-11-21T12:00:00Z',
+          },
+        })
+        .mockResolvedValueOnce({
+          data: [
+            {
+              idUnidadTemporal: 'u3',
+              nombreUnidadTemporal: 'Cierre',
+              orden: 3,
+            },
+            {
+              idUnidadTemporal: 'u1',
+              nombreUnidadTemporal: 'Inicio',
+              orden: 1,
+            },
+            {
+              idUnidadTemporal: 'u2',
+              nombreUnidadTemporal: 'Seguimiento',
+              orden: 2,
+            },
+          ],
+        });
+
+      expect(getEvolutionSourceMode()).toBe(AGGREGATE_SOURCE_MODE.API);
+      const cohort = await getCohort(id);
+      const response = await getCohortEvolution(id);
+      const catalog = await getScheduleUnits(id, cohort);
+      const result = interpretCohortEvolution(response, catalog, id);
+
+      expect(transport.get.mock.calls).toEqual([
+        [path],
+        [`${path}/evolucion`],
+        [unitsPath],
+      ]);
+      expect(result).toMatchObject({ status: S.READY, hasGaps: true });
+      expect(
+        result.units.map(({ label, adherence, craving }) => [
+          label,
+          adherence,
+          craving,
+        ]),
+      ).toEqual([
+        ['Inicio', 0, 3],
+        ['Seguimiento', null, null],
+        ['Cierre', 0.75, 0],
+      ]);
     },
   );
+
+  it.each([
+    [403, 'SIN_PERMISO', S.FORBIDDEN],
+    [404, 'COHORTE_ACTIVA_NO_ENCONTRADA', S.NOT_FOUND],
+    [500, 'ERROR_CONSTRUCCION_SERIE_TEMPORAL', S.ERROR],
+    [503, 'SEGUIMIENTO_NO_DISPONIBLE', S.UNAVAILABLE],
+  ])('interpreta HTTP %i %s', async (status, codigo, expected) => {
+    transport.get.mockRejectedValueOnce({
+      response: {
+        status,
+        data: {
+          codigo,
+          id_cohorte: id,
+          estado_agregacion: 'ERROR_ACTUALIZACION',
+          estado: 'DESACTUALIZADA',
+          datos: { serie_adherencia_promedio: [0.3] },
+        },
+      },
+    });
+    await expect(
+      getCohortEvolution(id).catch(evolutionStatusFromError),
+    ).resolves.toBe(expected);
+  });
+
+  it('no consulta unidades de una cohorte distinta', async () => {
+    await expect(
+      getScheduleUnits(id, { id: 'otra-cohorte', scheduleId }),
+    ).rejects.toThrow('cronograma');
+    expect(transport.get).not.toHaveBeenCalled();
+  });
+
+  it('no presenta una serie general como filtrada mientras RF-135 está pendiente', async () => {
+    await expect(
+      getCohortEvolution(id, {
+        filters: { modalidad_terapeutica: 'GRUPAL' },
+      }),
+    ).rejects.toThrow('filtros');
+    expect(transport.get).not.toHaveBeenCalled();
+  });
 });
 
 describe('Escenarios de demostración de la evolución (RF-141)', () => {

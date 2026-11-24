@@ -227,6 +227,10 @@ export function interpretCohortEvolution(response, catalog, requestedCohortId) {
 
 // Situación ante un rechazo de la fuente; por código, nunca por texto.
 export function evolutionStatusFromError(error) {
+  if (error?.status === 403) return S.FORBIDDEN;
+  if (error?.status === 503 && error.codigo === 'SEGUIMIENTO_NO_DISPONIBLE') {
+    return S.UNAVAILABLE;
+  }
   switch (error?.code) {
     case EVOLUTION_QUERY_ERROR.COHORT_NOT_FOUND:
       return S.NOT_FOUND;

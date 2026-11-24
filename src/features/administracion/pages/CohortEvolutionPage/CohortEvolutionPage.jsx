@@ -11,7 +11,6 @@ import {
   Info,
   Layers,
   Lock,
-  PlugZap,
   RefreshCw,
   SearchX,
   ShieldAlert,
@@ -284,8 +283,9 @@ function EvolutionContent({ view, isDemo }) {
 function CohortEvolution() {
   const { idCohorte } = useParams();
   const cohortId = idCohorte ?? null;
-  const { cohort, view, isLoading, isDemo, isIntegrationPending, retry } =
-    useCohortEvolution({ cohortId });
+  const { cohort, view, isLoading, isDemo, retry } = useCohortEvolution({
+    cohortId,
+  });
 
   const cohortName = cohort?.name?.trim();
 
@@ -338,13 +338,11 @@ function CohortEvolution() {
         </p>
       )}
 
-      {!isIntegrationPending && (
-        <ReadOnlyNotice>
-          Consulta de solo lectura: los valores provienen del módulo de
-          seguimiento, no se recalculan ni se interpolan. Solo se muestran
-          agregados de la cohorte.
-        </ReadOnlyNotice>
-      )}
+      <ReadOnlyNotice>
+        Consulta de solo lectura: los valores provienen del módulo de
+        seguimiento, no se recalculan ni se interpolan. Solo se muestran
+        agregados de la cohorte.
+      </ReadOnlyNotice>
 
       {isDemo && (
         <CohortNotice
@@ -358,40 +356,27 @@ function CohortEvolution() {
         </CohortNotice>
       )}
 
-      {isIntegrationPending ? (
-        <CohortNotice
-          tone="info"
-          icon={PlugZap}
-          title="Integración pendiente"
-          role="status"
-        >
-          La evolución temporal todavía no está conectada al módulo de
-          seguimiento. Cuando se integre, aquí aparecerán las series por unidad
-          del cronograma.
-        </CohortNotice>
-      ) : (
-        <section
-          aria-label="Evolución por unidad del cronograma"
-          aria-busy={isLoading}
-          className="flex flex-col gap-[var(--space-4)]"
-        >
-          {isLoading ? (
-            <>
-              <p role="status" className="sr-only">
-                Cargando la evolución temporal...
-              </p>
-              <div
-                aria-hidden="true"
-                className="h-[240px] animate-pulse rounded-[var(--radius-xl)] border border-[var(--surface-border)] bg-[var(--surface-card)] motion-reduce:animate-none"
-              />
-            </>
-          ) : view?.status === S.READY ? (
-            <EvolutionContent view={view} isDemo={isDemo} />
-          ) : (
-            <EvolutionState view={view} onRetry={retry} />
-          )}
-        </section>
-      )}
+      <section
+        aria-label="Evolución por unidad del cronograma"
+        aria-busy={isLoading}
+        className="flex flex-col gap-[var(--space-4)]"
+      >
+        {isLoading ? (
+          <>
+            <p role="status" className="sr-only">
+              Cargando la evolución temporal...
+            </p>
+            <div
+              aria-hidden="true"
+              className="h-[240px] animate-pulse rounded-[var(--radius-xl)] border border-[var(--surface-border)] bg-[var(--surface-card)] motion-reduce:animate-none"
+            />
+          </>
+        ) : view?.status === S.READY ? (
+          <EvolutionContent view={view} isDemo={isDemo} />
+        ) : (
+          <EvolutionState view={view} onRetry={retry} />
+        )}
+      </section>
     </div>
   );
 }

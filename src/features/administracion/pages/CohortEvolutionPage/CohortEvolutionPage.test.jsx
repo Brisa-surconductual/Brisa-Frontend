@@ -274,22 +274,19 @@ describe('Evolución temporal (RF-141): estados', () => {
     expect(html).not.toContain('role="alert"');
   });
 
-  it('carga e integración pendiente', () => {
+  it('carga sin mostrar indicadores previos', () => {
     expect(render({ isLoading: true })).toContain(
       'Cargando la evolución temporal...',
     );
-
-    const pending = render({ isDemo: false, isIntegrationPending: true });
-    expect(pending).toContain('Integración pendiente');
-    expect(pending).not.toContain('Datos de demostración');
   });
 
-  it('sin el modo demostración no consulta nada y no muestra datos', () => {
+  it('sin demostración inicia en carga del backend', () => {
     vi.stubEnv('DEV', true);
     vi.stubEnv('VITE_M08_DEMO', '');
     const html = render(null);
 
-    expect(html).toContain('Integración pendiente');
+    expect(html).toContain('aria-busy="true"');
+    expect(html).not.toContain('Datos de demostración');
     expect(html).not.toContain('data-point');
   });
 });
