@@ -332,10 +332,12 @@ export function NarrativeAggregateView({ view, isDemo, onRetry }) {
         <CohortNotice
           tone="neutral"
           icon={SearchX}
-          title="Cohorte no encontrada"
+          title={
+            message ? 'Cohorte activa no disponible' : 'Cohorte no encontrada'
+          }
           role="alert"
         >
-          La cohorte solicitada no existe en el sistema.
+          {message ?? 'La cohorte solicitada no existe en el sistema.'}
         </CohortNotice>
       );
 

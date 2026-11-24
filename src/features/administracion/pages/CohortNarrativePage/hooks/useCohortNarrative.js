@@ -5,10 +5,8 @@ import {
   getNarrativeAggregate,
   getNarrativeSourceMode,
 } from '../../../data/narrativeAggregateSource.js';
-import {
-  aggregateStatusFromError,
-  interpretNarrativeAggregate,
-} from '../../../services/narrativeAggregateResponse.js';
+import { interpretNarrativeAggregate } from '../../../services/narrativeAggregateResponse.js';
+import { aggregateViewFromError } from '../../../services/aggregateViewEnvelope.js';
 import { AGGREGATE_SOURCE_MODE } from '../../../types/behavioralAggregate.js';
 
 // Fuente actual; estable entre renders para no repetir la consulta.
@@ -25,7 +23,7 @@ const DEFAULT_SOURCE = Object.freeze({
  * cohorte pedida y nunca los recalcula. Es independiente de las demás
  * vistas agregadas: no espera a RF-132 ni a RF-134, y el nombre de la
  * cohorte se pide por separado, de modo que si falla no bloquea la
- * vista. Un fallo nunca deja datos visibles ni se reemplaza por datos
+ * vista. Un fallo solo muestra un respaldo identificado por la API y no recurre a datos
  * ficticios. La página se monta de nuevo al cambiar de cohorte (key).
  * `source` permite sustituir la fuente sin cambiar la página.
  */
@@ -75,8 +73,7 @@ export function useCohortNarrative({ cohortId, source = DEFAULT_SOURCE } = {}) {
         );
         if (active) setView(interpreted);
       } catch (error) {
-        if (active)
-          setView({ status: aggregateStatusFromError(error), data: null });
+        if (active) setView(aggregateViewFromError(error));
       } finally {
         if (active) setIsLoading(false);
       }

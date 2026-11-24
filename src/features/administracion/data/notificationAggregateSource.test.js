@@ -21,6 +21,9 @@ import {
   getNotificationAggregateSourceMode,
 } from './notificationAggregateSource.js';
 
+const transport = vi.hoisted(() => ({ get: vi.fn() }));
+vi.mock('@/shared/utils/apiClient.jsx', () => ({ apiClient: transport }));
+
 // Tiempo real: la demostración se carga con import() dinámico.
 function enableDemo(scenario) {
   vi.stubEnv('DEV', true);
@@ -40,6 +43,7 @@ let xhrSpy;
 
 beforeEach(() => {
   resetDemoScenarios(vi);
+  transport.get.mockReset();
   fetchSpy = vi.fn(() => Promise.reject(new Error('Sin red en las pruebas')));
   xhrSpy = vi.fn();
   vi.stubGlobal('fetch', fetchSpy);
@@ -47,31 +51,167 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  // La vista de notificaciones no hace peticiones HTTP ni contacta a M07.
   expect(fetchSpy).not.toHaveBeenCalled();
   expect(xhrSpy).not.toHaveBeenCalled();
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
 });
 
-describe('Puerto de la vista de notificaciones sin integración (RF-134)', () => {
-  it.each([
-    ['sin la variable', true, ''],
-    ['en producción, aunque exista la variable', false, 'true'],
-  ])(
-    '%s: integración pendiente y ningún dato ficticio',
-    async (_, dev, flag) => {
-      vi.stubEnv('DEV', dev);
-      vi.stubEnv('VITE_M08_DEMO', flag);
+const ID = '3f6c2a1e-8b7d-4c53-9a21-5d0e7b9f4a10';
+const FECHA = '2026-11-15T05:00:00.000Z';
 
-      expect(getNotificationAggregateSourceMode()).toBe(
-        AGGREGATE_SOURCE_MODE.PENDING_INTEGRATION,
-      );
-      await expect(getNotificationAggregate('demo-cohorte-b')).rejects.toThrow(
-        'no está integrada',
-      );
-    },
-  );
+const disponible = {
+  id_cohorte: ID,
+  estado: 'DISPONIBLE',
+  estado_agregacion: 'ACTUALIZADO',
+  ultimo_timestamp_disponible: FECHA,
+  motivo_sin_datos: null,
+  mensaje: null,
+  datos: {
+    tasa_apertura_promedio: null,
+    tasa_conversion_promedio: null,
+    total_notificaciones_enviadas: 0,
+    total_notificaciones_entregadas: 0,
+    total_notificaciones_descartadas: 0,
+  },
+};
+const degradada = {
+  ...disponible,
+  estado: 'DESACTUALIZADA',
+  estado_agregacion: 'ERROR_ACTUALIZACION',
+};
+const responderError = (status, data) => ({ response: { status, data } });
+
+describe('Fuente de RF-134 en backend', () => {
+  it.each([
+    ['desarrollo sin demo', true, ''],
+    ['producción con la variable de demo', false, 'true'],
+  ])('%s consulta el endpoint de la cohorte', async (_, dev, flag) => {
+    vi.stubEnv('DEV', dev);
+    vi.stubEnv('VITE_M08_DEMO', flag);
+    transport.get.mockResolvedValueOnce({ data: disponible });
+
+    expect(getNotificationAggregateSourceMode()).toBe(
+      AGGREGATE_SOURCE_MODE.API,
+    );
+    expect(await view(ID)).toMatchObject({
+      status: S.READY,
+      data: {
+        averageOpenRate: null,
+        averageConversionRate: null,
+        sentNotifications: 0,
+        deliveredNotifications: 0,
+        discardedNotifications: 0,
+      },
+    });
+    expect(transport.get).toHaveBeenCalledExactlyOnceWith(
+      `/admin/cohortes/${ID}/vistas/notificaciones`,
+    );
+  });
+
+  it('interpreta el 503 con métricas de respaldo y su fecha', async () => {
+    transport.get.mockRejectedValueOnce(responderError(503, degradada));
+
+    expect(await view(ID)).toMatchObject({
+      status: S.STALE,
+      lastAvailableAt: FECHA,
+      data: {
+        averageOpenRate: null,
+        averageConversionRate: null,
+        sentNotifications: 0,
+        deliveredNotifications: 0,
+        discardedNotifications: 0,
+      },
+    });
+  });
+
+  it('descarta una copia que corresponde a otra cohorte', async () => {
+    transport.get.mockRejectedValueOnce(
+      responderError(503, { ...degradada, id_cohorte: 'otra-cohorte' }),
+    );
+
+    expect(await view(ID)).toMatchObject({
+      status: S.INCONSISTENT,
+      data: null,
+    });
+  });
+
+  it('conserva el mensaje del 404 para una cohorte no activa', async () => {
+    const mensaje = 'No existe una cohorte activa disponible.';
+    transport.get.mockRejectedValueOnce(
+      responderError(404, { codigo: 'COHORTE_ACTIVA_NO_ENCONTRADA', mensaje }),
+    );
+
+    await expect(getNotificationAggregate(ID)).rejects.toMatchObject({
+      code: AGGREGATE_QUERY_ERROR.COHORT_NOT_FOUND,
+      mensaje,
+    });
+  });
+
+  it('distingue el consolidado pendiente del 503 sin respaldo', async () => {
+    const sinDatos = {
+      ...disponible,
+      datos: null,
+      ultimo_timestamp_disponible: null,
+    };
+    transport.get.mockResolvedValueOnce({
+      data: {
+        ...sinDatos,
+        estado_agregacion: 'PENDIENTE',
+        motivo_sin_datos: 'SIN_CONSOLIDAR',
+      },
+    });
+    transport.get.mockRejectedValueOnce(
+      responderError(503, {
+        ...sinDatos,
+        estado: 'NO_DISPONIBLE',
+        estado_agregacion: 'ERROR_ACTUALIZACION',
+      }),
+    );
+    transport.get.mockRejectedValueOnce(
+      responderError(503, '<html>Servicio no disponible</html>'),
+    );
+
+    expect(await view(ID)).toMatchObject({
+      status: S.NOT_CONSOLIDATED,
+      data: null,
+    });
+    expect(await view(ID)).toMatchObject({ status: S.UNAVAILABLE, data: null });
+    await expect(getNotificationAggregate(ID)).rejects.toMatchObject({
+      status: 503,
+    });
+  });
+
+  it('una caída de M07 permite que RF-133 siga consultando M06', async () => {
+    transport.get.mockImplementation((path) => {
+      if (path.endsWith('/vistas/notificaciones')) {
+        return Promise.reject(
+          responderError(503, {
+            ...degradada,
+            estado: 'NO_DISPONIBLE',
+            ultimo_timestamp_disponible: null,
+            datos: null,
+          }),
+        );
+      }
+      return Promise.resolve({
+        data: { ...disponible, datos: { total_logros_desbloqueados: 8 } },
+      });
+    });
+
+    const [notifications, narrative] = await Promise.all([
+      view(ID),
+      getNarrativeAggregate(ID).then((response) =>
+        interpretNarrativeAggregate(response, ID),
+      ),
+    ]);
+
+    expect(notifications.status).toBe(S.UNAVAILABLE);
+    expect(narrative).toMatchObject({
+      status: S.READY,
+      data: { unlockedAchievements: 8 },
+    });
+  });
 });
 
 describe('Puerto de la vista de notificaciones en demostración (RF-134)', () => {
@@ -87,6 +227,7 @@ describe('Puerto de la vista de notificaciones en demostración (RF-134)', () =>
     const b = await view('demo-cohorte-b');
     const c = await view('demo-cohorte-c');
 
+    expect(transport.get).not.toHaveBeenCalled();
     expect(b.status).toBe(S.READY);
     expect(b.data).toMatchObject({
       averageOpenRate: 0.5825,
@@ -253,7 +394,7 @@ describe('Mock de notificaciones fuera del build de producción (RF-134)', () =>
     );
     expect(facade).not.toMatch(/^import .*notificationAggregateDemo/m);
     expect(facade).toMatch(
-      /if \(!\(import\.meta\.env\.DEV && import\.meta\.env\.VITE_M08_DEMO === 'true'\)\) \{[\s\S]*?throw[\s\S]*?\}\s*return import\('\.\/notificationAggregateDemoSource\.js'\);/,
+      /if \(import\.meta\.env\.DEV && import\.meta\.env\.VITE_M08_DEMO === 'true'\) \{\s*const demo = await import\('\.\/notificationAggregateDemoSource\.js'\);/,
     );
   });
 });

@@ -1,4 +1,4 @@
-import { getBehavioralAggregateFromApi } from '../api/vistaAgregadaConductualApi.js';
+import { getBehavioralAggregateFromApi } from '../api/vistasAgregadasApi.js';
 import { AGGREGATE_SOURCE_MODE } from '../types/behavioralAggregate.js';
 import { isCohortDemoEnabled } from '../utils/cohortDemoMode.js';
 

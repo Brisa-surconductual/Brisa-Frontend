@@ -5,10 +5,8 @@ import {
   getNotificationAggregate,
   getNotificationAggregateSourceMode,
 } from '../../../data/notificationAggregateSource.js';
-import {
-  aggregateStatusFromError,
-  interpretNotificationAggregate,
-} from '../../../services/notificationAggregateResponse.js';
+import { interpretNotificationAggregate } from '../../../services/notificationAggregateResponse.js';
+import { aggregateViewFromError } from '../../../services/aggregateViewEnvelope.js';
 import { AGGREGATE_SOURCE_MODE } from '../../../types/behavioralAggregate.js';
 
 // Fuente actual; estable entre renders para no repetir la consulta.
@@ -25,8 +23,8 @@ const DEFAULT_SOURCE = Object.freeze({
  * datos de la cohorte pedida y nunca los recalcula. Es independiente de
  * las demás vistas agregadas: no espera a RF-132 ni a RF-133, y el
  * nombre de la cohorte se pide por separado, de modo que si falla no
- * bloquea la vista. Un fallo nunca deja datos visibles ni se reemplaza
- * por datos ficticios. La página se monta de nuevo al cambiar de cohorte
+ * bloquea la vista. Solo se conserva el respaldo de la cohorte que entrega
+ * la API. La página se monta de nuevo al cambiar de cohorte
  * (key). `source` permite sustituir la fuente sin cambiar la página.
  */
 export function useCohortNotifications({
@@ -78,8 +76,7 @@ export function useCohortNotifications({
         );
         if (active) setView(interpreted);
       } catch (error) {
-        if (active)
-          setView({ status: aggregateStatusFromError(error), data: null });
+        if (active) setView(aggregateViewFromError(error));
       } finally {
         if (active) setIsLoading(false);
       }

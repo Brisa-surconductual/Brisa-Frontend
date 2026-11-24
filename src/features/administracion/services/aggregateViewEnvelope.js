@@ -112,3 +112,10 @@ export const aggregateStatusFromError = (error) =>
   error?.code === AGGREGATE_QUERY_ERROR.COHORT_NOT_FOUND
     ? AGGREGATE_VIEW_STATUS.NOT_FOUND
     : AGGREGATE_VIEW_STATUS.ERROR;
+
+export function aggregateViewFromError(error) {
+  const status = aggregateStatusFromError(error);
+  const message =
+    status === AGGREGATE_VIEW_STATUS.NOT_FOUND ? text(error?.mensaje) : null;
+  return { status, data: null, ...(message && { message }) };
+}
