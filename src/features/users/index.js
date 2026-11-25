@@ -85,6 +85,7 @@ export {
 // Instalación de la PWA: se activa al arrancar (main.jsx, ADR-0006)
 
 export {
+  installPromptStore,
   listenInstallPrompt,
 } from './utils/installPromptEvent.js';
 

@@ -64,6 +64,7 @@ import {
   SessionTraceabilityPage,
 } from '@/features/administracion/index.js';
 
+import { LandingRoute } from './LandingRoute.jsx';
 import { RequireAuth } from './RequireAuth.jsx';
 import { RoleHomeRedirect } from './RoleHomeRedirect.jsx';
 
@@ -72,8 +73,15 @@ export function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Landing pública (con sesión activa ofrece «Ir a mi espacio»). */}
         <Route
           path="/"
+          element={<LandingRoute />}
+        />
+
+        {/* Pantalla de bienvenida de la PWA, antes en «/». */}
+        <Route
+          path="/splash"
           element={<SplashPage />}
         />
 

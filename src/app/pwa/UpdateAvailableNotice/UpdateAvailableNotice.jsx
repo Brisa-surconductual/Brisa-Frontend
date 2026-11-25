@@ -19,7 +19,7 @@ export function UpdateAvailableNotice({ store }) {
   return (
     <div
       role="status"
-      className="fixed inset-x-[var(--space-4)] bottom-[calc(var(--space-4)+env(safe-area-inset-bottom))] z-50 mx-auto flex max-w-[420px] flex-wrap items-center gap-[var(--space-3)] rounded-[var(--radius-lg)] border border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-4)] text-[var(--text-primary)] shadow-[var(--shadow-lg)]"
+      className="fixed inset-x-[var(--space-4)] bottom-[calc(var(--space-4)+env(safe-area-inset-bottom))] z-[100] mx-auto flex max-w-[420px] flex-wrap items-center gap-[var(--space-3)] rounded-[var(--radius-lg)] border border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-4)] text-[var(--text-primary)] shadow-[var(--shadow-lg)]"
     >
       <RefreshCw
         className="shrink-0 text-[var(--brand-600)]"

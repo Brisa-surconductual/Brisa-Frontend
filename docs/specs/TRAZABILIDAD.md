@@ -19,3 +19,5 @@ Esta primera versión registra solo el chat del estudiante (M03), integrado de p
 | RF-38 (consulta administrativa, M08) | — (contrato del backend, PR #74) | SDD, «Nota RF-38» | `features/administracion/`: `api/chatTraceability/`, `services/participantSessionsResponse.js`, `services/sessionTraceResponse.js`, `services/traceAnswer.js`, `services/chatTraceabilityError.js`, `services/chatTraceabilityIds.js`, `utils/chatTraceabilityRoutes.js`, `pages/ParticipantSessionsPage/`, `pages/SessionTraceabilityPage/`, `components/TraceabilityTimeline/`, `components/ChatSessionCard/`, `components/ParticipantSessionsLink/` | Los `*.test.js(x)` de esos archivos, `readOnlyRestriction.guard.test.jsx`, `app/router/AppRouter.test.jsx` | Parcial (probado con HTTP simulado; verificación contra el backend desplegado y código A7 auténtico de M08 pendientes) |
 
 Rutas relativas a `src/features/chat/`, salvo la fila de RF-38, que indica `features/administracion/`.
+
+| Landing pública (sin RF, A-071) | — | — | `features/landing/`, `app/router/LandingRoute.jsx` | `features/landing/services/*.test.js` | Cubierto en lógica pura; verificación visual, axe y Lighthouse pendientes |
