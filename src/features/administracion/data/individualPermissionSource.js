@@ -3,6 +3,7 @@ import {
   normalizePermiso,
   normalizePermissionList,
 } from '../services/individualPermission.js';
+import { normalizeParticipantCode } from '../services/chatTraceabilityIds.js';
 import { isCohortDemoEnabled } from '../utils/cohortDemoMode.js';
 
 /*
@@ -10,6 +11,9 @@ import { isCohortDemoEnabled } from '../utils/cohortDemoMode.js';
  * según `isCohortDemoEnabled()`. Normaliza en un solo sitio lo que llega
  * de cualquiera de las dos.
  */
+
+const PAGE_SIZE = permissionsApi.PERMISSIONS_PAGE_SIZE;
+const MAX_PAGE_SIZE = 100;
 
 async function loadDemo() {
   if (!(import.meta.env.DEV && import.meta.env.VITE_M08_DEMO === 'true')) {
@@ -21,8 +25,19 @@ async function loadDemo() {
 const backend = async () =>
   isCohortDemoEnabled() ? loadDemo() : permissionsApi;
 
+// D30: lo que el backend rechazaría con 400 (o contestaría para todos) no sale del cliente.
+function assertValidQuery(code, { offset = 0, limit = PAGE_SIZE } = {}) {
+  if (normalizeParticipantCode(code) === null)
+    throw new Error('Código de participante no válido.');
+  if (!Number.isInteger(offset) || offset < 0)
+    throw new Error('Desplazamiento no válido.');
+  if (!Number.isInteger(limit) || limit < 1 || limit > MAX_PAGE_SIZE)
+    throw new Error('Tamaño de página no válido.');
+}
+
 // Una página: `{ permissions, discarded, total, offset, limit }` (D25).
 export async function listPermissions(code, page) {
+  assertValidQuery(code, page);
   const { items, ...paging } = await (
     await backend()
   ).listPermissions(code, page);

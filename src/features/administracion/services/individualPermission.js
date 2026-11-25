@@ -1,3 +1,4 @@
+import { API_ERROR_CLIENTE } from '@/shared/utils/apiError.js';
 import {
   getCurrentDateInBogota,
   parseDateOnly,
@@ -8,6 +9,7 @@ import {
   PERMISSION_ERROR,
   PERMISSION_SCOPE,
 } from '../types/permissionScope.js';
+import { parseAuditTimestamp } from '../utils/formatAuditTimestamp.js';
 import {
   getPermissionErrorMessage,
   PERMISSION_FORM_MESSAGE,
@@ -25,7 +27,8 @@ const SCOPES = Object.values(PERMISSION_SCOPE);
 const BOGOTA_OFFSET = '-05:00';
 
 const isText = (value) => typeof value === 'string' && value.trim() !== '';
-const isInstant = (value) => isText(value) && !Number.isNaN(Date.parse(value));
+// D31: ISO 8601 con zona explícita (un `Date.parse` suelto acepta cadenas como 2026).
+const isInstant = (value) => parseAuditTimestamp(value) !== null;
 
 function instant(value, name) {
   if (!isInstant(value)) throw new Error(`Permiso con ${name} inválido.`);
@@ -91,7 +94,13 @@ export function normalizePermissionList(rows) {
 
   for (const row of rows) {
     try {
-      permissions.push(normalizePermiso(row));
+      const permission = normalizePermiso(row);
+      // D29: se pidieron solo los vigentes; uno que no lo es no se muestra.
+      if (!permission.active) {
+        discarded += 1;
+        continue;
+      }
+      permissions.push(permission);
     } catch {
       discarded += 1;
     }
@@ -159,8 +168,10 @@ const FIELD_BY_CODE = Object.freeze({
 export function readGrantError(error) {
   return Object.freeze({
     field: FIELD_BY_CODE[error?.codigo] ?? null,
-    message: isText(error?.mensaje)
-      ? error.mensaje
-      : getPermissionErrorMessage(error?.codigo),
+    // D28: sin `codigo` del backend (400 de Nest, guardas) → texto de respaldo.
+    message:
+      isText(error?.mensaje) && error?.codigo !== API_ERROR_CLIENTE.DESCONOCIDO
+        ? error.mensaje
+        : getPermissionErrorMessage(error?.codigo),
   });
 }

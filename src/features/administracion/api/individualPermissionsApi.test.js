@@ -221,3 +221,40 @@ describe('revokePermission', () => {
     await expect(revokePermission(ID)).rejects.toMatchObject({ status: 500 });
   });
 });
+
+describe('Rechazos que no son los esperados (status y codigo deben coincidir)', () => {
+  const request = {
+    codigo_participante: CODE,
+    alcance: 'ACCESO_INDIVIDUAL',
+    fecha_fin_vigencia: null,
+    id_usuario_beneficiario: BENEFICIARY,
+  };
+
+  it.each([
+    [404, 'PERMISO_NO_ENCONTRADO'],
+    [409, 'PERMISO_YA_REVOCADO'],
+    [400, 'DESCONOCIDO'],
+  ])('al conceder, %i %s se lanza', async (status, codigo) => {
+    apiClient.post.mockRejectedValue(failWith(status, { codigo }));
+
+    await expect(grantPermission(request)).rejects.toMatchObject({
+      status,
+    });
+  });
+
+  it.each([
+    [404, 'PARTICIPANTE_NO_ENCONTRADO'],
+    [422, 'AUTOCONCESION_NO_PERMITIDA'],
+    [400, 'DESCONOCIDO'],
+  ])('al revocar, %i %s se lanza', async (status, codigo) => {
+    apiClient.post.mockRejectedValue(failWith(status, { codigo }));
+
+    await expect(revokePermission(ID)).rejects.toMatchObject({ status });
+  });
+
+  it('un listado con data undefined se rechaza', async () => {
+    apiClient.get.mockResolvedValue({ data: undefined });
+
+    await expect(listPermissions(CODE)).rejects.toThrow('no es válido');
+  });
+});

@@ -260,3 +260,81 @@ describe('Revocar en la demostración', () => {
     });
   });
 });
+
+describe('Orden de las comprobaciones y regla del índice (D22)', () => {
+  const past = '2026-11-01T00:00:00.000Z';
+  const stranger = '99999999-9999-4999-8999-999999999999';
+
+  it('404 antes que el rol del beneficiario', () => {
+    expect(
+      createStore().grant(
+        grantRequest('P-00000000', 'ACCESO_INDIVIDUAL', {
+          beneficiary: stranger,
+        }),
+      ).codigo,
+    ).toBe('PARTICIPANTE_NO_ENCONTRADO');
+  });
+
+  it('vigencia antes que el rol del beneficiario', () => {
+    expect(
+      createStore().grant(
+        grantRequest('P-5E6F7A8B', 'ACCESO_INDIVIDUAL', {
+          fecha: past,
+          beneficiary: stranger,
+        }),
+      ).codigo,
+    ).toBe('VIGENCIA_INVALIDA');
+  });
+
+  it('un permiso revocado no bloquea conceder el mismo alcance', () => {
+    // El primer administrativo tiene un PROGRESION_NARRATIVA revocado.
+    expect(
+      createStore().grant(
+        grantRequest('P-1A2B3C4D', 'PROGRESION_NARRATIVA', {
+          beneficiary: DEMO_ADMINISTRATIVOS[0],
+        }),
+      ).ok,
+    ).toBe(true);
+  });
+
+  it('se puede volver a conceder tras revocar', () => {
+    const store = createStore();
+    const same = grantRequest('P-1A2B3C4D', 'ACCESO_INDIVIDUAL', {
+      beneficiary: DEMO_ADMINISTRATIVOS[0],
+    });
+
+    expect(store.grant(same).ok).toBe(false);
+    store.revoke(DEMO_PERMISSION_ID.ACTIVE_1);
+    expect(store.grant(same).ok).toBe(true);
+  });
+
+  it('el mismo beneficiario puede tener otro alcance', () => {
+    const store = createStore();
+
+    expect(
+      store.grant(
+        grantRequest('P-5E6F7A8B', 'ACCESO_INDIVIDUAL', {
+          beneficiary: BENEFICIARY,
+        }),
+      ).ok,
+    ).toBe(true);
+    expect(
+      store.grant(
+        grantRequest('P-5E6F7A8B', 'PROGRESION_NARRATIVA', {
+          beneficiary: BENEFICIARY,
+        }),
+      ).ok,
+    ).toBe(true);
+  });
+
+  it('lo recién concedido sale primero en la lista', () => {
+    const store = createStore();
+    const granted = store.grant(
+      grantRequest('P-1A2B3C4D', 'PROGRESION_NARRATIVA', {
+        beneficiary: DEMO_ADMINISTRATIVOS[4],
+      }),
+    );
+
+    expect(ids(store.list('P-1A2B3C4D'))[0]).toBe(granted.data.id_permiso);
+  });
+});

@@ -16,6 +16,7 @@ import { addDays } from '../utils/tomorrowInBogota.js';
  * `now` se inyecta para las pruebas.
  */
 
+// Igual que el `limit` por defecto del DTO del backend (no la constante de la API).
 export const PAGE_SIZE_DEFAULT = 20;
 
 const uuid = (n) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
@@ -125,7 +126,8 @@ export function createPermissionStore({
       id_usuario_beneficiario: beneficiaryId,
       revocado_en: null,
     };
-    records.push(record);
+    // Más nuevo primero, como el backend (`fecha_creacion DESC`): D32.
+    records.unshift(record);
     return { ok: true, data: toGrantResponse(record, now()) };
   }
 

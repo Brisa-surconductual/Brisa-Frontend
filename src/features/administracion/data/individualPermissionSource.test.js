@@ -223,3 +223,92 @@ describe('Fuente de permisos en demostración', () => {
     ).rejects.toMatchObject({ status: null, codigo: 'SIN_CONEXION' });
   });
 });
+
+describe('Consulta no válida (D30)', () => {
+  it.each([
+    ['código vacío', '', {}],
+    ['código que no es A7', 'PART-0001', {}],
+    ['limit 0', 'P-1A2B3C4D', { limit: 0 }],
+    ['limit 101', 'P-1A2B3C4D', { limit: 101 }],
+    ['limit 1,5', 'P-1A2B3C4D', { limit: 1.5 }],
+    ['offset negativo', 'P-1A2B3C4D', { offset: -1 }],
+  ])('lanza con %s sin llamar al backend', async (_, code, page) => {
+    await expect(listPermissions(code, page)).rejects.toThrow('no válido');
+    expect(transport.get).not.toHaveBeenCalled();
+  });
+
+  it('la página pedida llega al transporte', async () => {
+    transport.get.mockResolvedValue({
+      data: { items: [], total: 0, offset: 20, limit: 10 },
+    });
+
+    await listPermissions('P-1A2B3C4D', { offset: 20, limit: 10 });
+
+    expect(transport.get.mock.calls[0][1].params).toMatchObject({
+      offset: 20,
+      limit: 10,
+    });
+  });
+});
+
+describe('Fuente con la API: revocar y errores', () => {
+  it('revokePermission confirma y deja pasar el rechazo esperado', async () => {
+    transport.post.mockResolvedValueOnce({ data: {} });
+    await expect(revokePermission(ID)).resolves.toEqual({ ok: true });
+
+    transport.post.mockRejectedValueOnce({
+      response: { status: 404, data: { codigo: 'PERMISO_NO_ENCONTRADO' } },
+    });
+    await expect(revokePermission(ID)).resolves.toMatchObject({
+      ok: false,
+      status: 404,
+      codigo: 'PERMISO_NO_ENCONTRADO',
+    });
+  });
+
+  it('listPermissions lanza el error de la API (500 y 400)', async () => {
+    transport.get.mockRejectedValueOnce({
+      response: {
+        status: 500,
+        data: { codigo: 'ERROR_PERSISTENCIA_PERMISOS' },
+      },
+    });
+    await expect(listPermissions('P-1A2B3C4D')).rejects.toMatchObject({
+      status: 500,
+    });
+
+    transport.get.mockRejectedValueOnce({
+      response: { status: 400, data: { statusCode: 400, message: 'Bad' } },
+    });
+    await expect(listPermissions('P-1A2B3C4D')).rejects.toMatchObject({
+      status: 400,
+    });
+  });
+});
+
+describe('La demostración exige estar activa', () => {
+  it('con DEV pero sin VITE_M08_DEMO usa la API, no la demo', async () => {
+    vi.stubEnv('DEV', true);
+    vi.stubEnv('VITE_M08_DEMO', 'false');
+    transport.get.mockResolvedValue({
+      data: { items: [], total: 0, offset: 0, limit: 20 },
+    });
+
+    await listPermissions('P-1A2B3C4D');
+
+    expect(transport.get).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('Demo: lo recién concedido sale primero (D32)', () => {
+  it('el permiso nuevo encabeza la lista', async () => {
+    enableDemo();
+
+    const granted = await grantPermission(
+      request('P-1A2B3C4D', 'PROGRESION_NARRATIVA', DEMO_ADMINISTRATIVOS[7]),
+    );
+    const { permissions } = await listPermissions('P-1A2B3C4D');
+
+    expect(permissions[0].id).toBe(granted.permission.id);
+  });
+});

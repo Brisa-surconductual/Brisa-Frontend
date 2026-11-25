@@ -273,3 +273,91 @@ describe('readGrantError', () => {
     });
   });
 });
+
+describe('readGrantError: casos sin codigo del backend (D28)', () => {
+  const GENERIC = 'No se pudo completar la operación con el permiso.';
+
+  it.each([
+    ['undefined', undefined],
+    ['null', null],
+  ])('con %s usa el texto genérico en el aviso general', (_, error) => {
+    expect(readGrantError(error)).toEqual({ field: null, message: GENERIC });
+  });
+
+  it('un mensaje en blanco usa el texto de respaldo del código', () => {
+    expect(
+      readGrantError({ codigo: 'PERMISO_YA_VIGENTE', mensaje: '   ' }),
+    ).toEqual({
+      field: 'scope',
+      message: 'Ya hay un permiso vigente con este alcance.',
+    });
+  });
+
+  it('PERMISO_YA_VIGENTE sin mensaje usa el respaldo y el campo alcance', () => {
+    expect(readGrantError({ codigo: 'PERMISO_YA_VIGENTE' })).toEqual({
+      field: 'scope',
+      message: 'Ya hay un permiso vigente con este alcance.',
+    });
+  });
+
+  it('un código desconocido sin mensaje usa el texto genérico', () => {
+    expect(readGrantError({ codigo: 'OTRO', mensaje: '' })).toEqual({
+      field: null,
+      message: GENERIC,
+    });
+  });
+
+  it('el 400 de Nest (DESCONOCIDO con texto en inglés) no se muestra', () => {
+    expect(
+      readGrantError({
+        status: 400,
+        codigo: 'DESCONOCIDO',
+        mensaje: 'id_usuario_beneficiario must be a UUID',
+      }),
+    ).toEqual({ field: null, message: GENERIC });
+  });
+
+  it('el 500 ERROR_PERSISTENCIA_PERMISOS con mensaje sí se muestra', () => {
+    expect(
+      readGrantError({
+        status: 500,
+        codigo: 'ERROR_PERSISTENCIA_PERMISOS',
+        mensaje: 'No fue posible completar la operación.',
+      }),
+    ).toEqual({
+      field: null,
+      message: 'No fue posible completar la operación.',
+    });
+  });
+});
+
+describe('Listado: solo vigentes y marcas con zona (D29, D31)', () => {
+  it('descarta y cuenta un elemento con vigente false', () => {
+    const result = normalizePermissionList([
+      raw(),
+      raw({
+        id_permiso: '33333333-3333-4333-8333-333333333333',
+        vigente: false,
+      }),
+    ]);
+
+    expect(result.permissions).toHaveLength(1);
+    expect(result.discarded).toBe(1);
+  });
+
+  it('normalizePermiso sí acepta vigente false (el 201 y los datos)', () => {
+    expect(normalizePermiso(raw({ vigente: false })).active).toBe(false);
+  });
+
+  it.each([['1'], ['2026'], ['2026-11-25T15:04:00'], ['2026-11-25']])(
+    'rechaza la marca %s (sin ISO con zona)',
+    (value) => {
+      expect(() =>
+        normalizePermiso(raw({ fecha_inicio_vigencia: value })),
+      ).toThrow();
+      expect(() =>
+        normalizePermiso(raw({ fecha_fin_vigencia: value })),
+      ).toThrow();
+    },
+  );
+});
