@@ -102,7 +102,6 @@ const BASE = Object.freeze({
   dashboard: null,
   retryingSections: [],
   isDemo: true,
-  isIntegrationPending: false,
   reload: vi.fn(),
   retrySection: vi.fn(),
 });
@@ -388,15 +387,16 @@ describe('Panel principal (RF-140): cohorte activa', () => {
     expect(html).not.toContain('Participantes activos');
   });
 
-  it('integración pendiente: lo indica y no muestra indicadores', () => {
+  it('el conflicto de la API ofrece acceso a la gestión de cohortes', () => {
     const html = render({
-      status: ST.PENDING_INTEGRATION,
+      status: ST.MULTIPLE_ACTIVE_COHORTS,
       cohort: null,
+      activeCohorts: [],
       isDemo: false,
-      isIntegrationPending: true,
     });
 
-    expect(html).toContain('integración pendiente');
+    expect(html).toContain('Hay varias cohortes activas');
+    expect(html).toContain('href="/app/administrativo/cohortes"');
     expect(html).not.toContain('Datos de demostración');
     expect(html).not.toContain('Alertas críticas pendientes');
   });

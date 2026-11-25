@@ -52,9 +52,9 @@ const COHORTS = [
   { id: 'co-activa', name: 'Activa', status: COHORT_STATUS.ACTIVE },
 ];
 
-function source({ pending = false, listCohorts, queries = {} } = {}) {
+function source({ listCohorts, queries = {} } = {}) {
   return {
-    isIntegrationPending: () => pending,
+    isDemo: () => true,
     listCohorts: listCohorts ?? vi.fn().mockResolvedValue(COHORTS),
     queries: {
       [SEC.BEHAVIORAL]: vi.fn().mockResolvedValue(
@@ -191,16 +191,63 @@ describe('useCohortDashboard (RF-140)', () => {
     expect(lastState().status).toBe(ST.COHORTS_ERROR);
   });
 
-  it('con la integración pendiente no consulta nada', async () => {
-    const fuente = source({ pending: true });
+  it('usa una consulta consolidada y la cohorte definida por el servidor', async () => {
+    const fuente = {
+      ...source(),
+      isDemo: () => false,
+      getDashboard: vi.fn().mockResolvedValue({
+        estado: 'DISPONIBLE',
+        id_cohorte: 'co-activa',
+        [SEC.BEHAVIORAL]: envelope({
+          alertas_inactividad_pendientes: 1,
+          alertas_craving_pendientes: 2,
+        }),
+        total_alertas_criticas_pendientes: 0,
+        fecha_carga_pantalla: '2026-11-24T12:00:00Z',
+      }),
+    };
     const result = useCohortDashboard({
       source: fuente,
       cache: createDashboardCache(),
     });
     await flush();
 
-    expect(result.isIntegrationPending).toBe(true);
-    expect(result.status).toBe(ST.PENDING_INTEGRATION);
+    expect(result.isDemo).toBe(false);
+    expect(lastState()).toMatchObject({
+      status: ST.READY,
+      cohort: { id: 'co-activa' },
+      dashboard: {
+        total_alertas_criticas_pendientes: 0,
+        fecha_carga_pantalla: '2026-11-24T12:00:00Z',
+      },
+    });
+    expect(fuente.getDashboard).toHaveBeenCalledTimes(1);
     expect(fuente.listCohorts).not.toHaveBeenCalled();
+    for (const query of Object.values(fuente.queries))
+      expect(query).not.toHaveBeenCalled();
   });
+
+  it.each([
+    [401, 'NO_AUTENTICADO', ST.ACCESS_DENIED],
+    [403, 'SIN_PERMISO', ST.ACCESS_DENIED],
+    [409, 'COHORTE_ACTIVA_AMBIGUA', ST.MULTIPLE_ACTIVE_COHORTS],
+    [409, 'COHORTE_ACTIVA_CAMBIO', ST.COHORTS_ERROR],
+    [500, 'ERROR_REGISTRO_AUDITORIA', ST.PANEL_ERROR],
+  ])(
+    'maneja HTTP %i %s sin mostrar indicadores',
+    async (status, codigo, expected) => {
+      useCohortDashboard({
+        source: {
+          isDemo: () => false,
+          getDashboard: vi.fn().mockRejectedValue({ status, codigo }),
+        },
+      });
+      await flush();
+      expect(lastState()).toMatchObject({
+        status: expected,
+        cohort: null,
+        dashboard: null,
+      });
+    },
+  );
 });

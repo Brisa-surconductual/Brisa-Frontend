@@ -11,10 +11,9 @@ const COUNT_FORMAT = new Intl.NumberFormat('es-CO', {
 
 /*
  * Widget principal del panel (RF-140): total de alertas críticas
- * pendientes, el elemento más destacado de la pantalla. El total lo
- * calcula services/cohortDashboard.js (suma de inactividad y craving de
- * RF-132); aquí solo se presenta, junto al desglose tal como llega de la
- * vista conductual. Sin colores de alarma: un total mayor que cero solo
+ * pendientes, el elemento más destacado de la pantalla. Presenta el
+ * total del panel y el desglose de la vista conductual. Sin colores de
+ * alarma: un total mayor que cero solo
  * refuerza el borde. Un total desconocido es «No disponible», nunca 0.
  */
 export function CriticalAlertsCard({

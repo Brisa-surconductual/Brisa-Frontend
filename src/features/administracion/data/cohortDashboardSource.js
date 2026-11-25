@@ -1,16 +1,15 @@
-import { COHORT_SOURCE_MODE } from '../types/cohortSourceMode.js';
+import { getDashboardFromApi } from '../api/vistasAgregadasApi.js';
 import { DASHBOARD_SECTION } from '../types/cohortDashboard.js';
+import { isCohortDemoEnabled } from '../utils/cohortDemoMode.js';
 
 import { getBehavioralAggregate } from './behavioralAggregateSource.js';
-import { getCohortSourceMode, listCohorts } from './cohortSource.js';
+import { getCohort, listCohorts } from './cohortSource.js';
 import { getNarrativeAggregate } from './narrativeAggregateSource.js';
 import { getNotificationAggregate } from './notificationAggregateSource.js';
 
 /*
- * Fuentes del panel principal (RF-140). No añade integraciones: reutiliza
- * la fuente de cohortes (RF-124) y las tres fachadas de las vistas
- * agregadas, cada una con su propio mock en desarrollo. Sin el modo de
- * demostración no se consulta nada (integración pendiente).
+ * El panel consolidado es la fuente de RF-140. La demostración conserva
+ * las tres consultas de vistas y sus escenarios independientes.
  */
 
 /*
@@ -33,8 +32,9 @@ const sectionQuery = (section, query) => async (cohortId) => {
 };
 
 export const DASHBOARD_SOURCE = Object.freeze({
-  isIntegrationPending: () =>
-    getCohortSourceMode() !== COHORT_SOURCE_MODE.DEMO,
+  isDemo: isCohortDemoEnabled,
+  getDashboard: getDashboardFromApi,
+  getCohort,
   listCohorts,
   queries: Object.freeze({
     [DASHBOARD_SECTION.BEHAVIORAL]: sectionQuery(

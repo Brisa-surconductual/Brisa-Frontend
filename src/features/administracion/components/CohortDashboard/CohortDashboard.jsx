@@ -8,7 +8,6 @@ import {
   FlaskConical,
   History,
   Layers,
-  PlugZap,
   RefreshCw,
   SearchX,
   TrendingUp,
@@ -122,7 +121,7 @@ function CohortHeader({ cohort, loadedAt, isLoading, onReload }) {
             to={getCohortDetailPath(cohort.id)}
             className="text-[length:var(--font-size-lg)] leading-[var(--line-height-tight)] font-extrabold break-words text-[var(--text-primary)] no-underline hover:underline"
           >
-            {cohort.name?.trim() || 'Cohorte sin nombre'}
+            {cohort.name?.trim() || 'Ver cohorte'}
           </Link>
           <span className="text-[length:var(--font-size-xs)] text-[var(--text-muted)]">
             {loadedAt ? (
@@ -195,17 +194,39 @@ function CohortShortcuts({ cohort }) {
 }
 
 function CohortStatusNotice({ status, activeCohorts, onReload }) {
-  if (status === DASHBOARD_STATUS.COHORTS_ERROR) {
+  if (status === DASHBOARD_STATUS.ACCESS_DENIED) {
     return (
       <CohortNotice
         tone="danger"
         icon={AlertTriangle}
-        title="No pudimos identificar la cohorte activa"
+        title="Acceso no permitido"
+        role="alert"
+      >
+        Tu sesión no tiene acceso al panel administrativo.
+      </CohortNotice>
+    );
+  }
+
+  if (
+    status === DASHBOARD_STATUS.COHORTS_ERROR ||
+    status === DASHBOARD_STATUS.PANEL_ERROR
+  ) {
+    const panelError = status === DASHBOARD_STATUS.PANEL_ERROR;
+    return (
+      <CohortNotice
+        tone="danger"
+        icon={AlertTriangle}
+        title={
+          panelError
+            ? 'No pudimos cargar el panel'
+            : 'No pudimos identificar la cohorte activa'
+        }
         role="alert"
         action={<ReloadButton onClick={onReload} label="Reintentar" />}
       >
-        La consulta de cohortes falló o no respondió a tiempo. No se muestran
-        indicadores hasta identificar la cohorte activa.
+        {panelError
+          ? 'El panel no respondió correctamente. Intenta cargarlo de nuevo.'
+          : 'No se pudo confirmar la cohorte activa. Intenta cargar el panel de nuevo.'}
       </CohortNotice>
     );
   }
@@ -240,8 +261,19 @@ function CohortStatusNotice({ status, activeCohorts, onReload }) {
     <CohortNotice
       tone="warning"
       icon={Layers}
-      title={`Hay ${activeCohorts.length} cohortes activas`}
+      title={
+        activeCohorts.length
+          ? `Hay ${activeCohorts.length} cohortes activas`
+          : 'Hay varias cohortes activas'
+      }
       role="status"
+      action={
+        activeCohorts.length === 0 && (
+          <Link to={COHORTS_PATH} className={LINK_CLASS}>
+            Ir a Cohortes
+          </Link>
+        )
+      }
     >
       <span className="flex flex-col gap-[var(--space-2)]">
         <span>
@@ -284,7 +316,6 @@ export function CohortDashboard() {
     dashboard,
     retryingSections,
     isDemo,
-    isIntegrationPending,
     reload,
     retrySection,
   } = useCohortDashboard();
@@ -344,19 +375,6 @@ export function CohortDashboard() {
         </CohortNotice>
       )}
 
-      {isIntegrationPending && (
-        <CohortNotice
-          tone="info"
-          icon={PlugZap}
-          title="Panorama de la cohorte activa: integración pendiente"
-          role="status"
-        >
-          El panel de la cohorte activa todavía no está conectado a las vistas
-          agregadas. Cuando se integre, aquí aparecerán las alertas críticas y
-          los indicadores de conducta, progresión narrativa y notificaciones.
-        </CohortNotice>
-      )}
-
       {isLoading && !cohort && (
         <>
           <p role="status" className="sr-only">
@@ -369,9 +387,7 @@ export function CohortDashboard() {
         </>
       )}
 
-      {(status === DASHBOARD_STATUS.COHORTS_ERROR ||
-        status === DASHBOARD_STATUS.NO_ACTIVE_COHORT ||
-        status === DASHBOARD_STATUS.MULTIPLE_ACTIVE_COHORTS) && (
+      {!isLoading && status !== DASHBOARD_STATUS.READY && (
         <CohortStatusNotice
           status={status}
           activeCohorts={activeCohorts}
@@ -411,8 +427,8 @@ export function CohortDashboard() {
                   action={<ReloadButton onClick={reload} />}
                 >
                   Ninguna de las fuentes de información pudo ser consultada. Se
-                  muestra la última versión válida del panel conservada en esta
-                  sesión, marcada como desactualizada.
+                  muestran los últimos datos disponibles, marcados como
+                  desactualizados.
                 </CohortNotice>
               )}
 

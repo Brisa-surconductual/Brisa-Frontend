@@ -75,3 +75,19 @@ export function getCohortEvolutionFromApi(cohortId) {
     acceptBackup: false,
   });
 }
+
+export async function getDashboardFromApi() {
+  try {
+    return (await apiClient.get('/admin/dashboard')).data;
+  } catch (error) {
+    const response = error?.response;
+    if (
+      response?.status === 503 &&
+      response.data?.codigo === 'FUENTES_DASHBOARD_NO_DISPONIBLES' &&
+      ['DESACTUALIZADO', 'NO_DISPONIBLE'].includes(response.data.estado)
+    ) {
+      return response.data;
+    }
+    throw toApiError(error);
+  }
+}

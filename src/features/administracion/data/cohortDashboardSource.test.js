@@ -23,6 +23,9 @@ import { DASHBOARD_SOURCE } from './cohortDashboardSource.js';
 import { changeCohortStatus } from './cohortSource.js';
 import { resetDemoScenarios } from './demoScenarioTestEnv.js';
 
+const transport = vi.hoisted(() => ({ get: vi.fn() }));
+vi.mock('@/shared/utils/apiClient.jsx', () => ({ apiClient: transport }));
+
 /*
  * Panel principal (RF-140) con los mocks reales de RF-132, RF-133 y
  * RF-134 y la fuente de cohortes de demostración. Tiempo real: las
@@ -66,6 +69,7 @@ let xhrSpy;
 beforeEach(() => {
   resetDemoScenarios(vi);
   resetDashboardDemo();
+  transport.get.mockReset();
   fetchSpy = vi.fn(() => Promise.reject(new Error('Sin red en las pruebas')));
   xhrSpy = vi.fn();
   vi.stubGlobal('fetch', fetchSpy);
@@ -73,26 +77,50 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  // El panel no hace peticiones HTTP nuevas ni contacta M05, M06 o M07.
+  // Las peticiones de API se verifican a través del cliente HTTP simulado.
   expect(fetchSpy).not.toHaveBeenCalled();
   expect(xhrSpy).not.toHaveBeenCalled();
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
 });
 
-describe('Panel principal sin integración (RF-140)', () => {
-  it('sin el modo demostración, la integración queda pendiente', () => {
-    vi.stubEnv('DEV', true);
-    vi.stubEnv('VITE_M08_DEMO', '');
+describe('Origen HTTP del panel principal (RF-140)', () => {
+  it.each([
+    [true, ''],
+    [false, 'true'],
+  ])('usa el contrato consolidado con DEV=%s y demo=%s', async (dev, demo) => {
+    vi.stubEnv('DEV', dev);
+    vi.stubEnv('VITE_M08_DEMO', demo);
+    const data = { estado: 'SIN_COHORTE_ACTIVA', id_cohorte: null };
+    transport.get.mockResolvedValueOnce({ data });
+    expect(DASHBOARD_SOURCE.isDemo()).toBe(false);
+    await expect(DASHBOARD_SOURCE.getDashboard()).resolves.toBe(data);
+    expect(transport.get).toHaveBeenCalledExactlyOnceWith('/admin/dashboard');
+  });
 
-    expect(DASHBOARD_SOURCE.isIntegrationPending()).toBe(true);
+  it.each(['DESACTUALIZADO', 'NO_DISPONIBLE'])(
+    'conserva el cuerpo funcional del 503 %s',
+    async (estado) => {
+      const data = { codigo: 'FUENTES_DASHBOARD_NO_DISPONIBLES', estado };
+      transport.get.mockRejectedValueOnce({ response: { status: 503, data } });
+      await expect(DASHBOARD_SOURCE.getDashboard()).resolves.toBe(data);
+    },
+  );
+
+  it('distingue un 503 genérico del contrato degradado del panel', async () => {
+    transport.get.mockRejectedValueOnce({
+      response: { status: 503, data: '<html>No disponible</html>' },
+    });
+    await expect(DASHBOARD_SOURCE.getDashboard()).rejects.toMatchObject({
+      status: 503,
+    });
   });
 });
 
 describe('Escenarios de demostración del panel (RF-140)', () => {
   it('identifica la cohorte ACTIVA de la demostración', async () => {
     enableDemo();
-    expect(DASHBOARD_SOURCE.isIntegrationPending()).toBe(false);
+    expect(DASHBOARD_SOURCE.isDemo()).toBe(true);
     expect(await activeCohortId()).toBe('demo-cohorte-b');
   });
 
