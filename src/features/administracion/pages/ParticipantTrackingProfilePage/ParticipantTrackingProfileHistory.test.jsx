@@ -213,8 +213,18 @@ describe('Registros del historial', () => {
     expect(html).toMatch(/^<ol/);
     expect(html.match(/<li\b/g)).toHaveLength(2);
     expect(html.match(/<h3/g)).toHaveLength(2);
-    expect(textOf(html)).toMatch(/Craving elevado .*Activa .*Generada: 24 de feb de 2026, 07:30 .*Fuente: RF-63/);
-    expect(textOf(html)).toMatch(/Inactividad .*Resuelta .*Fuente: RF-68/);
+    expect(textOf(html)).toMatch(/Craving elevado .*Activa .*Generada: 24 de feb de 2026, 07:30 .*Fuente: Detección de craving elevado/);
+    expect(textOf(html)).toMatch(/Inactividad .*Resuelta .*Fuente: Detección de inactividad/);
+    // El identificador del requerimiento no se presenta en lugar de la descripción.
+    expect(textOf(html)).not.toMatch(/RF-\d+/);
+  });
+
+  it('la presentación no altera la fuente original de los datos', () => {
+    const alerts = [alert({ source: 'RF-63' }), alert({})];
+
+    list(alerts);
+
+    expect(alerts.map(({ source }) => source)).toEqual(['RF-63', 'RF-68']);
   });
 
   it('fechas de generación y resolución en hora de Colombia', () => {
@@ -234,12 +244,14 @@ describe('Registros del historial', () => {
     expect(list([alert({ status: 'EN_REVISION' })])).not.toContain('Resolución');
   });
 
-  it('tipo, fuente y estado desconocidos se muestran tal cual, sin interpretarlos', () => {
+  it('tipo, estado y fuente desconocidos se indican sin mostrar el valor técnico', () => {
     const text = textOf(list([alert({ type: 'RECAIDA', source: 'RF-99', status: 'ARCHIVADA' })]));
 
-    expect(text).toContain('Tipo no reconocido: RECAIDA');
-    expect(text).toContain('Fuente no reconocida: RF-99');
-    expect(text).toContain('Estado no reconocido: ARCHIVADA');
+    expect(text).toContain('Tipo no reconocido');
+    expect(text).toContain('Fuente: Fuente no reconocida');
+    expect(text).not.toContain('RF-99');
+    expect(text).toContain('Estado no reconocido');
+    expect(text).not.toMatch(/RECAIDA|ARCHIVADA/);
     expect(textOf(list([alert({ type: null, source: null, status: null })]))).toMatch(/Tipo no disponible.*Estado no disponible.*Fuente no disponible/);
   });
 
@@ -248,7 +260,7 @@ describe('Registros del historial', () => {
     ['EN_REVISION', 'En revisión', 'info'],
     ['RESUELTA', 'Resuelta', 'success'],
     ['DESCARTADA', 'Descartada', 'surface-hover'],
-    ['ARCHIVADA', 'Estado no reconocido: ARCHIVADA', 'surface-hover'],
+    ['ARCHIVADA', 'Estado no reconocido', 'surface-hover'],
   ])('estado %s: «%s» con texto e ícono, no solo color', (status, label, tone) => {
     const html = clean(renderToStaticMarkup(<AlertResolutionBadge status={status} />));
 

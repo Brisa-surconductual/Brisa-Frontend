@@ -170,8 +170,11 @@ describe('Indicadores, tendencias y alertas', () => {
     expect(html).not.toMatch(/success|danger|warning/);
   });
 
-  it('una tendencia desconocida se muestra tal cual, sin interpretarla; una ausente, como no disponible', () => {
-    expect(textOf(clean(renderToStaticMarkup(<ConsumptionTrendBadge trend="ESTABILIZACION" />)))).toContain('Valor no reconocido: ESTABILIZACION');
+  it('una tendencia desconocida no se interpreta ni se muestra cruda; una ausente, como no disponible', () => {
+    const unknown = textOf(clean(renderToStaticMarkup(<ConsumptionTrendBadge trend="ESTABILIZACION" />)));
+
+    expect(unknown).toContain('Valor no reconocido');
+    expect(unknown).not.toContain('ESTABILIZACION');
     expect(textOf(clean(renderToStaticMarkup(<ConsumptionTrendBadge trend={null} />)))).toContain('No disponible');
   });
 
@@ -186,7 +189,7 @@ describe('Indicadores, tendencias y alertas', () => {
 
   it('sin alertas, con tipo desconocido, sin fecha o no disponibles', () => {
     expect(textOf(clean(renderToStaticMarkup(<ActiveAlertList alerts={[]} />)))).toContain('Sin alertas activas');
-    expect(textOf(clean(renderToStaticMarkup(<ActiveAlertList alerts={[{ type: 'OTRA', generatedAt: '2026-03-08' }]} />)))).toMatch(/Tipo no reconocido: OTRA.*Fecha no disponible/);
+    expect(textOf(clean(renderToStaticMarkup(<ActiveAlertList alerts={[{ type: 'OTRA', generatedAt: '2026-03-08' }]} />)))).toMatch(/Tipo no reconocido .*Fecha no disponible/);
     expect(textOf(clean(renderToStaticMarkup(<ActiveAlertList alerts={null} />)))).toContain('No disponible');
   });
 });
@@ -232,7 +235,7 @@ describe('Estados de la ficha', () => {
   it('integración pendiente: sin datos, sin aviso de demo ni de solo lectura', () => {
     const html = render({ isIntegrationPending: true, isDemo: false, status: null, code: null, profile: null });
 
-    expect(html).toMatch(/role="status"[\s\S]*Integración pendiente/);
+    expect(html).toMatch(/role="status"[\s\S]*Información aún no disponible/);
     expect(html).not.toMatch(/Datos de demostración|Información de solo lectura|id="indicadores-principales"/);
   });
 
@@ -240,6 +243,6 @@ describe('Estados de la ficha', () => {
     vi.stubEnv('DEV', true);
     vi.stubEnv('VITE_M08_DEMO', 'false');
 
-    expect(render(null)).toContain('Integración pendiente');
+    expect(render(null)).toContain('Información aún no disponible');
   });
 });

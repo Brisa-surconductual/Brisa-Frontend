@@ -130,7 +130,8 @@ describe('Otras herramientas para ti (CP-12)', () => {
     expect(positions).toEqual([...positions].sort((a, b) => a - b));
     for (const { description, release } of STUDENT_TOOL_MODULES) {
       expect(html).toContain(description);
-      expect(html).toContain(`Módulo ${release}`);
+      // `release` es interno: el código académico no se muestra.
+      expect(html).not.toContain(release);
     }
   });
 

@@ -29,7 +29,7 @@ const CARD_BASE_CLASS =
  * con borde punteado y tono neutro para no competir con lo
  * disponible hoy.
  */
-function ModuleCardContent({ name, description, release, Icon, available }) {
+function ModuleCardContent({ name, description, Icon, available }) {
   return (
     <>
       <span
@@ -64,9 +64,6 @@ function ModuleCardContent({ name, description, release, Icon, available }) {
               Disponible próximamente
             </span>
           )}
-          <span className="font-[var(--font-mono)] text-[length:var(--font-size-xs)] text-[var(--text-muted)]">
-            Módulo {release}
-          </span>
         </div>
       </div>
     </>
@@ -77,12 +74,11 @@ function ModuleCardContent({ name, description, release, Icon, available }) {
 export function ModuleGrid({ modules = STUDENT_TOOL_MODULES }) {
   return (
     <ul className="m-0 grid list-none grid-cols-1 gap-[var(--space-3)] p-0 md:grid-cols-3">
-      {modules.map(({ id, name, description, release, to }) => {
+      {modules.map(({ id, name, description, to }) => {
         const content = (
           <ModuleCardContent
             name={name}
             description={description}
-            release={release}
             Icon={MODULE_ICON[id]}
             available={Boolean(to)}
           />

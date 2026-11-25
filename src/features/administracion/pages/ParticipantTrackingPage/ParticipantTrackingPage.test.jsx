@@ -239,7 +239,7 @@ describe('Estados de la pantalla', () => {
   it('integración pendiente: sin registros, filtros, aviso de demo ni de solo lectura', () => {
     const html = render({ isIntegrationPending: true, isDemo: false, isLoading: false });
 
-    expect(html).toMatch(/role="status"[\s\S]*Integración pendiente/);
+    expect(html).toMatch(/role="status"[\s\S]*Información aún no disponible/);
     expect(html).not.toMatch(/role="search"|<article|Datos de demostración/);
   });
 
@@ -247,6 +247,6 @@ describe('Estados de la pantalla', () => {
     vi.stubEnv('DEV', true);
     vi.stubEnv('VITE_M08_DEMO', 'false');
 
-    expect(render(null)).toContain('Integración pendiente');
+    expect(render(null)).toContain('Información aún no disponible');
   });
 });

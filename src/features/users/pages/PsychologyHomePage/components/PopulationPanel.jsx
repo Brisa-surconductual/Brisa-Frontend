@@ -84,7 +84,7 @@ export function PopulationPanel() {
             <p className="mt-[var(--space-1)] mb-0 text-[length:var(--font-size-sm)] leading-[var(--line-height-normal)]">
               El perfil administrativo solo consulta estadísticas del grupo.
               El acceso a datos individuales identificables requiere
-              consentimiento específico y llega en M08.
+              consentimiento específico del participante.
             </p>
           </div>
         </div>
@@ -107,8 +107,8 @@ export function PopulationPanel() {
 
             <p className="mt-[var(--space-1)] mb-0 text-[length:var(--font-size-sm)] leading-[var(--line-height-normal)]">
               Las cifras de esta sección son ejemplos para ilustrar la
-              vista. No provienen del backend ni describen a la población
-              real del programa.
+              vista. No son datos reales ni describen a la población del
+              programa.
             </p>
           </div>
         </div>

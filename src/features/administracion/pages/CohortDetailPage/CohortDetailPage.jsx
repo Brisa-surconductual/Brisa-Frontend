@@ -210,9 +210,9 @@ function CohortDetail() {
       )}
 
       {isIntegrationPending && (
-        <CohortNotice tone="info" icon={PlugZap} title="Integración pendiente" role="status">
-          La consulta de participantes todavía no está conectada al servidor.
-          Cuando se integre, aquí aparecerán los participantes de la cohorte.
+        <CohortNotice tone="info" icon={PlugZap} title="Información aún no disponible" role="status">
+          La consulta de participantes todavía no está disponible. Aquí
+          aparecerán los participantes de la cohorte cuando lo esté.
         </CohortNotice>
       )}
 

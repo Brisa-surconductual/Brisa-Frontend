@@ -92,7 +92,8 @@ export function AdministrativePauseHistoryPage() {
 
       if (data?.message) {
         mensajeDelBack = Array.isArray(data.message) ? data.message[0] : data.message;
-      } else if (error.message) {
+      } else if (error.message && !error.isAxiosError && !error.response) {
+        // El `message` de axios es técnico y en inglés: se usa el respaldo.
         mensajeDelBack = error.message;
       }
 

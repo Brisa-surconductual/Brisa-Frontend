@@ -134,7 +134,7 @@ function Pauses({ pauses }) {
             >
               <Icon size={14} strokeWidth={2} className="shrink-0" aria-hidden="true" />
               <span className="sr-only">Estado de la pausa: </span>
-              {presentation?.label ?? (pause.status ? `Estado no reconocido: ${pause.status}` : 'Estado no disponible')}
+              {presentation?.label ?? (pause.status ? 'Estado no reconocido' : 'Estado no disponible')}
             </span>
           </li>
         );
