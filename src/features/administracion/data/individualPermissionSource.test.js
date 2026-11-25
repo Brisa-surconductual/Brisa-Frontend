@@ -3,6 +3,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { resetDemoScenarios } from './demoScenarioTestEnv.js';
 import { resetPermissionDemoStore } from './individualPermissionDemoSource.js';
 import {
+  DEMO_ADMINISTRATIVOS,
+  DEMO_CURRENT_USER_ID,
+  DEMO_PERMISSION_ID,
+} from './individualPermissionDemoStore.js';
+import {
   grantPermission,
   listPermissions,
   revokePermission,
@@ -18,18 +23,25 @@ function enableDemo(scenario = '') {
   vi.stubEnv('VITE_M08_PERMISSION_SCENARIO', scenario);
 }
 
+const ID = '11111111-1111-4111-8111-111111111111';
+
 const RAW = Object.freeze({
-  id_permiso: 'perm-1',
+  id_permiso: ID,
   alcance: 'ACCESO_INDIVIDUAL',
   fecha_inicio_vigencia: '2026-11-25T15:04:00.000Z',
   fecha_fin_vigencia: '2026-12-02T04:59:59.000Z',
   vigente: true,
 });
 
-const request = (code, alcance = 'ACCESO_INDIVIDUAL') => ({
+const request = (
+  code,
+  alcance = 'ACCESO_INDIVIDUAL',
+  beneficiary = DEMO_ADMINISTRATIVOS[5],
+) => ({
   codigo_participante: code,
   alcance,
   fecha_fin_vigencia: null,
+  id_usuario_beneficiario: beneficiary,
 });
 
 beforeEach(() => {
@@ -42,11 +54,11 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllEnvs());
 
 describe('Fuente de permisos con la API', () => {
-  it('normaliza items y cuenta los elementos descartados', async () => {
+  it('normaliza items, cuenta los descartados y conserva la paginación', async () => {
     transport.get.mockResolvedValue({
       data: {
-        items: [RAW, { ...RAW, alcance: 'X' }],
-        total: 2,
+        items: [RAW, { ...RAW, alcance: 'X' }, { ...RAW, id_permiso: 'p-1' }],
+        total: 3,
         offset: 0,
         limit: 20,
       },
@@ -55,9 +67,14 @@ describe('Fuente de permisos con la API', () => {
     const result = await listPermissions('P-1A2B3C4D');
 
     expect(result.permissions.map(({ id, endDate }) => [id, endDate])).toEqual([
-      ['perm-1', '2026-12-01'],
+      [ID, '2026-12-01'],
     ]);
-    expect(result.discarded).toBe(1);
+    expect(result).toMatchObject({
+      discarded: 2,
+      total: 3,
+      offset: 0,
+      limit: 20,
+    });
   });
 
   it('normaliza el permiso creado y deja pasar los rechazos', async () => {
@@ -67,7 +84,7 @@ describe('Fuente de permisos con la API', () => {
     await expect(grantPermission(request('P-1A2B3C4D'))).resolves.toMatchObject(
       {
         ok: true,
-        permission: { id: 'perm-1', endDate: '2026-12-01', active: true },
+        permission: { id: ID, endDate: '2026-12-01', active: true },
       },
     );
 
@@ -86,7 +103,7 @@ describe('Fuente de permisos con la API', () => {
   });
 
   it('un 201 que no se puede normalizar no es un fallo: permission null para recargar', async () => {
-    transport.post.mockResolvedValue({ data: { id_permiso: 'perm-1' } });
+    transport.post.mockResolvedValue({ data: { id_permiso: ID } });
 
     await expect(grantPermission(request('P-1A2B3C4D'))).resolves.toEqual({
       ok: true,
@@ -96,16 +113,35 @@ describe('Fuente de permisos con la API', () => {
 });
 
 describe('Fuente de permisos en demostración', () => {
-  it('no llama a la API y solo trae los vigentes', async () => {
+  it('no llama a la API y solo trae los vigentes, con el beneficiario', async () => {
     enableDemo();
 
-    const { permissions } = await listPermissions('P-1A2B3C4D');
+    const { permissions, total } = await listPermissions('P-1A2B3C4D');
 
     expect(permissions.map(({ id }) => id)).toEqual([
-      'demo-permiso-1',
-      'demo-permiso-2',
+      DEMO_PERMISSION_ID.ACTIVE_1,
+      DEMO_PERMISSION_ID.ACTIVE_2,
     ]);
+    expect(permissions[0].beneficiaryId).toBe(DEMO_ADMINISTRATIVOS[0]);
+    expect(total).toBe(2);
     expect(transport.get).not.toHaveBeenCalled();
+  });
+
+  it('pagina P-9C0D1E2F y un código desconocido da lista vacía', async () => {
+    enableDemo();
+
+    const first = await listPermissions('P-9C0D1E2F');
+    const second = await listPermissions('P-9C0D1E2F', {
+      offset: 20,
+      limit: 20,
+    });
+
+    expect([first.permissions.length, first.total]).toEqual([20, 25]);
+    expect(second.permissions).toHaveLength(5);
+    await expect(listPermissions('P-00000000')).resolves.toMatchObject({
+      permissions: [],
+      total: 0,
+    });
   });
 
   it('concede, choca con el permiso vigente y revoca', async () => {
@@ -132,41 +168,58 @@ describe('Fuente de permisos en demostración', () => {
     });
   });
 
-  it('el escenario conflicto fuerza el 409 con un mensaje del servidor', async () => {
-    enableDemo('conflicto');
+  it('conceder a quien tiene la sesión da el 422 natural de autoconcesión', async () => {
+    enableDemo();
 
-    const result = await grantPermission(
-      request('P-5E6F7A8B', 'PROGRESION_NARRATIVA'),
-    );
-
-    expect(result).toMatchObject({
-      ok: false,
-      status: 409,
-      codigo: 'PERMISO_YA_VIGENTE',
+    await expect(
+      grantPermission(
+        request('P-5E6F7A8B', 'ACCESO_INDIVIDUAL', DEMO_CURRENT_USER_ID),
+      ),
+    ).resolves.toMatchObject({
+      status: 422,
+      codigo: 'AUTOCONCESION_NO_PERMITIDA',
     });
-    expect(result.mensaje).toMatch(/simulado del servidor/);
   });
 
-  it('el escenario autoconcesion fuerza el 422', async () => {
-    enableDemo('autoconcesion');
+  it.each([
+    ['conflicto', 409, 'PERMISO_YA_VIGENTE', true],
+    ['autoconcesion', 422, 'AUTOCONCESION_NO_PERMITIDA', false],
+    ['rol-invalido', 422, 'ROL_INVALIDO_PARA_OPERACION', true],
+    ['vigencia-invalida', 422, 'VIGENCIA_INVALIDA', false],
+  ])(
+    'el escenario %s fuerza %i %s al conceder',
+    async (scenario, status, codigo, withMessage) => {
+      enableDemo(scenario);
 
-    await expect(grantPermission(request('P-5E6F7A8B'))).resolves.toMatchObject(
-      {
-        ok: false,
-        status: 422,
-        codigo: 'AUTOCONCESION_NO_PERMITIDA',
-      },
-    );
-  });
+      const result = await grantPermission(request('P-5E6F7A8B'));
+
+      expect(result).toMatchObject({ ok: false, status, codigo });
+      // Con mensaje del servidor simulado, para ver su texto tal cual.
+      expect(result.mensaje !== '').toBe(withMessage);
+    },
+  );
+
+  it.each([
+    ['revocacion-revocado', 409, 'PERMISO_YA_REVOCADO'],
+    ['revocacion-inexistente', 404, 'PERMISO_NO_ENCONTRADO'],
+  ])(
+    'el escenario %s fuerza %i %s al revocar',
+    async (scenario, status, codigo) => {
+      enableDemo(scenario);
+
+      await expect(
+        revokePermission(DEMO_PERMISSION_ID.ACTIVE_1),
+      ).resolves.toMatchObject({ ok: false, status, codigo });
+    },
+  );
 
   it('los escenarios error y revocacion-error fallan', async () => {
     enableDemo('error');
     await expect(listPermissions('P-1A2B3C4D')).rejects.toThrow('simulado');
 
     enableDemo('revocacion-error');
-    await expect(revokePermission('demo-permiso-1')).rejects.toMatchObject({
-      status: null,
-      codigo: 'SIN_CONEXION',
-    });
+    await expect(
+      revokePermission(DEMO_PERMISSION_ID.ACTIVE_1),
+    ).rejects.toMatchObject({ status: null, codigo: 'SIN_CONEXION' });
   });
 });

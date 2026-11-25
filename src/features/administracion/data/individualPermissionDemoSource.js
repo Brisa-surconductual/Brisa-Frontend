@@ -41,14 +41,39 @@ export function resetPermissionDemoStore() {
 const pause = () =>
   new Promise((resolve) => setTimeout(resolve, DEMO_DELAY_MS));
 
-const forced = (status, codigo, mensaje = '') => ({
+const S = PERMISSION_DEMO_SCENARIO;
+const E = PERMISSION_ERROR;
+
+// Rechazos forzados por escenario: [status, codigo, mensaje del servidor].
+// Con `mensaje` se ve en la interfaz el texto del backend tal cual.
+const FORCED_GRANT = {
+  [S.CONFLICT]: [
+    409,
+    E.ALREADY_ACTIVE,
+    'Mensaje simulado del servidor: ya existe un permiso vigente con este alcance.',
+  ],
+  [S.SELF_GRANT]: [422, E.SELF_GRANT_FORBIDDEN, ''],
+  [S.INVALID_ROLE]: [
+    422,
+    E.INVALID_ROLE,
+    'Mensaje simulado del servidor: el usuario no tiene un rol válido.',
+  ],
+  [S.INVALID_VALIDITY]: [422, E.INVALID_VALIDITY, ''],
+};
+
+const FORCED_REVOKE = {
+  [S.REVOKE_REVOKED]: [409, E.ALREADY_REVOKED, ''],
+  [S.REVOKE_MISSING]: [404, E.NOT_FOUND, ''],
+};
+
+const forced = ([status, codigo, mensaje]) => ({
   ok: false,
   status,
   codigo,
   mensaje,
 });
 
-export async function listPermissions(code) {
+export async function listPermissions(code, page) {
   const scenario = getPermissionDemoScenario();
   if (scenario === PERMISSION_DEMO_SCENARIO.LOADING)
     return new Promise(() => {});
@@ -58,31 +83,22 @@ export async function listPermissions(code) {
   if (scenario === PERMISSION_DEMO_SCENARIO.ERROR) {
     throw new Error('Error simulado del modo de demostración.');
   }
-  return getStore().list(code);
+  return getStore().list(code, page);
 }
 
 export async function grantPermission(request) {
   await pause();
 
-  const scenario = getPermissionDemoScenario();
-  if (scenario === PERMISSION_DEMO_SCENARIO.CONFLICT) {
-    // Con `mensaje`, para ver en la interfaz el texto del backend tal cual.
-    return forced(
-      409,
-      PERMISSION_ERROR.ALREADY_ACTIVE,
-      'Mensaje simulado del servidor: ya existe un permiso vigente con este alcance.',
-    );
-  }
-  if (scenario === PERMISSION_DEMO_SCENARIO.SELF_GRANT) {
-    return forced(422, PERMISSION_ERROR.SELF_GRANT_FORBIDDEN);
-  }
-  return getStore().grant(request);
+  const rejection = FORCED_GRANT[getPermissionDemoScenario()];
+  return rejection ? forced(rejection) : getStore().grant(request);
 }
 
 export async function revokePermission(permissionId) {
   await pause();
 
-  if (getPermissionDemoScenario() === PERMISSION_DEMO_SCENARIO.REVOKE_ERROR) {
+  const scenario = getPermissionDemoScenario();
+  if (FORCED_REVOKE[scenario]) return forced(FORCED_REVOKE[scenario]);
+  if (scenario === PERMISSION_DEMO_SCENARIO.REVOKE_ERROR) {
     // Fallo sin respuesta del servidor: el mismo error normalizado que la API.
     throw toApiError(new Error('Network Error'));
   }

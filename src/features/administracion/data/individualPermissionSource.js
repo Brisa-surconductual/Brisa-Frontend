@@ -21,10 +21,12 @@ async function loadDemo() {
 const backend = async () =>
   isCohortDemoEnabled() ? loadDemo() : permissionsApi;
 
-// `null` si el participante no existe; si no, `{ permissions, discarded }`.
-export async function listPermissions(code) {
-  const rows = await (await backend()).listPermissions(code);
-  return rows === null ? null : normalizePermissionList(rows);
+// Una página: `{ permissions, discarded, total, offset, limit }` (D25).
+export async function listPermissions(code, page) {
+  const { items, ...paging } = await (
+    await backend()
+  ).listPermissions(code, page);
+  return { ...normalizePermissionList(items), ...paging };
 }
 
 // `request` sale de `toGrantRequest`. `{ ok: true, permission }` o el rechazo esperado.

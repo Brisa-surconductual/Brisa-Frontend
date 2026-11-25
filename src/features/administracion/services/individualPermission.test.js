@@ -11,12 +11,17 @@ import {
   validatePermissionForm,
 } from './individualPermission.js';
 
+const ID = '11111111-1111-4111-8111-111111111111';
+const BENEFICIARY = '22222222-2222-4222-8222-222222222222';
+
 const raw = (overrides = {}) => ({
-  id_permiso: 'perm-1',
+  id_permiso: ID,
   alcance: 'ACCESO_INDIVIDUAL',
   fecha_inicio_vigencia: '2026-11-25T15:04:00.000Z',
   fecha_fin_vigencia: '2026-12-02T04:59:59.000Z',
   vigente: true,
+  revocado_en: null,
+  id_usuario_beneficiario: BENEFICIARY,
   ...overrides,
 });
 
@@ -25,14 +30,15 @@ describe('normalizePermiso', () => {
     const permiso = normalizePermiso(raw());
 
     expect(permiso).toEqual({
-      id: 'perm-1',
+      id: ID,
       scope: PERMISSION_SCOPE.INDIVIDUAL_ACCESS,
       active: true,
       startsAt: '2026-11-25T15:04:00.000Z',
       endsAt: '2026-12-02T04:59:59.000Z',
       endDate: '2026-12-01',
-      grantedAt: null,
-      holder: null,
+      revokedAt: null,
+      beneficiaryId: BENEFICIARY,
+      beneficiaryName: null,
     });
     expect(Object.isFrozen(permiso)).toBe(true);
   });
@@ -61,27 +67,34 @@ describe('normalizePermiso', () => {
     expect(normalizePermiso(raw({ vigente: false })).active).toBe(false);
   });
 
-  it('expone titular y otorgado_en cuando vienen (opcionales, D21)', () => {
-    const permiso = normalizePermiso(
-      raw({
-        otorgado_en: '2026-11-25T15:04:00.000Z',
-        titular: { id: 'a-1', nombre: 'Ana' },
-      }),
-    );
+  it('acepta el 201 de la concesión: sin beneficiario ni revocado_en', () => {
+    const created = raw();
+    delete created.id_usuario_beneficiario;
+    delete created.revocado_en;
 
-    expect(permiso.grantedAt).toBe('2026-11-25T15:04:00.000Z');
-    expect(permiso.holder).toEqual({ id: 'a-1', name: 'Ana' });
+    const permiso = normalizePermiso(created);
+
+    expect(permiso.beneficiaryId).toBeNull();
+    expect(permiso.revokedAt).toBeNull();
+  });
+
+  it('lee revocado_en cuando viene', () => {
+    expect(
+      normalizePermiso(raw({ revocado_en: '2026-11-25T16:00:00.000Z' }))
+        .revokedAt,
+    ).toBe('2026-11-25T16:00:00.000Z');
   });
 
   it.each([
     ['sin id', { id_permiso: '' }],
+    ['con id que no es UUID (D27)', { id_permiso: 'perm-1' }],
     ['con alcance fuera de catálogo', { alcance: 'TOTAL' }],
     ['sin vigente', { vigente: undefined }],
     ['con vigente que no es booleano', { vigente: 'true' }],
     ['con inicio inválido', { fecha_inicio_vigencia: 'ayer' }],
     ['con fin inválido', { fecha_fin_vigencia: '31/12/2026' }],
-    ['con otorgado_en inválido', { otorgado_en: 'ayer' }],
-    ['con titular sin nombre', { titular: { id: 'a-1', nombre: '' } }],
+    ['con revocado_en inválido', { revocado_en: 'ayer' }],
+    ['con beneficiario que no es UUID', { id_usuario_beneficiario: 'ana' }],
   ])('rechaza un permiso %s', (_, overrides) => {
     expect(() => normalizePermiso(raw(overrides))).toThrow();
   });
@@ -99,7 +112,7 @@ describe('normalizePermissionList', () => {
       null,
     ]);
 
-    expect(result.permissions.map((p) => p.id)).toEqual(['perm-1']);
+    expect(result.permissions.map((p) => p.id)).toEqual([ID]);
     expect(result.discarded).toBe(2);
   });
 
@@ -123,13 +136,26 @@ describe('validatePermissionForm', () => {
   const form = (endDate) => ({
     scope: PERMISSION_SCOPE.INDIVIDUAL_ACCESS,
     endDate,
+    beneficiaryId: BENEFICIARY,
   });
 
-  it('exige el alcance', () => {
+  it('exige el alcance y el beneficiario', () => {
     expect(
-      validatePermissionForm({ scope: '', endDate: '' }, tomorrow),
+      validatePermissionForm(
+        { scope: '', endDate: '', beneficiaryId: '' },
+        tomorrow,
+      ),
     ).toEqual({
       scope: PERMISSION_FORM_MESSAGE.SCOPE_REQUIRED,
+      beneficiaryId: PERMISSION_FORM_MESSAGE.BENEFICIARY_REQUIRED,
+    });
+  });
+
+  it('rechaza un beneficiario que no es UUID', () => {
+    expect(
+      validatePermissionForm({ ...form(''), beneficiaryId: 'ana' }, tomorrow),
+    ).toEqual({
+      beneficiaryId: PERMISSION_FORM_MESSAGE.BENEFICIARY_REQUIRED,
     });
   });
 
@@ -158,11 +184,13 @@ describe('toGrantRequest', () => {
       toGrantRequest('P-1A2B3C4D', {
         scope: 'ACCESO_INDIVIDUAL',
         endDate: '2026-12-30',
+        beneficiaryId: BENEFICIARY,
       }),
     ).toEqual({
       codigo_participante: 'P-1A2B3C4D',
       alcance: 'ACCESO_INDIVIDUAL',
       fecha_fin_vigencia: '2026-12-31T04:59:59.000Z',
+      id_usuario_beneficiario: BENEFICIARY,
     });
   });
 
@@ -170,6 +198,7 @@ describe('toGrantRequest', () => {
     const sent = toGrantRequest('P-1A2B3C4D', {
       scope: 'ACCESO_INDIVIDUAL',
       endDate: '2026-12-30',
+      beneficiaryId: BENEFICIARY,
     });
 
     expect(
@@ -183,11 +212,13 @@ describe('toGrantRequest', () => {
       toGrantRequest('P-1A2B3C4D', {
         scope: 'PROGRESION_NARRATIVA',
         endDate: '',
+        beneficiaryId: BENEFICIARY,
       }),
     ).toEqual({
       codigo_participante: 'P-1A2B3C4D',
       alcance: 'PROGRESION_NARRATIVA',
       fecha_fin_vigencia: null,
+      id_usuario_beneficiario: BENEFICIARY,
     });
   });
 });
@@ -203,15 +234,24 @@ describe('readGrantError', () => {
     ).toEqual({ field: 'scope', message: 'Ya existe.' });
   });
 
-  it('lleva la autoconcesión al aviso general', () => {
+  it.each([
+    ['VIGENCIA_INVALIDA', 'endDate'],
+    ['AUTOCONCESION_NO_PERMITIDA', 'beneficiaryId'],
+    ['ROL_INVALIDO_PARA_OPERACION', 'beneficiaryId'],
+  ])(
+    'ubica %s junto al campo %s con el mensaje del backend',
+    (codigo, field) => {
+      expect(
+        readGrantError({ status: 422, codigo, mensaje: 'Del backend.' }),
+      ).toEqual({ field, message: 'Del backend.' });
+    },
+  );
+
+  it('sin mensaje usa el texto de respaldo del código', () => {
     expect(
-      readGrantError({
-        status: 422,
-        codigo: 'AUTOCONCESION_NO_PERMITIDA',
-        mensaje: '',
-      }),
+      readGrantError({ status: 422, codigo: 'AUTOCONCESION_NO_PERMITIDA' }),
     ).toEqual({
-      field: null,
+      field: 'beneficiaryId',
       message: 'No puedes concederte un permiso a ti mismo.',
     });
   });
@@ -220,7 +260,7 @@ describe('readGrantError', () => {
     expect(
       readGrantError({
         status: 422,
-        codigo: 'FECHA_FIN_INVALIDA',
+        codigo: 'ERROR_PERSISTENCIA_PERMISOS',
         mensaje: 'x',
       }),
     ).toEqual({

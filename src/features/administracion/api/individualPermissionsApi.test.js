@@ -13,34 +13,67 @@ vi.mock('@/shared/utils/apiClient.jsx', () => ({
 }));
 
 const CODE = 'P-1A2B3C4D';
+const ID = '11111111-1111-4111-8111-111111111111';
+const BENEFICIARY = '22222222-2222-4222-8222-222222222222';
 const failWith = (status, data) => ({ response: { status, data } });
 
 beforeEach(() => vi.resetAllMocks());
 
 describe('listPermissions', () => {
-  it('GET con el código y solo_vigentes, y devuelve items', async () => {
-    const items = [{ id_permiso: 'p-1' }];
+  it('GET con código, solo_vigentes, offset y limit; devuelve la página', async () => {
+    const items = [{ id_permiso: ID }];
     apiClient.get.mockResolvedValue({
       status: 200,
       data: { items, total: 1, offset: 0, limit: 20 },
     });
 
-    await expect(listPermissions(CODE)).resolves.toBe(items);
+    await expect(listPermissions(CODE)).resolves.toEqual({
+      items,
+      total: 1,
+      offset: 0,
+      limit: 20,
+    });
     expect(apiClient.get).toHaveBeenCalledWith('/admin/permisos-individuales', {
-      params: { codigo_participante: CODE, solo_vigentes: true },
+      params: {
+        codigo_participante: CODE,
+        solo_vigentes: true,
+        offset: 0,
+        limit: 20,
+      },
     });
   });
 
-  it('responde null si el participante no existe', async () => {
-    apiClient.get.mockRejectedValue(
-      failWith(404, { codigo: 'PARTICIPANTE_NO_ENCONTRADO' }),
-    );
+  it('envía el offset y el limit pedidos', async () => {
+    apiClient.get.mockResolvedValue({
+      data: { items: [], total: 25, offset: 20, limit: 10 },
+    });
 
-    await expect(listPermissions(CODE)).resolves.toBeNull();
+    await listPermissions(CODE, { offset: 20, limit: 10 });
+
+    expect(apiClient.get.mock.calls[0][1].params).toMatchObject({
+      offset: 20,
+      limit: 10,
+    });
   });
 
-  it('rechaza una respuesta sin items', async () => {
-    apiClient.get.mockResolvedValue({ data: [] });
+  it('un código desconocido es una página vacía, no un 404', async () => {
+    apiClient.get.mockResolvedValue({
+      data: { items: [], total: 0, offset: 0, limit: 20 },
+    });
+
+    await expect(listPermissions(CODE)).resolves.toMatchObject({
+      items: [],
+      total: 0,
+    });
+  });
+
+  it.each([
+    ['sin items', { total: 0, offset: 0, limit: 20 }],
+    ['con total inválido', { items: [], total: -1, offset: 0, limit: 20 }],
+    ['con offset inválido', { items: [], total: 0, offset: '0', limit: 20 }],
+    ['con limit inválido', { items: [], total: 0, offset: 0, limit: 0 }],
+  ])('rechaza una respuesta %s', async (_, data) => {
+    apiClient.get.mockResolvedValue({ data });
 
     await expect(listPermissions(CODE)).rejects.toThrow('no es válido');
   });
@@ -54,16 +87,26 @@ describe('listPermissions', () => {
     });
   });
 
-  it('lanza el error normalizado en los demás casos', async () => {
-    apiClient.get.mockRejectedValue(
-      failWith(500, { codigo: 'ERROR_INTERNO', mensaje: 'Falla.' }),
+  it('lanza el error normalizado (500 y 400 de validación)', async () => {
+    apiClient.get.mockRejectedValueOnce(
+      failWith(500, {
+        codigo: 'ERROR_PERSISTENCIA_PERMISOS',
+        mensaje: 'Falla.',
+      }),
     );
-
     await expect(listPermissions(CODE)).rejects.toMatchObject({
       status: 500,
-      codigo: 'ERROR_INTERNO',
+      codigo: 'ERROR_PERSISTENCIA_PERMISOS',
       mensaje: 'Falla.',
     });
+
+    apiClient.get.mockRejectedValueOnce(
+      failWith(400, {
+        statusCode: 400,
+        message: ['limit must not be greater than 100'],
+      }),
+    );
+    await expect(listPermissions(CODE)).rejects.toMatchObject({ status: 400 });
   });
 });
 
@@ -72,10 +115,11 @@ describe('grantPermission', () => {
     codigo_participante: CODE,
     alcance: 'ACCESO_INDIVIDUAL',
     fecha_fin_vigencia: null,
+    id_usuario_beneficiario: BENEFICIARY,
   });
 
   it('POST con el cuerpo tal cual y devuelve el permiso creado', async () => {
-    const data = { id_permiso: 'p-2', codigo_participante: CODE };
+    const data = { id_permiso: ID, codigo_participante: CODE };
     apiClient.post.mockResolvedValue({ status: 201, data });
 
     await expect(grantPermission(request)).resolves.toEqual({ ok: true, data });
@@ -89,6 +133,8 @@ describe('grantPermission', () => {
     [404, 'PARTICIPANTE_NO_ENCONTRADO'],
     [409, 'PERMISO_YA_VIGENTE'],
     [422, 'AUTOCONCESION_NO_PERMITIDA'],
+    [422, 'ROL_INVALIDO_PARA_OPERACION'],
+    [422, 'VIGENCIA_INVALIDA'],
   ])('devuelve el rechazo %i %s', async (status, codigo) => {
     apiClient.post.mockRejectedValue(
       failWith(status, { status, codigo, mensaje: 'Texto.' }),
@@ -104,11 +150,11 @@ describe('grantPermission', () => {
 
   it('lanza los rechazos no previstos y la falta de conexión', async () => {
     apiClient.post.mockRejectedValueOnce(
-      failWith(422, { codigo: 'FECHA_FIN_INVALIDA' }),
+      failWith(500, { codigo: 'ERROR_PERSISTENCIA_PERMISOS' }),
     );
     await expect(grantPermission(request)).rejects.toMatchObject({
-      status: 422,
-      codigo: 'FECHA_FIN_INVALIDA',
+      status: 500,
+      codigo: 'ERROR_PERSISTENCIA_PERMISOS',
     });
 
     apiClient.post.mockRejectedValueOnce(new Error('Network Error'));
@@ -124,15 +170,15 @@ describe('revokePermission', () => {
     apiClient.post.mockResolvedValue({
       status: 200,
       data: {
-        id_permiso: 'perm-1',
+        id_permiso: ID,
         vigente: false,
         revocado_en: '2026-11-25T15:00:00.000Z',
       },
     });
 
-    await expect(revokePermission('perm-1')).resolves.toEqual({ ok: true });
+    await expect(revokePermission(ID)).resolves.toEqual({ ok: true });
     expect(apiClient.post).toHaveBeenCalledWith(
-      '/admin/permisos-individuales/perm-1/revocar',
+      `/admin/permisos-individuales/${ID}/revocar`,
       {},
     );
   });
@@ -147,30 +193,31 @@ describe('revokePermission', () => {
     );
   });
 
-  it('devuelve el rechazo 409 PERMISO_YA_REVOCADO', async () => {
+  it.each([
+    [404, 'PERMISO_NO_ENCONTRADO'],
+    [409, 'PERMISO_YA_REVOCADO'],
+  ])('devuelve el rechazo %i %s', async (status, codigo) => {
     apiClient.post.mockRejectedValue(
-      failWith(409, { codigo: 'PERMISO_YA_REVOCADO', mensaje: 'Ya.' }),
+      failWith(status, { codigo, mensaje: 'Texto.' }),
     );
 
-    await expect(revokePermission('perm-1')).resolves.toEqual({
+    await expect(revokePermission(ID)).resolves.toEqual({
       ok: false,
-      status: 409,
-      codigo: 'PERMISO_YA_REVOCADO',
-      mensaje: 'Ya.',
+      status,
+      codigo,
+      mensaje: 'Texto.',
     });
   });
 
   it('lanza SIN_CONEXION y los demás errores', async () => {
     apiClient.post.mockRejectedValueOnce(new Error('Network Error'));
-    await expect(revokePermission('perm-1')).rejects.toMatchObject({
+    await expect(revokePermission(ID)).rejects.toMatchObject({
       codigo: 'SIN_CONEXION',
     });
 
     apiClient.post.mockRejectedValueOnce(
-      failWith(404, { codigo: 'PERMISO_NO_ENCONTRADO' }),
+      failWith(500, { codigo: 'ERROR_PERSISTENCIA_PERMISOS' }),
     );
-    await expect(revokePermission('perm-1')).rejects.toMatchObject({
-      status: 404,
-    });
+    await expect(revokePermission(ID)).rejects.toMatchObject({ status: 500 });
   });
 });

@@ -3,6 +3,7 @@ import {
   parseDateOnly,
 } from '@/shared/utils/dateUtils.js';
 
+import { isUuid } from './chatTraceabilityIds.js';
 import {
   PERMISSION_ERROR,
   PERMISSION_SCOPE,
@@ -14,7 +15,7 @@ import {
 
 /*
  * Permisos de acceso individual (HU-336). Funciones puras: normalizan la
- * respuesta del contrato de Taiga (A-075), validan el formulario, arman la
+ * respuesta del backend (PR #87, D22), validan el formulario, arman la
  * petición y ubican por `codigo` los errores de la concesión.
  */
 
@@ -34,11 +35,11 @@ function instant(value, name) {
 const optionalInstant = (value, name) =>
   value === null || value === undefined ? null : instant(value, name);
 
-function holder(value) {
+// El 201 de la concesión no trae el beneficiario; el GET sí (D23).
+function beneficiary(value) {
   if (value === null || value === undefined) return null;
-  if (!isText(value.id) || !isText(value.nombre))
-    throw new Error('Permiso con titular inválido.');
-  return Object.freeze({ id: value.id, name: value.nombre });
+  if (!isUuid(value)) throw new Error('Permiso con beneficiario inválido.');
+  return value;
 }
 
 /*
@@ -52,7 +53,9 @@ const bogotaDate = (value) =>
 // Un elemento del backend (snake_case) → permiso de la interfaz. Lanza si no vale.
 export function normalizePermiso(raw) {
   if (!raw || typeof raw !== 'object') throw new Error('Permiso vacío.');
-  if (!isText(raw.id_permiso)) throw new Error('Permiso sin id_permiso.');
+  // D27: un id que no es UUID daría 400 al revocar; se descarta aquí.
+  if (!isUuid(raw.id_permiso))
+    throw new Error('Permiso sin id_permiso válido.');
   if (!SCOPES.includes(raw.alcance))
     throw new Error('Permiso con alcance desconocido.');
   if (typeof raw.vigente !== 'boolean') throw new Error('Permiso sin vigente.');
@@ -66,9 +69,10 @@ export function normalizePermiso(raw) {
     startsAt: instant(raw.fecha_inicio_vigencia, 'fecha_inicio_vigencia'),
     endsAt,
     endDate: bogotaDate(endsAt),
-    // D21: opcionales en el contrato de Taiga.
-    grantedAt: optionalInstant(raw.otorgado_en, 'otorgado_en'),
-    holder: holder(raw.titular),
+    revokedAt: optionalInstant(raw.revocado_en, 'revocado_en'),
+    beneficiaryId: beneficiary(raw.id_usuario_beneficiario),
+    // A-076: el GET aún no trae el nombre; no se lee ningún campo inventado.
+    beneficiaryName: null,
   });
 }
 
@@ -97,8 +101,14 @@ export function normalizePermissionList(rows) {
 }
 
 // Validación del cliente antes de enviar. `tomorrow` es `YYYY-MM-DD` en Bogotá.
-export function validatePermissionForm({ scope, endDate }, tomorrow) {
+export function validatePermissionForm(
+  { scope, endDate, beneficiaryId },
+  tomorrow,
+) {
   const errors = {};
+
+  if (!isUuid(beneficiaryId))
+    errors.beneficiaryId = PERMISSION_FORM_MESSAGE.BENEFICIARY_REQUIRED;
 
   if (!SCOPES.includes(scope))
     errors.scope = PERMISSION_FORM_MESSAGE.SCOPE_REQUIRED;
@@ -122,21 +132,28 @@ export function validatePermissionForm({ scope, endDate }, tomorrow) {
 export const endOfDayInBogota = (date) =>
   new Date(`${date}T23:59:59${BOGOTA_OFFSET}`).toISOString();
 
-export const toGrantRequest = (participantCode, { scope, endDate }) => ({
+// `id_usuario_beneficiario` no es la identidad de quien pide (sale de la sesión): D23.
+export const toGrantRequest = (
+  participantCode,
+  { scope, endDate, beneficiaryId },
+) => ({
   codigo_participante: participantCode,
   alcance: scope,
   fecha_fin_vigencia: endDate ? endOfDayInBogota(endDate) : null,
+  id_usuario_beneficiario: beneficiaryId,
 });
 
-// D19: el sobre no trae `campo`; el error se ubica por `codigo`.
+// D24: el sobre no trae `campo`; el error se ubica por `codigo`.
 const FIELD_BY_CODE = Object.freeze({
   [PERMISSION_ERROR.ALREADY_ACTIVE]: 'scope',
+  [PERMISSION_ERROR.INVALID_VALIDITY]: 'endDate',
+  [PERMISSION_ERROR.SELF_GRANT_FORBIDDEN]: 'beneficiaryId',
+  [PERMISSION_ERROR.INVALID_ROLE]: 'beneficiaryId',
 });
 
 /*
  * El error de la concesión va junto al campo que le corresponde por su
- * `codigo`; la autoconcesión y lo no reconocido, al aviso general
- * (`field: null`). El `mensaje` del backend se muestra tal cual; el texto
+ * `codigo`; lo demás, al aviso general (`field: null`). El `mensaje` del backend se muestra tal cual; el texto
  * propio solo cubre su ausencia.
  */
 export function readGrantError(error) {

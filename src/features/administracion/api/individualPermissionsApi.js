@@ -4,8 +4,8 @@ import { toApiError } from '@/shared/utils/apiError.js';
 import { PERMISSION_ERROR } from '../types/permissionScope.js';
 
 /*
- * Permisos de acceso individual (HU-336). Contrato de la HU en Taiga,
- * pendiente de versionarse en el backend (A-075). Devuelve los datos tal
+ * Permisos de acceso individual (HU-336). Contrato = código del PR #87 del
+ * backend (D22), pendiente de versionarse (A-075). Devuelve los datos tal
  * como llegan; los normaliza `data/individualPermissionSource.js`.
  */
 
@@ -15,10 +15,20 @@ const PERMISSIONS_PATH = '/admin/permisos-individuales';
 const GRANT_REJECTIONS = new Map([
   [404, [PERMISSION_ERROR.PARTICIPANT_NOT_FOUND]],
   [409, [PERMISSION_ERROR.ALREADY_ACTIVE]],
-  [422, [PERMISSION_ERROR.SELF_GRANT_FORBIDDEN]],
+  [
+    422,
+    [
+      PERMISSION_ERROR.SELF_GRANT_FORBIDDEN,
+      PERMISSION_ERROR.INVALID_ROLE,
+      PERMISSION_ERROR.INVALID_VALIDITY,
+    ],
+  ],
 ]);
 
-const REVOKE_REJECTIONS = new Map([[409, [PERMISSION_ERROR.ALREADY_REVOKED]]]);
+const REVOKE_REJECTIONS = new Map([
+  [404, [PERMISSION_ERROR.NOT_FOUND]],
+  [409, [PERMISSION_ERROR.ALREADY_REVOKED]],
+]);
 
 const isExpected = (rejections, { status, codigo }) =>
   Boolean(rejections.get(status)?.includes(codigo));
@@ -30,34 +40,48 @@ const rejection = ({ status, codigo, mensaje }) => ({
   mensaje,
 });
 
+// Mismo valor que el `limit` por defecto del backend (máximo 100: D27).
+export const PERMISSIONS_PAGE_SIZE = 20;
+
+const isCount = (value, min) => Number.isInteger(value) && value >= min;
+
 /*
- * Permisos vigentes del participante (`items` de la respuesta paginada), o
- * `null` si el participante no existe.
- * Solo lee la primera página (el `limit` por defecto del backend); con dos
- * alcances por titular no se llega a él. Paginar si el listado crece.
+ * Una página de permisos vigentes: `{ items, total, offset, limit }`. Con un
+ * código desconocido el backend responde 200 con `items: []`, no 404.
  */
-export async function listPermissions(code) {
+export async function listPermissions(
+  code,
+  { offset = 0, limit = PERMISSIONS_PAGE_SIZE } = {},
+) {
   let data;
   try {
     ({ data } = await apiClient.get(PERMISSIONS_PATH, {
-      params: { codigo_participante: code, solo_vigentes: true },
+      params: {
+        codigo_participante: code,
+        solo_vigentes: true,
+        offset,
+        limit,
+      },
     }));
   } catch (error) {
-    const problem = toApiError(error);
-    if (
-      problem.status === 404 &&
-      problem.codigo === PERMISSION_ERROR.PARTICIPANT_NOT_FOUND
-    ) {
-      return null;
-    }
-    throw problem;
+    throw toApiError(error);
   }
-  if (!Array.isArray(data?.items))
+  if (
+    !Array.isArray(data?.items) ||
+    !isCount(data.total, 0) ||
+    !isCount(data.offset, 0) ||
+    !isCount(data.limit, 1)
+  )
     throw new Error('El listado de permisos no es válido.');
-  return data.items;
+  return {
+    items: data.items,
+    total: data.total,
+    offset: data.offset,
+    limit: data.limit,
+  };
 }
 
-// `request` = `{ codigo_participante, alcance, fecha_fin_vigencia }` (toGrantRequest).
+// `request` sale de `toGrantRequest` (incluye `id_usuario_beneficiario`).
 export async function grantPermission(request) {
   try {
     const { data } = await apiClient.post(PERMISSIONS_PATH, request);
