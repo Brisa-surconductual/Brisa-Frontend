@@ -11,7 +11,11 @@ import { useCohortExport } from './useCohortExport.js';
  * React mínimo para entorno node: useState devuelve el estado inicial con
  * un setter espía; useRef es un objeto simple compartido por la prueba.
  */
-const react = vi.hoisted(() => ({ setters: [], ref: { current: false } }));
+const react = vi.hoisted(() => ({
+  setters: [],
+  effects: [],
+  ref: { current: null },
+}));
 
 vi.mock('react', async (importOriginal) => ({
   ...(await importOriginal()),
@@ -19,6 +23,9 @@ vi.mock('react', async (importOriginal) => ({
     const setter = vi.fn();
     react.setters.push(setter);
     return [typeof initial === 'function' ? initial() : initial, setter];
+  },
+  useEffect(effect) {
+    react.effects.push(effect);
   },
   useRef() {
     return react.ref;
@@ -48,7 +55,8 @@ function source(changes = {}) {
 
 beforeEach(() => {
   react.setters = [];
-  react.ref = { current: false };
+  react.effects = [];
+  react.ref = { current: null };
 });
 
 describe('useCohortExport (RF-144)', () => {
@@ -56,13 +64,16 @@ describe('useCohortExport (RF-144)', () => {
     const fuente = source();
     await useCohortExport({ cohortId: 'co-1', source: fuente }).exportCsv();
 
-    expect(fuente.exportCsv).toHaveBeenCalledWith('co-1');
+    expect(fuente.exportCsv).toHaveBeenCalledWith('co-1', {
+      signal: expect.any(AbortSignal),
+    });
     expect(fuente.download).toHaveBeenCalledWith(FILE);
     expect(react.setters[STATE].mock.calls[0][0].status).toBe(ST.EXPORTING);
     expect(lastState()).toEqual({ status: ST.STARTED, file: FILE });
   });
 
   it.each([
+    [EXPORT_ERROR.SESSION_REQUIRED, ST.SESSION_REQUIRED],
     [EXPORT_ERROR.FORBIDDEN, ST.FORBIDDEN],
     [EXPORT_ERROR.COHORT_NOT_ACTIVE, ST.COHORT_NOT_ACTIVE],
     [EXPORT_ERROR.NO_INDICATORS, ST.NO_INDICATORS],
@@ -104,18 +115,25 @@ describe('useCohortExport (RF-144)', () => {
 
     expect(fuente.exportCsv).toHaveBeenCalledTimes(1);
     expect(fuente.download).toHaveBeenCalledTimes(1);
-    expect(react.ref.current).toBe(false);
+    expect(react.ref.current).toBeNull();
   });
 
-  it('con la integración pendiente no genera nada', async () => {
+  it('cancela la solicitud y evita descargar si se abandona el detalle', async () => {
+    let resolve;
     const fuente = source({
-      getMode: () => EXPORT_SOURCE_MODE.PENDING_INTEGRATION,
+      getMode: () => EXPORT_SOURCE_MODE.API,
+      exportCsv: vi.fn(() => new Promise((done) => (resolve = done))),
     });
     const result = useCohortExport({ cohortId: 'co-1', source: fuente });
-    await result.exportCsv();
+    const cleanup = react.effects[0]();
+    const pending = result.exportCsv();
+    cleanup();
+    resolve(FILE);
+    await pending;
 
-    expect(result.isIntegrationPending).toBe(true);
-    expect(fuente.exportCsv).not.toHaveBeenCalled();
+    expect(result.isDemo).toBe(false);
+    expect(fuente.exportCsv.mock.calls[0][1].signal.aborted).toBe(true);
     expect(fuente.download).not.toHaveBeenCalled();
+    expect(lastState().status).toBe(ST.EXPORTING);
   });
 });

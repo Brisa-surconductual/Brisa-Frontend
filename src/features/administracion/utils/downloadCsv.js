@@ -11,11 +11,12 @@ export const CSV_MIME_TYPE = 'text/csv;charset=utf-8';
  * `document`, `URL` y `Blob` en las pruebas.
  */
 export function startCsvDownload(
-  { fileName, content },
+  { fileName, content, blob },
   env = { document, URL, Blob },
 ) {
-  const blob = new env.Blob([UTF8_BOM, content], { type: CSV_MIME_TYPE });
-  const url = env.URL.createObjectURL(blob);
+  const file =
+    blob ?? new env.Blob([UTF8_BOM, content], { type: CSV_MIME_TYPE });
+  const url = env.URL.createObjectURL(file);
 
   try {
     const link = env.document.createElement('a');

@@ -16,7 +16,6 @@ const BASE = Object.freeze({
   file: null,
   isExporting: false,
   isDemo: true,
-  isIntegrationPending: false,
   exportCsv: vi.fn(),
 });
 
@@ -72,12 +71,12 @@ describe('Botón «Exportar indicadores CSV» (RF-144)', () => {
     expect(html).toContain('Disponible solo para la cohorte activa.');
   });
 
-  it('integración pendiente: deshabilitado y sin afirmar exportación', () => {
-    const html = render({ isDemo: false, isIntegrationPending: true });
+  it('habilita la exportación real de una cohorte activa', () => {
+    const html = render({ isDemo: false });
 
-    expect(html).toMatch(/<button[^>]* disabled=""/);
+    expect(html).not.toMatch(/<button[^>]* disabled=""/);
     expect(html).toContain(
-      'Exportación pendiente de integración con el servidor.',
+      'Solo agregados de la cohorte, sin datos personales.',
     );
     expect(html).not.toContain('Datos de demostración');
   });
@@ -116,6 +115,7 @@ describe('Botón «Exportar indicadores CSV» (RF-144)', () => {
   });
 
   it.each([
+    [ST.SESSION_REQUIRED],
     [ST.FORBIDDEN],
     [ST.COHORT_NOT_ACTIVE],
     [ST.NO_INDICATORS],
