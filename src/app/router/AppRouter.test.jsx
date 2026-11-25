@@ -438,6 +438,7 @@ describe('Rutas sin cambios', () => {
 
   it.each([
     '/',
+    '/splash',
     '/login',
     '/recuperar',
     '/recuperar/nueva',
@@ -454,6 +455,7 @@ describe('Rutas sin cambios', () => {
     expect(leafPaths(ROUTES).sort()).toEqual(
       [
         '/',
+        '/splash',
         '/login',
         '/recuperar',
         '/recuperar/nueva',
