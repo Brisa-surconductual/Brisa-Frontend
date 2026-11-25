@@ -8,6 +8,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { ParticipantAssignmentPanel } from './components/ParticipantAssignmentPanel/index.js';
 import { ParticipantCard } from './components/ParticipantCard/index.js';
 import * as cohortSource from './data/cohortSource.js';
+import * as permissionSource from './data/individualPermissionSource.js';
 import * as participantSource from './data/participantSource.js';
 import { AuditLogPage } from './pages/AuditLogPage/index.js';
 
@@ -128,6 +129,7 @@ describe('RF-148: límites del módulo administrativo', () => {
       'api/chatTraceability/fetchSessionTraceability.js',
       'api/cohortExportApi.js',
       'api/cohortesApi.js',
+      'api/individualPermissionsApi.js',
       'api/listAuditRecords.js',
       'api/observeReadOnlyRejections.js',
       'api/participantesCohorteApi.js',
@@ -160,6 +162,12 @@ describe('RF-148: las escrituras permitidas del M08 siguen disponibles', () => {
   it('RF-125: asignar y retirar participantes de una cohorte', () => {
     for (const operation of ['assignParticipants', 'removeCohortParticipant']) {
       expect(typeof participantSource[operation]).toBe('function');
+    }
+  });
+
+  it('HU-336: conceder y revocar permisos de acceso individual', () => {
+    for (const operation of ['grantPermission', 'revokePermission']) {
+      expect(typeof permissionSource[operation]).toBe('function');
     }
   });
 });
