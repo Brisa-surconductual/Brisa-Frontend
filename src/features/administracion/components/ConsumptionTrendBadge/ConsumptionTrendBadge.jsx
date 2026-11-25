@@ -6,7 +6,7 @@ import { TRACKING_TREND } from '../../types/participantTracking.js';
  * Tendencia de consumo (RF-128; definiciones en RF-73). Tono NEUTRO para
  * todos los valores: el color no valora la tendencia ni aporta una
  * interpretación clínica que el requisito no hace. Texto e ícono siempre.
- * Un valor fuera del enumerado se muestra tal cual, sin interpretarlo.
+ * Un valor fuera del enumerado no se interpreta ni se muestra crudo.
  */
 const TREND_PRESENTATION = Object.freeze({
   [TRACKING_TREND.REDUCTION]: Object.freeze({ label: 'Reducción', Icon: TrendingDown }),
@@ -20,7 +20,7 @@ export function ConsumptionTrendBadge({ trend }) {
   const Icon = presentation?.Icon ?? CircleHelp;
   let label = presentation?.label;
 
-  if (!label) label = trend ? `Valor no reconocido: ${trend}` : 'No disponible';
+  if (!label) label = trend ? 'Valor no reconocido' : 'No disponible';
 
   return (
     <span className="inline-flex w-fit items-center gap-[var(--space-2)] rounded-[var(--radius-full)] border border-[var(--surface-border)] bg-[var(--surface-hover)] px-[var(--space-3)] py-[var(--space-1)] text-[length:var(--font-size-md)] font-bold [overflow-wrap:anywhere] text-[var(--text-primary)]">

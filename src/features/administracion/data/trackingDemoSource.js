@@ -140,7 +140,7 @@ export async function getParticipantTrackingProfile(cohortId, reference) {
   }
 
   if (scenario === PROFILE_DEMO_SCENARIO.UNAVAILABLE) {
-    throw codedError(TRACKING_QUERY_ERROR.MODULE_UNAVAILABLE, 'M05 no disponible en la demostración.');
+    throw codedError(TRACKING_QUERY_ERROR.MODULE_UNAVAILABLE, 'Seguimiento no disponible en la demostración.');
   }
 
   const members = getDemoCohortMembers(cohortId);
@@ -214,7 +214,7 @@ export async function getParticipantAlertHistory(cohortId, reference) {
   }
 
   if (scenario === ALERT_HISTORY_DEMO_SCENARIO.UNAVAILABLE) {
-    throw codedError(TRACKING_QUERY_ERROR.MODULE_UNAVAILABLE, 'M05 no disponible en la demostración.');
+    throw codedError(TRACKING_QUERY_ERROR.MODULE_UNAVAILABLE, 'Seguimiento no disponible en la demostración.');
   }
 
   const members = getDemoCohortMembers(cohortId);

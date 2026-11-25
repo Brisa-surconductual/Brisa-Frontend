@@ -145,6 +145,6 @@ describe('Accesos de gestión', () => {
     expect(html).not.toContain('tab=POBLACION');
   });
 
-  it('identifican el chat como pendiente de integración', () =>
-    expect(render()).toContain('Integración pendiente'));
+  it('la modalidad del chat ya está conectada: no se anuncia como pendiente', () =>
+    expect(render()).not.toContain('Integración pendiente'));
 });

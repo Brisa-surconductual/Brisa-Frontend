@@ -112,12 +112,11 @@ function CohortNotifications() {
         <CohortNotice
           tone="info"
           icon={PlugZap}
-          title="Integración pendiente"
+          title="Información aún no disponible"
           role="status"
         >
-          La vista de efectividad de notificaciones todavía no está conectada al
-          módulo de notificaciones. Cuando se integre, aquí aparecerán las
-          métricas agregadas de la cohorte.
+          La vista de efectividad de notificaciones todavía no está disponible.
+          Aquí aparecerán las métricas agregadas de la cohorte cuando lo esté.
         </CohortNotice>
       ) : (
         <section

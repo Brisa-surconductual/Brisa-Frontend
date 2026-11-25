@@ -278,7 +278,7 @@ describe('Detalle de cohorte (RF-125)', () => {
   it('integración pendiente: lo indica y no muestra datos ficticios', () => {
     const html = render({ isIntegrationPending: true });
 
-    expect(html).toMatch(/role="status"[\s\S]*Integración pendiente/);
+    expect(html).toMatch(/role="status"[\s\S]*Información aún no disponible/);
     expect(html).not.toContain('Datos de demostración');
     expect(html).not.toContain('<article');
     expect(html).not.toContain('PART-');

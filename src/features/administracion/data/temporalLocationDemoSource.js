@@ -18,7 +18,7 @@ export async function getParticipantTemporalLocation(cohortId, reference) {
   const scenario = getTemporalDemoScenario();
   const catalog = TEMPORAL_DEMO_SCENARIO;
 
-  await begin(scenario, catalog, 'M04 no disponible en la demostración.');
+  await begin(scenario, catalog, 'Cronograma no disponible en la demostración.');
 
   const participantId = resolveDemoParticipant(cohortId, reference, { forceNotFound: scenario === catalog.NOT_FOUND });
   const stored = scenario === catalog.EMPTY ? null : DEMO_TEMPORAL_LOCATION[participantId] ?? null;

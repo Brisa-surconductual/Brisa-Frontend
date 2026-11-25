@@ -279,7 +279,7 @@ export function ProgramEligibilityCard({
           </Button>
 
           <p className="m-0 text-center font-[var(--font-mono)] text-[length:var(--font-size-xs)] text-[var(--text-secondary)]">
-            RF-25B · Transición de modalidad grupal a personalizada
+            Transición de modalidad grupal a personalizada
           </p>
         </div>
       </div>

@@ -148,8 +148,8 @@ export function NodeEditorForm({
         <div className="flex flex-col gap-[var(--space-2)]">
           <p className="m-0 text-[length:var(--font-size-xs)] text-[var(--text-secondary)]">
             Cada estudiante podrá responder este nodo cuando el contenido se
-            habilite en su propio cronograma (RF-24); antes verá la fecha en que
-            se habilita.
+            habilite en su propio cronograma; antes verá la fecha en que se
+            habilita.
           </p>
           <ContenidoProgramacion
             programaciones={programacionesDe(values.idContenido, contenidos)}
@@ -490,7 +490,7 @@ export function NodeEditorForm({
           value={values.capturaPerfilDimension}
           options={OPCIONES_DIMENSION_PERFIL_CLINICO}
           placeholder="Este nodo no captura perfil clínico"
-          hint="Solo para árboles grupales: cuando el estudiante pasa por este nodo, su perfil queda con el valor activado (RF-27B). El árbol publicado debe tener nodos para cada valor de cada dimensión."
+          hint="Solo para árboles grupales: cuando el estudiante pasa por este nodo, su perfil queda con el valor activado. El árbol publicado debe tener nodos para cada valor de cada dimensión."
           onChange={(event) =>
             onChange('capturaPerfilDimension', event.target.value)
           }

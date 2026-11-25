@@ -208,9 +208,9 @@ function ParticipantTrackingProfile({ cohortId, reference }) {
       )}
 
       {isIntegrationPending && (
-        <CohortNotice tone="info" icon={PlugZap} title="Integración pendiente" role="status">
+        <CohortNotice tone="info" icon={PlugZap} title="Información aún no disponible" role="status">
           La consulta del perfil de seguimiento individual todavía no está
-          conectada al servidor. No se muestra ningún dato del participante.
+          disponible. No se muestra ningún dato del participante.
         </CohortNotice>
       )}
 

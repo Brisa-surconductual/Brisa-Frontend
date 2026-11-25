@@ -52,7 +52,10 @@ describe('Población rediseñada', () => {
 
   it('identifica las cifras como demostrativas en el aviso y en cada bloque', () => {
     expect(html).toContain('Datos demostrativos');
-    expect(html).toContain('No provienen del backend ni describen a la población');
+    expect(html).toContain('No son datos reales ni describen a la población');
+    // Explicación funcional del acceso individual, sin referencias al desarrollo.
+    expect(html).toContain('requiere consentimiento específico del participante.');
+    expect(html).not.toMatch(/\bM0\d\b|backend/);
     expect(html.match(/>Ejemplo</g)).toHaveLength(2);
   });
 
@@ -101,9 +104,10 @@ describe('Ajustes rediseñados', () => {
 
     expect(html).toContain('Aún no disponible');
     expect(html).toContain('Ajustes del programa');
-    expect(html).toContain('Llega en M04');
+    expect(html.match(/Próximamente/g)).toHaveLength(2);
     expect(html).toContain('Gestión de reportes');
-    expect(html).toContain('Llega en M08');
+    expect(html).not.toMatch(/\bM0\d\b/);
+    expect(html).toContain('todavía no están disponibles en BRISA.');
   });
 
   it('sin correo muestra ausencia, no un valor inventado', () => {

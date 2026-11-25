@@ -58,7 +58,7 @@ export function NotificationSummary({ data }) {
             notificación y notificaciones abiertas. Se muestran tal como las
             entrega el módulo de notificaciones, entre 0 y 1, sin convertirlas a
             porcentaje. «Descartadas» son notificaciones entregadas que el
-            usuario descartó (interacción DESCARTADA, RF-98); por eso pueden
+            usuario descartó; por eso pueden
             contarse también entre las entregadas.
           </WidgetExplainer>
         </div>

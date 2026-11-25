@@ -18,6 +18,7 @@ const UNAVAILABLE_CAPABILITIES = Object.freeze([
     id: 'AJUSTES_PROGRAMA',
     icon: SlidersHorizontal,
     label: 'Ajustes del programa',
+    // Módulo del proyecto que lo habilitará (dato interno, no se muestra).
     module: 'M04',
   }),
   Object.freeze({
@@ -100,7 +101,7 @@ export function SettingsPanel({
         </h2>
 
         <ul className="m-0 flex list-none flex-col gap-[var(--space-2)] p-0">
-          {UNAVAILABLE_CAPABILITIES.map(({ id, icon: Icon, label, module }) => (
+          {UNAVAILABLE_CAPABILITIES.map(({ id, icon: Icon, label }) => (
             <li
               key={id}
               className="flex items-center gap-[var(--space-3)] rounded-[var(--radius-lg)] border border-dashed border-[var(--surface-border)] bg-[var(--surface-card)] px-[var(--space-4)] py-[var(--space-3)]"
@@ -118,14 +119,15 @@ export function SettingsPanel({
 
               <span className="inline-flex shrink-0 items-center gap-[var(--space-1)] rounded-[var(--radius-full)] border border-[var(--surface-border)] bg-[var(--surface-hover)] px-[var(--space-2)] py-[2px] text-[length:var(--font-size-xs)] font-bold text-[var(--text-secondary)]">
                 <Clock3 size={12} strokeWidth={2} aria-hidden="true" />
-                Llega en {module}
+                Próximamente
               </span>
             </li>
           ))}
         </ul>
 
         <p className="m-0 text-[length:var(--font-size-sm)] leading-[var(--line-height-normal)] text-[var(--text-secondary)]">
-          Los ajustes del programa y la gestión de reportes llegan en M04 y M08.
+          Los ajustes del programa y la gestión de reportes todavía no están
+          disponibles en BRISA.
         </p>
       </section>
 

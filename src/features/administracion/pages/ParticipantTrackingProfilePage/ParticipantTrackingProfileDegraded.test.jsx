@@ -134,7 +134,8 @@ describe('Consulta temporal M04 en la ficha', () => {
 
     expect(text).toMatch(/Pausas administrativas \(4\)/);
     expect(block).toContain('<time dateTime="2026-03-06T05:00:00Z">6 de mar de 2026, 00:00</time>');
-    for (const label of ['Activa', 'Finalizada', 'Anulada', 'Estado no reconocido: SUSPENDIDA']) expect(text).toContain(label);
+    for (const label of ['Activa', 'Finalizada', 'Anulada', 'Estado no reconocido']) expect(text).toContain(label);
+    expect(text).not.toContain('SUSPENDIDA');
     expect(text).toContain('fecha no disponible');
     expect(text).not.toMatch(/motivo/i);
   });
@@ -308,7 +309,7 @@ describe('Independencia de las secciones (RF-149)', () => {
   it('integración pendiente: ninguna sección ni advertencia', () => {
     const html = render({ profile: { isIntegrationPending: true, isDemo: false, status: null, profile: null, code: null } });
 
-    expect(textOf(html)).toContain('Integración pendiente');
+    expect(textOf(html)).toContain('Información aún no disponible');
     expect(html).not.toMatch(/ubicacion-temporal|Modo degradado/);
   });
 });

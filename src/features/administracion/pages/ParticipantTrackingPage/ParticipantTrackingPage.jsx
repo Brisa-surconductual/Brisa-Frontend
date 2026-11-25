@@ -117,10 +117,10 @@ function ParticipantTracking() {
       )}
 
       {isIntegrationPending ? (
-        <CohortNotice tone="info" icon={PlugZap} title="Integración pendiente" role="status">
-          La consulta de indicadores de seguimiento todavía no está conectada
-          al servidor. Cuando se integre, aquí aparecerán los participantes que
-          tengas autorización para consultar.
+        <CohortNotice tone="info" icon={PlugZap} title="Información aún no disponible" role="status">
+          La consulta de indicadores de seguimiento todavía no está
+          disponible. Aquí aparecerán los participantes que tengas
+          autorización para consultar cuando lo esté.
         </CohortNotice>
       ) : (
         <section aria-labelledby="indicadores-seguimiento" aria-busy={isLoading} className="flex flex-col gap-[var(--space-4)]">

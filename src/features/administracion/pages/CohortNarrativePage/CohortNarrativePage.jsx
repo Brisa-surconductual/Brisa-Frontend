@@ -110,12 +110,11 @@ function CohortNarrative() {
         <CohortNotice
           tone="info"
           icon={PlugZap}
-          title="Integración pendiente"
+          title="Información aún no disponible"
           role="status"
         >
-          La vista de progresión narrativa todavía no está conectada al módulo
-          de gamificación. Cuando se integre, aquí aparecerá el estado agregado
-          de la cohorte.
+          La vista de progresión narrativa todavía no está disponible. Aquí
+          aparecerá el estado agregado de la cohorte cuando lo esté.
         </CohortNotice>
       ) : (
         <section

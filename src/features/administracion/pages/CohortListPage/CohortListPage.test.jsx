@@ -88,7 +88,7 @@ describe('Listado de cohortes (RF-124)', () => {
   it('integración pendiente: lo indica y no muestra listado ni datos', () => {
     const html = render({ isIntegrationPending: true });
 
-    expect(html).toContain('Integración pendiente');
+    expect(html).toContain('Información aún no disponible');
     expect(html).not.toContain('Todas las cohortes');
     expect(html).not.toContain('Cohorte Piloto');
   });

@@ -109,12 +109,11 @@ function CohortAggregate() {
         <CohortNotice
           tone="info"
           icon={PlugZap}
-          title="Integración pendiente"
+          title="Información aún no disponible"
           role="status"
         >
-          La vista agregada conductual todavía no está conectada al módulo de
-          seguimiento. Cuando se integre, aquí aparecerá el estado agregado de
-          la cohorte.
+          La vista agregada conductual todavía no está disponible. Aquí
+          aparecerá el estado agregado de la cohorte cuando lo esté.
         </CohortNotice>
       ) : (
         <section

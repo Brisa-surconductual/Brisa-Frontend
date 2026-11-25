@@ -171,11 +171,11 @@ export function CohortListPage() {
         <CohortNotice
           tone="info"
           icon={PlugZap}
-          title="Integración pendiente"
+          title="Información aún no disponible"
           role="status"
         >
-          La consulta de cohortes todavía no está conectada al servidor. Cuando
-          se integre, aquí aparecerán las cohortes registradas.
+          La consulta de cohortes todavía no está disponible. Aquí aparecerán
+          las cohortes registradas cuando lo esté.
         </CohortNotice>
       ) : (
         <section

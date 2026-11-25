@@ -92,7 +92,7 @@ export async function getCohortEvolution(cohortId, { filters = null } = {}) {
   if (scenario === SCENARIO.SOURCE_UNAVAILABLE) {
     throw codedError(
       EVOLUTION_QUERY_ERROR.SOURCE_UNAVAILABLE,
-      'M05 no disponible (demo).',
+      'Seguimiento no disponible en la demostración.',
     );
   }
 

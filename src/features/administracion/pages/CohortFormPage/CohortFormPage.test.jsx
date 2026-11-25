@@ -129,7 +129,7 @@ describe('Estados del formulario', () => {
   it('integración pendiente: sin formulario ni operaciones ficticias', () => {
     const html = render({ isDemo: false, isIntegrationPending: true });
 
-    expect(html).toContain('Integración pendiente');
+    expect(html).toContain('Información aún no disponible');
     expect(html).not.toContain('<form');
     expect(html).not.toContain('Los cambios son temporales');
   });

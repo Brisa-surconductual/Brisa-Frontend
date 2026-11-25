@@ -55,7 +55,7 @@ export async function getParticipantNarrativeProgress(cohortId, reference) {
   const scenario = getNarrativeDemoScenario();
   const catalog = NARRATIVE_DEMO_SCENARIO;
 
-  await begin(scenario, catalog, 'M06 no disponible en la demostración.');
+  await begin(scenario, catalog, 'Gamificación no disponible en la demostración.');
 
   if (scenario === catalog.PERMISSION_REQUIRED) {
     throw codedError(TRACKING_QUERY_ERROR.EXPLICIT_PERMISSION_REQUIRED, 'Permiso explícito no concedido en la demostración.');
@@ -90,7 +90,7 @@ export async function getParticipantNotificationInteraction(cohortId, reference)
   const scenario = getNotificationsDemoScenario();
   const catalog = NOTIFICATIONS_DEMO_SCENARIO;
 
-  await begin(scenario, catalog, 'M07 no disponible en la demostración.');
+  await begin(scenario, catalog, 'Notificaciones no disponibles en la demostración.');
 
   const participantId = resolveDemoParticipant(cohortId, reference, { forceNotFound: scenario === catalog.NOT_FOUND });
   const stored = scenario === catalog.EMPTY ? null : DEMO_NOTIFICATION_INTERACTION[participantId] ?? null;

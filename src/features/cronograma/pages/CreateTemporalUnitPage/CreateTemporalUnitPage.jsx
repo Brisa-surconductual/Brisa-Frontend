@@ -9,6 +9,7 @@ import { TemporalUnitForm } from '@/features/cronograma/components/TemporalUnitF
 import { useCreateTemporalUnitForm } from './hooks/useCreateTemporalUnitForm.js';
 import { crearUnidadTemporal } from '@/features/cronograma/api/unidadTemporal/crearUnidadTemporal.jsx';
 import { listSchedule } from '../../api/cronograma/listSchedule.jsx';
+import { getApiErrorMessage } from '@/features/cronograma/utils/apiErrorMessage.js';
 
 const PAGE_CLASS =
   'mx-auto flex w-full max-w-[800px] flex-col gap-[var(--space-6)] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]';
@@ -71,10 +72,12 @@ export function CreateTemporalUnitPage() {
         }, 2000);
       })
       .catch((error) => {
-        const backendMessage =
-          error.response?.data?.message ||
-          error.response?.data?.error ||
-          'Revisa los datos. El servidor rechazó la solicitud (Error 400).';
+        // Mensaje del backend o respaldo propio; nunca el nombre del
+        // estado HTTP (`data.error`) ni el `message` técnico de axios.
+        const backendMessage = getApiErrorMessage(
+          error,
+          'No fue posible crear la unidad temporal. Revisa los datos e intenta nuevamente.',
+        );
         throw new Error(backendMessage);
       });
   }
