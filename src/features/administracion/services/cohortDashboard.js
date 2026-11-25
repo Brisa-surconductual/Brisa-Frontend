@@ -15,12 +15,11 @@ import { interpretNarrativeAggregate } from './narrativeAggregateResponse.js';
 import { interpretNotificationAggregate } from './notificationAggregateResponse.js';
 
 /*
- * Orquestación del panel principal (RF-140). Capa de presentación sobre
- * RF-132, RF-133 y RF-134: cada vista se interpreta con su propio
- * servicio, sin cambios, y ningún dato se recalcula, salvo la única
- * excepción de RF-140: total_alertas_criticas_pendientes.
+ * Los estados y los intérpretes de RF-132, RF-133 y RF-134 se comparten
+ * entre el panel HTTP y la demostración. La demostración orquesta las
+ * fuentes locales y calcula su total de alertas.
  *
- * Las tres consultas se lanzan a la vez con Promise.allSettled: cada una
+ * En demostración, las consultas se lanzan con Promise.allSettled: cada una
  * tiene su propio tiempo límite y su propio resultado, de modo que el
  * fallo o la demora de una no cambia el estado de las otras.
  */
@@ -86,11 +85,15 @@ function toSectionResult(section, settled, cohortId) {
     });
   }
 
+  return interpretDashboardSection(section, settled.value, cohortId);
+}
+
+export function interpretDashboardSection(section, response, cohortId) {
   try {
     return Object.freeze({
       section,
       outcome: SECTION_OUTCOME.RESPONDED,
-      view: INTERPRETERS[section](settled.value, cohortId),
+      view: INTERPRETERS[section](response, cohortId),
     });
   } catch {
     // Error al ensamblar la sección: nunca deja datos visibles.
