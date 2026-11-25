@@ -123,9 +123,10 @@ describe('RF-148: límites del módulo administrativo', () => {
       /apiClient|from\s+['"]axios['"]|\bfetch\s*\(|XMLHttpRequest|navigator\.sendBeacon|new\s+WebSocket/.test(code),
     );
 
-    expect(http.map(({ name }) => name)).toEqual([
+    expect(http.map(({ name }) => name).sort()).toEqual([
       'api/chatTraceability/fetchParticipantSessions.js',
       'api/chatTraceability/fetchSessionTraceability.js',
+      'api/cohortExportApi.js',
       'api/cohortesApi.js',
       'api/listAuditRecords.js',
       'api/observeReadOnlyRejections.js',

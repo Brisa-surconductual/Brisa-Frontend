@@ -6,7 +6,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { interpretBehavioralAggregate } from '../services/behavioralAggregateResponse.js';
 import { interpretNotificationAggregate } from '../services/notificationAggregateResponse.js';
-import { EXPORT_ERROR, EXPORT_SOURCE_MODE } from '../types/cohortExport.js';
+import {
+  EXPORT_COLUMNS,
+  EXPORT_ERROR,
+  EXPORT_SOURCE_MODE,
+} from '../types/cohortExport.js';
 import { parseCsv } from '../utils/csvTestParser.js';
 import { getBehavioralAggregate } from './behavioralAggregateSource.js';
 import {
@@ -15,6 +19,9 @@ import {
 } from './cohortExportSource.js';
 import { resetDemoScenarios } from './demoScenarioTestEnv.js';
 import { getNotificationAggregate } from './notificationAggregateSource.js';
+
+const transport = vi.hoisted(() => ({ get: vi.fn() }));
+vi.mock('@/shared/utils/apiClient.jsx', () => ({ apiClient: transport }));
 
 // Tiempo real: las demostraciones se cargan con import() dinámico.
 function enableDemo(scenarios = {}) {
@@ -33,6 +40,7 @@ let xhrSpy;
 
 beforeEach(() => {
   resetDemoScenarios(vi);
+  transport.get.mockReset();
   fetchSpy = vi.fn(() => Promise.reject(new Error('Sin red en las pruebas')));
   xhrSpy = vi.fn();
   vi.stubGlobal('fetch', fetchSpy);
@@ -40,25 +48,122 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  // La exportación no hace peticiones HTTP: ni al endpoint ni a M05/M07.
+  // Las pruebas aíslan el transporte del backend y nunca acceden a la red.
   expect(fetchSpy).not.toHaveBeenCalled();
   expect(xhrSpy).not.toHaveBeenCalled();
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
 });
 
-describe('Exportación CSV sin integración (RF-144)', () => {
+describe('Exportación CSV desde la API (RF-144)', () => {
+  const id = '3f6c2a1e-8b7d-4c53-9a21-5d0e7b9f4a10';
+  const fileName = 'indicadores_cohorte_activa_20261123.csv';
+  const disposition = `attachment; filename="${fileName}"`;
+  const rows = [
+    EXPORT_COLUMNS,
+    [
+      '"Cohorte ""Bogotá"", prueba\r\nSede"',
+      'DESACTUALIZADA',
+      '',
+      ...Array(8).fill('0'),
+      'NO_DISPONIBLE',
+      ...Array(6).fill('No disponible'),
+    ],
+  ];
+  const csv = '\uFEFF' + rows.map((row) => row.join(',') + '\r\n').join('');
+  const response = ({
+    text = csv,
+    type = 'text/csv;charset=utf-8',
+    header = disposition,
+  } = {}) => ({
+    data: new Blob([text], { type }),
+    headers: { 'content-disposition': header },
+  });
+
   it.each([
     ['sin la variable', true, ''],
     ['en producción, aunque exista la variable', false, 'true'],
-  ])('%s: integración pendiente y ningún CSV local', async (_, dev, flag) => {
-    vi.stubEnv('DEV', dev);
-    vi.stubEnv('VITE_M08_DEMO', flag);
+  ])(
+    '%s: pide solo el CSV autorizado y conserva el Blob del backend',
+    async (_, dev, flag) => {
+      vi.stubEnv('DEV', dev);
+      vi.stubEnv('VITE_M08_DEMO', flag);
+      const http = response();
+      transport.get.mockResolvedValue(http);
+      const { signal } = new AbortController();
 
-    expect(getExportSourceMode()).toBe(EXPORT_SOURCE_MODE.PENDING_INTEGRATION);
-    await expect(exportCohortIndicatorsCsv(COHORT)).rejects.toThrow(
-      'no está integrada',
-    );
+      expect(getExportSourceMode()).toBe(EXPORT_SOURCE_MODE.API);
+      const file = await exportCohortIndicatorsCsv(id, {
+        include_pii: true,
+        signal,
+      });
+      expect(transport.get).toHaveBeenCalledExactlyOnceWith(
+        `/admin/cohortes/${id}/exportacion.csv`,
+        { responseType: 'blob', signal },
+      );
+      expect(file).toEqual({
+        fileName,
+        blob: http.data,
+        sizeBytes: http.data.size,
+        behavioralStale: true,
+        notificationsAvailable: false,
+      });
+      expect(file.blob).toBe(http.data);
+    },
+  );
+
+  it.each([
+    [401, '', EXPORT_ERROR.SESSION_REQUIRED],
+    [403, 'ACCESO_DENEGADO', EXPORT_ERROR.FORBIDDEN],
+    [422, 'COHORTE_NO_ACTIVA', EXPORT_ERROR.COHORT_NOT_ACTIVE],
+    [422, 'SIN_INDICADORES_CONSOLIDADOS', EXPORT_ERROR.NO_INDICATORS],
+    [500, 'ERROR_REGISTRO_AUDITORIA', EXPORT_ERROR.AUDIT_UNAVAILABLE],
+    [500, 'ERROR_GENERACION_CSV', EXPORT_ERROR.GENERATION_FAILED],
+  ])(
+    'interpreta HTTP %i con código %s en un Blob de error',
+    async (status, codigo, code) => {
+      transport.get.mockRejectedValue({
+        response: {
+          status,
+          data: new Blob([JSON.stringify({ codigo })], {
+            type: 'application/json',
+          }),
+        },
+      });
+      await expect(exportCohortIndicatorsCsv(id)).rejects.toMatchObject({
+        status,
+        code,
+      });
+    },
+  );
+
+  it('maneja un error HTML del proxy sin mostrar su contenido', async () => {
+    transport.get.mockRejectedValue({
+      response: { status: 502, data: new Blob(['<html>Error interno</html>']) },
+    });
+    await expect(exportCohortIndicatorsCsv(id)).rejects.toMatchObject({
+      status: 502,
+      code: EXPORT_ERROR.GENERATION_FAILED,
+      mensaje: '',
+    });
+  });
+
+  it.each([
+    ['tipo HTML', { type: 'text/html' }],
+    [
+      'nombre ajeno al contrato',
+      { header: 'attachment; filename="usuarios.csv"' },
+    ],
+    ['sin nombre del servidor', { header: '' }],
+    [
+      'columna ajena al contrato',
+      { text: csv.replace('nombre_cohorte', 'correo') },
+    ],
+    ['segunda fila de datos', { text: csv + rows[1].join(',') + '\r\n' }],
+    ['fila truncada', { text: csv.slice(0, -4) }],
+  ])('rechaza una respuesta 200 con %s', async (_, overrides) => {
+    transport.get.mockResolvedValue(response(overrides));
+    await expect(exportCohortIndicatorsCsv(id)).rejects.toThrow();
   });
 });
 
@@ -71,6 +176,7 @@ describe('Exportación CSV en demostración (RF-144)', () => {
     expect(file.content.endsWith('\r\n')).toBe(true);
     expect(file.sizeBytes).toBe(new TextEncoder().encode(file.content).length);
     expect(file.simulatedAudit).toBe(true);
+    expect(transport.get).not.toHaveBeenCalled();
     expect(parseCsv(file.content)).toHaveLength(2);
   });
 

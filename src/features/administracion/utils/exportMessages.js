@@ -5,6 +5,8 @@ import { EXPORT_STATUS } from '../types/cohortExport.js';
 export const EXPORT_MESSAGE = Object.freeze({
   [EXPORT_STATUS.FORBIDDEN]:
     'Acceso denegado. No cuenta con los privilegios necesarios para exportar datos del módulo administrativo.',
+  [EXPORT_STATUS.SESSION_REQUIRED]:
+    'Tu sesión no está activa. Vuelve a iniciar sesión para exportar el archivo.',
   [EXPORT_STATUS.COHORT_NOT_ACTIVE]:
     'No se puede exportar. La cohorte seleccionada no está activa o no existe en el sistema.',
   [EXPORT_STATUS.NO_INDICATORS]:

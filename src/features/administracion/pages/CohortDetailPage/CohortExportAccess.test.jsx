@@ -17,7 +17,7 @@ vi.mock('./hooks/useCohortDetail.js', async (importOriginal) => {
   };
 });
 
-function render(cohort) {
+function render(cohort, isDemo = true) {
   const participants = DEMO_PARTICIPANTS.filter(
     ({ cohortId }) => cohortId === cohort?.id,
   );
@@ -29,7 +29,7 @@ function render(cohort) {
     loadError: '',
     notFound: !cohort,
     participantsError: '',
-    isDemo: true,
+    isDemo,
     isIntegrationPending: false,
     canManage: true,
     retry: vi.fn(),
@@ -76,14 +76,14 @@ describe('Exportación CSV desde el detalle de la cohorte (RF-144)', () => {
     expect(html).toContain('Disponible solo para la cohorte activa.');
   });
 
-  it('sin el modo demostración: integración pendiente', () => {
+  it('sin el modo demostración: habilita la exportación de una cohorte activa', () => {
     vi.stubEnv('DEV', true);
     vi.stubEnv('VITE_M08_DEMO', '');
-    const html = render(DEMO_COHORTS[1]);
+    const html = render(DEMO_COHORTS[1], false);
 
-    expect(html).toContain(
-      'Exportación pendiente de integración con el servidor.',
-    );
+    expect(html).toContain('Exportar indicadores CSV');
+    expect(html).toContain('Solo agregados de la cohorte, sin datos personales.');
+    expect(html).not.toContain('Datos de demostración');
   });
 
   it('sin cohorte no aparece', () => {

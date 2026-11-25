@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import {
   exportCohortIndicatorsCsv,
@@ -12,6 +12,7 @@ import {
 import { startCsvDownload } from '../utils/downloadCsv.js';
 
 const STATUS_BY_CODE = Object.freeze({
+  [EXPORT_ERROR.SESSION_REQUIRED]: EXPORT_STATUS.SESSION_REQUIRED,
   [EXPORT_ERROR.FORBIDDEN]: EXPORT_STATUS.FORBIDDEN,
   [EXPORT_ERROR.COHORT_NOT_ACTIVE]: EXPORT_STATUS.COHORT_NOT_ACTIVE,
   [EXPORT_ERROR.NO_INDICATORS]: EXPORT_STATUS.NO_INDICATORS,
@@ -38,16 +39,28 @@ export function useCohortExport({ cohortId, source = DEFAULT_SOURCE } = {}) {
     status: EXPORT_STATUS.IDLE,
     file: null,
   });
-  const inFlight = useRef(false);
+  const inFlight = useRef(null);
+
+  useEffect(
+    () => () => {
+      inFlight.current?.abort();
+      inFlight.current = null;
+    },
+    [],
+  );
 
   async function exportCsv() {
-    if (inFlight.current || mode !== EXPORT_SOURCE_MODE.DEMO) return;
+    if (!cohortId || inFlight.current) return;
 
-    inFlight.current = true;
+    const controller = new AbortController();
+    inFlight.current = controller;
     setState({ status: EXPORT_STATUS.EXPORTING, file: null });
 
     try {
-      const file = await source.exportCsv(cohortId);
+      const file = await source.exportCsv(cohortId, {
+        signal: controller.signal,
+      });
+      if (controller.signal.aborted) return;
 
       try {
         source.download(file);
@@ -58,12 +71,13 @@ export function useCohortExport({ cohortId, source = DEFAULT_SOURCE } = {}) {
 
       setState({ status: EXPORT_STATUS.STARTED, file });
     } catch (error) {
+      if (controller.signal.aborted) return;
       setState({
         status: STATUS_BY_CODE[error?.code] ?? EXPORT_STATUS.GENERATION_FAILED,
         file: null,
       });
     } finally {
-      inFlight.current = false;
+      if (inFlight.current === controller) inFlight.current = null;
     }
   }
 
@@ -72,7 +86,6 @@ export function useCohortExport({ cohortId, source = DEFAULT_SOURCE } = {}) {
     file: state.file,
     isExporting: state.status === EXPORT_STATUS.EXPORTING,
     isDemo: mode === EXPORT_SOURCE_MODE.DEMO,
-    isIntegrationPending: mode === EXPORT_SOURCE_MODE.PENDING_INTEGRATION,
     exportCsv,
   };
 }

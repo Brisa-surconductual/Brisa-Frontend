@@ -57,6 +57,17 @@ describe('Descarga del CSV (RF-144)', () => {
     expect(link.remove).toHaveBeenCalled();
   });
 
+  it('entrega al navegador el Blob original del servidor sin modificarlo', () => {
+    const { env, link } = fakeEnv();
+    const fileName = 'indicadores_cohorte_activa_20261122.csv';
+    const blob = new Blob([UTF8_BOM, 'a\r\n1\r\n'], { type: CSV_MIME_TYPE });
+
+    startCsvDownload({ fileName, blob }, env);
+
+    expect(env.URL.createObjectURL).toHaveBeenCalledWith(blob);
+    expect(link.download).toBe(fileName);
+  });
+
   it('libera la URL temporal después del clic', () => {
     vi.useFakeTimers();
     const { env } = fakeEnv();

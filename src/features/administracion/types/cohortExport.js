@@ -8,13 +8,14 @@ export const EXPORT_STATUS = Object.freeze({
   STARTED: 'STARTED',
   // FA1 (403).
   FORBIDDEN: 'FORBIDDEN',
+  SESSION_REQUIRED: 'SESSION_REQUIRED',
   // FA2 (422): cohorte inactiva o inexistente.
   COHORT_NOT_ACTIVE: 'COHORT_NOT_ACTIVE',
   // FA3 (422): sin indicadores calculados.
   NO_INDICATORS: 'NO_INDICATORS',
   // FA5 (500).
   GENERATION_FAILED: 'GENERATION_FAILED',
-  // La bitácora (simulada en demostración) no registró: sin descarga.
+  // La bitácora no registró: sin descarga.
   AUDIT_UNAVAILABLE: 'AUDIT_UNAVAILABLE',
   // El navegador no pudo iniciar la descarga.
   DOWNLOAD_FAILED: 'DOWNLOAD_FAILED',
@@ -23,6 +24,7 @@ export const EXPORT_STATUS = Object.freeze({
 // Códigos con los que la fuente rechaza la exportación.
 export const EXPORT_ERROR = Object.freeze({
   FORBIDDEN: 'EXPORT_FORBIDDEN',
+  SESSION_REQUIRED: 'EXPORT_SESSION_REQUIRED',
   COHORT_NOT_ACTIVE: 'EXPORT_COHORT_NOT_ACTIVE',
   NO_INDICATORS: 'EXPORT_NO_INDICATORS',
   GENERATION_FAILED: 'EXPORT_GENERATION_FAILED',
@@ -32,7 +34,7 @@ export const EXPORT_ERROR = Object.freeze({
 // Origen de la exportación.
 export const EXPORT_SOURCE_MODE = Object.freeze({
   DEMO: 'DEMO',
-  PENDING_INTEGRATION: 'PENDING_INTEGRATION',
+  API: 'API',
 });
 
 // Estado visible de cada componente del CSV.

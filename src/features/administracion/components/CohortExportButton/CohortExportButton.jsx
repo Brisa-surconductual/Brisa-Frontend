@@ -14,6 +14,7 @@ import { EXPORT_MESSAGE } from '../../utils/exportMessages.js';
 import { CohortNotice } from '../CohortNotice/index.js';
 
 const DENIED = Object.freeze([
+  EXPORT_STATUS.SESSION_REQUIRED,
   EXPORT_STATUS.FORBIDDEN,
   EXPORT_STATUS.COHORT_NOT_ACTIVE,
   EXPORT_STATUS.NO_INDICATORS,
@@ -59,11 +60,12 @@ function ExportResult({ status, file, isDemo }) {
  * (RF-144), en el detalle de la cohorte. Solo agregados de RF-132 y
  * RF-134; no hay opción de exportar datos individuales. El botón queda
  * deshabilitado mientras se genera el archivo, si la cohorte no está
- * activa o si la integración está pendiente.
+ * activa.
  */
 export function CohortExportButton({ cohortId, cohortName, cohortStatus }) {
-  const { status, file, isExporting, isDemo, isIntegrationPending, exportCsv } =
-    useCohortExport({ cohortId });
+  const { status, file, isExporting, isDemo, exportCsv } = useCohortExport({
+    cohortId,
+  });
   const isActive = cohortStatus === COHORT_STATUS.ACTIVE;
 
   return (
@@ -74,7 +76,7 @@ export function CohortExportButton({ cohortId, cohortName, cohortStatus }) {
           onClick={exportCsv}
           loading={isExporting}
           loadingText="Generando CSV..."
-          disabled={!isActive || isIntegrationPending}
+          disabled={!isActive}
           className="min-h-[44px]"
         >
           <Download size={16} strokeWidth={2} aria-hidden="true" />
@@ -83,13 +85,11 @@ export function CohortExportButton({ cohortId, cohortName, cohortStatus }) {
         </Button>
 
         <p className="m-0 text-[length:var(--font-size-xs)] leading-[var(--line-height-normal)] text-[var(--text-muted)]">
-          {isIntegrationPending
-            ? 'Exportación pendiente de integración con el servidor.'
-            : !isActive
-              ? 'Disponible solo para la cohorte activa.'
-              : isDemo
-                ? 'Datos de demostración: el archivo contiene indicadores ficticios. Solo agregados de la cohorte, sin datos personales.'
-                : 'Solo agregados de la cohorte, sin datos personales.'}
+          {!isActive
+            ? 'Disponible solo para la cohorte activa.'
+            : isDemo
+              ? 'Datos de demostración: el archivo contiene indicadores ficticios. Solo agregados de la cohorte, sin datos personales.'
+              : 'Solo agregados de la cohorte, sin datos personales.'}
         </p>
       </div>
 
