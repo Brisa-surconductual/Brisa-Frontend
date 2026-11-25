@@ -135,8 +135,8 @@ export function validatePermissionForm(
 
 /*
  * D20: el permiso vale hasta el final del día elegido en Bogotá, así que se
- * envía `YYYY-MM-DDT23:59:59-05:00` en ISO (UTC). PENDIENTE (A-075): Leandro
- * confirma si el backend espera este instante o `23:59:59Z`.
+ * envía `YYYY-MM-DDT23:59:59-05:00` en ISO (UTC). Confirmado por el backend
+ * (2026-11-25): la zona es la de Bogotá.
  */
 export const endOfDayInBogota = (date) =>
   new Date(`${date}T23:59:59${BOGOTA_OFFSET}`).toISOString();
