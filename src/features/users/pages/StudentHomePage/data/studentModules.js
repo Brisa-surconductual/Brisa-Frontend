@@ -41,3 +41,12 @@ export const STUDENT_MODULES = Object.freeze([
     release: 'M06',
   }),
 ]);
+
+/*
+ * «Otras herramientas para ti»: el chat tiene su propia tarjeta
+ * principal en el inicio y no se repite en la cuadrícula. Cada
+ * herramienta conserva su disponibilidad real (`to`).
+ */
+export const STUDENT_TOOL_MODULES = Object.freeze(
+  STUDENT_MODULES.filter(({ id }) => id !== STUDENT_MODULE.CHAT),
+);

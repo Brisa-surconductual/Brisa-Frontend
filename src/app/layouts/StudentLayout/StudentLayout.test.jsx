@@ -40,6 +40,13 @@ describe('Sección activa del estudiante', () => {
     ['/app/estudiante', STUDENT_SECTION.INICIO],
     ['/app/estudiante/', STUDENT_SECTION.INICIO],
     ['/app/estudiante/cronograma/contenido-vigente', STUDENT_SECTION.CONTENIDO],
+    ['/app/estudiante/chat', STUDENT_SECTION.CHAT],
+    ['/app/estudiante/chat/', STUDENT_SECTION.CHAT],
+    ['/app/estudiante/chat/sesion/abc', STUDENT_SECTION.CHAT],
+    ['/app/estudiante/chat/sin-conexion/abc', STUDENT_SECTION.CHAT],
+    // RF-43: la intervención SOS no es una conversación ordinaria.
+    ['/app/estudiante/sos', null],
+    ['/app/estudiante/chatx', null],
     ['/app/administrativo', null],
   ])('%s → %s', (pathname, expected) =>
     expect(getActiveStudentSection(pathname)).toBe(expected));
@@ -47,6 +54,7 @@ describe('Sección activa del estudiante', () => {
   it('solo navega a rutas reales del estudiante', () =>
     expect(STUDENT_NAV_ITEMS.map(({ to }) => to)).toEqual([
       '/app/estudiante',
+      '/app/estudiante/chat',
       '/app/estudiante/cronograma/contenido-vigente',
     ]));
 });
@@ -65,6 +73,8 @@ describe('Layout del estudiante', () => {
   it.each([
     ['/app/estudiante', 'Inicio'],
     ['/app/estudiante/cronograma/contenido-vigente', 'Contenido vigente'],
+    ['/app/estudiante/chat', 'Chat'],
+    ['/app/estudiante/chat/sesion/abc', 'Chat'],
   ])('en %s marca activa "%s" en ambas navegaciones', (path, label) => {
     const html = render(path);
     const active = [
@@ -83,7 +93,7 @@ describe('Layout del estudiante', () => {
     expect(blocks).toHaveLength(2);
     for (const block of blocks) {
       expect(block).toContain('aria-label="Navegación del estudiante"');
-      expect(block.match(/<a /g)).toHaveLength(2);
+      expect(block.match(/<a /g)).toHaveLength(3);
       expect(block).not.toContain('<button');
       expect(block).not.toContain('role="tab"');
       expect(block).not.toContain('disabled');
@@ -93,10 +103,24 @@ describe('Layout del estudiante', () => {
   it('los módulos futuros no aparecen como enlaces de navegación', () => {
     const navigation = navBlocks(render('/app/estudiante')).join('');
 
-    for (const futureModule of ['Chat', 'Diario', 'Progreso', 'Perfil']) {
+    for (const futureModule of ['Diario', 'Progreso', 'Mascota', 'Perfil']) {
       expect(navigation).not.toContain(futureModule);
     }
   });
+
+  it('la barra inferior móvil reparte tres destinos con ícono y etiqueta visibles', () => {
+    const bottom = navBlocks(render('/app/estudiante'))[1];
+
+    expect(bottom).toContain('grid-cols-3');
+    for (const label of ['Inicio', 'Chat', 'Contenido']) {
+      expect(bottom).toContain(`<span aria-hidden="true">${label}</span>`);
+    }
+    expect(bottom.match(/<svg/g)).toHaveLength(3);
+    expect(bottom.match(/focus-visible:outline-2/g)).toHaveLength(3);
+  });
+
+  it('en la intervención SOS ninguna sección queda activa', () =>
+    expect(render('/app/estudiante/sos')).not.toContain('aria-current="page"'));
 
   it('cierra sesión con el mecanismo existente (useLogoutHandler)', () => {
     useLogoutHandler.mockClear();

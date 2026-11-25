@@ -73,16 +73,54 @@ const NOTICE_BY_VIEW = Object.freeze({
   }),
 });
 
+function StatusChip({ toneClass, statusLabel }) {
+  return (
+    <span className="inline-flex w-fit shrink-0 items-center gap-[var(--space-1)] self-start rounded-[var(--radius-full)] border border-current bg-[var(--surface-card)] px-[var(--space-2)] py-[3px] font-[var(--font-mono)] text-[length:var(--font-size-xs)] font-bold whitespace-nowrap">
+      <span className={`h-[6px] w-[6px] shrink-0 rounded-[var(--radius-full)] ${toneClass.dot}`} aria-hidden="true" />
+      {statusLabel}
+    </span>
+  );
+}
+
+/*
+ * `variant="compact"`: fila breve para el inicio cuando el registro
+ * está completo. Mismos textos, tono y etiqueta (las reglas no
+ * cambian); solo se reduce el peso visual. Los estados que piden
+ * atención usan siempre la versión completa con su acción.
+ */
 export function RegistrationStatusNotice({
   view,
   estadoRegistro,
   onGoToConsent,
+  variant = 'full',
 }) {
   const { tone, Icon, title, description, label } =
     NOTICE_BY_VIEW[view] ?? NOTICE_BY_VIEW[REGISTRATION_STATUS_VIEW.UNKNOWN];
   const toneClass = TONE_CLASS[tone];
   // Etiqueta propia en los estados que no deben mostrarse tal cual.
   const statusLabel = label ?? estadoRegistro;
+  const needsAction = view === REGISTRATION_STATUS_VIEW.PENDING_CONSENT;
+
+  if (variant === 'compact' && !needsAction) {
+    return (
+      <div
+        className={`flex flex-wrap items-center gap-[var(--space-3)] rounded-[var(--radius-lg)] border px-[var(--space-4)] py-[var(--space-3)] ${toneClass.box}`}
+      >
+        <Icon size={20} strokeWidth={1.8} aria-hidden="true" className="shrink-0" />
+
+        <div className="flex min-w-0 flex-1 flex-col">
+          <p className="m-0 text-[length:var(--font-size-xs)] font-bold tracking-[var(--letter-spacing-wide)] uppercase opacity-90">
+            Estado de tu cuenta
+          </p>
+          <strong className="block text-[length:var(--font-size-sm)] leading-[var(--line-height-snug)] font-extrabold">
+            {title}
+          </strong>
+        </div>
+
+        <StatusChip toneClass={toneClass} statusLabel={statusLabel} />
+      </div>
+    );
+  }
 
   return (
     <section
@@ -112,7 +150,7 @@ export function RegistrationStatusNotice({
           {description}
         </p>
 
-        {view === REGISTRATION_STATUS_VIEW.PENDING_CONSENT && (
+        {needsAction && (
           <div className="mt-[var(--space-2)]">
             <Button variant="secondary" onClick={onGoToConsent}>
               Revisar consentimiento
@@ -121,10 +159,7 @@ export function RegistrationStatusNotice({
         )}
       </div>
 
-      <span className="inline-flex w-fit shrink-0 items-center gap-[var(--space-1)] self-start rounded-[var(--radius-full)] border border-current bg-[var(--surface-card)] px-[var(--space-2)] py-[3px] font-[var(--font-mono)] text-[length:var(--font-size-xs)] font-bold whitespace-nowrap">
-        <span className={`h-[6px] w-[6px] shrink-0 rounded-[var(--radius-full)] ${toneClass.dot}`} aria-hidden="true" />
-        {statusLabel}
-      </span>
+      <StatusChip toneClass={toneClass} statusLabel={statusLabel} />
     </section>
   );
 }

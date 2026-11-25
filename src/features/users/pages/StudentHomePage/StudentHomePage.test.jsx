@@ -16,12 +16,17 @@ vi.mock('@/features/cronograma/components/CurrentContentAccessCard/index.js', ()
   CurrentContentAccessCard: () => <section>tarjeta-contenido-actual</section>,
 }));
 
+vi.mock('@/features/cronograma/components/AssignedScheduleSummary/index.js', () => ({
+  AssignedScheduleSummary: () => <div>resumen-cronograma</div>,
+}))
+
 function render(state) {
   homeState = {
     displayName: 'estudiante.qa',
     roleLabel: 'Estudiante',
     estadoRegistro: 'REGISTRO_COMPLETO',
     registrationStatusView: REGISTRATION_STATUS_VIEW.COMPLETED,
+    accessConfirmed: true,
     goToConsent: () => {},
     handleLogout: () => {},
     ...state,
@@ -35,13 +40,13 @@ function render(state) {
 }
 
 describe('Inicio del estudiante dentro del StudentLayout', () => {
-  it('conserva saludo, aviso de estado, contenido actual y módulos', () => {
+  it('conserva saludo, aviso de estado, contenido actual y herramientas', () => {
     const html = render();
 
     expect(html).toContain('Hola, estudiante.qa</h1>');
     expect(html).toContain('¡Registro completado!');
     expect(html).toContain('tarjeta-contenido-actual');
-    expect(html).toContain('Módulos del programa');
+    expect(html).toContain('Otras herramientas para ti');
     expect(html).toContain('próximamente');
   });
 
@@ -51,7 +56,11 @@ describe('Inicio del estudiante dentro del StudentLayout', () => {
     [REGISTRATION_STATUS_VIEW.PENDING_REVIEW, 'PENDIENTE_REVISION', 'Tu registro está pendiente de revisión'],
     [REGISTRATION_STATUS_VIEW.UNKNOWN, null, 'No pudimos confirmar el estado de tu registro'],
   ])('conserva el aviso real del estado (%s)', (view, estado, text) => {
-    const html = render({ registrationStatusView: view, estadoRegistro: estado });
+    const html = render({
+      registrationStatusView: view,
+      estadoRegistro: estado,
+      accessConfirmed: false,
+    });
 
     expect(html).toContain(text);
     expect(html).not.toContain('¡Registro completado!');
