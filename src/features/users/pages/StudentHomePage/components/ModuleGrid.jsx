@@ -10,7 +10,7 @@ import {
 
 import {
   STUDENT_MODULE,
-  STUDENT_MODULES,
+  STUDENT_TOOL_MODULES,
 } from '@/features/users/pages/StudentHomePage/data/studentModules.js';
 
 const MODULE_ICON = Object.freeze({
@@ -21,7 +21,7 @@ const MODULE_ICON = Object.freeze({
 });
 
 const CARD_BASE_CLASS =
-  'flex min-w-0 items-start gap-[var(--space-3)] rounded-[var(--radius-xl)] border bg-[var(--surface-card)] p-[var(--space-4)] min-[480px]:flex-col lg:min-h-[176px]';
+  'flex min-w-0 items-start gap-[var(--space-3)] rounded-[var(--radius-xl)] border bg-[var(--surface-card)] p-[var(--space-4)] md:flex-col md:min-h-[160px]';
 
 /*
  * Módulos con pantalla (`to`): tarjeta que enlaza a su entrada.
@@ -43,7 +43,7 @@ function ModuleCardContent({ name, description, release, Icon, available }) {
         <Icon size={20} strokeWidth={1.7} />
       </span>
 
-      <div className="flex min-w-0 flex-1 flex-col gap-[var(--space-1)] min-[480px]:w-full">
+      <div className="flex min-w-0 flex-1 flex-col gap-[var(--space-1)] md:w-full">
         <h3 className="m-0 text-[length:var(--font-size-md)] font-bold text-[var(--text-primary)]">
           {name}
         </h3>
@@ -52,7 +52,7 @@ function ModuleCardContent({ name, description, release, Icon, available }) {
           {description}
         </p>
 
-        <div className="mt-[var(--space-2)] flex flex-wrap items-center gap-x-[var(--space-2)] gap-y-[var(--space-1)] min-[480px]:mt-auto">
+        <div className="mt-[var(--space-2)] flex flex-wrap items-center gap-x-[var(--space-2)] gap-y-[var(--space-1)] md:mt-auto">
           {available ? (
             <span className="inline-flex items-center gap-[var(--space-1)] text-[length:var(--font-size-sm)] font-bold text-[var(--brand-700)]">
               Abrir
@@ -73,10 +73,11 @@ function ModuleCardContent({ name, description, release, Icon, available }) {
   );
 }
 
-export function ModuleGrid() {
+// Por defecto, las herramientas complementarias (sin el chat).
+export function ModuleGrid({ modules = STUDENT_TOOL_MODULES }) {
   return (
-    <ul className="m-0 grid list-none grid-cols-1 gap-[var(--space-3)] p-0 min-[480px]:grid-cols-2 lg:grid-cols-4">
-      {STUDENT_MODULES.map(({ id, name, description, release, to }) => {
+    <ul className="m-0 grid list-none grid-cols-1 gap-[var(--space-3)] p-0 md:grid-cols-3">
+      {modules.map(({ id, name, description, release, to }) => {
         const content = (
           <ModuleCardContent
             name={name}

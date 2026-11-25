@@ -10,13 +10,21 @@ import {
 import { Link } from 'react-router-dom';
 import { useCurrentContents } from '../../hooks/useCurrentContents.js';
 import { Button } from '@/shared/components/ui/Button/index.js';
+import { CompactCurrentContent } from './CompactCurrentContent.jsx';
 
 /*
  * Acceso al contenido vigente desde el inicio. Muestra solo lo
  * que entrega la API: sin porcentajes ni actividades completadas.
+ * `variant="compact"`: versión breve del inicio del estudiante,
+ * con la misma consulta y sin el resumen del cronograma (el inicio
+ * lo muestra en «Estado del programa»).
  */
-export function CurrentContentAccessCard() {
-  const { currentContent, loading, loadError, retry } = useCurrentContents();
+export function CurrentContentAccessCard({ variant = 'full' }) {
+  const contents = useCurrentContents();
+  const { currentContent, loading, loadError, retry } = contents;
+
+  if (variant === 'compact') return <CompactCurrentContent {...contents} />;
+
   return (
     <section
       aria-labelledby="contenido-actual-titulo"

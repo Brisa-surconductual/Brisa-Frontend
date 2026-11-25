@@ -663,6 +663,36 @@ Nota RF-43 (botón SOS «Tengo ganas de vapear», MVP; rama `feat/m03-rf43-sos-c
   - **Pendiente:** integración contra el backend desplegado con un estudiante de prueba. Incluye activar a mitad de sesión y recuperar el mismo nodo, completar dentro de 60 s, y cerrar hacia los 15 s comprobando `INCOMPLETA` y la duración real. También queda pendiente la medición de < 300 ms en navegador y la revisión visual (360, 768 y 1024 px).
   - **Limitaciones:** el hook de la página no tiene prueba propia (ADR-0002, sin DOM). Su lógica está en servicios probados.
 
+Nota de diseño: inicio del estudiante centrado en el chat (rama `feat/estudiante-redisenio-inicio-juan`; solo presentación, sin cambios de endpoints ni de reglas de negocio). El chat terapéutico (M03) pasa a ser la acción principal del inicio.
+
+- **Orden del inicio** (`users/pages/StudentHomePage`), en una columna en móvil:
+  1. Bienvenida compacta («Hola, {nombre}» con el nombre de la sesión, `getDisplayName`).
+  2. «Tu espacio terapéutico» (`TherapeuticSpaceCard`).
+  3. «Estado del programa» (`ProgramStatusSection`).
+  4. «Tu contenido actual».
+  5. «Otras herramientas para ti».
+
+  Desde 1024 px, «Estado del programa» y «Tu contenido actual» van en dos columnas; desde 768 px, las herramientas van en tres columnas. La bienvenida no lleva emoji, por la regla del proyecto «Nunca emoji en la interfaz».
+- **Tarjeta del chat:** «Ir a mi chat» lleva a `/app/estudiante/chat`, nunca a un `idSesion`. `ChatEntryPage` sigue creando o reanudando la sesión.
+  - El inicio no llama a `POST /chat/sesiones/iniciar` ni a ninguna API del chat (hay una guarda de pruebas sobre el código del inicio).
+  - No se muestran sesión, progreso, modalidad ni disponibilidad: no hay una fuente real para esos datos en el inicio.
+- **Acceso al chat:** solo `REGISTRO_COMPLETO` con alcance `COMPLETA` confirma el acceso (`accessConfirmed`). En ese caso, el botón del chat es la única acción verde sólida.
+  - En cualquier otro estado (consentimiento pendiente, revisión pendiente, sesión limitada o desconocido), el aviso completo de `RegistrationStatusNotice`, con su acción, va antes del chat.
+  - En esos estados el botón del chat pasa a secundario y se aclara que el acceso depende del registro.
+- **Estado del programa:** `RegistrationStatusNotice` tiene `variant="compact"`, con los mismos textos, tono y etiqueta; solo se usa con el registro completo. A su lado va `AssignedScheduleSummary`, con su propia consulta: un registro completo no se presenta como cronograma activo.
+- **Contenido actual:** `CurrentContentAccessCard` tiene `variant="compact"` (`CompactCurrentContent`). Usa el mismo `useCurrentContents`, sin peticiones nuevas, y no repite el resumen del cronograma.
+  - Estados: carga, error con reintento, sin contenido, y uno o varios contenidos (nombre, unidad temporal y «Vigente»).
+  - «Ver contenido vigente» es una acción secundaria.
+  - La variante completa no cambia.
+- **Otras herramientas:** son Diario, Progreso y Mascota (`STUDENT_TOOL_MODULES`). El chat sale de la cuadrícula, pero no del catálogo. Cada herramienta conserva su disponibilidad real: sin pantalla, se muestra como «Disponible próximamente» y sin enlace.
+- **Navegación del estudiante** (`studentNavigation.js`): tres destinos, Inicio, Chat y Contenido, en la barra superior (tableta y escritorio) y en la barra inferior móvil, que pasa a tres columnas con ícono y etiqueta visibles y foco visible.
+  - Chat queda activo en `/chat` y en sus conversaciones (`/chat/sesion/...`, sin conexión).
+  - La intervención SOS (`/app/estudiante/sos`) no activa ninguna sección.
+  - La altura de la barra inferior no cambia: los límites del botón SOS arrastrable (RF-43) siguen igual.
+- **Estado:**
+  - **Verificado con pruebas automatizadas:** inicio, herramientas, variante compacta, navegación, layout y router.
+  - **Pendiente:** revisión visual en navegador (360, 430, 768, 1024 y 1440 px; modo claro y oscuro).
+
 Nota: en el Excel hay códigos duplicados o irregulares (RF-75 aparece en M05 y M07; `RF93` sin guion; RF-146 no aparece; títulos vacíos en RF-54, RF-55, RF-89, RF-90, RF-92; RF-109 y RF-110 con el mismo título). Se registran como **aclaraciones pendientes** (sección 7) y no se resuelven por suposición.
 
 ---
@@ -790,3 +820,4 @@ Aplicar SDD retroactivamente a todo el código sería inviable. Se adopta así:
 | v0.7 | 2026-11-23 | RF-38: interfaz administrativa de trazabilidad de sesiones del chat (listado por seudónimo A7 y línea de tiempo), primera integración HTTP del M08, guarda RF-148 con lista de adaptadores permitidos y dependencia del código A7 auténtico de M08. |
 | v0.8 | 2026-11-23 | RF-43: botón SOS global del estudiante, pantalla de intervención con cuenta regresiva del servidor, cierre obligatorio por motivo, recursos de apoyo, retorno a la actividad anterior y huecos del contrato. |
 | v0.9 | 2026-11-23 | RF-43: botón SOS rojo con token propio y arrastrable (puntero y teclado), con ajuste al borde y límites de pantalla. |
+| v0.10 | 2026-11-25 | Inicio del estudiante centrado en el chat: tarjeta «Tu espacio terapéutico», estado del programa y contenido vigente compactos, «Otras herramientas para ti» sin el chat y navegación del estudiante con Inicio, Chat y Contenido. |

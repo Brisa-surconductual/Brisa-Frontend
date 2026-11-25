@@ -6,6 +6,7 @@ import {
   getRoleLabel,
 } from '@/features/users/types/authTypes.js';
 import {
+  REGISTRATION_STATUS_VIEW,
   getRegistrationStatusView,
 } from '@/features/users/services/registrationState.js';
 import {
@@ -26,15 +27,21 @@ export function useStudentHomePage() {
     navigate('/registro/consentimiento');
   }
 
+  const registrationStatusView = getRegistrationStatusView(
+    estadoRegistro,
+    alcance,
+  );
+
   return {
     displayName: getDisplayName(user),
     roleLabel: getRoleLabel(role),
     // Estado y alcance reales de la sesión: nunca valores fijos.
     estadoRegistro,
-    registrationStatusView: getRegistrationStatusView(
-      estadoRegistro,
-      alcance,
-    ),
+    registrationStatusView,
+    // Solo registro completo con sesión COMPLETA confirma el acceso;
+    // cualquier otro estado conserva su aviso como prioridad.
+    accessConfirmed:
+      registrationStatusView === REGISTRATION_STATUS_VIEW.COMPLETED,
     goToConsent,
     handleLogout,
   };
