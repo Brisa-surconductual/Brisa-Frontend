@@ -147,7 +147,11 @@ describe('Permisos administrativos (CP-19)', () => {
       .filter((element) => element?.type === RequireAuth)
       .map((element) => element.props.allowedRoles ?? null);
 
-    expect(roles).toContainEqual([USER_ROLE.ADMINISTRATIVO]);
+    // FE-336b: el área administrativa admite también al coordinador de psicología.
+    expect(roles).toContainEqual([
+      USER_ROLE.ADMINISTRATIVO,
+      USER_ROLE.COORDINADOR_PSI,
+    ]);
     expect(matches.some(({ route }) => route.element?.type === AdminLayout)).toBe(true);
   });
 });
