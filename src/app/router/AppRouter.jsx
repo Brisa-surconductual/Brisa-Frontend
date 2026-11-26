@@ -62,6 +62,7 @@ import {
   CohortEvolutionPage,
   ParticipantSessionsPage,
   SessionTraceabilityPage,
+  PendingAlertsPage,
 } from '@/features/administracion/index.js';
 
 import { LandingRoute } from './LandingRoute.jsx';
@@ -349,6 +350,12 @@ export function AppRouter() {
               <Route
                 path="administrativo/cohortes/:idCohorte/evolucion"
                 element={<CohortEvolutionPage />}
+              />
+
+              {/* RF-146 / RF-147: alertas pendientes de la cohorte y su atención. */}
+              <Route
+                path="administrativo/cohortes/:idCohorte/alertas/pendientes"
+                element={<PendingAlertsPage />}
               />
 
               <Route

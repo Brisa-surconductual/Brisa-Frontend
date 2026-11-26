@@ -124,6 +124,8 @@ describe('RF-148: límites del módulo administrativo', () => {
     );
 
     expect(http.map(({ name }) => name).sort()).toEqual([
+      // RF-146 / RF-147: bandeja de alertas pendientes y su atención.
+      'api/alertasPendientesApi.js',
       'api/chatTraceability/fetchParticipantSessions.js',
       'api/chatTraceability/fetchSessionTraceability.js',
       'api/cohortExportApi.js',

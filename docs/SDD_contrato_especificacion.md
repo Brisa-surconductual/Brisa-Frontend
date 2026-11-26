@@ -471,6 +471,8 @@ Leyenda de estado: **Cubierto** (UI + contrato + pruebas) · **Parcial** (falta 
 | RF-140 | Dashboard principal | `administracion` · `CohortDashboard`, montado en `PsychologyHomePage` (`/app/administrativo`) | Integrado con el backend. Proveedores M05, M06 y M07 pendientes (ver nota). |
 | RF-141 | Evolución temporal de indicadores por unidad del cronograma | `administracion` · `CohortEvolutionPage` (`/app/administrativo/cohortes/:idCohorte/evolucion`) | Integrada con el backend. Proveedor M05 y filtros RF-135 pendientes (ver nota). |
 | RF-144 | Exportación CSV de indicadores agregados de la cohorte activa | `administracion` · `CohortExportButton` en `CohortDetailPage` | Integrado con el endpoint de RF-144 (ver nota) |
+| RF-146 | Bandeja de alertas pendientes por cohorte | `administracion` · `PendingAlertsPage` (`/app/administrativo/cohortes/:idCohorte/alertas/pendientes`) | Integrada con el endpoint real, probada con HTTP simulado; M05 todavía simulado en el backend (ver nota) |
+| RF-147 | Marcar alerta como atendida (irreversible, con motivo) | `administracion` · `AttendAlertDialog` en `PendingAlertsPage` | Integrada con el endpoint real, probada con HTTP simulado; prueba contra backend de integración pendiente (ver nota) |
 | RF-38 | Trazabilidad de la interacción conversacional (consulta administrativa) | `administracion` · `ParticipantSessionsPage`, `SessionTraceabilityPage` (`/app/administrativo/chat/participantes/:codigoParticipante/sesiones[/:idSesion/trazabilidad]`) | Parcial: integración HTTP real implementada y probada con HTTP simulado; verificación contra el backend desplegado y código A7 de M08 pendientes (ver nota) |
 
 Nota RF-24 / RF-31 (terapia completada): un estudiante completa una sola vez cada árbol publicado (flujo y versión). Si `POST /chat/sesiones/iniciar` responde con `sesion.estado_actual = 'COMPLETADA'` (con `reanudada: false`), el backend no creó otra sesión: devuelve la sesión completada del árbol vigente con su nodo final e `historial_reciente`. `ChatEntryPage` muestra entonces «¡Has terminado tu terapia!», indica que las respuestas quedaron guardadas y que podrá comenzar otra conversación cuando se publique un nuevo árbol para su modalidad y perfil; no ofrece «Comenzar» ni «Continuar», solo «Ver conversación» (consulta de solo lectura en `ChatConversationPage`) y «Volver al inicio». El estado `COMPLETADA` prevalece sobre `reanudada`.
@@ -502,7 +504,7 @@ Nota M08 Etapa 2 (común a RF-132, RF-133, RF-134, RF-140, RF-141 y RF-144; rama
 - **Patrón común:** página (o componente) → hook → fachada en `data/` → fuente de demostración cargada con `import()` dinámico solo si `import.meta.env.DEV && import.meta.env.VITE_M08_DEMO === 'true'` → servicio puro de interpretación. Sin el modo demostración el estado es «Integración pendiente»: no se consulta nada ni se muestran datos sustitutos. Cada RF tiene su variable de escenario (`VITE_M08_AGGREGATE_SCENARIO`, `VITE_M08_NARRATIVE_AGGREGATE_SCENARIO`, `VITE_M08_NOTIFICATIONS_AGGREGATE_SCENARIO`, `VITE_M08_DASHBOARD_SCENARIO`, `VITE_M08_EVOLUTION_SCENARIO`, `VITE_M08_EXPORT_SCENARIO`), independiente de las ya existentes. Pruebas estáticas y la revisión de `dist/` confirman que ningún dato ficticio llega al build de producción.
 - **Envoltura común RF-78:** `services/aggregateViewEnvelope.js` resuelve para RF-132, RF-133 y RF-134 el aislamiento por cohorte (una respuesta de otra cohorte no deja datos), la situación de la vista según `estado` y `motivo_sin_datos` (disponible, desactualizada, sin consolidar, suprimida, no disponible, error) y la fecha. Cada vista aplica después su propia lista explícita de campos. Ningún valor se calcula, redondea ni convierte a porcentaje; un dato ausente es «No disponible», nunca 0. «Sin consolidar» es un estado funcional, no un error.
 - **Cohorte consultada:** RF-132, RF-133, RF-134 y RF-141 se consultan por cohorte (rutas `/cohortes/:idCohorte/...`, enlazadas desde el detalle de la cohorte), mientras el Excel habla de la «cohorte activa». RF-140 y RF-144 sí exigen la cohorte en estado ACTIVA. Por confirmar si las vistas deben limitarse a la cohorte activa.
-- **Navegación:** ninguna funcionalidad añade entradas al menú; las rutas nuevas mantienen «Cohortes» como sección activa y las guardas de RF-122. El detalle de la cohorte agrupa en «Vistas de la cohorte» los accesos a RF-142, RF-132, RF-133, RF-134 y RF-141 (1, 2 o 5 columnas según el ancho) y debajo la exportación de RF-144.
+- **Navegación:** ninguna funcionalidad añade entradas al menú; las rutas nuevas mantienen «Cohortes» como sección activa y las guardas de RF-122. El detalle de la cohorte agrupa en «Vistas de la cohorte» los accesos a RF-142, RF-132, RF-133, RF-134, RF-141 y RF-146 (1, 2 o 3 columnas según el ancho) y debajo la exportación de RF-144.
 - **Datos de demostración coherentes:** los mocks de la Cohorte Piloto B están alineados entre sí: 22 participantes asignados en RF-125 (18 activos, 3 pendientes de validación, 1 inactivo), los 18 activos de RF-132, la distribución narrativa de RF-133 que suma 18 y las series de RF-141 cuya última unidad coincide con RF-132. Los activos `PART-0015` a `PART-0030` tienen además referencia, perfil e historial de seguimiento (RF-142, RF-128, RF-129) con valores fijos. `data/demoFixtureCoherence.test.js` vigila esta coherencia. Quedan sin alinear, a propósito: la Cohorte Piloto C (2 participantes inactivos en RF-125 frente a 11 activos en RF-132) y las alertas de B (RF-132 informa 2 de inactividad y 1 de craving; el seguimiento individual suma 2 y 2).
 - **Pendiente con el backend:** rutas de los recursos, códigos de error (403, 404, 422, 503) y su forma, y los adaptadores de `api/`. La revisión visual en navegador (390, 800, 1280 y 1440 px) no se ha hecho y queda para el equipo.
 
@@ -693,6 +695,40 @@ Nota de diseño: inicio del estudiante centrado en el chat (rama `feat/estudiant
   - **Verificado con pruebas automatizadas:** inicio, herramientas, variante compacta, navegación, layout y router.
   - **Pendiente:** revisión visual en navegador (360, 430, 768, 1024 y 1440 px; modo claro y oscuro).
 
+Nota RF-146 y RF-147 (M08, etapa 4, tarea 1; rama `feat/m08-etapa4-juan`). Contrato confirmado leyendo el backend (`GestionAlertasController` y sus DTO, casos de uso y excepciones): Psicología consulta las alertas pendientes de una cohorte y marca una alerta como atendida, de forma irreversible y con motivo.
+
+- **Ruta:** `/app/administrativo/cohortes/:idCohorte/alertas/pendientes` (`PendingAlertsPage`). Va bajo la guarda `ADMINISTRATIVO` y `AdminLayout`, y se accede con «Ver alertas pendientes» en «Vistas de la cohorte» del detalle. Con seis accesos, la rejilla pasa a 1, 2 o 3 columnas. «Volver a la cohorte» regresa al detalle, y la página se monta de nuevo por cohorte (`key`).
+- **RF-146 · `GET /admin/cohortes/:id_cohorte/alertas/pendientes`:** acepta `tipo_alerta` (opcional: `CRAVING_ELEVADO` o `INACTIVIDAD`), `offset` y `limit` (20 por defecto; el backend admite hasta 100). La respuesta no lleva envoltura `{ data }`: `{ items: [{ id_alerta, tipo_alerta, fecha_generacion, codigo_participante }], total, offset, limit }`.
+  - El filtro y la paginación los resuelve el servidor y se conserva su orden (la más antigua primero).
+  - 204: «Sin alertas pendientes».
+  - 200 con `items: []` y `total > 0` (página fuera de rango, por ejemplo tras atender la última de la página): se pide la última página existente, sin inventar elementos.
+  - 400 solicitud no válida; 401 lleva a `/login`; 403 acceso denegado; 404 `COHORTE_NO_ENCONTRADA`; 503 `M05_NO_DISPONIBLE` con reintento.
+  - Un error de red o 5xx nunca se muestra como una lista vacía. Una respuesta que no cumple el contrato no se presenta a medias.
+  - Cada consulta se cancela (`AbortController`) y su respuesta se descarta si llega tarde.
+- **RF-147 · `POST /admin/alertas/:id_alerta/atender`:** el cuerpo es exactamente `{ accion: "MARCAR_ATENDIDA", motivo }`, con cookie y X-CSRF-Token de `apiClient`. El identificador va en la URL. El tipo y el participante no se envían: el backend los toma de M05. La respuesta 200 es `{ id_alerta, estado: "ATENDIDA", fecha_atencion }`.
+  - **Diálogo (`AttendAlertDialog`):** muestra el tipo, el seudónimo y el aviso de acción definitiva, y pide el «Motivo de atención» con contador.
+    - Abrirlo no envía nada; el envío sale solo con «Confirmar atención».
+    - Hay candado contra el doble envío y, mientras se procesa, no se puede cerrar.
+    - La lista no se modifica de forma optimista: tras el 200 se muestra la confirmación y se vuelve a consultar.
+  - **Respuestas** (se decide por `status` y `codigo`):
+    - 409 `ALERTA_YA_ATENDIDA` o `ALERTA_NO_ACTIVA` y 404 `ALERTA_NO_ENCONTRADA`: aviso y actualización.
+    - 422 `MOTIVO_INVALIDO`, o 400 de `ValidationPipe`, que en el backend actual valida el cuerpo antes que el dominio: se conserva el motivo para corregirlo.
+    - 503: el diálogo sigue abierto y la alerta no cambia.
+    - 500 `ERROR_TRANSACCION`, otro 5xx o falta de respuesta: no hay éxito ficticio. Se exige «Actualizar alertas» antes de otro intento, porque sin respuesta el resultado no se conoce.
+    - 401: lleva a `/login`.
+- **Diferencias con el contrato inicial:** el backend actual exige un **motivo obligatorio de 10 a 500 caracteres** (medido tras recortar espacios: `MotivoAtencion` y `ck_alerta_motivo`), que no figuraba en el contrato inicial suministrado. El frontend valida lo mismo antes de enviar y envía el texto recortado. RF-146 no aparece en el Excel (ver la nota de códigos irregulares).
+- **Dependencia de M05:** hoy el backend consume M05 mediante `MockSeguimientoIndividualAdapter`, un adaptador simulado. La integración con el M05 real **no se ha probado**: las alertas que se ven dependen de ese adaptador hasta que exista el proveedor real.
+- **Separación de funcionalidades:**
+  - RF-129 (historial individual de alertas de la ficha) es solo consulta y no cambia.
+  - RF-140 (alertas críticas del panel) es otro agregado: su total no se usa como total de la bandeja.
+  - RF-146 tiene su propio total, del GET. RF-147 es la única acción de escritura.
+- **Modo de demostración** (`VITE_M08_DEMO=true`): las cohortes son ficticias, así que la bandeja no consulta ni escribe en el servidor (`data/pendingAlertsSource.js` lo impide) y solo muestra el aviso «No disponible en la demostración». No hay simulador para esta funcionalidad.
+- **RF-148:** `api/alertasPendientesApi.js` se añade a la lista explícita de adaptadores HTTP de la guarda. Su escritura va a `/admin/alertas/...`, no a un recurso protegido.
+- **Estado:**
+  - **Implementado:** lo anterior.
+  - **Verificado con pruebas automatizadas** (Vitest en `node`, HTTP simulado): adaptador, reglas puras, fuente, hook, página, acceso desde la cohorte, rutas y guarda RF-148.
+  - **Pendiente:** prueba contra un backend de integración con una sesión administrativa (no se ejecutó) y revisión visual en navegador (360 a 1440 px, claro y oscuro).
+
 Nota: en el Excel hay códigos duplicados o irregulares (RF-75 aparece en M05 y M07; `RF93` sin guion; RF-146 no aparece; títulos vacíos en RF-54, RF-55, RF-89, RF-90, RF-92; RF-109 y RF-110 con el mismo título). Se registran como **aclaraciones pendientes** (sección 7) y no se resuelven por suposición.
 
 ---
@@ -821,3 +857,4 @@ Aplicar SDD retroactivamente a todo el código sería inviable. Se adopta así:
 | v0.8 | 2026-11-23 | RF-43: botón SOS global del estudiante, pantalla de intervención con cuenta regresiva del servidor, cierre obligatorio por motivo, recursos de apoyo, retorno a la actividad anterior y huecos del contrato. |
 | v0.9 | 2026-11-23 | RF-43: botón SOS rojo con token propio y arrastrable (puntero y teclado), con ajuste al borde y límites de pantalla. |
 | v0.10 | 2026-11-25 | Inicio del estudiante centrado en el chat: tarjeta «Tu espacio terapéutico», estado del programa y contenido vigente compactos, «Otras herramientas para ti» sin el chat y navegación del estudiante con Inicio, Chat y Contenido. |
+| v0.11 | 2026-11-26 | RF-146 y RF-147: bandeja de alertas pendientes por cohorte y atención irreversible con motivo (10 a 500 caracteres), integradas con los endpoints reales; dependencia del adaptador simulado de M05, separación de RF-129 y RF-140 y sin escrituras en modo de demostración. |

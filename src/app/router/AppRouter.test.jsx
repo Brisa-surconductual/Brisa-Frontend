@@ -99,6 +99,7 @@ const ADMIN_PATHS = Object.freeze([
   '/app/administrativo/cohortes/co-1/vista-narrativa',
   '/app/administrativo/cohortes/co-1/vista-notificaciones',
   '/app/administrativo/cohortes/co-1/evolucion',
+  '/app/administrativo/cohortes/co-1/alertas/pendientes',
   '/app/administrativo/auditoria',
   '/app/administrativo/chat/modalidad',
   '/app/administrativo/chat/grupal',
