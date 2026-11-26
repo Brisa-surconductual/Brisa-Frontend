@@ -80,7 +80,7 @@ export function LoginForm({
           />
         }
         endAdornment={
-          <button type="button" className="inline-flex items-center justify-center rounded-[var(--radius-sm)] border-0 bg-transparent p-[var(--space-1)] text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] disabled:cursor-not-allowed disabled:opacity-60" onClick={toggleVisibility} aria-label={visibilityLabel} aria-pressed={isPasswordVisible} disabled={isSubmitting}
+          <button type="button" className="inline-flex h-[36px] w-[36px] items-center justify-center rounded-[var(--radius-md)] border-0 bg-transparent p-0 text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] disabled:cursor-not-allowed disabled:opacity-60 motion-reduce:transition-none" onClick={toggleVisibility} aria-label={visibilityLabel} aria-pressed={isPasswordVisible} disabled={isSubmitting}
           >
             {isPasswordVisible ? (
               <EyeOff size={19} strokeWidth={1.5} aria-hidden="true"
@@ -94,7 +94,7 @@ export function LoginForm({
         required
       />
 
-      <button type="button" className="self-center border-0 bg-transparent p-0 text-[13px] font-semibold text-[var(--brand-600)] hover:underline" onClick={onForgotPassword}
+      <button type="button" className="-mt-[var(--space-2)] inline-flex min-h-[44px] items-center self-end rounded-[var(--radius-sm)] border-0 bg-transparent px-[var(--space-1)] text-[length:var(--font-size-sm)] font-semibold text-[var(--brand-600)] underline-offset-4 hover:underline" onClick={onForgotPassword}
       >
         ¿Olvidaste tu contraseña?
       </button>

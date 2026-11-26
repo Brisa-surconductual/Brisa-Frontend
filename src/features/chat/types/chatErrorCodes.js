@@ -33,6 +33,16 @@ export const CHAT_ERROR_CODE = Object.freeze({
   PERFIL_CLINICO_NO_DISPONIBLE: error(500, INICIALIZACION),
   ARBOL_NO_DISPONIBLE: error(500, INICIALIZACION),
 
+  // Códigos que el backend emite hoy en POST /chat/sesiones/iniciar
+  SIN_CRONOGRAMA: error(422, INICIALIZACION),
+  PERFIL_INCOMPLETO: error(409, INICIALIZACION),
+  SIN_FLUJO_PUBLICADO: error(404, INICIALIZACION),
+  FLUJO_NO_PUBLICADO: error(409, INICIALIZACION),
+  NODO_INICIAL_NO_DISPONIBLE: error(500, INICIALIZACION),
+  ERROR_CARGA_ARBOL: error(500, INICIALIZACION),
+  NODO_ACTUAL_NO_DISPONIBLE: error(500, INICIALIZACION),
+  NODO_FUERA_DE_FLUJO: error(500, INICIALIZACION),
+
   // Contrato 4: obtener el nodo actual
   SESION_NO_ENCONTRADA: error(404, FLUJO),
   NODO_NO_ENCONTRADO: error(404, FLUJO),
@@ -57,6 +67,37 @@ export const CHAT_ERROR_CODE = Object.freeze({
   TRANSICION_NO_DETERMINADA: error(500, FLUJO),
   INTERACCION_NO_ALMACENADA: error(500, FLUJO),
   PERFIL_CLINICO_NO_ALMACENADO: error(500, FLUJO),
+
+  // Etapa 2 (Taiga #250): POST /chat/sesiones/:id/respuestas (RF-27 a
+  // RF-29). Los de la Etapa 1 se conservan (D14): el catálogo se consulta
+  // por clave y un grep de imports no detecta esos usos.
+  FORMATO_INCORRECTO: error(400, VALIDACION),
+  VALOR_NO_PERMITIDO: error(400, VALIDACION),
+  TIPO_ENTRADA_NO_PERMITIDO: error(400, FLUJO),
+  NODO_TERMINAL: error(409, FLUJO),
+  NODO_EN_ESPERA_CRONOGRAMA: error(409, FLUJO),
+  NODO_DESACTUALIZADO: error(409, FLUJO),
+  SESION_NO_ACTIVA: error(409, FLUJO),
+  CAPTURA_FUERA_DE_GRUPAL: error(409, FLUJO),
+  SIN_TRANSICION: error(500, FLUJO),
+  DESTINO_INVALIDO: error(500, FLUJO),
+  ERROR_PERFIL: error(500, FLUJO),
+
+  // RF-37: catálogo vigente del filtro conversacional del backend
+  // (`catalogo-errores-conversacionales.ts`). El texto lo da el backend.
+  PARAMETRO_INVALIDO: error(400, VALIDACION),
+  SIN_COINCIDENCIA: error(400, VALIDACION),
+  CSRF_INVALIDO: error(403, FLUJO),
+  NODO_INEXISTENTE: error(404, FLUJO),
+  ESTADO_INCONSISTENTE: error(409, FLUJO),
+  SESION_NO_REANUDABLE: error(409, FLUJO),
+  SECUENCIA_FUERA_DE_ORDEN: error(409, FLUJO),
+  ID_INTERACCION_REUTILIZADA: error(409, FLUJO),
+  HISTORIAL_INCONSISTENTE: error(422, FLUJO),
+  LIMITE_REPORTES: error(429, FLUJO),
+  ERROR_PERSISTENCIA: error(500, FLUJO),
+  CONTENIDO_NO_DISPONIBLE: error(500, FLUJO),
+  RECURSO_NO_DISPONIBLE: error(503, FLUJO),
 
   // Contrato 6.1: precarga
   SESION_NO_INICIALIZADA: error(422, PRECARGA),

@@ -1,7 +1,14 @@
-export const booleano = Object.freeze({
-  validar: (_entrada, respuesta) =>
-    typeof respuesta === 'boolean' ? null : 'TIPO_DATO_INVALIDO',
+// D5: sin `opciones`, «Sí» y «No».
+const SI_NO = Object.freeze([
+  Object.freeze({ valor: true, etiqueta: 'Sí' }),
+  Object.freeze({ valor: false, etiqueta: 'No' }),
+]);
 
-  textoRespuesta: (entrada, respuesta) =>
-    respuesta ? entrada.etiqueta_verdadero : entrada.etiqueta_falso,
+export const opcionesBooleano = ({ opciones }) =>
+  opciones?.length ? opciones : SI_NO;
+
+export const booleano = Object.freeze({
+  textoRespuesta: (entrada, valor) =>
+    opcionesBooleano(entrada).find((o) => o.valor === valor)?.etiqueta ??
+    String(valor),
 });

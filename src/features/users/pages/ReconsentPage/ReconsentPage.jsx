@@ -2,13 +2,15 @@ import { Navigate } from 'react-router-dom';
 
 import {
   AlertTriangle,
-  ArrowLeft,
   Loader2,
+  RefreshCw,
 } from 'lucide-react';
 
 import {
   ConsentDocument,
 } from '../../components/ConsentDocument/index.js';
+import { FormNotice } from '../../components/FormNotice/index.js';
+import { RegistrationHeader } from '../../components/RegistrationHeader/index.js';
 
 import {
   ReconsentAuthorizationForm,
@@ -81,64 +83,45 @@ export function ReconsentPage() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-[520px] flex-col gap-[var(--space-6)]">
-      <header className="flex items-center gap-[var(--space-3)]">
-        <button
-          type="button"
-          className="inline-flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-[var(--radius-full)] border-0 bg-[var(--surface-hover)] p-0 text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-border)]"
-          onClick={handleBack}
-          aria-label="Volver a revisión"
-        >
-          <ArrowLeft
-            size={20}
-            strokeWidth={1.7}
-            aria-hidden="true"
-          />
-        </button>
-
-        <span className="text-[13px] font-bold text-[var(--text-secondary)]">
-          Actualizar consentimiento
-        </span>
-      </header>
+    <div className="mx-auto flex w-full max-w-[560px] flex-col gap-[var(--space-6)]">
+      <RegistrationHeader
+        onBack={handleBack}
+        backLabel="Volver a revisión"
+        sectionLabel="Actualizar consentimiento"
+        title="Confirma nuevamente tu consentimiento"
+        description="Lee el documento vigente y acepta ambas autorizaciones antes de finalizar el registro."
+      />
 
       <SensitiveChangesNotice
         fields={sensitiveFieldLabels}
       />
 
-      <section className="flex flex-col">
-        <h1 className="m-0 text-[25px] leading-[1.25] font-extrabold text-[var(--text-primary)]">
-          Confirma nuevamente tu consentimiento
-        </h1>
-
-        <p className="mt-[var(--space-2)] mb-0 text-[14px] leading-[1.6] text-[var(--text-secondary)]">
-          Lee el documento vigente y acepta ambas autorizaciones antes de finalizar el registro.
-        </p>
-      </section>
-
       {submitError && (
-        <div className="flex items-start gap-[var(--space-3)] rounded-[var(--radius-md)] border border-[var(--danger-border)] bg-[var(--danger-bg)] p-[var(--space-4)] text-[var(--danger-text)]" role="alert">
-          <AlertTriangle
-            size={20}
-            strokeWidth={1.8}
-            className="shrink-0"
-            aria-hidden="true"
-          />
-
-          <p className="m-0 text-[12px]">
-            {submitError}
-          </p>
-        </div>
+        <FormNotice tone="danger" icon={AlertTriangle} role="alert">
+          {submitError}
+        </FormNotice>
       )}
 
       {isLoadingConsent ? (
-        <div className="flex h-[300px] items-center justify-center gap-[var(--space-3)]" role="status">
+        <div className="flex h-[300px] flex-col items-center justify-center gap-[var(--space-3)] rounded-[var(--radius-xl)] border border-[var(--surface-border)] bg-[var(--surface-bg)]" role="status">
           <Loader2 className="animate-spin text-[var(--brand-600)] motion-reduce:animate-none" size={24} aria-hidden="true" />
-          <span className="text-[13px] text-[var(--text-secondary)]">Cargando consentimiento vigente...</span>
+          <span className="text-[length:var(--font-size-sm)] text-[var(--text-secondary)]">Cargando consentimiento vigente...</span>
         </div>
       ) : loadError ? (
-        <div className="flex min-h-[300px] flex-col items-start justify-center gap-[var(--space-3)]" role="alert">
-          <p className="m-0 text-[13px] text-[var(--danger-text)]">{loadError}</p>
-          <Button variant="secondary" onClick={retryLoadConsent}>Reintentar carga</Button>
+        <div role="alert">
+          <FormNotice
+            tone="danger"
+            icon={AlertTriangle}
+            title="Consentimiento no disponible"
+            action={
+              <Button variant="secondary" onClick={retryLoadConsent}>
+                <RefreshCw size={16} strokeWidth={1.8} aria-hidden="true" />
+                Reintentar carga
+              </Button>
+            }
+          >
+            {loadError}
+          </FormNotice>
         </div>
       ) : (
         <ConsentDocument

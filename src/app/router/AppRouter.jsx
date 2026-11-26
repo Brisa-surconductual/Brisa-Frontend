@@ -1,9 +1,19 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { AdminLayout } from '@/app/layouts/AdminLayout/index.js';
 import { ProtectedLayout } from '@/app/layouts/ProtectedLayout/index.js';
+import { StudentLayout } from '@/app/layouts/StudentLayout/index.js';
 import { RegistrationLayout } from '@/app/layouts/RegistrationLayout/index.js';
 import {
-  ProgramModalityPage,
-  PersonalizedTreesPage,
+  ChatConversationPage,
+  ChatEntryPage,
+  ChatOfflineDemoPage,
+  ChatOfflinePage,
+  GroupTreeDetailPage,
+  GroupTreesPage,
+  TaxonomyVariablesPage,
+  ProgramModalityScreen,
+  PersonalizedTreesScreen,
+  SosInterventionPage,
 } from '@/features/chat/index.js';
 import {
   BaselinePage,
@@ -38,17 +48,47 @@ import {
   SchedulePanelPage,
   AssignSchedulePage,
 } from '@/features/cronograma/index.js';
+import {
+  AuditLogPage,
+  CohortDetailPage,
+  CohortFormPage,
+  CohortListPage,
+  ParticipantTrackingPage,
+  ParticipantTrackingProfilePage,
+  CohortAggregatePage,
+  CohortNarrativePage,
+  CohortNotificationsPage,
+  CohortDashboard,
+  CohortEvolutionPage,
+  ParticipantSessionsPage,
+  SessionTraceabilityPage,
+  PendingAlertsPage,
+} from '@/features/administracion/index.js';
 
+import { LandingRoute } from './LandingRoute.jsx';
 import { RequireAuth } from './RequireAuth.jsx';
 import { RoleHomeRedirect } from './RoleHomeRedirect.jsx';
 
+
+// Roles del área administrativa: el backend acepta a ambos en sus rutas /admin (FE-336b).
+const ADMIN_AREA_ROLES = Object.freeze([
+  USER_ROLE.ADMINISTRATIVO,
+  USER_ROLE.COORDINADOR_PSI,
+]);
 
 export function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Landing pública (con sesión activa ofrece «Ir a mi espacio»). */}
         <Route
           path="/"
+          element={<LandingRoute />}
+        />
+
+        {/* Pantalla de bienvenida de la PWA, antes en «/». */}
+        <Route
+          path="/splash"
           element={<SplashPage />}
         />
 
@@ -131,29 +171,60 @@ export function AppRouter() {
                 />
               }
             >
-              <Route
-                path="estudiante"
-                element={<StudentHomePage />}
-              />
+              <Route element={<StudentLayout />}>
+                <Route
+                  path="estudiante"
+                  element={<StudentHomePage />}
+                />
 
-              <Route
-                path="estudiante/cronograma/contenido-vigente"
-                element={<CurrentContentPage />}
-              />
+                <Route
+                  path="estudiante/cronograma/contenido-vigente"
+                  element={<CurrentContentPage />}
+                />
+
+                <Route
+                  path="estudiante/chat"
+                  element={<ChatEntryPage />}
+                />
+
+                <Route
+                  path="estudiante/chat/sesion/:idSesion"
+                  element={<ChatConversationPage />}
+                />
+
+                {/* RF-34: conversación con el paquete guardado en el dispositivo. */}
+                <Route
+                  path="estudiante/chat/sin-conexion/:idSesion"
+                  element={<ChatOfflinePage />}
+                />
+
+                {/* Demostración sin conexión: solo opera en desarrollo. */}
+                <Route
+                  path="estudiante/chat/demo-sin-conexion"
+                  element={<ChatOfflineDemoPage />}
+                />
+
+                {/* RF-43: intervención SOS «Tengo ganas de vapear». */}
+                <Route
+                  path="estudiante/sos"
+                  element={<SosInterventionPage />}
+                />
+              </Route>
             </Route>
 
             <Route
               element={
                 <RequireAuth
-                  allowedRoles={[
-                    USER_ROLE.ADMINISTRATIVO,
-                  ]}
+                  allowedRoles={ADMIN_AREA_ROLES}
                 />
               }
             >
+              <Route element={<AdminLayout />}>
               <Route
                 path="administrativo"
-                element={<PsychologyHomePage />}
+                element={
+                  <PsychologyHomePage cohortDashboard={<CohortDashboard />} />
+                }
               />
 
               <Route
@@ -231,33 +302,114 @@ export function AppRouter() {
               />
 
               <Route
+                path="administrativo/cronograma/:idSchedule/panel"
+                element={<SchedulePanelPage />}
+              />
+
+              <Route
+                path="administrativo/cronograma/:idSchedule/crear-unidad"
+                element={<CreateTemporalUnitPage />}
+              />
+
+              <Route
+                path="administrativo/cohortes"
+                element={<CohortListPage />}
+              />
+
+              <Route
+                path="administrativo/cohortes/nueva"
+                element={<CohortFormPage />}
+              />
+
+              <Route
+                path="administrativo/cohortes/:idCohorte"
+                element={<CohortDetailPage />}
+              />
+
+              <Route
+                path="administrativo/cohortes/:idCohorte/seguimiento"
+                element={<ParticipantTrackingPage />}
+              />
+
+              <Route
+                path="administrativo/cohortes/:idCohorte/seguimiento/:codigoParticipante"
+                element={<ParticipantTrackingProfilePage />}
+              />
+
+              <Route
+                path="administrativo/cohortes/:idCohorte/vista-agregada"
+                element={<CohortAggregatePage />}
+              />
+
+              <Route
+                path="administrativo/cohortes/:idCohorte/vista-narrativa"
+                element={<CohortNarrativePage />}
+              />
+
+              <Route
+                path="administrativo/cohortes/:idCohorte/vista-notificaciones"
+                element={<CohortNotificationsPage />}
+              />
+
+              <Route
+                path="administrativo/cohortes/:idCohorte/evolucion"
+                element={<CohortEvolutionPage />}
+              />
+
+              {/* RF-146 / RF-147: alertas pendientes de la cohorte y su atención. */}
+              <Route
+                path="administrativo/cohortes/:idCohorte/alertas/pendientes"
+                element={<PendingAlertsPage />}
+              />
+
+              <Route
+                path="administrativo/cohortes/:idCohorte/editar"
+                element={<CohortFormPage mode="edit" />}
+              />
+
+              <Route
+                path="administrativo/auditoria"
+                element={<AuditLogPage />}
+              />
+
+              <Route
                 path="administrativo/chat/modalidad"
-                element={<ProgramModalityPage />}
+                element={<ProgramModalityScreen />}
+              />
+
+              <Route
+                path="administrativo/chat/grupal"
+                element={<GroupTreesPage />}
+              />
+
+              <Route
+                path="administrativo/chat/grupal/:flowId"
+                element={<GroupTreeDetailPage />}
               />
 
               <Route
                 path="administrativo/chat/arboles"
-                element={<PersonalizedTreesPage />}
+                element={<PersonalizedTreesScreen />}
               />
 
+              <Route
+                path="administrativo/chat/variables"
+                element={<TaxonomyVariablesPage />}
+              />
+
+              {/* RF-38: trazabilidad de sesiones por seudónimo A7 (solo lectura). */}
+              <Route
+                path="administrativo/chat/participantes/:codigoParticipante/sesiones"
+                element={<ParticipantSessionsPage />}
+              />
+
+              <Route
+                path="administrativo/chat/participantes/:codigoParticipante/sesiones/:idSesion/trazabilidad"
+                element={<SessionTraceabilityPage />}
+              />
+              </Route>
             </Route>
           </Route>
-
-          <Route 
-                path="/app/administrativo/cronograma"
-                element={<ScheduleManagementPage />} 
-          />
-          
-          <Route 
-                path="/app/administrativo/cronograma/:idSchedule/panel" 
-                element={<SchedulePanelPage />}
-           />
-          
-          <Route 
-                path="/app/administrativo/cronograma/:idSchedule/crear-unidad" 
-                element={<CreateTemporalUnitPage />} 
-          />
-          
         </Route>
 
         <Route

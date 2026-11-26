@@ -50,8 +50,14 @@ svg {
   max-width: 100%;
 }
 
-a {
-  color: inherit;
+/*
+ * En la capa base: fuera de capa prevalecía sobre las utilidades
+ * de color de Tailwind aplicadas a enlaces.
+ */
+@layer base {
+  a {
+    color: inherit;
+  }
 }
 
 #root {

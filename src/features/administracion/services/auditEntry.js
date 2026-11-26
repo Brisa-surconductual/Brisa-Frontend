@@ -1,0 +1,29 @@
+/*
+ * Registro de auditoría tal como lo presenta la interfaz (RF-123).
+ *
+ * LISTA EXPLÍCITA de campos permitidos: id (solo como clave interna,
+ * nunca se muestra), action, resource, timestamp y status. Cualquier
+ * otro campo de la fuente se descarta aquí: dirección IP, usuario,
+ * sesión, identificador del recurso, correos, nombres, documentos,
+ * datos clínicos o de consumo, cuerpos de solicitud o user-agent. Su
+ * exposición futura requiere contrato y autorización específicos.
+ *
+ * El adaptador HTTP proyecta el contrato RF-123. Aquí se mantiene la
+ * misma lista de campos para las fuentes HTTP y de demostración.
+ */
+const asText = (value) => (typeof value === 'string' ? value : '');
+
+export function toAuditEntry(record) {
+  return Object.freeze({
+    id: asText(record?.id),
+    action: asText(record?.action),
+    resource: asText(record?.resource),
+    timestamp: asText(record?.timestamp),
+    status: asText(record?.status),
+  });
+}
+
+// Conserva el orden recibido de la fuente: no ordena ni filtra.
+export function toAuditEntries(records) {
+  return Object.freeze((Array.isArray(records) ? records : []).map(toAuditEntry));
+}

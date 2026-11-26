@@ -1,15 +1,21 @@
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/app/providers/index.js';
+import { AlertTriangle } from 'lucide-react';
+
+import { BackButton } from '@/features/cronograma/components/BackButton/index.js';
+import { NextStepsCard } from '@/features/cronograma/components/NextStepsCard/index.js';
+import { PanelNotice } from '@/features/cronograma/components/PanelNotice/index.js';
 import { ScheduleForm } from '@/features/cronograma/components/ScheduleForm/index.js';
+import { SchedulePageHeader } from '@/features/cronograma/components/SchedulePageHeader/index.js';
 import { crearCronograma } from '../../api/cronograma/crearCronograma';
-import { AdministrativeHeader } from '@/shared/components/navigation/AdministrativeHeader/index.js';
-import { AdministrativeTabBar } from '@/shared/components/navigation/AdministrativeTabBar/index.js';
-import {
-  ADMINISTRATIVE_TAB,
-  ADMINISTRATIVE_TABS,
-} from '@/shared/data/administrativeTabs.js';
 import { useCreateScheduleForm } from './hooks/useCreateScheduleForm.js';
+
+// Orden real del flujo, tal como lo exige el panel del cronograma.
+const NEXT_STEPS = Object.freeze([
+  'Añade sus unidades temporales desde el panel del cronograma.',
+  'Asocia los contenidos de cada unidad y define su disponibilidad.',
+  'Valida y activa el cronograma. Sin unidades no se puede activar.',
+]);
 
 function toIsoMidnight(dateOnlyString) {
   return `${dateOnlyString}T00:00:00.000Z`;
@@ -25,7 +31,6 @@ function normalizeScheduleForm(form) {
 
 export function CreateSchedulePage() {
   const navigate = useNavigate();
-  const { role, logout } = useAuth();
 
   const pending = useRef(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -57,23 +62,6 @@ export function CreateSchedulePage() {
     onValidSubmit: handleValidSubmit,
   });
 
-  function handleLogout() {
-    logout();
-    navigate('/login', { replace: true });
-  }
-
-  function handleTabChange(tabId) {
-    if (tabId === ADMINISTRATIVE_TAB.CRONOGRAMA) {
-      navigate('/app/administrativo/cronograma');
-      return;
-    }
-    if (tabId === ADMINISTRATIVE_TAB.DASHBOARD) {
-      navigate('/app/administrativo');
-      return;
-    }
-    navigate(`/app/administrativo?tab=${encodeURIComponent(tabId)}`);
-  }
-
   function handleBack() {
     navigate('/app/administrativo/cronograma');
   }
@@ -83,58 +71,42 @@ export function CreateSchedulePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--surface-bg)]">
-      <AdministrativeHeader
-        roleLabel={role ?? 'ADMINISTRATIVO'}
-        onLogout={handleLogout}
+    <div className="mx-auto flex w-full max-w-[1100px] flex-col gap-[var(--space-6)] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]">
+      <BackButton onClick={handleBack}>Volver a cronogramas</BackButton>
+
+      <SchedulePageHeader
+        eyebrow="Administración · Cronogramas"
+        title="Crear cronograma"
+        description="Registra la información general del nuevo cronograma."
       />
 
-      <AdministrativeTabBar
-        tabs={ADMINISTRATIVE_TABS}
-        activeTabId={ADMINISTRATIVE_TAB.CRONOGRAMA}
-        onTabChange={handleTabChange}
-      />
+      {submitError && (
+        <PanelNotice
+          tone="danger"
+          icon={AlertTriangle}
+          title="No se pudo crear el cronograma"
+          role="alert"
+        >
+          {submitError}
+        </PanelNotice>
+      )}
 
-      <main>
-        <div className="mx-auto w-full max-w-[1200px] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]">
-          <button
-            type="button"
-            className="mb-[var(--space-5)] text-[13px] font-bold text-[var(--brand-600)]"
-            onClick={handleBack}
-          >
-            ← Volver al cronograma
-          </button>
+      <div className="grid items-start gap-[var(--space-6)] lg:grid-cols-[minmax(0,1fr)_320px]">
+        <ScheduleForm
+          form={form}
+          errors={errors}
+          isSubmitting={isSubmitting}
+          onChange={handleChange}
+          onSubmit={handleSubmit}
+          onCancel={handleCancel}
+        />
 
-          <p className="m-0 text-[12px] font-bold tracking-[0.04em] text-[var(--brand-600)] uppercase">
-            Administración
-          </p>
-
-          <h1 className="mt-[var(--space-1)] mb-0 text-[26px] font-extrabold text-[var(--text-primary)] md:text-[30px]">
-            Crear cronograma
-          </h1>
-
-          <p className="mt-[var(--space-2)] mb-0 max-w-[680px] text-[13px] leading-[1.6] text-[var(--text-muted)]">
-            Registra la información general del nuevo cronograma.
-          </p>
-
-          {submitError && (
-            <p className="mt-[var(--space-4)] text-[13px] font-semibold text-[var(--danger-text)]">
-              {submitError}
-            </p>
-          )}
-
-          <div className="mt-[var(--space-6)]">
-            <ScheduleForm
-              form={form}
-              errors={errors}
-              isSubmitting={isSubmitting}
-              onChange={handleChange}
-              onSubmit={handleSubmit}
-              onCancel={handleCancel}
-            />
-          </div>
-        </div>
-      </main>
+        <NextStepsCard
+          id="crear-cronograma-pasos"
+          title="Después de crearlo"
+          steps={NEXT_STEPS}
+        />
+      </div>
     </div>
   );
 }

@@ -9,23 +9,44 @@ export const MODALIDAD = Object.freeze({
   PERSONALIZADA: 'PERSONALIZADA',
 });
 
-// Contrato 7.1: estado de cada interacción en la cola local sin conexión.
+// Etapa 3, tarea 3: estado de cada interacción en `cola_interacciones`.
+// ERROR_SINCRONIZACION marca la interacción que el servidor rechazó.
 export const ESTADO_SINCRONIZACION = Object.freeze({
   PENDIENTE_SINCRONIZACION: 'PENDIENTE_SINCRONIZACION',
+  ERROR_SINCRONIZACION: 'ERROR_SINCRONIZACION',
 });
 
-// Contrato 7.2: estado que devuelve el servidor por cada interacción del lote.
+// Etapa 3, tarea 3: `estado_sesion_offline` de `sesiones_locales`.
+// Ante el servidor: EN_CURSO e INTERRUMPIDA → ACTIVA; COMPLETADA →
+// COMPLETADA (regla 5).
+export const ESTADO_SESION_OFFLINE = Object.freeze({
+  EN_CURSO: 'EN_CURSO',
+  INTERRUMPIDA: 'INTERRUMPIDA',
+  COMPLETADA: 'COMPLETADA',
+});
+
+// Etapa 3: `estado_conectividad` de cada interacción (RF-27 v1.1). No
+// confundir con ESTADO_CONECTIVIDAD, del contrato anterior.
+export const CONECTIVIDAD_INTERACCION = Object.freeze({
+  EN_LINEA: 'EN_LINEA',
+  SIN_CONEXION: 'SIN_CONEXION',
+});
+
+// Etapa 3, tarea 4: `resultado` que devuelve el servidor por cada
+// interacción del lote (POST .../interacciones/sincronizar). Sustituye a
+// los valores del contrato anterior (SINCRONIZADO, DUPLICADO, ERROR).
 export const RESULTADO_SINCRONIZACION = Object.freeze({
-  SINCRONIZADO: 'SINCRONIZADO',
-  DUPLICADO: 'DUPLICADO',
-  ERROR: 'ERROR',
+  SINCRONIZADA: 'SINCRONIZADA',
+  DUPLICADA: 'DUPLICADA',
+  RECHAZADA: 'RECHAZADA',
   PENDIENTE: 'PENDIENTE',
 });
 
-// Contrato 7.2: DUPLICADO se trata como sincronizado.
+// DUPLICADA también confirma: el servidor ya tenía la interacción y se
+// borra de la cola, igual que una SINCRONIZADA.
 export const RESULTADO_SINCRONIZACION_EXITOSO = Object.freeze([
-  RESULTADO_SINCRONIZACION.SINCRONIZADO,
-  RESULTADO_SINCRONIZACION.DUPLICADO,
+  RESULTADO_SINCRONIZACION.SINCRONIZADA,
+  RESULTADO_SINCRONIZACION.DUPLICADA,
 ]);
 
 export const ESTADO_PRECARGA = Object.freeze({
@@ -37,15 +58,4 @@ export const ESTADO_PRECARGA = Object.freeze({
 export const ESTADO_CONECTIVIDAD = Object.freeze({
   ONLINE: 'ONLINE',
   OFFLINE: 'OFFLINE',
-});
-
-export const EMISOR = Object.freeze({
-  AVATAR: 'AVATAR',
-  SISTEMA: 'SISTEMA',
-});
-
-export const TIPO_RECURSO = Object.freeze({
-  IMAGEN: 'IMAGEN',
-  VIDEO: 'VIDEO',
-  GIF: 'GIF',
 });

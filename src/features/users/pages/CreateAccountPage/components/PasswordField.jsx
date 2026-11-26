@@ -58,7 +58,7 @@ export function PasswordField({
         endAdornment={
           <button
             type="button"
-            className="inline-flex items-center justify-center rounded-[var(--radius-sm)] border-0 bg-transparent p-[var(--space-1)] text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-500)] disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex h-[40px] w-[40px] items-center justify-center rounded-[var(--radius-md)] border-0 bg-transparent p-0 text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-500)] disabled:cursor-not-allowed disabled:opacity-60"
             onClick={toggleVisibility}
             aria-label={visibilityLabel}
             aria-pressed={isVisible}

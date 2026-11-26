@@ -41,7 +41,7 @@ export function DestinationModuleSelector({
           </p>
         </div>
       ) : (
-        <div className="grid gap-[var(--space-2)] sm:grid-cols-2">
+        <div className="grid gap-[var(--space-2)] @md:grid-cols-2">
           {modules.map((module) => {
             const checked =
               selectedModuleIds.includes(module.id);
@@ -57,16 +57,11 @@ export function DestinationModuleSelector({
                 }
                 onChange={() => onToggle?.(module.id)}
               >
-                <span className="flex flex-col gap-[2px]">
-                  <span className="font-semibold">
-                    {module.name}
-                  </span>
-
-                  {module.code && (
-                    <span className="text-[11px] text-[var(--text-muted)]">
-                      {module.code}
-                    </span>
-                  )}
+                {/* El código del catálogo (CHAT, SEGUIM, GAMIF, NOTIF) es
+                    interno y repite el nombre: no se muestra. La
+                    selección viaja por `module.id`. */}
+                <span className="font-semibold">
+                  {module.name}
                 </span>
               </Checkbox>
             );

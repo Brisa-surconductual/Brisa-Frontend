@@ -38,7 +38,10 @@ export function EscalaInput({
   const idExtremos = `${id}-extremos`;
   const idAviso = `${id}-aviso`;
   const sinValor = valor == null;
-  const { min, max, paso = 1, etiqueta_min, etiqueta_max } = entrada;
+  const { min, max, etiquetas } = entrada;
+  // `?? 1` y no un valor por defecto: D4 deja `paso` en null, no undefined.
+  // 1 es también el paso por defecto del range nativo.
+  const paso = entrada.paso ?? 1;
   const posiciones = Math.round((max - min) / paso) + 1;
   const marcas =
     posiciones <= 11
@@ -75,8 +78,8 @@ export function EscalaInput({
         id={idExtremos}
         className="flex justify-between text-[10.5px] font-semibold text-[var(--text-secondary)]"
       >
-        <span>{etiqueta_min}</span>
-        <span>{etiqueta_max}</span>
+        <span>{etiquetas?.min}</span>
+        <span>{etiquetas?.max}</span>
       </div>
 
       <input

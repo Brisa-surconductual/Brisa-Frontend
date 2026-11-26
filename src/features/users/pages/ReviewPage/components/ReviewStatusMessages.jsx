@@ -65,7 +65,6 @@ export function ReviewStatusMessages({
               <Button
                 type="button"
                 variant="secondary"
-                size="small"
                 onClick={onRenewConsent}
               >
                 Actualizar consentimiento

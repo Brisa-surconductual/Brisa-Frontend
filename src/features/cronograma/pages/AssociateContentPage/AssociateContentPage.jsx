@@ -1,19 +1,25 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-
-import { useAuth } from '@/app/providers/index.js';
-
-import { AdministrativeHeader } from '@/shared/components/navigation/AdministrativeHeader/index.js';
-import { AdministrativeTabBar } from '@/shared/components/navigation/AdministrativeTabBar/index.js';
 import {
-  ADMINISTRATIVE_TAB,
-  ADMINISTRATIVE_TABS,
-} from '@/shared/data/administrativeTabs.js';
+  AlertTriangle,
+  CalendarRange,
+  CalendarClock,
+  FileStack,
+  Link2Off,
+  ListOrdered,
+  Lock,
+  PackageOpen,
+  PencilLine,
+  SearchX,
+} from 'lucide-react';
 
 import { AssociateContentForm } from '@/features/cronograma/components/AssociateContentForm/index.js';
 import { ScheduledContentAvailabilityForm } from '@/features/cronograma/components/ScheduledContentAvailabilityForm/index.js';
 import { ContentRow } from '@/features/cronograma/components/ContentRow/index.js';
-import { EmptyScheduleState } from '@/features/cronograma/components/EmptyScheduleState/index.js';
+import { BackButton } from '@/features/cronograma/components/BackButton/index.js';
+import { PanelNotice } from '@/features/cronograma/components/PanelNotice/index.js';
+import { SchedulePageHeader } from '@/features/cronograma/components/SchedulePageHeader/index.js';
+import { TemporalUnitStatusBadge } from '@/features/cronograma/components/TemporalUnitStatusBadge/index.js';
 
 import { useAssociateContentForm } from './hooks/useAssociateContentForm.js';
 import { useScheduledContentAvailabilityForm } from './hooks/useScheduledContentAvailabilityForm.js';
@@ -36,6 +42,13 @@ import { asociarContenidoUnidadTemporal } from '@/features/cronograma/api/conten
 import { actualizarDisponibilidadContenido } from '@/features/cronograma/api/contenidoUnidadTemporal/actualizarDisponibilidadContenido.jsx';
 import { eliminarAsociacionContenidoUnidadTemporal } from '@/features/cronograma/api/contenidoUnidadTemporal/eliminarAsociacionContenidoUnidadTemporal.jsx';
 import { associationErrorMessage } from '../../utils/associationErrorMessage.js';
+
+const PAGE_CLASS =
+  'mx-auto flex w-full max-w-[1200px] flex-col gap-[var(--space-6)] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]';
+const CARD_CLASS =
+  'rounded-[var(--radius-xl)] border border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-4)] shadow-[var(--shadow-sm)] sm:p-[var(--space-5)] md:p-[var(--space-6)]';
+const CHIP_CLASS =
+  'inline-flex shrink-0 items-center gap-[var(--space-1)] rounded-[var(--radius-full)] border px-[var(--space-2)] py-[2px] text-[length:var(--font-size-xs)] font-bold';
 
 const EMPTY_CONTENT_CATALOG = Object.freeze([]);
 const EMPTY_TEMPORAL_UNITS = Object.freeze([]);
@@ -108,8 +121,6 @@ const CONTENT_LIST_HEADING_ID = 'associate-content-list-heading';
 export function AssociateContentPage() {
   const navigate = useNavigate();
   const { scheduleId, unitId } = useParams();
-
-  const { role, logout } = useAuth();
 
   const [contentCatalog, setContentCatalog] = useState(EMPTY_CONTENT_CATALOG);
 
@@ -403,28 +414,6 @@ export function AssociateContentPage() {
           : 'Los contenidos del catálogo ya están vinculados a unidades temporales. Cada contenido solo puede pertenecer a una unidad. Crea un contenido nuevo para continuar.'
       : '';
 
-  function handleLogout() {
-    logout();
-
-    navigate('/login', {
-      replace: true,
-    });
-  }
-
-  function handleTabChange(tabId) {
-    if (tabId === ADMINISTRATIVE_TAB.CRONOGRAMA) {
-      navigate('/app/administrativo/cronograma');
-      return;
-    }
-
-    if (tabId === ADMINISTRATIVE_TAB.DASHBOARD) {
-      navigate('/app/administrativo');
-      return;
-    }
-
-    navigate(`/app/administrativo?tab=${encodeURIComponent(tabId)}`);
-  }
-
   function handleBack() {
     navigate('/app/administrativo/cronograma');
   }
@@ -442,239 +431,331 @@ export function AssociateContentPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--surface-bg)]">
-      <AdministrativeHeader
-        roleLabel={role ?? 'ADMINISTRATIVO'}
-        onLogout={handleLogout}
-      />
+    <div className={PAGE_CLASS}>
+      <BackButton onClick={handleBack}>Volver a cronogramas</BackButton>
 
-      <AdministrativeTabBar
-        tabs={ADMINISTRATIVE_TABS}
-        activeTabId={ADMINISTRATIVE_TAB.CRONOGRAMA}
-        onTabChange={handleTabChange}
-      />
+      <div className={CARD_CLASS}>
+        <SchedulePageHeader
+          eyebrow="Programación de contenidos"
+          title="Asociar contenido a esta unidad"
+          description={
+            !loading && unit
+              ? 'Selecciona un contenido del catálogo y define su rango de disponibilidad para esta unidad temporal.'
+              : undefined
+          }
+          badge={
+            !loading && unit ? (
+              scheduleEditable ? (
+                <span
+                  className={`${CHIP_CLASS} border-[var(--brand-200)] bg-[var(--brand-50)] text-[var(--brand-700)]`}
+                >
+                  <PencilLine size={13} strokeWidth={2} aria-hidden="true" />
+                  Programación editable
+                </span>
+              ) : (
+                <span
+                  className={`${CHIP_CLASS} border-[var(--surface-border)] bg-[var(--surface-hover)] text-[var(--text-secondary)]`}
+                >
+                  <Lock size={13} strokeWidth={2} aria-hidden="true" />
+                  Solo lectura
+                </span>
+              )
+            ) : null
+          }
+        >
+          {!loading && unit && (
+            <dl className="m-0 mt-[var(--space-2)] flex flex-wrap gap-x-[var(--space-6)] gap-y-[var(--space-2)] text-[length:var(--font-size-sm)]">
+              <div className="flex min-w-0 items-center gap-[var(--space-2)]">
+                <dt className="inline-flex items-center gap-[var(--space-2)] text-[var(--text-muted)]">
+                  <ListOrdered size={16} strokeWidth={1.8} aria-hidden="true" />
+                  Unidad
+                </dt>
+                <dd className="m-0 min-w-0 font-semibold [overflow-wrap:anywhere] text-[var(--text-primary)]">
+                  {unit.order != null ? `${unit.order}. ` : ''}
+                  {unit.name}
+                </dd>
+              </div>
 
-      <main>
-        <div className="mx-auto w-full max-w-[1200px] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]">
-          <button
-            type="button"
-            className="mb-[var(--space-5)] text-[13px] font-bold text-[var(--brand-600)]"
-            onClick={handleBack}
-          >
-            ← Volver al cronograma
-          </button>
+              <div className="flex items-center gap-[var(--space-2)]">
+                <dt className="inline-flex items-center gap-[var(--space-2)] text-[var(--text-muted)]">
+                  <CalendarRange size={16} strokeWidth={1.8} aria-hidden="true" />
+                  Vigencia
+                </dt>
+                <dd className="m-0 font-semibold text-[var(--text-primary)] tabular-nums">
+                  {unit.startDate?.split('T')[0]} al{' '}
+                  {unit.endDate?.split('T')[0]}
+                </dd>
+              </div>
 
-          <p className="m-0 text-[12px] font-bold tracking-[0.04em] text-[var(--brand-600)] uppercase">
-            Administración
-          </p>
-
-          <h1 className="mt-[var(--space-1)] mb-0 text-[26px] font-extrabold text-[var(--text-primary)] md:text-[30px]">
-            Asociar contenido a esta unidad
-          </h1>
-
-          {loadError && (
-            <div
-              className="mt-[var(--space-5)] rounded-[var(--radius-md)] border border-[var(--danger-border)] bg-[var(--danger-bg)] p-[var(--space-4)] text-[13px] font-semibold text-[var(--danger-text)]"
-              role="alert"
-            >
-              {loadError}
-            </div>
+              <div className="flex items-center gap-[var(--space-2)]">
+                <dt className="inline-flex items-center gap-[var(--space-2)] text-[var(--text-muted)]">
+                  <CalendarClock size={16} strokeWidth={1.8} aria-hidden="true" />
+                  Estado
+                </dt>
+                <dd className="m-0">
+                  <TemporalUnitStatusBadge status={unit.status} />
+                </dd>
+              </div>
+            </dl>
           )}
+        </SchedulePageHeader>
+      </div>
 
-          {loading ? (
-            <p
-              className="mt-[var(--space-6)] text-[13px] text-[var(--text-muted)]"
+      {loadError && (
+        <PanelNotice tone="danger" icon={AlertTriangle} role="alert">
+          {loadError}
+        </PanelNotice>
+      )}
+
+      {loading ? (
+        <div aria-busy="true" className="flex flex-col gap-[var(--space-4)]">
+          <p role="status" className="sr-only">
+            Cargando contenidos de la unidad...
+          </p>
+          <div className="grid gap-[var(--space-6)] xl:grid-cols-2" aria-hidden="true">
+            {[0, 1].map((index) => (
+              <div
+                key={index}
+                className="h-[280px] animate-pulse rounded-[var(--radius-xl)] border border-[var(--surface-border)] bg-[var(--surface-card)] motion-reduce:animate-none"
+              />
+            ))}
+          </div>
+        </div>
+      ) : unit ? (
+        <>
+          {!scheduleEditable && (
+            <PanelNotice
+              tone="neutral"
+              icon={Lock}
+              title="Cronograma activo · solo lectura"
               role="status"
             >
-              Cargando contenidos de la unidad...
-            </p>
-          ) : unit ? (
-            <>
-              <p className="mt-[var(--space-2)] mb-0 max-w-[680px] text-[13px] leading-[1.6] text-[var(--text-muted)]">
-                Selecciona un contenido del catálogo y define su rango de
-                disponibilidad para esta unidad temporal.
-              </p>
+              Este cronograma está activo. Sus contenidos y su programación
+              son de solo lectura.
+            </PanelNotice>
+          )}
 
-              {!scheduleEditable && (
-                <p role="status" className="mt-[var(--space-4)] text-[13px]">
-                  Este cronograma está activo. Sus contenidos y su programación
-                  son de solo lectura.
-                </p>
-              )}
-              {scheduleEditable && incompleteContent.length > 0 && (
-                <section
-                  className="mt-[var(--space-4)]"
-                  aria-label="Contenidos pendientes de recursos"
-                >
-                  <p className="text-[13px]">
-                    Completa los recursos de estos contenidos antes de
-                    programarlos:
-                  </p>
-                  {incompleteContent.map((item) => (
-                    <Button
-                      key={item.id}
-                      variant="secondary"
-                      onClick={() => completeResources(item)}
-                    >
-                      Completar recursos de {item.title}
-                    </Button>
-                  ))}
-                </section>
-              )}
-              {scheduleEditable && (
-                <div className="mt-[var(--space-6)]">
-                  <AssociateContentForm
-                    form={form}
-                    errors={errors}
-                    contentOptions={contentOptions}
-                    contentHint={contentHint}
-                    isSubmitting={isSubmitting}
-                    unit={
-                      unit
-                        ? {
-                            ...unit,
-                            startDate: toDateTimeLocal(unit.startDate),
-                            endDate: toDateTimeLocal(unit.endDate),
-                          }
-                        : undefined
-                    }
-                    successMessage={associationSuccess}
-                    onChange={handleFormChange}
-                    onSubmit={handleSubmit}
-                    onCancel={handleCancel}
-                    onCreateContent={() =>
-                      navigate(
-                        '/app/administrativo/cronograma/contenidos/nuevo',
-                        {
-                          state: {
-                            returnToAssociation: { scheduleId, unitId },
-                          },
+          <div
+            className={
+              scheduleEditable
+                ? 'grid items-start gap-[var(--space-6)] xl:grid-cols-2'
+                : 'flex flex-col gap-[var(--space-6)]'
+            }
+          >
+            {scheduleEditable && (
+              <div className="flex min-w-0 flex-col gap-[var(--space-6)]">
+                {incompleteContent.length > 0 && (
+                  <section
+                    className="flex flex-col gap-[var(--space-3)] rounded-[var(--radius-xl)] border border-[var(--warning-border)] bg-[var(--warning-bg)] p-[var(--space-4)]"
+                    aria-label="Contenidos pendientes de recursos"
+                  >
+                    <div className="flex items-start gap-[var(--space-3)] text-[var(--warning-text)]">
+                      <PackageOpen
+                        size={20}
+                        strokeWidth={1.8}
+                        className="mt-[2px] shrink-0"
+                        aria-hidden="true"
+                      />
+                      <p className="m-0 text-[length:var(--font-size-sm)] leading-[var(--line-height-normal)] font-semibold">
+                        Completa los recursos de estos contenidos antes de
+                        programarlos:
+                      </p>
+                    </div>
+
+                    <ul className="m-0 flex list-none flex-col gap-[var(--space-2)] p-0">
+                      {incompleteContent.map((item) => (
+                        <li key={item.id}>
+                          <Button
+                            variant="secondary"
+                            fullWidth
+                            className="justify-start text-left"
+                            onClick={() => completeResources(item)}
+                          >
+                            Completar recursos de {item.title}
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                )}
+
+                <AssociateContentForm
+                  form={form}
+                  errors={errors}
+                  contentOptions={contentOptions}
+                  contentHint={contentHint}
+                  isSubmitting={isSubmitting}
+                  unit={
+                    unit
+                      ? {
+                          ...unit,
+                          startDate: toDateTimeLocal(unit.startDate),
+                          endDate: toDateTimeLocal(unit.endDate),
+                        }
+                      : undefined
+                  }
+                  successMessage={associationSuccess}
+                  onChange={handleFormChange}
+                  onSubmit={handleSubmit}
+                  onCancel={handleCancel}
+                  onCreateContent={() =>
+                    navigate(
+                      '/app/administrativo/cronograma/contenidos/nuevo',
+                      {
+                        state: {
+                          returnToAssociation: { scheduleId, unitId },
                         },
-                      )
-                    }
-                  />
-                </div>
-              )}
+                      },
+                    )
+                  }
+                />
+              </div>
+            )}
+
+            <div className="flex min-w-0 flex-col gap-[var(--space-6)]">
               {editingAssociation && (
-                <div className="mt-[var(--space-6)]">
-                  <ScheduledContentAvailabilityForm
-                    form={availabilityForm}
-                    errors={availabilityErrors}
-                    contentTitle={editingAssociation.contentTitle ?? ''}
-                    temporalUnitName={editingAssociation.temporalUnitName ?? ''}
-                    temporalUnitRange={
-                      editingAssociation.temporalUnitRange ?? ''
-                    }
-                    onChange={handleAvailabilityChange}
-                    onSubmit={handleAvailabilitySubmit}
-                    onCancel={handleCancelAvailabilityEdit}
-                  />
-                </div>
+                <ScheduledContentAvailabilityForm
+                  // Una edición por asociación: al cambiar de
+                  // contenido, el formulario recibe el foco de nuevo.
+                  key={editingAssociation.id}
+                  form={availabilityForm}
+                  errors={availabilityErrors}
+                  contentTitle={editingAssociation.contentTitle ?? ''}
+                  temporalUnitName={editingAssociation.temporalUnitName ?? ''}
+                  temporalUnitRange={
+                    editingAssociation.temporalUnitRange ?? ''
+                  }
+                  onChange={handleAvailabilityChange}
+                  onSubmit={handleAvailabilitySubmit}
+                  onCancel={handleCancelAvailabilityEdit}
+                />
               )}
 
               <section
-                className="mt-[var(--space-6)]"
+                className={`${CARD_CLASS} flex flex-col gap-[var(--space-4)]`}
                 aria-labelledby={CONTENT_LIST_HEADING_ID}
               >
-                <h2
-                  className="m-0 text-[16px] font-bold text-[var(--text-primary)]"
-                  id={CONTENT_LIST_HEADING_ID}
-                >
-                  Contenidos asociados
-                </h2>
+                <div className="flex items-start justify-between gap-[var(--space-3)]">
+                  <div className="min-w-0">
+                    <h2
+                      className="m-0 text-[length:var(--font-size-lg)] font-extrabold text-[var(--text-primary)]"
+                      id={CONTENT_LIST_HEADING_ID}
+                    >
+                      Contenidos asociados
+                    </h2>
 
-                <p className="mt-[var(--space-1)] mb-0 text-[13px] text-[var(--text-muted)]">
-                  {`Contenido programado en ${unit.name}.`}
-                </p>
+                    <p className="mt-[var(--space-1)] mb-0 text-[length:var(--font-size-sm)] [overflow-wrap:anywhere] text-[var(--text-secondary)]">
+                      {`Contenido programado en ${unit.name}.`}
+                    </p>
+                  </div>
 
-                <div className="mt-[var(--space-4)]">
-                  {unitContent.length > 0 ? (
-                    <ul className="m-0 grid list-none gap-[var(--space-2)] p-0">
-                      {unitContent.map((item) => {
-                        const content = contentCatalog.find(
-                          (catalogItem) => catalogItem.id === item.contentId,
-                        );
-
-                        return (
-                          <li key={item.id}>
-                            <ContentRow
-                              order={item.order}
-                              title={content?.title ?? item.contentId}
-                              contentType={content?.type}
-                              status={item.status}
-                              actions={
-                                scheduleEditable &&
-                                canModifyScheduledContent(item.status) ? (
-                                  <>
-                                    <Button
-                                      size="small"
-                                      variant="secondary"
-                                      onClick={() =>
-                                        handleEditAvailability({
-                                          ...item,
-                                          contentTitle:
-                                            content?.title ?? item.contentId,
-                                          temporalUnitName: unit.name,
-                                        })
-                                      }
-                                    >
-                                      Editar disponibilidad
-                                    </Button>
-
-                                    <Button
-                                      size="small"
-                                      variant="danger"
-                                      onClick={() =>
-                                        handleRequestDeleteAssociation({
-                                          ...item,
-                                          contentTitle:
-                                            content?.title ?? item.contentId,
-                                          temporalUnitName: unit.name,
-                                        })
-                                      }
-                                    >
-                                      Desvincular
-                                    </Button>
-                                  </>
-                                ) : null
-                              }
-                            />
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  ) : (
-                    <EmptyScheduleState
-                      title="Sin contenidos asociados"
-                      description="Esta unidad temporal todavía no tiene contenido programado."
-                    />
-                  )}
+                  <span className="shrink-0 rounded-[var(--radius-full)] bg-[var(--surface-hover)] px-[var(--space-3)] py-[2px] text-[length:var(--font-size-xs)] font-bold text-[var(--text-secondary)] tabular-nums">
+                    {unitContent.length}
+                    <span className="sr-only"> contenidos</span>
+                  </span>
                 </div>
+
+                {unitContent.length > 0 ? (
+                  <ul className="m-0 grid list-none gap-[var(--space-2)] p-0">
+                    {unitContent.map((item) => {
+                      const content = contentCatalog.find(
+                        (catalogItem) => catalogItem.id === item.contentId,
+                      );
+                      const contentTitle = content?.title ?? item.contentId;
+
+                      return (
+                        <li key={item.id}>
+                          <ContentRow
+                            order={item.order}
+                            title={contentTitle}
+                            contentType={content?.type}
+                            status={item.status}
+                            actions={
+                              scheduleEditable &&
+                              canModifyScheduledContent(item.status) ? (
+                                <>
+                                  <Button
+                                    variant="secondary"
+                                    onClick={() =>
+                                      handleEditAvailability({
+                                        ...item,
+                                        contentTitle,
+                                        temporalUnitName: unit.name,
+                                      })
+                                    }
+                                  >
+                                    <CalendarClock size={16} strokeWidth={1.8} aria-hidden="true" />
+                                    Editar disponibilidad
+                                    <span className="sr-only"> de {contentTitle}</span>
+                                  </Button>
+
+                                  <Button
+                                    variant="secondary"
+                                    onClick={() =>
+                                      handleRequestDeleteAssociation({
+                                        ...item,
+                                        contentTitle,
+                                        temporalUnitName: unit.name,
+                                      })
+                                    }
+                                  >
+                                    <span className="inline-flex items-center gap-[var(--space-2)] text-[var(--danger-text)]">
+                                      <Link2Off size={16} strokeWidth={1.8} aria-hidden="true" />
+                                      Desvincular
+                                      <span className="sr-only"> {contentTitle}</span>
+                                    </span>
+                                  </Button>
+                                </>
+                              ) : null
+                            }
+                          />
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : (
+                  <PanelNotice
+                    tone="neutral"
+                    icon={FileStack}
+                    title="Sin contenidos asociados"
+                    role="status"
+                  >
+                    Esta unidad temporal todavía no tiene contenido programado.
+                  </PanelNotice>
+                )}
               </section>
-              <ConfirmationDialog
-                open={Boolean(pendingDeleteAssociation)}
-                title="Desvincular contenido"
-                description={
-                  pendingDeleteAssociation
-                    ? `¿Deseas desvincular "${pendingDeleteAssociation.contentTitle}" de ${pendingDeleteAssociation.temporalUnitName}? Esta acción quitará el contenido de la unidad temporal.`
-                    : ''
-                }
-                confirmText="Desvincular"
-                cancelText="Cancelar"
-                onConfirm={handleConfirmDeleteAssociation}
-                onCancel={handleCancelDeleteAssociation}
-              />
-            </>
-          ) : (
-            <div className="mt-[var(--space-6)]">
-              <EmptyScheduleState
-                title="Unidad temporal no encontrada"
-                description={`No existe una unidad temporal con el identificador "${unitId}".`}
-              />
             </div>
-          )}
-        </div>
-      </main>
+          </div>
+
+          <ConfirmationDialog
+            open={Boolean(pendingDeleteAssociation)}
+            title="Desvincular contenido"
+            description={
+              pendingDeleteAssociation
+                ? `¿Deseas desvincular "${pendingDeleteAssociation.contentTitle}" de ${pendingDeleteAssociation.temporalUnitName}? Esta acción quitará el contenido de la unidad temporal.`
+                : ''
+            }
+            confirmText="Desvincular"
+            cancelText="Cancelar"
+            onConfirm={handleConfirmDeleteAssociation}
+            onCancel={handleCancelDeleteAssociation}
+          />
+        </>
+      ) : (
+        <PanelNotice
+          tone="neutral"
+          icon={SearchX}
+          title="Unidad temporal no encontrada"
+          role="status"
+          action={
+            <Button variant="secondary" onClick={handleBack}>
+              Volver a cronogramas
+            </Button>
+          }
+        >
+          {`No existe una unidad temporal con el identificador "${unitId}".`}
+        </PanelNotice>
+      )}
     </div>
   );
 }

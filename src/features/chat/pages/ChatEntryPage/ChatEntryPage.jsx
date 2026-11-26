@@ -1,0 +1,202 @@
+import {
+  AlertTriangle,
+  ArrowLeft,
+  ArrowRight,
+  CircleCheck,
+  History,
+  Info,
+  LogIn,
+  RefreshCw,
+} from 'lucide-react';
+
+import { Button } from '@/shared/components/ui/Button/index.js';
+
+import { MENSAJE_RECUPERADA_DESDE_HISTORIAL } from '../../services/sesionConversacional.js';
+import { ESTADO_PANTALLA_ENTRADA } from '../../types/estadoPantallaEntrada.js';
+
+import { BrisaMark } from './components/BrisaMark/index.js';
+import { EntryStatePanel } from './components/EntryStatePanel/index.js';
+import { useChatEntryPage } from './hooks/useChatEntryPage.js';
+import { formatDateTime } from '../../utils/formatDateTime.js';
+
+const TITLE_ID = 'chat-entrada-titulo';
+
+function SessionDetails({ sesion }) {
+  const unidad = sesion.ubicacionTemporal;
+  const ultimaActividad = formatDateTime(sesion.sesion.fechaUltimaInteraccion);
+
+  return (
+    <dl className="m-0 mt-[var(--space-4)] flex flex-col gap-[var(--space-2)] text-[length:var(--font-size-sm)]">
+      {unidad?.nombreUnidad && (
+        <div className="flex justify-center gap-[var(--space-2)]">
+          <dt className="font-semibold text-[var(--text-muted)]">Unidad</dt>
+          <dd className="m-0 font-bold text-[var(--text-primary)]">
+            {unidad.nombreUnidad}
+          </dd>
+        </div>
+      )}
+
+      {ultimaActividad && (
+        <div className="flex justify-center gap-[var(--space-2)]">
+          <dt className="font-semibold text-[var(--text-muted)]">
+            Última actividad
+          </dt>
+          <dd className="m-0 font-bold text-[var(--text-primary)]">
+            {ultimaActividad}
+          </dd>
+        </div>
+      )}
+    </dl>
+  );
+}
+
+export function ChatEntryPage() {
+  const { estado, sesion, error, retry, goHome, goLogin, goConversation } =
+    useChatEntryPage();
+
+  return (
+    <div className="mx-auto flex min-h-[60vh] w-full max-w-[480px] flex-col justify-center py-[var(--space-6)]">
+      {estado === ESTADO_PANTALLA_ENTRADA.CARGANDO && (
+        <EntryStatePanel
+          titleId={TITLE_ID}
+          title="Preparando tu sesión"
+          busy
+          visual={<BrisaMark pulse />}
+        >
+          <p className="m-0">
+            Estamos buscando dónde quedaste. Solo tardará un momento.
+          </p>
+        </EntryStatePanel>
+      )}
+
+      {estado === ESTADO_PANTALLA_ENTRADA.REANUDANDO && (
+        <EntryStatePanel
+          titleId={TITLE_ID}
+          title="Retomamos donde quedaste"
+          visual={<BrisaMark />}
+          actions={
+            <Button onClick={goConversation} size="large">
+              Continuar
+              <ArrowRight size={20} strokeWidth={1.8} aria-hidden="true" />
+            </Button>
+          }
+        >
+          <p className="m-0">
+            Tu conversación sigue en el punto donde la dejaste.
+          </p>
+          {sesion.recuperadaDesdeHistorial && (
+            <p className="m-0 mt-[var(--space-3)] flex items-start justify-center gap-[var(--space-2)] text-[length:var(--font-size-sm)] text-[var(--info-text)]">
+              <Info
+                size={16}
+                strokeWidth={1.75}
+                aria-hidden="true"
+                className="mt-[2px] shrink-0"
+              />
+              <span className="text-pretty">
+                {MENSAJE_RECUPERADA_DESDE_HISTORIAL}
+              </span>
+            </p>
+          )}
+          <SessionDetails sesion={sesion} />
+        </EntryStatePanel>
+      )}
+
+      {estado === ESTADO_PANTALLA_ENTRADA.LISTA && (
+        <EntryStatePanel
+          titleId={TITLE_ID}
+          title="Tu sesión está lista"
+          visual={<BrisaMark />}
+          actions={
+            <Button onClick={goConversation} size="large">
+              Comenzar
+              <ArrowRight size={20} strokeWidth={1.8} aria-hidden="true" />
+            </Button>
+          }
+        >
+          <p className="m-0">
+            Empezamos desde el principio de tu intervención.
+          </p>
+          <SessionDetails sesion={sesion} />
+        </EntryStatePanel>
+      )}
+
+      {estado === ESTADO_PANTALLA_ENTRADA.COMPLETADA && (
+        <EntryStatePanel
+          titleId={TITLE_ID}
+          title="¡Has terminado tu terapia!"
+          visual={
+            <CircleCheck
+              size={40}
+              strokeWidth={1.6}
+              className="text-[var(--success-text)]"
+              aria-hidden="true"
+            />
+          }
+          actions={
+            <>
+              <Button onClick={goConversation} size="large">
+                <History size={20} strokeWidth={1.8} aria-hidden="true" />
+                Ver conversación
+              </Button>
+
+              <Button onClick={goHome} variant="secondary" size="large">
+                <ArrowLeft size={20} strokeWidth={1.8} aria-hidden="true" />
+                Volver al inicio
+              </Button>
+            </>
+          }
+        >
+          <p className="m-0">
+            Completaste esta conversación y tus respuestas quedaron guardadas.
+          </p>
+          <p className="m-0 mt-[var(--space-2)]">
+            Podrás comenzar otra conversación cuando se publique un nuevo
+            recorrido para ti.
+          </p>
+          <SessionDetails sesion={sesion} />
+        </EntryStatePanel>
+      )}
+
+      {estado === ESTADO_PANTALLA_ENTRADA.ERROR && (
+        <EntryStatePanel
+          tone="danger"
+          role="alert"
+          titleId={TITLE_ID}
+          title="No pudimos iniciar tu chat"
+          visual={
+            <AlertTriangle
+              size={40}
+              strokeWidth={1.6}
+              className="text-[var(--danger)]"
+              aria-hidden="true"
+            />
+          }
+          actions={
+            <>
+              {error.reintentable && (
+                <Button onClick={retry} size="large">
+                  <RefreshCw size={20} strokeWidth={1.8} aria-hidden="true" />
+                  Reintentar
+                </Button>
+              )}
+
+              {error.requiereLogin && (
+                <Button onClick={goLogin} size="large">
+                  <LogIn size={20} strokeWidth={1.8} aria-hidden="true" />
+                  Iniciar sesión
+                </Button>
+              )}
+
+              <Button onClick={goHome} variant="secondary" size="large">
+                <ArrowLeft size={20} strokeWidth={1.8} aria-hidden="true" />
+                Volver al inicio
+              </Button>
+            </>
+          }
+        >
+          <p className="m-0">{error.mensaje}</p>
+        </EntryStatePanel>
+      )}
+    </div>
+  );
+}

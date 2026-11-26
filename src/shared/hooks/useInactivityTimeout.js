@@ -35,6 +35,7 @@ export function useInactivityTimeout({
   warningDelayMs,
   countdownMs,
   onTimeout,
+  onActivity,
 }) {
   const [isWarning, setIsWarning] = useState(false);
   const [remainingMs, setRemainingMs] = useState(countdownMs);
@@ -43,9 +44,11 @@ export function useInactivityTimeout({
   const warningStartedAtRef = useRef(null);
   const isWarningRef = useRef(false);
   const onTimeoutRef = useRef(onTimeout);
+  const onActivityRef = useRef(onActivity);
 
   useEffect(() => {
     onTimeoutRef.current = onTimeout;
+    onActivityRef.current = onActivity;
   });
 
   function extendSession() {
@@ -72,6 +75,7 @@ export function useInactivityTimeout({
       }
 
       lastActivityAtRef.current = Date.now();
+      onActivityRef.current?.();
     }
 
     ACTIVITY_EVENTS.forEach((eventName) => {
@@ -84,10 +88,18 @@ export function useInactivityTimeout({
       if (!isWarningRef.current) {
         if (now - lastActivityAtRef.current >= warningDelayMs) {
           isWarningRef.current = true;
-          warningStartedAtRef.current = now;
+          /*
+           * La cuenta regresiva parte de cuando debió empezar el
+           * aviso, no de ahora: tras suspender la pestaña no se
+           * ofrece de nuevo el margen completo.
+           */
+          warningStartedAtRef.current =
+            lastActivityAtRef.current + warningDelayMs;
 
           setIsWarning(true);
-          setRemainingMs(countdownMs);
+          setRemainingMs(
+            Math.max(0, countdownMs - (now - warningStartedAtRef.current)),
+          );
         }
 
         return;

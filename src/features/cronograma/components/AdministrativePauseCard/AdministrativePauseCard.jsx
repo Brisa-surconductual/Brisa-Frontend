@@ -1,28 +1,36 @@
+import { Ban, CalendarRange, CircleCheck, CirclePause, ShieldUser } from 'lucide-react';
+
 import { Button } from '@/shared/components/ui/Button/index.js';
 import {
   ADMINISTRATIVE_PAUSE_STATUS,
   ADMINISTRATIVE_PAUSE_STATUS_LABEL,
 } from '@/features/cronograma/types/administrativePauseTypes.js';
 
-const STATUS_CLASS = Object.freeze({
-  'ACTIVA': 'bg-[var(--brand-100)] text-[var(--brand-700)]',
-  'FINALIZADA': 'bg-[var(--success-bg)] text-[var(--success-text)]',
-  'ANULADA': 'bg-[var(--neutral-100)] text-[var(--text-muted)]',
+import { StatusChip } from '../StatusChip/index.js';
+
+// Presentación del estado que envía el backend; un valor
+// desconocido se muestra tal cual, en tono neutro.
+const STATUS_PRESENTATION = Object.freeze({
+  [ADMINISTRATIVE_PAUSE_STATUS.ACTIVA]: Object.freeze({ tone: 'warning', icon: CirclePause }),
+  [ADMINISTRATIVE_PAUSE_STATUS.FINALIZADA]: Object.freeze({ tone: 'success', icon: CircleCheck }),
+  [ADMINISTRATIVE_PAUSE_STATUS.ANULADA]: Object.freeze({ tone: 'neutral', icon: Ban }),
 });
 
-export function AdministrativePauseCard({ pause, onAnnul }) {
-  
+export function AdministrativePauseCard({ pause, onAnnul, disabled = false }) {
   const {
     fechaInicio,
     fechaFin,
     motivo,
-    estado, 
+    estado,
     correoElectronico,
     correoUsuarioAdministrativo,
   } = pause;
 
   const statusLabel = ADMINISTRATIVE_PAUSE_STATUS_LABEL[estado] ?? estado;
-  const canAnnul = estado === 'ACTIVA';
+  const presentation = STATUS_PRESENTATION[estado];
+  // Solo una pausa activa se puede anular (regla existente).
+  const canAnnul = estado === ADMINISTRATIVE_PAUSE_STATUS.ACTIVA;
+  const isAnnulled = estado === ADMINISTRATIVE_PAUSE_STATUS.ANULADA;
 
   const emailAfectado = correoElectronico?.value || correoElectronico || 'Desconocido';
   const emailAdmin = correoUsuarioAdministrativo?.value || correoUsuarioAdministrativo || 'N/A';
@@ -31,71 +39,68 @@ export function AdministrativePauseCard({ pause, onAnnul }) {
   const fechaFinLimpia = fechaFin ? fechaFin.split('T')[0] : 'N/A';
 
   return (
-    <article className="rounded-[var(--radius-lg)] border border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-4)] shadow-[var(--shadow-sm)] md:p-[var(--space-5)]">
-      
-      <div className="flex flex-wrap items-start justify-between gap-[var(--space-3)] border-b border-[var(--surface-border)] pb-3">
-        <div>
-          <p className="m-0 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wide">
-            Usuario Afectado
+    <article
+      className={`flex h-full flex-col gap-[var(--space-4)] rounded-[var(--radius-xl)] border p-[var(--space-4)] sm:p-[var(--space-5)] ${
+        isAnnulled
+          ? 'border-dashed border-[var(--surface-border)] bg-[var(--surface-bg)]'
+          : 'border-[var(--surface-border)] bg-[var(--surface-card)] shadow-[var(--shadow-sm)]'
+      } ${canAnnul ? 'border-l-[4px] border-l-[var(--warning)]' : ''}`}
+    >
+      <div className="flex flex-wrap items-start justify-between gap-[var(--space-3)]">
+        <div className="min-w-0">
+          <p className="m-0 text-[length:var(--font-size-xs)] font-bold text-[var(--text-muted)]">
+            Participante
           </p>
-          <h2 className="mt-1 mb-0 text-[15px] font-extrabold text-[var(--text-primary)]">
+          <h3 className="mt-[2px] mb-0 text-[length:var(--font-size-base)] font-extrabold [overflow-wrap:anywhere] text-[var(--text-primary)]">
             {emailAfectado}
-          </h2>
+          </h3>
         </div>
 
-        <span
-          className={`rounded-[var(--radius-full)] px-3 py-1 text-[10px] font-extrabold tracking-[0.03em] uppercase ${
-            STATUS_CLASS[estado] ?? 'bg-[var(--neutral-100)] text-[var(--text-muted)]'
-          }`}
-        >
-          {statusLabel}
-        </span>
+        <StatusChip tone={presentation?.tone ?? 'neutral'} icon={presentation?.icon}>
+          {statusLabel ?? 'Sin estado'}
+        </StatusChip>
       </div>
 
-      <dl className="mt-4 grid gap-4 sm:grid-cols-2">
-        
-        <div>
-          <dt className="text-[11px] font-semibold text-[var(--text-muted)]">
-            Fecha de Inicio
+      <dl className="m-0 flex flex-col gap-[var(--space-3)] text-[length:var(--font-size-sm)]">
+        <div className="flex flex-wrap items-center gap-x-[var(--space-2)] gap-y-[var(--space-1)]">
+          <dt className="inline-flex items-center gap-[var(--space-2)] text-[var(--text-muted)]">
+            <CalendarRange size={15} strokeWidth={1.8} aria-hidden="true" />
+            Periodo
           </dt>
-          <dd className="mt-1 ml-0 text-[13px] font-bold text-[var(--text-primary)]">
-             {fechaInicioLimpia}
+          <dd className="m-0 font-semibold text-[var(--text-primary)] tabular-nums">
+            {fechaInicioLimpia} al {fechaFinLimpia}
           </dd>
         </div>
 
         <div>
-          <dt className="text-[11px] font-semibold text-[var(--text-muted)]">
-            Fecha de Fin
-          </dt>
-          <dd className="mt-1 ml-0 text-[13px] font-bold text-[var(--text-primary)]">
-             {fechaFinLimpia}
-          </dd>
-        </div>
-
-        {/* Motivo */}
-        <div className="sm:col-span-2">
-          <dt className="text-[11px] font-semibold text-[var(--text-muted)]">
-            Motivo de la Pausa
-          </dt>
-          <dd className="mt-1 ml-0 text-[13px] leading-[1.5] text-[var(--text-primary)] bg-[var(--surface-bg)] p-2.5 rounded-[var(--radius-md)] border border-[var(--surface-border)]">
+          <dt className="text-[var(--text-muted)]">Motivo de la pausa</dt>
+          <dd className="m-0 mt-[var(--space-1)] rounded-[var(--radius-md)] border border-[var(--surface-border)] bg-[var(--surface-bg)] px-[var(--space-3)] py-[var(--space-2)] leading-[var(--line-height-normal)] [overflow-wrap:anywhere] text-[var(--text-primary)]">
             {motivo}
           </dd>
         </div>
 
-        {/* Administrador Responsable */}
-        <div className="sm:col-span-2 pt-2 border-t border-[var(--surface-border)] flex items-center justify-between text-[12px]">
-          <span className="text-[var(--text-muted)] font-medium">Registrado por Admin:</span>
-          <span className="font-bold text-[var(--text-secondary)]">{emailAdmin}</span>
+        <div className="flex flex-wrap items-center gap-x-[var(--space-2)] gap-y-[var(--space-1)] text-[length:var(--font-size-xs)]">
+          <dt className="inline-flex items-center gap-[var(--space-2)] text-[var(--text-muted)]">
+            <ShieldUser size={14} strokeWidth={1.8} aria-hidden="true" />
+            Registrada por
+          </dt>
+          <dd className="m-0 font-bold [overflow-wrap:anywhere] text-[var(--text-secondary)]">
+            {emailAdmin}
+          </dd>
         </div>
-
       </dl>
 
-      <div className="mt-4 flex justify-end pt-2">
-        <Button variant="danger" disabled={!canAnnul} onClick={onAnnul}>
-          Anular pausa
-        </Button>
-      </div>
-
+      {canAnnul && (
+        <div className="mt-auto flex justify-end border-t border-[var(--surface-border)] pt-[var(--space-4)]">
+          <Button variant="secondary" disabled={disabled} onClick={onAnnul}>
+            <span className="inline-flex items-center gap-[var(--space-2)] text-[var(--danger-text)]">
+              <Ban size={17} strokeWidth={1.8} aria-hidden="true" />
+              Anular pausa
+              <span className="sr-only"> de {emailAfectado}</span>
+            </span>
+          </Button>
+        </div>
+      )}
     </article>
   );
 }

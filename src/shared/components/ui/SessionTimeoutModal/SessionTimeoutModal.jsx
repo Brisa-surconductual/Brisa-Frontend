@@ -9,6 +9,8 @@ export function SessionTimeoutModal({
   remainingMs,
   onExtend,
   onLogout,
+  isExtending = false,
+  extendError = '',
 }) {
   const dialogRef = useRef(null);
   const titleId = useId();
@@ -66,12 +68,23 @@ export function SessionTimeoutModal({
           <span className="text-[16px]"> s</span>
         </p>
 
+        {extendError && (
+          <p className="mt-0 mb-[var(--space-4)] text-[13px] leading-[1.5] text-[var(--danger-text)]" role="alert">
+            {extendError}
+          </p>
+        )}
+
         <div className="grid grid-cols-2 gap-[var(--space-3)] max-[370px]:grid-cols-1">
           <Button variant="secondary" onClick={onLogout}>
             Cerrar sesión
           </Button>
 
-          <Button variant="primary" onClick={onExtend}>
+          <Button
+            variant="primary"
+            onClick={onExtend}
+            loading={isExtending}
+            loadingText="Confirmando..."
+          >
             Seguir aquí
           </Button>
         </div>

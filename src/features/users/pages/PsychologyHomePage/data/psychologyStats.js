@@ -13,6 +13,7 @@ export const PROGRAM_STATS = Object.freeze([
     id: 'ACTIVOS',
     key: 'estudiantesActivos',
     label: 'Estudiantes activos',
+    unit: 'cuentas activas',
     tone: 'brand',
   }),
 
@@ -20,6 +21,7 @@ export const PROGRAM_STATS = Object.freeze([
     id: 'COMPLETO',
     key: 'conRegistroCompleto',
     label: 'Con registro completo',
+    unit: 'estudiantes',
     tone: 'success',
   }),
 
@@ -27,14 +29,49 @@ export const PROGRAM_STATS = Object.freeze([
     id: 'PENDIENTE',
     key: 'conRegistroPendiente',
     label: 'Con registro pendiente',
+    unit: 'estudiantes',
     tone: 'warning',
   }),
 
   Object.freeze({
     id: 'DURACION_BASE',
     key: 'diasCronogramaBase',
-    label: 'Días del cronograma base',
+    label: 'Duración del cronograma base',
+    unit: 'días',
     tone: 'info',
+  }),
+]);
+
+/*
+ * Accesos del dashboard: solo rutas existentes. No se enlaza
+ * Población porque aún muestra datos de ejemplo. La modalidad
+ * del chat ya consulta el backend (ProgramModalityScreen): no
+ * lleva aviso de integración.
+ */
+export const DASHBOARD_SHORTCUTS = Object.freeze([
+  Object.freeze({
+    id: 'CRONOGRAMAS',
+    title: 'Gestionar cronogramas',
+    description: 'Crea, revisa y activa cronogramas y sus unidades.',
+    to: '/app/administrativo/cronograma',
+  }),
+  Object.freeze({
+    id: 'PROGRESO',
+    title: 'Progreso de participantes',
+    description: 'Consulta la ubicación temporal de cada participante.',
+    to: '/app/administrativo/cronograma/progreso',
+  }),
+  Object.freeze({
+    id: 'CONTENIDOS',
+    title: 'Contenidos psicoeducativos',
+    description: 'Administra contenidos y sus recursos.',
+    to: '/app/administrativo/cronograma/contenidos',
+  }),
+  Object.freeze({
+    id: 'CHAT',
+    title: 'Modalidad del chat',
+    description: 'Configuración de la modalidad del programa.',
+    to: '/app/administrativo/chat/modalidad',
   }),
 ]);
 

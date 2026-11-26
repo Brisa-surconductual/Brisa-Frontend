@@ -1,3 +1,5 @@
+import { SlidersHorizontal } from 'lucide-react';
+
 import { SelectField } from '@/shared/components/ui/SelectField/index.js';
 import { TextField } from '@/shared/components/ui/TextField/index.js';
 
@@ -19,6 +21,10 @@ const STATUS_OPTIONS = Object.freeze(
   ),
 );
 
+/*
+ * Filtros de unidades del panel: estado y fecha. Mismos campos y
+ * callbacks; solo cambia la presentación.
+ */
 export function ScheduleFilters({
   status = '',
   date = '',
@@ -29,25 +35,34 @@ export function ScheduleFilters({
 }) {
   return (
     <section
-      className="rounded-[var(--radius-lg)] border border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-4)] shadow-[var(--shadow-sm)] md:p-[var(--space-5)]"
+      className="rounded-[var(--radius-xl)] border border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-4)] shadow-[var(--shadow-sm)] md:p-[var(--space-5)]"
       aria-labelledby="schedule-filters-title"
     >
       <div className="flex flex-col gap-[var(--space-4)]">
-        <div>
+        <div className="flex flex-wrap items-center justify-between gap-[var(--space-2)]">
           <h2
             id="schedule-filters-title"
-            className="m-0 text-[16px] font-bold text-[var(--text-primary)]"
+            className="m-0 inline-flex items-center gap-[var(--space-2)] text-[length:var(--font-size-md)] font-bold text-[var(--text-primary)]"
           >
-            Filtros
+            <SlidersHorizontal
+              size={18}
+              strokeWidth={1.8}
+              className="text-[var(--brand-600)]"
+              aria-hidden="true"
+            />
+            Filtrar unidades
           </h2>
 
-          <p className="mt-[var(--space-1)] mb-0 text-[12px] text-[var(--text-muted)]">
-            Consulta las unidades del
-            cronograma por estado o fecha.
+          <p
+            className="m-0 rounded-[var(--radius-full)] bg-[var(--surface-hover)] px-[var(--space-3)] py-[2px] text-[length:var(--font-size-xs)] font-bold text-[var(--text-secondary)] tabular-nums"
+            aria-live="polite"
+          >
+            {resultCount} de {totalCount}{' '}
+            unidades
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-[var(--space-4)] md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-[var(--space-4)] sm:grid-cols-2">
           <SelectField
             id="schedule-status"
             name="status"
@@ -75,14 +90,6 @@ export function ScheduleFilters({
             }
           />
         </div>
-
-        <p
-          className="m-0 text-[12px] font-semibold text-[var(--text-secondary)]"
-          aria-live="polite"
-        >
-          {resultCount} de {totalCount}{' '}
-          unidades
-        </p>
       </div>
     </section>
   );

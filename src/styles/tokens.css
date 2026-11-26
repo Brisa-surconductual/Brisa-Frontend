@@ -57,6 +57,16 @@
   --info-text: #1e6fa8;
   --info-border: #a8cbe6;
 
+  /* RF-43: botón SOS «Tengo ganas de vapear». Rojo propio para que se
+     distinga de los demás botones; no altera --danger ni la marca.
+     Blanco sobre #c62828: 5.6:1 (AA). */
+  --sos-bg: #c62828;
+  --sos-bg-hover: #b71c1c;
+  --sos-bg-active: #8e1414;
+  --sos-bg-disabled: #d98c8c;
+  --sos-text: #ffffff;
+  --sos-focus-ring: #8e1414;
+
   /* Superficies */
   --surface-bg: var(--neutral-50);
   --surface-card: var(--neutral-0);
@@ -108,6 +118,84 @@
   --shadow-lg:
     0 8px 24px rgb(22 21 16 / 10%),
     0 2px 6px rgb(22 21 16 / 6%);
+
+  /*
+   * Rediseño v2 (Etapa 2). Tokens aditivos: no modifican los
+   * existentes, así las pantallas aún no rediseñadas no cambian.
+   */
+
+  /* Escala tipográfica */
+  --font-size-xs: 12px;
+  --font-size-sm: 13px;
+  --font-size-md: 14px;
+  --font-size-base: 15px;
+  --font-size-lg: 17px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 30px;
+  --font-size-4xl: 36px;
+
+  --line-height-tight: 1.15;
+  --line-height-snug: 1.3;
+  --line-height-normal: 1.55;
+  --line-height-relaxed: 1.7;
+
+  --letter-spacing-tight: -0.02em;
+  --letter-spacing-wide: 0.08em;
+
+  /* Radios y elevación de composición */
+  --radius-3xl: 28px;
+  --shadow-xl:
+    0 24px 48px -12px rgb(22 21 16 / 18%),
+    0 4px 12px rgb(22 21 16 / 6%);
+
+  /* Anillo de foco (complementa a :focus-visible) */
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--brand-500) 30%, transparent);
+
+  /* Superficie de identidad (panel de marca) */
+  --surface-brand: var(--brand-700);
+  --surface-brand-raised: var(--brand-600);
+  --surface-brand-line: color-mix(in srgb, var(--neutral-0) 16%, transparent);
+  --text-on-brand: var(--neutral-0);
+  --text-on-brand-muted: var(--brand-100);
+
+  /* Contenedores de composición */
+  --container-auth: 1080px;
+  --container-form: 420px;
+
+  /* Glassmorphism (chat M03 y pantallas nuevas). El texto largo va sobre
+     --glass-bg-strong o --glass-brand-bg para conservar AA 4.5:1. */
+  --glass-blur: 16px;
+  --glass-blur-strong: 24px;
+  --glass-bg: color-mix(in srgb, var(--surface-card) 72%, transparent);
+  --glass-bg-strong: color-mix(in srgb, var(--surface-card) 88%, transparent);
+  --glass-border: color-mix(in srgb, var(--brand-200) 55%, transparent);
+  --glass-shadow:
+    0 8px 32px rgb(12 60 55 / 10%),
+    inset 0 1px 0 color-mix(in srgb, var(--neutral-0) 70%, transparent);
+  --glass-brand-bg: color-mix(in srgb, var(--brand-600) 94%, transparent);
+  --glass-brand-border: color-mix(in srgb, var(--brand-300) 55%, transparent);
+  --glass-brand-text: var(--neutral-0);
+  --glass-glow:
+    0 0 0 3px color-mix(in srgb, var(--brand-400) 28%, transparent),
+    0 0 24px color-mix(in srgb, var(--brand-400) 30%, transparent);
+  --chat-backdrop:
+    radial-gradient(
+      120% 60% at 0% 0%,
+      color-mix(in srgb, var(--brand-100) 85%, transparent) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      90% 50% at 100% 35%,
+      color-mix(in srgb, var(--brand-200) 40%, transparent) 0%,
+      transparent 65%
+    ),
+    radial-gradient(
+      100% 55% at 50% 100%,
+      color-mix(in srgb, var(--brand-50) 95%, transparent) 0%,
+      transparent 70%
+    ),
+    var(--surface-bg);
 }
 
 [data-theme="dark"] {
@@ -149,6 +237,11 @@
   --info-text: #9bc8e8;
   --info-border: #1f4566;
 
+  /* RF-43: el rojo del SOS se conserva; el anillo de foco se aclara para
+     contrastar con el fondo oscuro. */
+  --sos-focus-ring: #ff8a80;
+  --sos-bg-disabled: #7a3030;
+
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 35%);
   --shadow-md: 0 2px 8px rgb(0 0 0 / 45%);
   --shadow-lg: 0 8px 24px rgb(0 0 0 / 55%);
@@ -157,4 +250,48 @@
   --button-secondary-border: #514b3f;
   --button-secondary-hover-bg: var(--surface-hover);
   --button-secondary-hover-border: #6a6253;
+
+  /* Rediseño v2: la escala de marca se invierte en oscuro */
+  --shadow-xl:
+    0 24px 48px -12px rgb(0 0 0 / 60%),
+    0 4px 12px rgb(0 0 0 / 40%);
+  --surface-brand: #0c3c37;
+  --surface-brand-raised: #11534c;
+  --surface-brand-line: color-mix(in srgb, #eaf6f5 14%, transparent);
+  --text-on-brand: #eaf6f5;
+  --text-on-brand-muted: #9ed9d2;
+
+  /* Glassmorphism oscuro: vidrio verde-negro con borde claro tenue */
+  --glass-bg: color-mix(
+    in srgb,
+    color-mix(in srgb, var(--surface-card) 70%, var(--brand-50)) 66%,
+    transparent
+  );
+  --glass-bg-strong: color-mix(
+    in srgb,
+    color-mix(in srgb, var(--surface-card) 70%, var(--brand-50)) 86%,
+    transparent
+  );
+  --glass-border: color-mix(in srgb, var(--brand-900) 12%, transparent);
+  --glass-shadow:
+    0 8px 32px rgb(0 0 0 / 45%),
+    inset 0 1px 0 color-mix(in srgb, var(--brand-900) 8%, transparent);
+  --glass-brand-bg: color-mix(in srgb, var(--brand-200) 92%, transparent);
+  --glass-brand-border: color-mix(in srgb, var(--brand-500) 45%, transparent);
+  --glass-brand-text: var(--text-on-brand);
+  --glass-glow:
+    0 0 0 3px color-mix(in srgb, var(--brand-500) 30%, transparent),
+    0 0 24px color-mix(in srgb, var(--brand-500) 35%, transparent);
+  --chat-backdrop:
+    radial-gradient(
+      110% 55% at 0% 0%,
+      color-mix(in srgb, var(--brand-100) 70%, transparent) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      80% 45% at 100% 40%,
+      color-mix(in srgb, var(--brand-200) 35%, transparent) 0%,
+      transparent 65%
+    ),
+    var(--surface-bg);
 }

@@ -1,4 +1,8 @@
+import { FileStack } from 'lucide-react';
+
 import { PsychoeducationalResourceCard } from '@/features/cronograma/components/PsychoeducationalResourceCard/index.js';
+
+import { PanelNotice } from '../PanelNotice/index.js';
 
 export function PsychoeducationalResourceList({
   resources,
@@ -12,16 +16,15 @@ export function PsychoeducationalResourceList({
 }) {
   if (resources.length === 0) {
     return (
-      <section className="rounded-[var(--radius-xl)] border border-dashed border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-7)] text-center">
-        <h2 className="m-0 text-[17px] font-extrabold text-[var(--text-primary)]">
-          No hay recursos registrados
-        </h2>
-
-        <p className="mx-auto mt-[var(--space-2)] mb-0 max-w-[520px] text-[13px] leading-[1.6] text-[var(--text-muted)]">
-          Los bloques de texto y recursos multimedia
-          asociados a este contenido aparecerán aquí.
-        </p>
-      </section>
+      <PanelNotice
+        tone="neutral"
+        icon={FileStack}
+        title="No hay recursos registrados"
+        role="status"
+      >
+        Los bloques de texto y recursos multimedia asociados a este contenido
+        aparecerán aquí.
+      </PanelNotice>
     );
   }
 
@@ -31,27 +34,28 @@ export function PsychoeducationalResourceList({
   );
 
   return (
-    <section
-      className="grid gap-[var(--space-4)]"
+    <ol
+      className="m-0 grid list-none gap-[var(--space-4)] p-0"
       aria-label="Recursos del contenido psicoeducativo"
     >
       {orderedResources.map((resource, index) => (
-        <PsychoeducationalResourceCard
-          key={resource.id}
-          resource={resource}
-          destinationModules={destinationModules}
-          canManage={canManage}
-          canMoveUp={canReorder && index > 0}
-          canMoveDown={
-            canReorder &&
-            index < orderedResources.length - 1
-          }
-          onMoveUp={onMoveUp}
-          onMoveDown={onMoveDown}
-          onEdit={onEdit}
-          onDelete={onDelete}
-        />
+        <li key={resource.id}>
+          <PsychoeducationalResourceCard
+            resource={resource}
+            destinationModules={destinationModules}
+            canManage={canManage}
+            canMoveUp={canReorder && index > 0}
+            canMoveDown={
+              canReorder &&
+              index < orderedResources.length - 1
+            }
+            onMoveUp={onMoveUp}
+            onMoveDown={onMoveDown}
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
+        </li>
       ))}
-    </section>
+    </ol>
   );
 }

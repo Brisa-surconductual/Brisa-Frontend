@@ -1,19 +1,11 @@
 import { expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 
-import { EMISOR } from '../../types/index.js';
 import { ChatMessageBubble } from './ChatMessageBubble.jsx';
 
-it('AVATAR y SISTEMA producen marcados distintos', () => {
-  const avatar = renderToStaticMarkup(
-    <ChatMessageBubble emisor={EMISOR.AVATAR} texto="Hola" />,
-  );
-  const sistema = renderToStaticMarkup(
-    <ChatMessageBubble emisor={EMISOR.SISTEMA} texto="Hola" />,
-  );
+it('el mensaje es de Brisa y el texto va tal cual', () => {
+  const html = renderToStaticMarkup(<ChatMessageBubble texto={'Hola\n  tú'} />);
 
-  expect(sistema).toContain('border-dashed');
-  expect(avatar).not.toContain('border-dashed');
-  expect(sistema).toContain('Sistema: ');
-  expect(avatar).toContain('Brisa: ');
+  expect(html).toContain('Brisa: </span>Hola\n  tú');
+  expect(html).not.toContain('Sistema: ');
 });

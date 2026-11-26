@@ -29,4 +29,69 @@ export const SESSION_TIMEOUT = import.meta.env.DEV
 export const SESSION_END_REASON = Object.freeze({
   INACTIVITY: 'INACTIVITY',
   MANUAL: 'MANUAL',
+  // El backend ya no reconoce la sesión (401 al confirmar actividad).
+  EXPIRED: 'EXPIRED',
 });
+
+/*
+ * Sincronización con el límite de inactividad del backend
+ * (`limiteInactividadMinutos` de iniciar-sesion y sesion/actual).
+ *
+ * El backend cuenta la inactividad desde la última petición
+ * autenticada. La interacción del usuario se le informa como
+ * máximo una vez cada `syncIntervalMs`, así que el servidor puede
+ * ir hasta ese intervalo por detrás de la interacción real. El
+ * cierre local debe ocurrir antes que el del servidor:
+ *
+ *   total local <= límite del backend - intervalo - margen
+ */
+const MAX_ACTIVITY_SYNC_INTERVAL_MS = 2 * MINUTE_MS;
+const BACKEND_EXPIRY_MARGIN_MS = 30 * SECOND_MS;
+
+export function getActivitySyncIntervalMs(backendLimitMinutes) {
+  const limitMs = toBackendLimitMs(backendLimitMinutes);
+
+  return limitMs === null
+    ? MAX_ACTIVITY_SYNC_INTERVAL_MS
+    : Math.min(MAX_ACTIVITY_SYNC_INTERVAL_MS, limitMs / 4);
+}
+
+function toBackendLimitMs(backendLimitMinutes) {
+  return Number.isFinite(backendLimitMinutes) && backendLimitMinutes > 0
+    ? backendLimitMinutes * MINUTE_MS
+    : null;
+}
+
+/*
+ * Tiempos efectivos del aviso y del cierre. Sin el dato del
+ * backend se conservan los configurados aquí.
+ */
+export function resolveSessionTimeout(
+  backendLimitMinutes,
+  configured = SESSION_TIMEOUT,
+) {
+  const limitMs = toBackendLimitMs(backendLimitMinutes);
+  const configuredTotalMs = configured.warningDelayMs + configured.countdownMs;
+
+  if (limitMs === null) return configured;
+
+  // Con límites muy cortos el margen no cabe: se usa la mitad.
+  const totalMs = Math.min(
+    configuredTotalMs,
+    Math.max(
+      limitMs / 2,
+      limitMs -
+        getActivitySyncIntervalMs(backendLimitMinutes) -
+        BACKEND_EXPIRY_MARGIN_MS,
+    ),
+  );
+
+  if (totalMs >= configuredTotalMs) return configured;
+
+  const countdownMs = Math.min(configured.countdownMs, totalMs / 2);
+
+  return Object.freeze({
+    warningDelayMs: totalMs - countdownMs,
+    countdownMs,
+  });
+}

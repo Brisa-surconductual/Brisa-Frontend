@@ -1,35 +1,24 @@
 import { conComa } from './escala.js';
 
-// Sin decimales: solo dígitos. Con decimales: la coma es el único
-// separador. Así "1.000" (mil, en Colombia) da error en lugar de
-// guardarse en silencio como 1.
-const ENTERO = /^-?\d+$/;
-const CON_COMA = /^-?\d+(,\d+)?$/;
+// La coma es el único separador decimal: así "1.000" (mil, en Colombia)
+// no se convierte en silencio en 1.
+const NUMERO = /^-?\d+(,\d+)?$/;
+
+const pasoEntero = (paso) => paso == null || Number.isInteger(paso);
 
 export const numerico = Object.freeze({
-  // El componente guarda el texto tal como se escribe; aquí se convierte.
-  // Si no es un número válido se devuelve igual para que `validar` lo
-  // rechace.
-  normalizar: ({ decimales = 0 }, valor) => {
+  // D2: el componente guarda el texto tal como se escribe; aquí solo se
+  // convierte. Lo que no se puede convertir se envía tal cual y el
+  // backend responde. No se recorta al rango (CA-28-6).
+  normalizar: (_entrada, valor) => {
     const texto = (valor ?? '').trim();
     if (texto === '') return null;
-    const patron = decimales > 0 ? CON_COMA : ENTERO;
-    return patron.test(texto) ? Number(texto.replace(',', '.')) : texto;
+    // Muchos dígitos dan Infinity, que JSON envía como null: viaja el texto.
+    const numero = Number(texto.replace(',', '.'));
+    return NUMERO.test(texto) && Number.isFinite(numero) ? numero : texto;
   },
 
-  // decimales = 0 si falta: el contrato dice "0 = entero".
-  validar: ({ min, max, decimales = 0 }, valor) => {
-    if (!Number.isFinite(valor)) return 'TIPO_DATO_INVALIDO';
-    // toFixed y no String(valor): String(1e-7) es "1e-7".
-    if (Number(valor.toFixed(decimales)) !== valor) return 'FORMATO_INVALIDO';
-    if ((min != null && valor < min) || (max != null && valor > max)) {
-      return 'FUERA_DE_RANGO';
-    }
-    return null;
-  },
-
-  textoRespuesta: ({ unidad }, valor) =>
-    unidad ? `${conComa(valor)} ${unidad}` : conComa(valor),
+  textoRespuesta: (_entrada, valor) => conComa(valor),
 });
 
 const rango = (min, max) => {
@@ -40,7 +29,12 @@ const rango = (min, max) => {
   return null;
 };
 
-export const ayudaNumerico = ({ min, max, decimales = 0 }) =>
-  [rango(min, max), decimales > 0 && 'Usa coma para los decimales']
+// D3: pinta la configuración; no valida.
+export const ayudaNumerico = ({ min, max, paso }) =>
+  [rango(min, max), !pasoEntero(paso) && 'Usa coma para los decimales']
     .filter(Boolean)
     .join('. ') || null;
+
+// Sin `paso` no se sabe si admite decimales: se ofrece el teclado con coma.
+export const modoTeclado = ({ paso }) =>
+  paso != null && Number.isInteger(paso) ? 'numeric' : 'decimal';

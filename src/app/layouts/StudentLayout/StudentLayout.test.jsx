@@ -1,0 +1,171 @@
+import { describe, expect, it, vi } from 'vitest';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
+
+import { StudentLayout } from './StudentLayout.jsx';
+import {
+  STUDENT_NAV_ITEMS,
+  STUDENT_SECTION,
+  getActiveStudentSection,
+} from './studentNavigation.js';
+
+const { logoutHandler, useLogoutHandler } = vi.hoisted(() => {
+  const handler = () => {};
+  return {
+    logoutHandler: handler,
+    useLogoutHandler: vi.fn(() => handler),
+  };
+});
+
+vi.mock('@/shared/hooks/useLogoutHandler.jsx', () => ({ useLogoutHandler }));
+
+function render(path) {
+  return renderToStaticMarkup(
+    <MemoryRouter initialEntries={[path]}>
+      <Routes>
+        <Route element={<StudentLayout />}>
+          <Route path="*" element={<p>Contenido de la página</p>} />
+        </Route>
+      </Routes>
+    </MemoryRouter>,
+  );
+}
+
+function navBlocks(html) {
+  return [...html.matchAll(/<nav[^>]*>[\s\S]*?<\/nav>/g)].map(([block]) => block);
+}
+
+describe('Sección activa del estudiante', () => {
+  it.each([
+    ['/app/estudiante', STUDENT_SECTION.INICIO],
+    ['/app/estudiante/', STUDENT_SECTION.INICIO],
+    ['/app/estudiante/cronograma/contenido-vigente', STUDENT_SECTION.CONTENIDO],
+    ['/app/estudiante/chat', STUDENT_SECTION.CHAT],
+    ['/app/estudiante/chat/', STUDENT_SECTION.CHAT],
+    ['/app/estudiante/chat/sesion/abc', STUDENT_SECTION.CHAT],
+    ['/app/estudiante/chat/sin-conexion/abc', STUDENT_SECTION.CHAT],
+    // RF-43: la intervención SOS no es una conversación ordinaria.
+    ['/app/estudiante/sos', null],
+    ['/app/estudiante/chatx', null],
+    ['/app/administrativo', null],
+  ])('%s → %s', (pathname, expected) =>
+    expect(getActiveStudentSection(pathname)).toBe(expected));
+
+  it('solo navega a rutas reales del estudiante', () =>
+    expect(STUDENT_NAV_ITEMS.map(({ to }) => to)).toEqual([
+      '/app/estudiante',
+      '/app/estudiante/chat',
+      '/app/estudiante/cronograma/contenido-vigente',
+    ]));
+});
+
+describe('Layout del estudiante', () => {
+  it('muestra la página dentro de un único <main>', () => {
+    const html = render('/app/estudiante');
+
+    expect(html.match(/<main/g)).toHaveLength(1);
+    expect(html.match(/<header/g)).toHaveLength(1);
+    expect(html).toMatch(
+      /<main id="contenido-estudiante"[^>]*>[\s\S]*Contenido de la página[\s\S]*<\/main>/,
+    );
+  });
+
+  it.each([
+    ['/app/estudiante', 'Inicio'],
+    ['/app/estudiante/cronograma/contenido-vigente', 'Contenido vigente'],
+    ['/app/estudiante/chat', 'Chat'],
+    ['/app/estudiante/chat/sesion/abc', 'Chat'],
+  ])('en %s marca activa "%s" en ambas navegaciones', (path, label) => {
+    const html = render(path);
+    const active = [
+      ...html.matchAll(/<a[^>]*aria-current="page"[^>]*>[\s\S]*?<\/a>/g),
+    ].map(([link]) => link);
+
+    // Encabezado (tableta y escritorio) y barra inferior (móvil).
+    expect(active).toHaveLength(2);
+    expect(active[0]).toContain(label);
+    expect(active[1]).toContain(`aria-label="${label}"`);
+  });
+
+  it('la navegación usa enlaces reales, sin pestañas ni botones deshabilitados', () => {
+    const blocks = navBlocks(render('/app/estudiante'));
+
+    expect(blocks).toHaveLength(2);
+    for (const block of blocks) {
+      expect(block).toContain('aria-label="Navegación del estudiante"');
+      expect(block.match(/<a /g)).toHaveLength(3);
+      expect(block).not.toContain('<button');
+      expect(block).not.toContain('role="tab"');
+      expect(block).not.toContain('disabled');
+    }
+  });
+
+  it('los módulos futuros no aparecen como enlaces de navegación', () => {
+    const navigation = navBlocks(render('/app/estudiante')).join('');
+
+    for (const futureModule of ['Diario', 'Progreso', 'Mascota', 'Perfil']) {
+      expect(navigation).not.toContain(futureModule);
+    }
+  });
+
+  it('la barra inferior móvil reparte tres destinos con ícono y etiqueta visibles', () => {
+    const bottom = navBlocks(render('/app/estudiante'))[1];
+
+    expect(bottom).toContain('grid-cols-3');
+    for (const label of ['Inicio', 'Chat', 'Contenido']) {
+      expect(bottom).toContain(`<span aria-hidden="true">${label}</span>`);
+    }
+    expect(bottom.match(/<svg/g)).toHaveLength(3);
+    expect(bottom.match(/focus-visible:outline-2/g)).toHaveLength(3);
+  });
+
+  it('en la intervención SOS ninguna sección queda activa', () =>
+    expect(render('/app/estudiante/sos')).not.toContain('aria-current="page"'));
+
+  it('cierra sesión con el mecanismo existente (useLogoutHandler)', () => {
+    useLogoutHandler.mockClear();
+
+    const html = render('/app/estudiante');
+
+    expect(useLogoutHandler).toHaveBeenCalled();
+    expect(logoutHandler).toBeTypeOf('function');
+    expect(html).toMatch(/<button type="button"[^>]*>[\s\S]*?Salir<\/button>/);
+  });
+
+  it('respeta el área segura y reserva la altura de la barra inferior', () => {
+    const html = render('/app/estudiante');
+
+    expect(html).toContain('pb-[env(safe-area-inset-bottom)]');
+    expect(html).toContain('pb-[calc(64px+env(safe-area-inset-bottom)+var(--space-6))]');
+  });
+
+  it.each([
+    '/app/estudiante',
+    '/app/estudiante/cronograma/contenido-vigente',
+    '/app/estudiante/chat/sesion/abc',
+  ])('RF-43: %s muestra un único botón SOS, fuera de la navegación', (path) => {
+    const html = render(path);
+    const botones = [...html.matchAll(/<button[^>]*>[\s\S]*?<\/button>/g)]
+      .map(([b]) => b)
+      .filter((b) => b.includes('Tengo ganas de vapear'));
+
+    expect(botones).toHaveLength(1);
+    expect(botones[0]).toContain('type="button"');
+    // Flota sobre la barra inferior móvil sin taparla.
+    expect(botones[0]).toContain('bottom-[calc(64px+env(safe-area-inset-bottom)+var(--space-3))]');
+    expect(navBlocks(html).join('')).not.toContain('Tengo ganas de vapear');
+  });
+
+  it('RF-43: marca el encabezado y la barra inferior como límites del botón arrastrable', () => {
+    const html = render('/app/estudiante');
+
+    expect(html).toMatch(/<header data-sos-limite="superior"/);
+    expect(html).toMatch(/<nav[^>]*data-sos-limite="inferior"[^>]*md:hidden/);
+  });
+
+  it('RF-43: dentro de la intervención SOS no se muestra otro botón', () =>
+    expect(render('/app/estudiante/sos')).not.toContain('Tengo ganas de vapear'));
+
+  it('ofrece un enlace para saltar al contenido', () =>
+    expect(render('/app/estudiante')).toContain('href="#contenido-estudiante"'));
+});

@@ -1,17 +1,24 @@
 import {
+  ArrowRight,
+  CircleCheck,
+  CircleDot,
+  CircleHelp,
+  CirclePause,
+} from 'lucide-react';
+
+import {
   PARTICIPANT_PROGRESS_STATUS,
   PARTICIPANT_PROGRESS_STATUS_LABEL,
 } from '@/features/cronograma/types/participantProgressTypes.js';
 
-const STATUS_CLASS = Object.freeze({
-  [PARTICIPANT_PROGRESS_STATUS.ACTIVO]:
-    'bg-[var(--brand-100)] text-[var(--brand-700)]',
+import { StatusChip } from '../StatusChip/index.js';
 
-  [PARTICIPANT_PROGRESS_STATUS.EN_PAUSA]:
-    'bg-[var(--warning-bg)] text-[var(--warning-text)]',
-
-  [PARTICIPANT_PROGRESS_STATUS.COMPLETADO]:
-    'bg-[var(--success-bg)] text-[var(--success-text)]',
+// Presentación de los estados que calcula la página. Un estado
+// desconocido queda neutro y nunca se muestra como completado.
+const STATUS_PRESENTATION = Object.freeze({
+  [PARTICIPANT_PROGRESS_STATUS.ACTIVO]: Object.freeze({ tone: 'brand', icon: CircleDot }),
+  [PARTICIPANT_PROGRESS_STATUS.EN_PAUSA]: Object.freeze({ tone: 'warning', icon: CirclePause }),
+  [PARTICIPANT_PROGRESS_STATUS.COMPLETADO]: Object.freeze({ tone: 'success', icon: CircleCheck }),
 });
 
 function formatProgressValue(value) {
@@ -27,72 +34,59 @@ export function ParticipantProgressCard({
   onViewTemporalInformation,
 }) {
   const statusLabel =
-    PARTICIPANT_PROGRESS_STATUS_LABEL[status] ?? status ?? '—';
+    PARTICIPANT_PROGRESS_STATUS_LABEL[status] ?? status ?? 'Sin estado';
+  const presentation = STATUS_PRESENTATION[status] ?? {
+    tone: 'neutral',
+    icon: CircleHelp,
+  };
 
   return (
-    <article className="rounded-[var(--radius-lg)] border border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-4)] shadow-[var(--shadow-sm)] md:p-[var(--space-5)]">
-      <div className="flex flex-wrap items-start justify-between gap-[var(--space-3)]">
-        <div>
-          <p className="m-0 text-[11px] font-semibold text-[var(--text-muted)]">
-            Participante
-          </p>
-
-          <h2 className="mt-[var(--space-1)] mb-0 text-[16px] font-bold text-[var(--text-primary)] md:text-[18px]">
+    <article className="flex flex-col gap-[var(--space-4)] rounded-[var(--radius-xl)] border border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-4)] shadow-[var(--shadow-sm)] sm:p-[var(--space-5)] lg:flex-row lg:items-center">
+      <div className="flex min-w-0 flex-1 flex-col gap-[var(--space-2)]">
+        <div className="flex flex-wrap items-center gap-[var(--space-2)]">
+          <h3 className="m-0 min-w-0 text-[length:var(--font-size-base)] font-extrabold [overflow-wrap:anywhere] text-[var(--text-primary)]">
             {formatProgressValue(participantName)}
-          </h2>
+          </h3>
+
+          <StatusChip tone={presentation.tone} icon={presentation.icon}>
+            {statusLabel}
+          </StatusChip>
         </div>
 
-        <span
-          className={`rounded-[var(--radius-full)] px-[var(--space-3)] py-[var(--space-1)] text-[10px] font-extrabold tracking-[0.03em] uppercase ${
-            STATUS_CLASS[status] ??
-            'bg-[var(--neutral-100)] text-[var(--text-muted)]'
-          }`}
-        >
-          {statusLabel}
-        </span>
+        <dl className="m-0 flex flex-wrap gap-x-[var(--space-6)] gap-y-[var(--space-2)] text-[length:var(--font-size-sm)]">
+          <div className="flex min-w-0 items-center gap-[var(--space-2)]">
+            <dt className="text-[var(--text-muted)]">Unidad temporal</dt>
+            <dd className="m-0 font-semibold [overflow-wrap:anywhere] text-[var(--text-primary)]">
+              {formatProgressValue(temporalUnitName)}
+            </dd>
+          </div>
+
+          <div className="flex items-center gap-[var(--space-2)]">
+            <dt className="text-[var(--text-muted)]">Semana actual</dt>
+            <dd className="m-0 font-semibold text-[var(--text-primary)] tabular-nums">
+              {formatProgressValue(currentWeek)}
+            </dd>
+          </div>
+
+          <div className="flex items-center gap-[var(--space-2)]">
+            <dt className="text-[var(--text-muted)]">Día actual</dt>
+            <dd className="m-0 font-semibold text-[var(--text-primary)] tabular-nums">
+              {formatProgressValue(currentDay)}
+            </dd>
+          </div>
+        </dl>
       </div>
 
-      <dl className="mt-[var(--space-4)] grid gap-[var(--space-4)] sm:grid-cols-3">
-        <div>
-          <dt className="text-[11px] font-semibold text-[var(--text-muted)]">
-            Unidad temporal
-          </dt>
-
-          <dd className="mt-[var(--space-1)] ml-0 text-[13px] font-medium text-[var(--text-primary)]">
-            {formatProgressValue(temporalUnitName)}
-          </dd>
-        </div>
-
-        <div>
-          <dt className="text-[11px] font-semibold text-[var(--text-muted)]">
-            Semana actual
-          </dt>
-
-          <dd className="mt-[var(--space-1)] ml-0 text-[13px] font-medium text-[var(--text-primary)]">
-            {formatProgressValue(currentWeek)}
-          </dd>
-        </div>
-
-        <div>
-          <dt className="text-[11px] font-semibold text-[var(--text-muted)]">
-            Día actual
-          </dt>
-
-          <dd className="mt-[var(--space-1)] ml-0 text-[13px] font-medium text-[var(--text-primary)]">
-            {formatProgressValue(currentDay)}
-          </dd>
-        </div>
-      </dl>
       {onViewTemporalInformation ? (
-        <div className="mt-[var(--space-4)] border-t border-[var(--surface-border)] pt-[var(--space-4)]">
-          <button
-            type="button"
-            className="cursor-pointer border-0 bg-transparent p-0 text-[12px] font-bold text-[var(--brand-600)] hover:underline md:text-[13px]"
-            onClick={onViewTemporalInformation}
-          >
-            Ver información temporal →
-          </button>
-        </div>
+        <button
+          type="button"
+          className="inline-flex min-h-[44px] shrink-0 items-center justify-center gap-[var(--space-2)] self-start rounded-[var(--radius-lg)] border border-[var(--surface-border)] bg-[var(--surface-card)] px-[var(--space-4)] text-[length:var(--font-size-sm)] font-bold text-[var(--brand-600)] transition-colors duration-150 hover:bg-[var(--surface-hover)] motion-reduce:transition-none lg:self-center"
+          onClick={onViewTemporalInformation}
+        >
+          Ver información temporal
+          <span className="sr-only"> de {formatProgressValue(participantName)}</span>
+          <ArrowRight size={16} strokeWidth={2} aria-hidden="true" />
+        </button>
       ) : null}
     </article>
   );

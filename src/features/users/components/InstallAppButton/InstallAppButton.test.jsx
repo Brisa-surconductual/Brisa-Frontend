@@ -17,3 +17,10 @@ it('anuncia que abre un diálogo y oculta el ícono', () => {
   expect(html).toMatch(/<svg[^>]*aria-hidden="true"/);
   expect(html).toContain('Instalar Brisa');
 });
+
+it('en modo nativo no anuncia un diálogo propio', () => {
+  const html = render('nativo');
+
+  expect(html).not.toContain('aria-haspopup');
+  expect(html).toContain('Instalar Brisa');
+});

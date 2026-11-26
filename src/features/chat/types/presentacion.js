@@ -7,11 +7,11 @@ export const PRESENTACION = Object.freeze({
 
 export const PRESENTACION_COMPATIBLE = Object.freeze({
   [PRESENTACION.TARJETAS]: Object.freeze([
-    TIPO_ENTRADA.SELECCION_UNICA,
-    TIPO_ENTRADA.SELECCION_MULTIPLE,
+    TIPO_ENTRADA.OPCION_UNICA,
+    TIPO_ENTRADA.MULTISELECCION,
   ]),
   // Contrato 2.3.1: SILUETA solo admite selección múltiple
-  [PRESENTACION.SILUETA]: Object.freeze([TIPO_ENTRADA.SELECCION_MULTIPLE]),
+  [PRESENTACION.SILUETA]: Object.freeze([TIPO_ENTRADA.MULTISELECCION]),
 });
 
 // Contrato 2.3.1: valores permitidos en `opciones` cuando la presentación es

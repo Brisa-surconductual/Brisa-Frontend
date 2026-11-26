@@ -17,8 +17,8 @@ export function ReconsentAuthorizationForm({
 }) {
   return (
     <form className="flex flex-col gap-[var(--space-5)]" onSubmit={onSubmit} noValidate aria-busy={isSubmitting}>
-      <fieldset disabled={disabled || isSubmitting} className="m-0 flex min-w-0 flex-col gap-[var(--space-4)] rounded-[var(--radius-lg)] border border-[var(--surface-border)] p-[var(--space-5)]">
-        <legend className="px-[var(--space-2)] text-[14px] font-extrabold text-[var(--text-primary)]">
+      <fieldset disabled={disabled || isSubmitting} className="m-0 flex min-w-0 flex-col gap-[var(--space-3)] rounded-[var(--radius-xl)] border border-[var(--surface-border)] bg-[var(--surface-bg)] p-[var(--space-4)] sm:p-[var(--space-5)]">
+        <legend className="float-left mb-[var(--space-1)] w-full p-0 text-[length:var(--font-size-md)] font-extrabold text-[var(--text-primary)]">
           Renovación de autorizaciones
         </legend>
 

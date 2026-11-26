@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { useInstallPrompt } from '../../../hooks/useInstallPrompt.js';
+import { INSTALL_MODE } from '../../../types/installInstructions.js';
 import { formatAppFooter } from '../utils/appVersion.js';
 
 export function useSplashPage() {
@@ -15,7 +16,14 @@ export function useSplashPage() {
     if (!isInstallOpen) installTriggerRef.current?.focus();
   }, [isInstallOpen]);
 
+  // Con aviso nativo se instala directo; si la persona lo rechaza, el aviso
+  // ya no vuelve y el botón pasa a abrir la hoja de instrucciones.
   function openInstall(event) {
+    if (install.modo === INSTALL_MODE.NATIVO) {
+      void install.instalar();
+      return;
+    }
+
     installTriggerRef.current = event.currentTarget;
     setIsInstallOpen(true);
   }

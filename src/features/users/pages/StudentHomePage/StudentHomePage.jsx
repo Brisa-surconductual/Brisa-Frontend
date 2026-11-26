@@ -1,67 +1,86 @@
-import { CircleCheck } from 'lucide-react';
-
-import { StudentBottomNav } from '@/features/users/components/StudentBottomNav/index.js';
-import { StudentHeader } from '@/features/users/components/StudentHeader/index.js';
-
 import { ModuleGrid } from './components/ModuleGrid.jsx';
+import { ProgramStatusSection } from './components/ProgramStatusSection.jsx';
+import { RegistrationStatusNotice } from './components/RegistrationStatusNotice.jsx';
+import { TherapeuticSpaceCard } from './components/TherapeuticSpaceCard.jsx';
+import { STUDENT_TOOL_MODULES } from './data/studentModules.js';
 import { useStudentHomePage } from './hooks/useStudentHomePage.js';
 
 import { CurrentContentAccessCard } from '@/features/cronograma/components/CurrentContentAccessCard/index.js';
 
+// Texto real de la cuadrícula: hoy ninguna herramienta tiene pantalla.
+const TOOLS_UPCOMING = STUDENT_TOOL_MODULES.every(({ to }) => !to);
+
+/*
+ * Inicio del estudiante. Encabezado, navegación, cierre de sesión y
+ * botón SOS los aporta el StudentLayout. Orden (una columna en móvil):
+ * bienvenida → tu espacio terapéutico (acción principal) → estado del
+ * programa → tu contenido actual → otras herramientas. Si el registro
+ * no está confirmado, su aviso completo va antes del chat: tiene
+ * prioridad y el chat no se presenta como acceso garantizado.
+ */
 export function StudentHomePage() {
-  const { displayName, roleLabel, handleLogout } = useStudentHomePage();
+  const {
+    displayName,
+    estadoRegistro,
+    registrationStatusView,
+    accessConfirmed,
+    goToConsent,
+  } = useStudentHomePage();
 
   return (
-    <div className="min-h-screen w-full bg-[var(--surface-bg)]">
-      <div className="flex min-h-screen w-full flex-col bg-[var(--surface-bg)]">
-        <StudentHeader
-          displayName={displayName}
-          roleLabel={roleLabel}
-          onLogout={handleLogout}
+    <div className="flex flex-col gap-[var(--space-5)] md:gap-[var(--space-6)]">
+      <header className="flex flex-col gap-[var(--space-1)]">
+        <h1 className="m-0 text-[length:var(--font-size-2xl)] leading-[var(--line-height-tight)] font-extrabold tracking-[var(--letter-spacing-tight)] [overflow-wrap:anywhere] text-[var(--text-primary)] md:text-[length:var(--font-size-3xl)]">
+          Hola, {displayName}
+        </h1>
+
+        <p className="m-0 text-[length:var(--font-size-sm)] leading-[var(--line-height-normal)] text-[var(--text-secondary)] md:text-[length:var(--font-size-md)]">
+          Este es tu espacio para avanzar a tu ritmo.
+        </p>
+      </header>
+
+      {!accessConfirmed && (
+        <RegistrationStatusNotice
+          view={registrationStatusView}
+          estadoRegistro={estadoRegistro}
+          onGoToConsent={goToConsent}
+        />
+      )}
+
+      <TherapeuticSpaceCard accessConfirmed={accessConfirmed} />
+
+      <div className="grid grid-cols-1 gap-[var(--space-5)] md:gap-[var(--space-6)] lg:grid-cols-2 lg:items-stretch">
+        <ProgramStatusSection
+          showRegistration={accessConfirmed}
+          view={registrationStatusView}
+          estadoRegistro={estadoRegistro}
+          onGoToConsent={goToConsent}
         />
 
-        <main className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col gap-[var(--space-4)] p-[var(--space-4)] md:gap-[var(--space-6)] md:p-[var(--space-7)] lg:px-[var(--space-7)] lg:py-[var(--space-8)]">
-          <div className="flex items-start gap-[var(--space-3)] rounded-[var(--radius-md)] border border-[var(--success-border)] bg-[var(--success-bg)] p-[var(--space-3)] text-[var(--success-text)] md:p-[var(--space-4)]">
-            <CircleCheck size={20} strokeWidth={1.8} className="mt-px shrink-0" aria-hidden="true" />
-
-            <div>
-              <strong className="block text-[13px] md:text-[14px]">
-                ¡Registro completado!
-              </strong>
-
-              <p className="mt-[var(--space-1)] mb-0 text-[12px] leading-[1.5] opacity-90 md:text-[13px]">
-                Tu programa psicoeducativo está listo. Los módulos se habilitarán según tu progreso.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between gap-[var(--space-3)]">
-            <span className="text-[13px] font-bold text-[var(--text-primary)] md:text-[14px]">
-              Estado de tu cuenta
-            </span>
-
-            {/*
-             * Valor fijo por ahora: la sesión solo lleva
-             * correo y rol. Debe leerse de `estado_registro`
-             * cuando este viaje en la sesión.
-             */}
-            <span className="inline-flex items-center gap-[var(--space-1)] whitespace-nowrap rounded-[var(--radius-full)] border border-[var(--success-border)] bg-[var(--success-bg)] px-[var(--space-2)] py-[3px] font-[var(--font-mono)] text-[10px] font-bold text-[var(--success-text)]">
-              <span className="h-[6px] w-[6px] shrink-0 rounded-[var(--radius-full)] bg-[var(--success)]" aria-hidden="true" />
-              REGISTRO_COMPLETO
-            </span>
-          </div>
-
-          <CurrentContentAccessCard />
-
-          <h2 className="mt-[var(--space-1)] mb-0 text-[11px] font-bold tracking-[0.1em] text-[var(--text-secondary)] uppercase">
-            Módulos del programa
-          </h2>
-
-          <ModuleGrid />
-        </main>
-
-        <StudentBottomNav activeItemId="inicio" />
+        <CurrentContentAccessCard variant="compact" />
       </div>
+
+      <section
+        aria-labelledby="otras-herramientas-titulo"
+        className="flex flex-col gap-[var(--space-3)]"
+      >
+        <div>
+          <h2
+            id="otras-herramientas-titulo"
+            className="m-0 text-[length:var(--font-size-lg)] font-extrabold text-[var(--text-primary)]"
+          >
+            Otras herramientas para ti
+          </h2>
+          {TOOLS_UPCOMING && (
+            <p className="mt-[var(--space-1)] mb-0 text-[length:var(--font-size-sm)] text-[var(--text-secondary)]">
+              Estas herramientas aún no están disponibles. Se habilitarán más
+              adelante.
+            </p>
+          )}
+        </div>
+
+        <ModuleGrid />
+      </section>
     </div>
   );
 }

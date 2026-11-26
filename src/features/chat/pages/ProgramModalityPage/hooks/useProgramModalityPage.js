@@ -64,16 +64,17 @@ export function useProgramModalityPage({ eligibility, onEnableModality }) {
     setFeedback(null);
 
     try {
-      await onEnableModality(eligibility.id_programa);
+      await onEnableModality();
 
       setFeedback({
         type: 'success',
         message: 'La modalidad personalizada se habilitó correctamente.',
       });
-    } catch {
+    } catch (error) {
       setFeedback({
         type: 'error',
-        message: 'No fue posible completar el cambio de modalidad.',
+        message:
+          error?.message || 'No fue posible completar el cambio de modalidad.',
       });
     } finally {
       setIsProcessing(false);

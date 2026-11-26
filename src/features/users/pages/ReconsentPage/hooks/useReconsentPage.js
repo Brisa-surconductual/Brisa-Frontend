@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/app/providers/index.js';
+import { getApiErrorText } from '../../../services/apiErrorText.js';
 import { obtenerConsentimiento } from '../../../api/obtenerConsetimiento.jsx';
 import { renovarConsentimientoRegistro } from '../../../api/validacionConsetimeinto.jsx';
 
@@ -203,9 +204,10 @@ export function useReconsentPage() {
       });
     } catch (error) {
       setSubmitError(
-        error?.response?.data?.message ??
-        error?.message ??
-        'No pudimos actualizar el consentimiento. Intenta nuevamente.',
+        getApiErrorText(
+          error,
+          'No pudimos actualizar el consentimiento. Intenta nuevamente.',
+        ),
       );
     } finally {
       submitting.current = false;
