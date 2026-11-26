@@ -102,9 +102,9 @@ export function CohortFormPage({ mode = COHORT_FORM_MODE.CREATE }) {
       )}
 
       {isIntegrationPending && (
-        <CohortNotice tone="info" icon={PlugZap} title="Integración pendiente" role="status">
-          La gestión de cohortes todavía no está conectada al servidor. No es
-          posible crear ni editar cohortes desde esta pantalla.
+        <CohortNotice tone="info" icon={PlugZap} title="Información aún no disponible" role="status">
+          La gestión de cohortes todavía no está disponible. No es posible
+          crear ni editar cohortes desde esta pantalla.
         </CohortNotice>
       )}
 

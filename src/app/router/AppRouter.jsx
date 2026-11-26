@@ -62,8 +62,10 @@ import {
   CohortEvolutionPage,
   ParticipantSessionsPage,
   SessionTraceabilityPage,
+  PendingAlertsPage,
 } from '@/features/administracion/index.js';
 
+import { LandingRoute } from './LandingRoute.jsx';
 import { RequireAuth } from './RequireAuth.jsx';
 import { RoleHomeRedirect } from './RoleHomeRedirect.jsx';
 
@@ -72,8 +74,15 @@ export function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Landing pública (con sesión activa ofrece «Ir a mi espacio»). */}
         <Route
           path="/"
+          element={<LandingRoute />}
+        />
+
+        {/* Pantalla de bienvenida de la PWA, antes en «/». */}
+        <Route
+          path="/splash"
           element={<SplashPage />}
         />
 
@@ -319,7 +328,7 @@ export function AppRouter() {
               />
 
               <Route
-                path="administrativo/cohortes/:idCohorte/seguimiento/:referencia"
+                path="administrativo/cohortes/:idCohorte/seguimiento/:codigoParticipante"
                 element={<ParticipantTrackingProfilePage />}
               />
 
@@ -341,6 +350,12 @@ export function AppRouter() {
               <Route
                 path="administrativo/cohortes/:idCohorte/evolucion"
                 element={<CohortEvolutionPage />}
+              />
+
+              {/* RF-146 / RF-147: alertas pendientes de la cohorte y su atención. */}
+              <Route
+                path="administrativo/cohortes/:idCohorte/alertas/pendientes"
+                element={<PendingAlertsPage />}
               />
 
               <Route

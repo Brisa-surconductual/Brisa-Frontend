@@ -159,7 +159,7 @@ describe('Acceso a la asignación (RF-125)', () => {
       assignmentChanges: { canAssign: false },
     });
 
-    expect(html).toContain('Integración pendiente');
+    expect(html).toContain('Información aún no disponible');
     expect(html).not.toMatch(/<button|Asignar/);
   });
 

@@ -1,4 +1,4 @@
-import { BellRing, CircleCheck, CircleHelp, CircleSlash, ScanSearch } from 'lucide-react';
+import { BellRing, CircleCheck, CircleHelp, CircleSlash, Clock, ScanSearch, UserCheck } from 'lucide-react';
 
 import { ALERT_RESOLUTION_STATUS } from '../../types/participantTracking.js';
 import { alertStatusLabel } from '../../utils/alertLabels.js';
@@ -25,6 +25,14 @@ const STATUS_PRESENTATION = Object.freeze({
     className: 'border-[var(--success-border)] bg-[var(--success-bg)] text-[var(--success-text)]',
   }),
   [ALERT_RESOLUTION_STATUS.DISMISSED]: Object.freeze({ Icon: CircleSlash, className: NEUTRAL_CLASS }),
+  [ALERT_RESOLUTION_STATUS.PENDING]: Object.freeze({
+    Icon: Clock,
+    className: 'border-[var(--warning-border)] bg-[var(--warning-bg)] text-[var(--warning-text)]',
+  }),
+  [ALERT_RESOLUTION_STATUS.ATTENDED]: Object.freeze({
+    Icon: UserCheck,
+    className: 'border-[var(--success-border)] bg-[var(--success-bg)] text-[var(--success-text)]',
+  }),
 });
 
 export function AlertResolutionBadge({ status }) {

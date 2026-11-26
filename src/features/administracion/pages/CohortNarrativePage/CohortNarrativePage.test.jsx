@@ -231,7 +231,7 @@ describe('Vista narrativa agregada (RF-133): presentación', () => {
   it('integración pendiente: sin datos ni aviso de demostración', () => {
     const html = render({ isDemo: false, isIntegrationPending: true });
 
-    expect(html).toContain('Integración pendiente');
+    expect(html).toContain('Información aún no disponible');
     expect(html).not.toContain('Datos de demostración');
     expect(html).not.toContain('Indicadores narrativos');
   });

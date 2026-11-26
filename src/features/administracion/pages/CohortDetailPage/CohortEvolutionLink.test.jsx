@@ -79,13 +79,13 @@ describe('Enlace «Ver evolución temporal» desde la cohorte (RF-141)', () => {
     expect([...order].sort((a, b) => a - b)).toEqual(order);
   });
 
-  it('cinco accesos sin botones sueltos: el quinto ocupa la fila en dos columnas', () => {
+  it('seis accesos sin botones sueltos: dos columnas en tableta y tres en escritorio', () => {
     const html = render();
+    const nav = html.match(/<nav aria-labelledby="vistas-cohorte"[\s\S]*?<\/nav>/)[0];
 
-    expect(html).toContain('sm:grid-cols-2 xl:grid-cols-5');
-    expect(html).toMatch(
-      /sm:max-xl:col-span-2"[^>]*>.*?Ver evolución temporal/s,
-    );
+    expect(nav).toContain('sm:grid-cols-2 xl:grid-cols-3');
+    expect(nav.match(/<a /g)).toHaveLength(6);
+    expect(nav).not.toContain('col-span');
   });
 
   it('no aparece sin cohorte', () => {

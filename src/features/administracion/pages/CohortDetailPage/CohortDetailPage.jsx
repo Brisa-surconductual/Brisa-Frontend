@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   BarChart3,
   BellRing,
+  Siren,
   TrendingUp,
   BookOpen,
   CalendarRange,
@@ -36,6 +37,7 @@ import {
   getCohortNarrativePath,
   getCohortEvolutionPath,
   getCohortNotificationsPath,
+  getCohortPendingAlertsPath,
   getCohortTrackingPath,
 } from '../../utils/cohortRoutes.js';
 
@@ -210,9 +212,9 @@ function CohortDetail() {
       )}
 
       {isIntegrationPending && (
-        <CohortNotice tone="info" icon={PlugZap} title="Integración pendiente" role="status">
-          La consulta de participantes todavía no está conectada al servidor.
-          Cuando se integre, aquí aparecerán los participantes de la cohorte.
+        <CohortNotice tone="info" icon={PlugZap} title="Información aún no disponible" role="status">
+          La consulta de participantes todavía no está disponible. Aquí
+          aparecerán los participantes de la cohorte cuando lo esté.
         </CohortNotice>
       )}
 
@@ -311,7 +313,7 @@ function CohortDetail() {
                   Vistas de la cohorte
                 </h3>
 
-                <div className="grid grid-cols-1 gap-[var(--space-3)] sm:grid-cols-2 xl:grid-cols-5">
+                <div className="grid grid-cols-1 gap-[var(--space-3)] sm:grid-cols-2 xl:grid-cols-3">
                   {/* Indicadores de seguimiento (RF-142): otra consulta, otra fuente. */}
                   <Link
                     to={getCohortTrackingPath(cohort.id)}
@@ -352,14 +354,23 @@ function CohortDetail() {
                     <span className="sr-only"> de {title}</span>
                   </Link>
 
-                  {/* Evolución temporal por unidad del cronograma (RF-141). En dos
-                      columnas ocupa la fila completa para no quedar suelto. */}
+                  {/* Evolución temporal por unidad del cronograma (RF-141). */}
                   <Link
                     to={getCohortEvolutionPath(cohort.id)}
-                    className="inline-flex min-h-[44px] w-full items-center gap-[var(--space-2)] rounded-[var(--radius-md)] border border-[var(--surface-border)] bg-[var(--surface-card)] px-[var(--space-4)] py-[var(--space-2)] text-left text-[length:var(--font-size-sm)] leading-[var(--line-height-tight)] font-bold text-[var(--brand-600)] no-underline transition-colors duration-150 hover:bg-[var(--surface-hover)] motion-reduce:transition-none sm:max-xl:col-span-2"
+                    className="inline-flex min-h-[44px] w-full items-center gap-[var(--space-2)] rounded-[var(--radius-md)] border border-[var(--surface-border)] bg-[var(--surface-card)] px-[var(--space-4)] py-[var(--space-2)] text-left text-[length:var(--font-size-sm)] leading-[var(--line-height-tight)] font-bold text-[var(--brand-600)] no-underline transition-colors duration-150 hover:bg-[var(--surface-hover)] motion-reduce:transition-none"
                   >
                     <TrendingUp size={16} strokeWidth={1.8} className="shrink-0" aria-hidden="true" />
                     Ver evolución temporal
+                    <span className="sr-only"> de {title}</span>
+                  </Link>
+
+                  {/* Alertas pendientes y su atención (RF-146, RF-147): fuente propia. */}
+                  <Link
+                    to={getCohortPendingAlertsPath(cohort.id)}
+                    className="inline-flex min-h-[44px] w-full items-center gap-[var(--space-2)] rounded-[var(--radius-md)] border border-[var(--surface-border)] bg-[var(--surface-card)] px-[var(--space-4)] py-[var(--space-2)] text-left text-[length:var(--font-size-sm)] leading-[var(--line-height-tight)] font-bold text-[var(--brand-600)] no-underline transition-colors duration-150 hover:bg-[var(--surface-hover)] motion-reduce:transition-none"
+                  >
+                    <Siren size={16} strokeWidth={1.8} className="shrink-0" aria-hidden="true" />
+                    Ver alertas pendientes
                     <span className="sr-only"> de {title}</span>
                   </Link>
                 </div>

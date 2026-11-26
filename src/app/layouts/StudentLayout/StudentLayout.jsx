@@ -17,7 +17,7 @@ const BOTTOM_BAR_HEIGHT = 'h-[64px]';
 
 /*
  * Navegación en el encabezado (tableta y escritorio): enlaces en
- * píldora. Con dos destinos reales una barra lateral sobraría.
+ * píldora. Con tres destinos reales una barra lateral sobraría.
  */
 function StudentTopNav({ activeSection }) {
   return (
@@ -31,7 +31,7 @@ function StudentTopNav({ activeSection }) {
               <Link
                 to={to}
                 aria-current={isActive ? 'page' : undefined}
-                className={`inline-flex min-h-[40px] items-center gap-[var(--space-2)] rounded-[var(--radius-full)] px-[var(--space-4)] text-[length:var(--font-size-sm)] no-underline transition-colors duration-150 motion-reduce:transition-none ${
+                className={`inline-flex min-h-[40px] items-center gap-[var(--space-2)] rounded-[var(--radius-full)] px-[var(--space-4)] text-[length:var(--font-size-sm)] no-underline transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-600)] motion-reduce:transition-none ${
                   isActive
                     ? 'bg-[var(--surface-card)] font-bold text-[var(--brand-700)] shadow-[var(--shadow-sm)]'
                     : 'font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
@@ -60,7 +60,7 @@ function StudentBottomBar({ activeSection }) {
       data-sos-limite="inferior"
       className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--surface-border)] bg-[var(--surface-card)] pb-[env(safe-area-inset-bottom)] md:hidden"
     >
-      <ul className={`m-0 grid list-none grid-cols-2 p-0 ${BOTTOM_BAR_HEIGHT}`}>
+      <ul className={`m-0 grid list-none grid-cols-3 p-0 ${BOTTOM_BAR_HEIGHT}`}>
         {STUDENT_NAV_ITEMS.map(({ id, label, shortLabel, Icon, to }) => {
           const isActive = id === activeSection;
 
@@ -70,7 +70,7 @@ function StudentBottomBar({ activeSection }) {
                 to={to}
                 aria-current={isActive ? 'page' : undefined}
                 aria-label={label}
-                className={`relative flex flex-1 flex-col items-center justify-center gap-[2px] text-[length:var(--font-size-xs)] no-underline ${
+                className={`relative flex flex-1 flex-col items-center justify-center gap-[2px] text-[length:var(--font-size-xs)] no-underline focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-[var(--brand-600)] ${
                   isActive
                     ? 'font-bold text-[var(--brand-700)] before:absolute before:top-0 before:h-[3px] before:w-[32px] before:rounded-b-[var(--radius-full)] before:bg-[var(--brand-500)]'
                     : 'font-semibold text-[var(--text-muted)]'

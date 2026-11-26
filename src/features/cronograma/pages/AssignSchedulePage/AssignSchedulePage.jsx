@@ -20,17 +20,8 @@ import { SearchableUserSelect } from '../../components/SearchableUserSelect/Sear
 
 import { assignScheduleToUser } from '../../api/cronograma/assingSchuldeToUser.jsx';
 import { listSchedule } from '../../api/cronograma/listSchedule.jsx';
+import { getApiErrorMessage } from '@/features/cronograma/utils/apiErrorMessage.js';
 
-function getApiErrorMessage(error, fallbackMessage) {
-  if (error?.response?.data?.message) {
-    const msg = error.response.data.message;
-    return Array.isArray(msg) ? msg.join(', ') : msg; 
-  }
-  if (error?.message) {
-    return error.message;
-  }
-  return fallbackMessage;
-}
 
 export function AssignSchedulePage() {
   const navigate = useNavigate();
@@ -53,7 +44,7 @@ export function AssignSchedulePage() {
       try {
         const data = await listSchedule();
         setSchedules(data || []);
-      } catch (error) {
+      } catch {
         setLoadError('No se pudieron cargar los cronogramas disponibles.');
       } finally {
         setLoading(false);

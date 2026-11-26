@@ -23,7 +23,6 @@ const BASE = Object.freeze({
   freshness: { stale: false },
   isLoading: false,
   isDemo: false,
-  isIntegrationPending: false,
   headingRef: { current: null },
   retry: vi.fn(),
 });
@@ -33,9 +32,9 @@ const SESSIONS_HREF = 'href="/app/administrativo/chat/participantes/P-1A2B3C4D/s
 function render(changes) {
   hook.value = { ...BASE, ...changes };
   return renderToStaticMarkup(
-    <MemoryRouter initialEntries={['/app/administrativo/cohortes/c-1/seguimiento/seg-0001']}>
+    <MemoryRouter initialEntries={['/app/administrativo/cohortes/c-1/seguimiento/P-1A2B3C4D']}>
       <Routes>
-        <Route path="/app/administrativo/cohortes/:idCohorte/seguimiento/:referencia" element={<ParticipantTrackingProfilePage />} />
+        <Route path="/app/administrativo/cohortes/:idCohorte/seguimiento/:codigoParticipante" element={<ParticipantTrackingProfilePage />} />
       </Routes>
     </MemoryRouter>,
   );
@@ -52,7 +51,6 @@ describe('Ficha RF-128 → sesiones del chat (RF-38)', () => {
 
   it.each([
     ['en la demostración', { isDemo: true }],
-    ['con la integración pendiente', { isIntegrationPending: true }],
     ['con un código que no es A7', { code: 'PART-0015' }],
     ['sin participante confirmado (acceso denegado)', { status: PROFILE_STATUS.DENIED }],
     ['mientras carga', { isLoading: true }],
@@ -61,6 +59,6 @@ describe('Ficha RF-128 → sesiones del chat (RF-38)', () => {
   });
 
   it('nunca usa la referencia opaca de la ruta como código', () => {
-    expect(render({ code: null })).not.toContain('seg-0001/sesiones');
+    expect(render({ code: null })).not.toContain('/sesiones');
   });
 });

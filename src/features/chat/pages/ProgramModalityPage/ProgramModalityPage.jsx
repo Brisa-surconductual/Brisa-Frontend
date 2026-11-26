@@ -52,11 +52,11 @@ export function ProgramModalityPage({
           <ChatAdminNotice
             tone="warning"
             icon={PlugZap}
-            title="Integración pendiente"
+            title="Información no disponible"
           >
-            La consulta de elegibilidad y la habilitación de la modalidad aún no
-            están conectadas al backend. No se muestran cifras ni se puede
-            cambiar la modalidad desde esta pantalla.
+            Todavía no hay información de elegibilidad para mostrar. No se
+            muestran cifras ni se puede cambiar la modalidad desde esta
+            pantalla.
           </ChatAdminNotice>
         )}
 

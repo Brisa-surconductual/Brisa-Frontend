@@ -32,6 +32,9 @@ export { ParticipantSessionsPage } from './pages/ParticipantSessionsPage/index.j
 
 export { SessionTraceabilityPage } from './pages/SessionTraceabilityPage/index.js';
 
+// Bandeja de alertas pendientes y su atención (RF-146, RF-147).
+export { PendingAlertsPage } from './pages/PendingAlertsPage/index.js';
+
 // Panel principal de la cohorte activa (RF-140), montado en la pantalla
 // de aterrizaje administrativa por app/router.
 

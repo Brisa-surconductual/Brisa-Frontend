@@ -90,7 +90,8 @@ describe('Historial en modo de demostración', () => {
     expect(result.alerts.map(({ generatedAt }) => generatedAt.slice(0, 10))).toEqual([
       '2026-02-10', '2026-02-18', '2026-02-24', '2026-03-03', '2026-03-05', '2026-03-07',
     ]);
-    expect(new Set(result.alerts.map(({ status }) => status))).toEqual(new Set(Object.values(ALERT_RESOLUTION_STATUS)));
+    const { ACTIVE, IN_REVIEW, RESOLVED, DISMISSED } = ALERT_RESOLUTION_STATUS;
+    expect(new Set(result.alerts.map(({ status }) => status))).toEqual(new Set([ACTIVE, IN_REVIEW, RESOLVED, DISMISSED]));
     expect(result.alerts[0]).toMatchObject({ status: ALERT_RESOLUTION_STATUS.RESOLVED, resolvedAt: null });
   });
 
@@ -123,11 +124,12 @@ describe('Historial en modo de demostración', () => {
 describe('Coherencia entre alertas activas (RF-128), listado (RF-142) e historial (RF-129)', () => {
   it.each(['demo-cohorte-b', 'demo-cohorte-c'])('%s: las ACTIVA del historial son las del resumen y del listado', async (cohortId) => {
     enableDemo();
-    const list = interpretTrackingResponse(await listCohortTracking(cohortId, { ...INITIAL_TRACKING_QUERY, limit: 50 }), cohortId);
+    const list = interpretTrackingResponse(await listCohortTracking(cohortId, { ...INITIAL_TRACKING_QUERY, limit: 50 }));
 
     for (const entry of list.entries) {
-      const profile = interpretProfileResponse(await getParticipantTrackingProfile(cohortId, entry.reference), { cohortId, reference: entry.reference });
-      const result = await history(cohortId, entry.reference);
+      // La ficha se abre por código; el historial de la demo lo acepta también.
+      const profile = interpretProfileResponse(await getParticipantTrackingProfile(cohortId, entry.code), { code: entry.code });
+      const result = await history(cohortId, entry.code);
       const alerts = result.alerts;
       const active = alerts.filter(({ status }) => status === ALERT_RESOLUTION_STATUS.ACTIVE);
 
@@ -202,7 +204,7 @@ describe('Escenarios del historial (VITE_M08_ALERT_HISTORY_SCENARIO)', () => {
     enableDemo('error');
     vi.stubEnv('VITE_M08_PROFILE_SCENARIO', 'perfil');
 
-    expect((await getParticipantTrackingProfile(COHORT, REF_4)).access).toBe(TRACKING_ACCESS.GRANTED);
+    expect((await getParticipantTrackingProfile(COHORT, 'PART-0004')).modo_consulta).toBe('SOLO_LECTURA');
 
     vi.stubEnv('VITE_M08_ALERT_HISTORY_SCENARIO', 'historial');
     vi.stubEnv('VITE_M08_PROFILE_SCENARIO', 'no-disponible');

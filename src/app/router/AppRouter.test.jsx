@@ -94,11 +94,12 @@ const ADMIN_PATHS = Object.freeze([
   '/app/administrativo/cohortes/co-1',
   '/app/administrativo/cohortes/co-1/editar',
   '/app/administrativo/cohortes/co-1/seguimiento',
-  '/app/administrativo/cohortes/co-1/seguimiento/ref-1',
+  '/app/administrativo/cohortes/co-1/seguimiento/P-7F3A91C2',
   '/app/administrativo/cohortes/co-1/vista-agregada',
   '/app/administrativo/cohortes/co-1/vista-narrativa',
   '/app/administrativo/cohortes/co-1/vista-notificaciones',
   '/app/administrativo/cohortes/co-1/evolucion',
+  '/app/administrativo/cohortes/co-1/alertas/pendientes',
   '/app/administrativo/auditoria',
   '/app/administrativo/chat/modalidad',
   '/app/administrativo/chat/grupal',
@@ -279,12 +280,12 @@ describe('Rutas administrativas protegidas', () => {
     expect(ADMIN_NAV_ITEMS.map(({ label }) => label)).not.toContain('Evolución temporal');
   });
 
-  it('la ficha individual (RF-128) monta su página con idCohorte y referencia, y mantiene Cohortes activa', () => {
-    const leaf = match('/app/administrativo/cohortes/demo-cohorte-b/seguimiento/seg-k7m2q9').at(-1);
+  it('la ficha individual (RF-128) monta su página con idCohorte y el código del participante, y mantiene Cohortes activa', () => {
+    const leaf = match('/app/administrativo/cohortes/demo-cohorte-b/seguimiento/P-7F3A91C2').at(-1);
 
     expect(leaf.route.element.type).toBe(ParticipantTrackingProfilePage);
-    expect(leaf.params).toEqual({ idCohorte: 'demo-cohorte-b', referencia: 'seg-k7m2q9' });
-    expect(getActiveAdminSection('/app/administrativo/cohortes/demo-cohorte-b/seguimiento/seg-k7m2q9')).toBe(
+    expect(leaf.params).toEqual({ idCohorte: 'demo-cohorte-b', codigoParticipante: 'P-7F3A91C2' });
+    expect(getActiveAdminSection('/app/administrativo/cohortes/demo-cohorte-b/seguimiento/P-7F3A91C2')).toBe(
       ADMIN_SECTION.COHORTES,
     );
     expect(match('/app/administrativo/cohortes/demo-cohorte-b/seguimiento').at(-1).route.element.type).toBe(
@@ -438,6 +439,7 @@ describe('Rutas sin cambios', () => {
 
   it.each([
     '/',
+    '/splash',
     '/login',
     '/recuperar',
     '/recuperar/nueva',
@@ -454,6 +456,7 @@ describe('Rutas sin cambios', () => {
     expect(leafPaths(ROUTES).sort()).toEqual(
       [
         '/',
+        '/splash',
         '/login',
         '/recuperar',
         '/recuperar/nueva',
@@ -475,7 +478,7 @@ describe('Rutas sin cambios', () => {
         ...ADMIN_PATHS.map((path) =>
           path
             .replace(/\/cohortes\/co-1(?=\/|$)/, '/cohortes/:idCohorte')
-            .replace('/seguimiento/ref-1', '/seguimiento/:referencia')
+            .replace('/seguimiento/P-7F3A91C2', '/seguimiento/:codigoParticipante')
             .replace('/u-1/informacion', '/:participantId/informacion')
             .replace('/c-1/', '/:contentId/')
             .replace('/s-1/unidades/u-1', '/:scheduleId/unidades/:unitId')

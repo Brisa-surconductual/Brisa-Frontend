@@ -31,10 +31,11 @@ const enableButton = (html) =>
   )?.[0];
 
 describe('Modalidad del chat', () => {
-  it('tal como la monta el router, declara la integración pendiente sin cifras ni habilitación', () => {
+  it('sin datos de elegibilidad lo indica, sin cifras ni habilitación', () => {
     const html = render(<ProgramModalityPage />);
 
-    expect(html).toContain('Integración pendiente');
+    expect(html).toContain('Información no disponible');
+    expect(html).not.toMatch(/backend|Integración pendiente/);
     expect(html).toContain('Sin información del programa');
     expect(html).not.toContain('Modalidad conversacional');
     expect(html).not.toContain('role="progressbar"');
@@ -64,11 +65,11 @@ describe('Modalidad del chat', () => {
       /role="status"[^>]*>Consultando elegibilidad del programa/,
     );
     expect(loading).toContain('aria-busy="true"');
-    expect(loading).not.toContain('Integración pendiente');
+    expect(loading).not.toContain('Información no disponible');
     expect(failed).toMatch(
       /role="alert"[\s\S]*No fue posible consultar la elegibilidad del programa/,
     );
-    expect(failed).not.toContain('Integración pendiente');
+    expect(failed).not.toContain('Información no disponible');
   });
 
   it('con datos elegibles y acción integrada conserva las condiciones y habilita el botón', () => {
@@ -115,10 +116,24 @@ describe('Modalidad del chat', () => {
 });
 
 describe('Árboles conversacionales', () => {
-  it('tal como la monta el router, no inventa árboles y declara la integración pendiente', () => {
+  it('distingue datos no recibidos (null) de una lista vacía confirmada ([])', () => {
+    const notReceived = render(<PersonalizedTreesPage trees={null} />, TREES);
+    const empty = render(<PersonalizedTreesPage trees={[]} />, TREES);
+
+    expect(notReceived).toContain(
+      'No se recibió la información de los árboles conversacionales.',
+    );
+    expect(notReceived).not.toContain('Sin versiones');
+    expect(empty).not.toContain('No se recibió la información');
+    expect(empty).not.toContain('Información no disponible');
+    expect(empty).toContain('Sin versiones');
+  });
+
+  it('sin datos no inventa árboles y lo indica', () => {
     const html = render(<PersonalizedTreesPage />, TREES);
 
-    expect(html).toContain('Integración pendiente');
+    expect(html).toContain('Información no disponible');
+    expect(html).not.toMatch(/backend|Integración pendiente/);
     expect(html).toContain(
       'Los árboles estarán disponibles cuando se consulte la información del',
     );
@@ -162,7 +177,7 @@ describe('Árboles conversacionales', () => {
     ];
     const html = render(<PersonalizedTreesPage trees={trees} />, TREES);
 
-    expect(html).not.toContain('Integración pendiente');
+    expect(html).not.toContain('Información no disponible');
     expect(html.match(/<li/g)).toHaveLength(4);
     expect(html).toContain('Árbol v2');
     expect(html).not.toContain('Árbol v1');

@@ -219,7 +219,7 @@ describe('Aislamiento y autorización independientes', () => {
 
     expect((await narrativeOf(REF(4))).outcome).toBe(SECTION_OUTCOME.DENIED);
     await expect(getParticipantNotificationInteraction(COHORT, REF(4))).rejects.toThrow();
-    expect((await getParticipantTrackingProfile(COHORT, REF(4))).access).toBe(TRACKING_ACCESS.GRANTED);
+    expect((await getParticipantTrackingProfile(COHORT, 'PART-0004')).modo_consulta).toBe('SOLO_LECTURA');
     expect((await getParticipantAlertHistory(COHORT, REF(4))).access).toBe(TRACKING_ACCESS.GRANTED);
 
     vi.stubEnv('VITE_M08_NARRATIVE_SCENARIO', 'narrativa');

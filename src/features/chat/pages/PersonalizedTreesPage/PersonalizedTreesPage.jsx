@@ -31,10 +31,10 @@ export function PersonalizedTreesPage({
           <ChatAdminNotice
             tone="warning"
             icon={PlugZap}
-            title="Integración pendiente"
+            title="Información no disponible"
           >
-            La consulta de árboles conversacionales aún no está conectada al
-            backend. Esta pantalla no muestra árboles de ejemplo.
+            No se recibió la información de los árboles conversacionales. Esta
+            pantalla no muestra árboles de ejemplo.
           </ChatAdminNotice>
         )}
 

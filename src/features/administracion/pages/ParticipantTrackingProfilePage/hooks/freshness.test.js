@@ -60,19 +60,24 @@ describe('Ficha (RF-128, M05)', () => {
   const PROFILE = 3;
   const STATUS = 4;
   const FRESHNESS = 7;
+  const PARTICIPANT = 'P-7F3A91C2';
   const granted = (extra = {}) => ({
-    access: TRACKING_ACCESS.GRANTED,
-    ...REQUEST,
-    code: 'X-1',
-    profile: { progress: 1, adherence: 2, trend: 'ESTABLE', activeAlerts: [], updatedAt: AT },
+    codigo_participante: PARTICIPANT,
+    indicadores_adherencia: { tasa_adherencia: 0.4, dias_con_registro: 10 },
+    indicadores_progreso: { nivel_progreso: 'INICIAL', unidades_completadas: 1 },
+    tendencia_consumo: 'ESTABLE',
+    alertas_activas: [],
+    fecha_actualizacion: AT,
+    modo_consulta: 'SOLO_LECTURA',
     ...extra,
   });
   const source = (response) => ({
-    getMode: () => TRACKING_SOURCE_MODE.DEMO,
+    getMode: () => TRACKING_SOURCE_MODE.API,
     getCohort: vi.fn().mockResolvedValue(null),
     getProfile: typeof response === 'function' ? response : vi.fn().mockResolvedValue(response),
   });
-  const load = (response) => run(useParticipantTrackingProfile, { source: source(response) }, { effect: 2, loading: 5 });
+  const load = (response) =>
+    run(useParticipantTrackingProfile, { participantCode: PARTICIPANT, source: source(response) }, { effect: 2, loading: 5 });
 
   it('actual: datos sin marca', async () => {
     await load(granted());
@@ -89,12 +94,12 @@ describe('Ficha (RF-128, M05)', () => {
     expect(lastValue(FRESHNESS)).toEqual({ state: FRESHNESS_STATE.STALE, lastAvailableAt: AT });
   });
 
-  it('sin perfil y desactualizado: conserva el código y la marca', async () => {
-    await load(granted({ ...STALE, profile: null }));
+  it('sin perfil (204, sin cuerpo): conserva el código y no hay marca', async () => {
+    await load(null);
 
     expect(lastValue(STATUS)).toBe(PROFILE_STATUS.NO_PROFILE);
-    expect(lastValue(CODE)).toBe('X-1');
-    expect(lastValue(FRESHNESS).state).toBe(FRESHNESS_STATE.STALE);
+    expect(lastValue(CODE)).toBe(PARTICIPANT);
+    expect(lastValue(FRESHNESS)).toEqual(CURRENT_FRESHNESS);
   });
 
   it('desactualizado sin fecha confiable: no muestra código ni indicadores', async () => {
@@ -112,23 +117,23 @@ describe('Ficha (RF-128, M05)', () => {
     expect(lastValue(PROFILE)).toBeNull();
   });
 
-  it('denegado y degradado: los datos antiguos no eluden la denegación', async () => {
-    await load(granted({ ...STALE, access: TRACKING_ACCESS.DENIED }));
+  it('denegado (403): sin datos antiguos que eludan la denegación', async () => {
+    await load(vi.fn().mockRejectedValue({ status: 403, codigo: 'SIN_PERMISO_INDIVIDUAL' }));
 
     expect(lastValue(STATUS)).toBe(PROFILE_STATUS.DENIED);
     expect(lastValue(PROFILE)).toBeNull();
     expect(lastValue(FRESHNESS)).toEqual(CURRENT_FRESHNESS);
   });
 
-  it('inconsistente y degradado: bloqueado', async () => {
-    await load(granted({ ...STALE, reference: 'ref-2' }));
+  it('de otro participante y degradado: bloqueado', async () => {
+    await load(granted({ ...STALE, codigo_participante: 'P-00000001' }));
 
     expect(lastValue(STATUS)).toBe(PROFILE_STATUS.INCONSISTENT);
     expect(lastValue(FRESHNESS)).toEqual(CURRENT_FRESHNESS);
   });
 
   it('no disponible sin datos anteriores (FA2): error propio, sin datos ficticios', async () => {
-    await load(vi.fn().mockRejectedValue(Object.assign(new Error('x'), { code: 'MODULO_NO_DISPONIBLE' })));
+    await load(vi.fn().mockRejectedValue({ status: 503, codigo: 'M05_NO_DISPONIBLE' }));
 
     expect(lastValue(STATUS)).toBe(PROFILE_STATUS.UNAVAILABLE);
     expect(lastValue(PROFILE)).toBeNull();

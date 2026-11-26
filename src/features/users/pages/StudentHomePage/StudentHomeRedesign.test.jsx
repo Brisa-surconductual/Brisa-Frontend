@@ -8,7 +8,7 @@ import { ModuleGrid } from './components/ModuleGrid.jsx';
 import { RegistrationStatusNotice } from './components/RegistrationStatusNotice.jsx';
 import { useStudentHomePage } from './hooks/useStudentHomePage.js';
 import { StudentHomePage } from './StudentHomePage.jsx';
-import { STUDENT_MODULES } from './data/studentModules.js';
+import { STUDENT_TOOL_MODULES } from './data/studentModules.js';
 
 const auth = vi.hoisted(() => ({ value: {} }));
 
@@ -21,6 +21,10 @@ vi.mock('react-router-dom', async (importOriginal) => ({
 
 vi.mock('@/features/cronograma/components/CurrentContentAccessCard/index.js', () => ({
   CurrentContentAccessCard: () => <section>tarjeta-contenido-actual</section>,
+}));
+
+vi.mock('@/features/cronograma/components/AssignedScheduleSummary/index.js', () => ({
+  AssignedScheduleSummary: () => <div>resumen-cronograma</div>,
 }));
 
 const session = (extra) => ({
@@ -109,7 +113,7 @@ describe('Inicio del estudiante: datos reales de la sesión', () => {
   });
 });
 
-describe('Módulos del programa (CP-12)', () => {
+describe('Otras herramientas para ti (CP-12)', () => {
   const renderGrid = () =>
     renderToStaticMarkup(
       <MemoryRouter>
@@ -117,47 +121,67 @@ describe('Módulos del programa (CP-12)', () => {
       </MemoryRouter>,
     );
 
-  it('conserva catálogo, orden, nombres, descripciones y versión', () => {
+  it('conserva Diario, Progreso y Mascota con orden, descripciones y versión', () => {
     const html = renderGrid();
-    const positions = STUDENT_MODULES.map(({ name }) => html.indexOf(`${name}</h3>`));
+    const positions = STUDENT_TOOL_MODULES.map(({ name }) => html.indexOf(`${name}</h3>`));
 
+    expect(STUDENT_TOOL_MODULES.map(({ name }) => name)).toEqual(['Diario', 'Progreso', 'Mascota']);
     expect(positions.every((position) => position >= 0)).toBe(true);
     expect(positions).toEqual([...positions].sort((a, b) => a - b));
-    for (const { description, release } of STUDENT_MODULES) {
+    for (const { description, release } of STUDENT_TOOL_MODULES) {
       expect(html).toContain(description);
-      expect(html).toContain(`Módulo ${release}`);
+      // `release` es interno: el código académico no se muestra.
+      expect(html).not.toContain(release);
     }
   });
 
-  it('el chat es la puerta de entrada al módulo y ya no dice próximamente', () => {
+  it('el chat no se repite en la cuadrícula', () => {
     const html = renderGrid();
-    const chatCard = html.slice(html.indexOf('<a '), html.indexOf('</a>'));
 
-    expect(chatCard).toContain('href="/app/estudiante/chat"');
-    expect(chatCard).toContain('Chat</h3>');
-    expect(chatCard).toContain('Abrir');
-    expect(chatCard).not.toContain('próximamente');
+    expect(html).not.toContain('Chat</h3>');
+    expect(html).not.toContain('href="/app/estudiante/chat"');
   });
 
-  it('los demás módulos siguen como tarjetas informativas, sin enlaces ni botones', () => {
+  it('las herramientas sin pantalla siguen como «Disponible próximamente», sin enlaces ni botones', () => {
     const html = renderGrid();
 
-    expect(html.match(/<a /g)).toHaveLength(1);
-    expect(html.match(/Disponible próximamente/g)).toHaveLength(STUDENT_MODULES.length - 1);
+    expect(html).not.toContain('<a ');
+    expect(html.match(/Disponible próximamente/g)).toHaveLength(3);
     expect(html).not.toContain('<button');
+  });
+
+  it('una herramienta con pantalla real se muestra como enlace', () => {
+    const html = renderToStaticMarkup(
+      <MemoryRouter>
+        <ModuleGrid
+          modules={[{ id: 'DIARIO', name: 'Diario', description: 'd', release: 'M02', to: '/x' }]}
+        />
+      </MemoryRouter>,
+    );
+
+    expect(html).toContain('href="/x"');
+    expect(html).not.toContain('próximamente');
   });
 });
 
 describe('Estructura del inicio (CP-20)', () => {
-  it('un solo h1, módulos bajo h2 y sin <main> propio', () => {
+  it('un solo h1, secciones bajo h2 en el orden acordado y sin <main> propio', () => {
     const html = renderToStaticMarkup(
-    <MemoryRouter>
-      <StudentHomePage />
-    </MemoryRouter>,
-  );
+      <MemoryRouter>
+        <StudentHomePage />
+      </MemoryRouter>,
+    );
+    const order = [
+      'Hola, ana.qa</h1>',
+      'id="espacio-terapeutico-titulo"',
+      'id="estado-programa-titulo"',
+      'tarjeta-contenido-actual',
+      'id="otras-herramientas-titulo"',
+    ].map((marker) => html.indexOf(marker));
 
     expect(html.match(/<h1/g)).toHaveLength(1);
-    expect(html).toMatch(/<h2 id="modulos-programa-titulo"/);
+    expect(order.every((position) => position >= 0)).toBe(true);
+    expect(order).toEqual([...order].sort((a, b) => a - b));
     expect(html).not.toContain('<main');
   });
 });

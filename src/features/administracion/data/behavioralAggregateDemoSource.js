@@ -29,7 +29,7 @@ const pause = () =>
 
 const MESSAGE = Object.freeze({
   NOT_CONSOLIDATED:
-    'La cohorte activa no cuenta todavía con indicadores consolidados. La vista se mostrará cuando M05 complete su primer ciclo de consolidación.',
+    'La cohorte activa no cuenta todavía con indicadores consolidados. La vista se mostrará cuando se complete su primer ciclo de consolidación.',
   UNAVAILABLE:
     'El módulo de seguimiento no está disponible en este momento. Se mostrará la última vista agregada disponible, si existe, marcada como desactualizada.',
 });

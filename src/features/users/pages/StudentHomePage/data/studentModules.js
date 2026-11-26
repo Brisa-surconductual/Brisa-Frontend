@@ -9,7 +9,7 @@ export const STUDENT_MODULE = Object.freeze({
  * Catálogo de módulos del programa. Los que traen `to` ya tienen
  * pantalla de entrada y se muestran como enlace; el resto aún no
  * está construido: `release` indica el módulo del proyecto que
- * lo habilitará.
+ * lo habilitará. Es un dato interno del equipo: no se muestra.
  */
 export const STUDENT_MODULES = Object.freeze([
   Object.freeze({
@@ -41,3 +41,12 @@ export const STUDENT_MODULES = Object.freeze([
     release: 'M06',
   }),
 ]);
+
+/*
+ * «Otras herramientas para ti»: el chat tiene su propia tarjeta
+ * principal en el inicio y no se repite en la cuadrícula. Cada
+ * herramienta conserva su disponibilidad real (`to`).
+ */
+export const STUDENT_TOOL_MODULES = Object.freeze(
+  STUDENT_MODULES.filter(({ id }) => id !== STUDENT_MODULE.CHAT),
+);

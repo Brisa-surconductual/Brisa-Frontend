@@ -13,19 +13,8 @@ import { ConfirmationDialog } from '@/shared/components/ui/ConfirmationDialog/in
 import { eliminarContenido } from '@/features/cronograma/api/contenido/eliminarContenido.jsx';
 import { obtenerCatalogoContenidos } from '@/features/cronograma/api/contenido/obtenerCatalogoContenidos.jsx';
 import { mapCatalogContent } from '../../utils/contentPreparation.js';
+import { getApiErrorMessage } from '@/features/cronograma/utils/apiErrorMessage.js';
 
-function getApiErrorMessage(error, fallbackMessage) {
-  if (error?.response?.data?.message) {
-    const msg = error.response.data.message;
-    return Array.isArray(msg) ? msg.join(', ') : msg; 
-  }
-  
-  if (error?.message) {
-    return error.message;
-  }
-
-  return fallbackMessage;
-}
 
 const EMPTY_CONTENTS = Object.freeze([]);
 

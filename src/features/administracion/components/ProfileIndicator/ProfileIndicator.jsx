@@ -1,20 +1,12 @@
-import { INDICATOR_STATE } from '../../types/participantTracking.js';
-
 /*
  * Indicador principal de la ficha (RF-128): progreso o adherencia, tal
- * como lo reporta M05. Muestra el número recibido SIN convertirlo a
- * porcentaje ni añadir unidades, porque el contrato aún no las confirma.
- * «No calculable» y «No disponible» se distinguen siempre con texto.
+ * como lo reporta M05. Recibe el valor ya formateado (nivel como
+ * categoría, adherencia en %) o `null` si no está disponible, y un dato
+ * complementario opcional (unidades completadas, días con registro). No
+ * calcula ni infiere indicadores.
  */
-const NUMBER = new Intl.NumberFormat('es-CO', { maximumFractionDigits: 2 });
-
-const STATE_LABEL = Object.freeze({
-  [INDICATOR_STATE.NOT_AVAILABLE]: 'No disponible',
-  [INDICATOR_STATE.NOT_CALCULABLE]: 'No calculable',
-});
-
-export function ProfileIndicator({ icon: Icon, label, description, indicator }) {
-  const available = indicator?.state === INDICATOR_STATE.AVAILABLE;
+export function ProfileIndicator({ icon: Icon, label, value, detail = null, description }) {
+  const available = value !== null && value !== undefined;
 
   return (
     <div className="flex flex-col gap-[var(--space-2)] rounded-[var(--radius-xl)] border border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-5)] shadow-[var(--shadow-sm)]">
@@ -26,12 +18,13 @@ export function ProfileIndicator({ icon: Icon, label, description, indicator }) 
         <span
           className={
             available
-              ? 'text-[length:var(--font-size-3xl)] leading-[var(--line-height-tight)] font-extrabold text-[var(--text-primary)] tabular-nums'
+              ? 'text-[length:var(--font-size-2xl)] leading-[var(--line-height-tight)] font-extrabold text-[var(--text-primary)] tabular-nums'
               : 'text-[length:var(--font-size-lg)] font-bold text-[var(--text-secondary)]'
           }
         >
-          {available ? NUMBER.format(indicator.value) : STATE_LABEL[indicator?.state] ?? STATE_LABEL[INDICATOR_STATE.NOT_AVAILABLE]}
+          {available ? value : 'No disponible'}
         </span>
+        {detail && <span className="text-[length:var(--font-size-sm)] font-semibold text-[var(--text-secondary)] tabular-nums">{detail}</span>}
         <span className="text-[length:var(--font-size-xs)] text-[var(--text-muted)]">{description}</span>
       </dd>
     </div>

@@ -9,6 +9,8 @@ import {
   useNavigate,
 } from 'react-router-dom';
 
+import { getApiErrorText } from '../../../services/apiErrorText.js';
+
 import { useAuth } from '@/app/providers/index.js';
 
 import { registroUsuario } from '../../../api/resgistratio.jsx';
@@ -148,9 +150,10 @@ export function useReviewPage() {
         const { error } = result;
 
         setSubmitError(
-          error?.response?.data?.message ??
-            error?.response?.data?.error ??
+          getApiErrorText(
+            error,
             'No pudimos confirmar el registro. Intenta nuevamente.',
+          ),
         );
         return;
       }

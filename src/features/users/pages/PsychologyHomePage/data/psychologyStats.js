@@ -44,9 +44,9 @@ export const PROGRAM_STATS = Object.freeze([
 
 /*
  * Accesos del dashboard: solo rutas existentes. No se enlaza
- * Población porque aún muestra datos de ejemplo. El chat se
- * identifica como pendiente de integración: su pantalla todavía
- * no recibe datos del backend.
+ * Población porque aún muestra datos de ejemplo. La modalidad
+ * del chat ya consulta el backend (ProgramModalityScreen): no
+ * lleva aviso de integración.
  */
 export const DASHBOARD_SHORTCUTS = Object.freeze([
   Object.freeze({
@@ -72,7 +72,6 @@ export const DASHBOARD_SHORTCUTS = Object.freeze([
     title: 'Modalidad del chat',
     description: 'Configuración de la modalidad del programa.',
     to: '/app/administrativo/chat/modalidad',
-    status: 'Integración pendiente',
   }),
 ]);
 

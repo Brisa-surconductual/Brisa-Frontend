@@ -4,7 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
 import { AlertHistoryList } from '../../components/AlertHistoryList/index.js';
 import { AlertResolutionBadge } from '../../components/AlertResolutionBadge/index.js';
-import { ALERT_HISTORY_STATUS, INDICATOR_STATE } from '../../types/participantTracking.js';
+import { ALERT_HISTORY_STATUS } from '../../types/participantTracking.js';
 import { ParticipantTrackingProfilePage } from './ParticipantTrackingProfilePage.jsx';
 import { PROFILE_STATUS } from './hooks/useParticipantTrackingProfile.js';
 
@@ -41,8 +41,10 @@ const HISTORY = Object.freeze([
 ]);
 
 const PROFILE = Object.freeze({
-  progress: { state: INDICATOR_STATE.AVAILABLE, value: 21 },
-  adherence: { state: INDICATOR_STATE.AVAILABLE, value: 34 },
+  progressLevel: 'INICIAL',
+  completedUnits: 1,
+  adherence: 0.34,
+  daysWithRecord: 8,
   trend: 'NO_CALCULADA',
   activeAlerts: ACTIVE,
   updatedAt: '2026-03-09T06:00:00-05:00',
@@ -55,7 +57,6 @@ const PROFILE_STATE = Object.freeze({
   status: PROFILE_STATUS.READY,
   isLoading: false,
   isDemo: true,
-  isIntegrationPending: false,
   headingRef: { current: null },
   retry: vi.fn(),
 });
@@ -76,9 +77,9 @@ function render(profile = {}, history = {}) {
   hooks.profile = { ...PROFILE_STATE, ...profile };
   hooks.history = { ...HISTORY_STATE, ...history };
   return clean(renderToStaticMarkup(
-    <MemoryRouter initialEntries={['/app/administrativo/cohortes/c-1/seguimiento/ref-1']}>
+    <MemoryRouter initialEntries={['/app/administrativo/cohortes/c-1/seguimiento/PART-0001']}>
       <Routes>
-        <Route path="/app/administrativo/cohortes/:idCohorte/seguimiento/:referencia" element={<ParticipantTrackingProfilePage />} />
+        <Route path="/app/administrativo/cohortes/:idCohorte/seguimiento/:codigoParticipante" element={<ParticipantTrackingProfilePage />} />
       </Routes>
     </MemoryRouter>,
   ));
@@ -102,7 +103,7 @@ describe('Integración con la ficha (RF-128)', () => {
   it('consulta el historial de la misma cohorte y referencia, con el resumen para compararlo', () => {
     render();
 
-    expect(hooks.historyArgs).toEqual({ cohortId: 'c-1', reference: 'ref-1', enabled: true, activeAlerts: ACTIVE });
+    expect(hooks.historyArgs).toEqual({ cohortId: 'c-1', reference: 'PART-0001', enabled: true, activeAlerts: ACTIVE });
   });
 
   it('diferencia el resumen de activas del historial: este incluye resueltas, descartadas y en revisión', () => {
@@ -133,7 +134,7 @@ describe('Integración con la ficha (RF-128)', () => {
     ['inexistente', { status: PROFILE_STATUS.NOT_FOUND, profile: null, code: null }],
     ['fuera de la cohorte', { status: PROFILE_STATUS.OUTSIDE_COHORT, profile: null, code: null }],
     ['inconsistente', { status: PROFILE_STATUS.INCONSISTENT, profile: null, code: null }],
-    ['integración pendiente', { isIntegrationPending: true, isDemo: false, status: null, profile: null, code: null }],
+    ['en la API real (secciones aún no integradas)', { isDemo: false }],
   ])('ficha %s: no consulta el historial ni deja ningún registro visible', (_, profile) => {
     const html = render(profile);
 
@@ -193,13 +194,16 @@ describe('Estados de la sección', () => {
   it('solo consulta: sin botones, formularios ni enlaces nuevos; sin acciones sobre las alertas', () => {
     const html = render();
 
-    expect(html).not.toMatch(/<form|<input|<select|<textarea|<button/);
+    expect(html).not.toMatch(/<form|<input|<select|<textarea/);
+    // RF-145: el único botón es la exportación CSV, que solo lee.
+    expect((html.match(/<button[\s\S]*?<\/button>/g) ?? []).map((button) => textOf(button).trim()))
+      .toEqual(['Exportar CSV del historial de seguimiento']);
     expect(html.match(/<a /g)).toHaveLength(1);
     expect(textOf(html)).not.toMatch(/Marcar como atendida|Atender|Resolver|Descartar\b|Eliminar|Editar|Reabrir/);
   });
 
   it('no muestra datos personales, identificadores internos ni otros datos clínicos', () => {
-    expect(render()).not.toMatch(/@|uuid|alertId|demo-participante|ref-1"|diario|chat|craving \d|nivel/i);
+    expect(render()).not.toMatch(/@|uuid|alertId|demo-participante|seg-|diario|chat|craving \d|nivel(?! de progreso)/i);
   });
 });
 
@@ -213,8 +217,18 @@ describe('Registros del historial', () => {
     expect(html).toMatch(/^<ol/);
     expect(html.match(/<li\b/g)).toHaveLength(2);
     expect(html.match(/<h3/g)).toHaveLength(2);
-    expect(textOf(html)).toMatch(/Craving elevado .*Activa .*Generada: 24 de feb de 2026, 07:30 .*Fuente: RF-63/);
-    expect(textOf(html)).toMatch(/Inactividad .*Resuelta .*Fuente: RF-68/);
+    expect(textOf(html)).toMatch(/Craving elevado .*Activa .*Generada: 24 de feb de 2026, 07:30 .*Fuente: Detección de craving elevado/);
+    expect(textOf(html)).toMatch(/Inactividad .*Resuelta .*Fuente: Detección de inactividad/);
+    // El identificador del requerimiento no se presenta en lugar de la descripción.
+    expect(textOf(html)).not.toMatch(/RF-\d+/);
+  });
+
+  it('la presentación no altera la fuente original de los datos', () => {
+    const alerts = [alert({ source: 'RF-63' }), alert({})];
+
+    list(alerts);
+
+    expect(alerts.map(({ source }) => source)).toEqual(['RF-63', 'RF-68']);
   });
 
   it('fechas de generación y resolución en hora de Colombia', () => {
@@ -234,12 +248,14 @@ describe('Registros del historial', () => {
     expect(list([alert({ status: 'EN_REVISION' })])).not.toContain('Resolución');
   });
 
-  it('tipo, fuente y estado desconocidos se muestran tal cual, sin interpretarlos', () => {
+  it('tipo, estado y fuente desconocidos se indican sin mostrar el valor técnico', () => {
     const text = textOf(list([alert({ type: 'RECAIDA', source: 'RF-99', status: 'ARCHIVADA' })]));
 
-    expect(text).toContain('Tipo no reconocido: RECAIDA');
-    expect(text).toContain('Fuente no reconocida: RF-99');
-    expect(text).toContain('Estado no reconocido: ARCHIVADA');
+    expect(text).toContain('Tipo no reconocido');
+    expect(text).toContain('Fuente: Fuente no reconocida');
+    expect(text).not.toContain('RF-99');
+    expect(text).toContain('Estado no reconocido');
+    expect(text).not.toMatch(/RECAIDA|ARCHIVADA/);
     expect(textOf(list([alert({ type: null, source: null, status: null })]))).toMatch(/Tipo no disponible.*Estado no disponible.*Fuente no disponible/);
   });
 
@@ -248,7 +264,7 @@ describe('Registros del historial', () => {
     ['EN_REVISION', 'En revisión', 'info'],
     ['RESUELTA', 'Resuelta', 'success'],
     ['DESCARTADA', 'Descartada', 'surface-hover'],
-    ['ARCHIVADA', 'Estado no reconocido: ARCHIVADA', 'surface-hover'],
+    ['ARCHIVADA', 'Estado no reconocido', 'surface-hover'],
   ])('estado %s: «%s» con texto e ícono, no solo color', (status, label, tone) => {
     const html = clean(renderToStaticMarkup(<AlertResolutionBadge status={status} />));
 

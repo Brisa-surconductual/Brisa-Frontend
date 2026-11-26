@@ -6,8 +6,8 @@ import {
 
 /*
  * Etiquetas legibles de las alertas (RF-128, RF-129). El dominio conserva
- * los valores originales; un valor desconocido se muestra tal cual, sin
- * interpretarlo.
+ * los valores originales; un valor desconocido no se interpreta ni se
+ * muestra crudo: solo se indica que no se reconoce.
  */
 const TYPE_LABEL = Object.freeze({
   [TRACKING_ALERT_TYPE.HIGH_CRAVING]: 'Craving elevado',
@@ -19,24 +19,34 @@ const STATUS_LABEL = Object.freeze({
   [ALERT_RESOLUTION_STATUS.IN_REVIEW]: 'En revisión',
   [ALERT_RESOLUTION_STATUS.RESOLVED]: 'Resuelta',
   [ALERT_RESOLUTION_STATUS.DISMISSED]: 'Descartada',
+  [ALERT_RESOLUTION_STATUS.PENDING]: 'Pendiente',
+  [ALERT_RESOLUTION_STATUS.ATTENDED]: 'Atendida',
 });
 
-const KNOWN_SOURCES = Object.freeze(Object.values(TRACKING_ALERT_SOURCE));
+/*
+ * La fuente llega como el identificador del requerimiento que generó la
+ * alerta (RF-63, RF-68). Se conserva en los datos; en pantalla se muestra
+ * qué la detectó. Un valor desconocido no se muestra crudo.
+ */
+const SOURCE_LABEL = Object.freeze({
+  [TRACKING_ALERT_SOURCE.HIGH_CRAVING]: 'Detección de craving elevado',
+  [TRACKING_ALERT_SOURCE.INACTIVITY]: 'Detección de inactividad',
+});
 
 export function alertTypeLabel(type) {
   if (TYPE_LABEL[type]) return TYPE_LABEL[type];
 
-  return type ? `Tipo no reconocido: ${type}` : 'Tipo no disponible';
+  return type ? 'Tipo no reconocido' : 'Tipo no disponible';
 }
 
 export function alertStatusLabel(status) {
   if (STATUS_LABEL[status]) return STATUS_LABEL[status];
 
-  return status ? `Estado no reconocido: ${status}` : 'Estado no disponible';
+  return status ? 'Estado no reconocido' : 'Estado no disponible';
 }
 
 export function alertSourceLabel(source) {
-  if (KNOWN_SOURCES.includes(source)) return source;
+  if (SOURCE_LABEL[source]) return SOURCE_LABEL[source];
 
-  return source ? `Fuente no reconocida: ${source}` : 'Fuente no disponible';
+  return source ? 'Fuente no reconocida' : 'Fuente no disponible';
 }
