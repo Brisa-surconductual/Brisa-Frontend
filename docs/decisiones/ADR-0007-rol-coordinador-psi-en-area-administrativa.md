@@ -3,7 +3,7 @@
 **Estado:** Propuesta
 **Fecha:** 2026-11-25
 **Tarea de origen:** FE-336b · enmienda E1
-**Decidió:** Sebastián, responsable de FE-336b
+**Propone:** Sebastián · **Acepta:** Juan Esteban (revisión del PR)
 **Afecta a:** `src/features/users/types/authTypes.js`, `src/app/router/roleRoutes.js`,
 `src/app/router/AppRouter.jsx`, `AdminLayout`; todo el equipo que agregue rutas o roles;
 PR 2 de FE-336
