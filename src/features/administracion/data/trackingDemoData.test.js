@@ -105,7 +105,9 @@ describe('Historial de alertas ficticio (RF-129)', () => {
   it('cubre los cuatro estados, ambos tipos y fuentes, una resuelta sin fecha, valores desconocidos y fechas inválidas', () => {
     const statuses = new Set(all.map(({ status }) => status));
 
-    for (const status of Object.values(ALERT_RESOLUTION_STATUS)) expect(statuses.has(status)).toBe(true);
+    // Los cuatro estados del historial provisional; PENDIENTE y ATENDIDA son del contrato real.
+    const { ACTIVE, IN_REVIEW, RESOLVED, DISMISSED } = ALERT_RESOLUTION_STATUS;
+    for (const status of [ACTIVE, IN_REVIEW, RESOLVED, DISMISSED]) expect(statuses.has(status)).toBe(true);
     for (const type of Object.values(TRACKING_ALERT_TYPE)) expect(all.some((alert) => alert.type === type)).toBe(true);
     for (const source of Object.values(TRACKING_ALERT_SOURCE)) expect(all.some((alert) => alert.source === source)).toBe(true);
     expect(all.some(({ status, resolvedAt }) => status === ALERT_RESOLUTION_STATUS.RESOLVED && resolvedAt === null)).toBe(true);

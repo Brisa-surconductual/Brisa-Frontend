@@ -10,15 +10,22 @@ import {
   TRACKING_SORT_FIELD,
   TRACKING_THRESHOLDS,
 } from '../../types/participantTracking.js';
+import { PROGRESS_LEVEL_OPTIONS } from '../../utils/trackingLabels.js';
 
 /*
- * Filtros y orden del seguimiento (RF-142). Solo presenta: cada cambio
- * se comunica al hook, que lo pide a la fuente; aquí no se filtra ni se
- * ordena nada. La opción vacía de cada selector significa «sin filtro»
- * u «orden de la fuente».
+ * Filtros y orden del seguimiento (RF-142), con los parámetros reales del
+ * backend: nivel de progreso, rango de adherencia, alertas activas y
+ * orden por cualquiera de los indicadores. Solo presenta: cada cambio se
+ * comunica al hook, que lo pide al backend; aquí no se filtra ni se
+ * ordena nada. La opción vacía de cada selector significa «sin filtro» u
+ * «orden predeterminado» (código del participante, ascendente).
  */
-const THRESHOLD_OPTIONS = Object.freeze(
+const MIN_OPTIONS = Object.freeze(
   TRACKING_THRESHOLDS.map((value) => Object.freeze({ value: String(value), label: `${value} % o más` })),
+);
+
+const MAX_OPTIONS = Object.freeze(
+  TRACKING_THRESHOLDS.map((value) => Object.freeze({ value: String(value), label: `${value} % o menos` })),
 );
 
 const ALERT_OPTIONS = Object.freeze([
@@ -26,15 +33,19 @@ const ALERT_OPTIONS = Object.freeze([
   Object.freeze({ value: TRACKING_ALERT_FILTER.WITHOUT_ALERTS, label: 'Sin alertas activas' }),
 ]);
 
-const sortOption = (field, direction, label) => Object.freeze({ value: `${field}-${direction}`, label });
+const sortOption = (field, direction, label) => Object.freeze({ value: `${field}:${direction}`, label });
+const { ASC, DESC } = SORT_DIRECTION;
 
 const SORT_OPTIONS = Object.freeze([
-  sortOption(TRACKING_SORT_FIELD.PROGRESS, SORT_DIRECTION.DESC, 'Progreso: de mayor a menor'),
-  sortOption(TRACKING_SORT_FIELD.PROGRESS, SORT_DIRECTION.ASC, 'Progreso: de menor a mayor'),
-  sortOption(TRACKING_SORT_FIELD.ADHERENCE, SORT_DIRECTION.DESC, 'Adherencia: de mayor a menor'),
-  sortOption(TRACKING_SORT_FIELD.ADHERENCE, SORT_DIRECTION.ASC, 'Adherencia: de menor a mayor'),
-  sortOption(TRACKING_SORT_FIELD.ACTIVE_ALERTS, SORT_DIRECTION.DESC, 'Alertas activas: de más a menos'),
-  sortOption(TRACKING_SORT_FIELD.ACTIVE_ALERTS, SORT_DIRECTION.ASC, 'Alertas activas: de menos a más'),
+  sortOption(TRACKING_SORT_FIELD.CODE, DESC, 'Código: de la Z a la A'),
+  sortOption(TRACKING_SORT_FIELD.PROGRESS, DESC, 'Nivel de progreso: de mayor a menor'),
+  sortOption(TRACKING_SORT_FIELD.PROGRESS, ASC, 'Nivel de progreso: de menor a mayor'),
+  sortOption(TRACKING_SORT_FIELD.ADHERENCE, DESC, 'Adherencia: de mayor a menor'),
+  sortOption(TRACKING_SORT_FIELD.ADHERENCE, ASC, 'Adherencia: de menor a mayor'),
+  sortOption(TRACKING_SORT_FIELD.ACTIVE_ALERTS, DESC, 'Alertas activas: de más a menos'),
+  sortOption(TRACKING_SORT_FIELD.ACTIVE_ALERTS, ASC, 'Alertas activas: de menos a más'),
+  sortOption(TRACKING_SORT_FIELD.ATTENDED_ALERTS, DESC, 'Alertas atendidas: de más a menos'),
+  sortOption(TRACKING_SORT_FIELD.ATTENDED_ALERTS, ASC, 'Alertas atendidas: de menos a más'),
 ]);
 
 const valueOf = (value) => (value === null || value === undefined ? '' : String(value));
@@ -49,24 +60,33 @@ export function TrackingControls({ filters, sortValue, hasFilters, disabled = fa
       onSubmit={(event) => event.preventDefault()}
       className="flex flex-col gap-[var(--space-4)] rounded-[var(--radius-xl)] border border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-4)] md:p-[var(--space-5)]"
     >
-      <div className="grid grid-cols-1 gap-[var(--space-3)] sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-[var(--space-3)] sm:grid-cols-2 xl:grid-cols-5">
         <SelectField
-          id={`${baseId}-progreso`}
+          id={`${baseId}-nivel`}
           label="Nivel de progreso"
-          placeholder="Cualquier progreso"
-          options={THRESHOLD_OPTIONS}
-          value={valueOf(filters.progressMin)}
+          placeholder="Cualquier nivel"
+          options={PROGRESS_LEVEL_OPTIONS}
+          value={valueOf(filters.level)}
           disabled={disabled}
-          onChange={(event) => onFilter('progressMin', event.target.value)}
+          onChange={(event) => onFilter('level', event.target.value)}
         />
         <SelectField
-          id={`${baseId}-adherencia`}
-          label="Tasa de adherencia"
-          placeholder="Cualquier adherencia"
-          options={THRESHOLD_OPTIONS}
+          id={`${baseId}-adherencia-min`}
+          label="Adherencia mínima"
+          placeholder="Sin mínimo"
+          options={MIN_OPTIONS}
           value={valueOf(filters.adherenceMin)}
           disabled={disabled}
           onChange={(event) => onFilter('adherenceMin', event.target.value)}
+        />
+        <SelectField
+          id={`${baseId}-adherencia-max`}
+          label="Adherencia máxima"
+          placeholder="Sin máximo"
+          options={MAX_OPTIONS}
+          value={valueOf(filters.adherenceMax)}
+          disabled={disabled}
+          onChange={(event) => onFilter('adherenceMax', event.target.value)}
         />
         <SelectField
           id={`${baseId}-alertas`}
@@ -80,7 +100,7 @@ export function TrackingControls({ filters, sortValue, hasFilters, disabled = fa
         <SelectField
           id={`${baseId}-orden`}
           label="Ordenar por"
-          placeholder="Orden de la fuente"
+          placeholder="Código: de la A a la Z"
           options={SORT_OPTIONS}
           value={sortValue}
           disabled={disabled}

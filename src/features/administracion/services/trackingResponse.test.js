@@ -1,114 +1,105 @@
 import { describe, expect, it } from 'vitest';
 
-import { TRACKING_ACCESS, TRACKING_OUTCOME } from '../types/participantTracking.js';
-import { interpretTrackingResponse } from './trackingResponse.js';
+import { TRACKING_OUTCOME } from '../types/participantTracking.js';
+
+import { interpretTrackingResponse, isOutOfRange } from './trackingResponse.js';
 
 const item = (changes = {}) => ({
-  cohortId: 'c-1',
-  code: 'X-1',
-  progress: 40,
-  adherence: 70,
-  activeAlertCount: 1,
+  codigo_participante: 'P-7F3A91C2',
+  nivel_progreso: 'EN_AVANCE',
+  tasa_adherencia: 0.41,
+  alertas_activas: 2,
+  alertas_atendidas: 0,
+  tipos_alerta_activa: ['INACTIVIDAD', 'CRAVING_ELEVADO'],
   ...changes,
 });
 
-const response = (changes = {}) => ({
-  access: TRACKING_ACCESS.GRANTED,
-  cohortId: 'c-1',
-  total: 1,
-  offset: 0,
-  limit: 5,
-  items: [item()],
-  ...changes,
-});
+const page = (items = [item()], changes = {}) => ({ items, total: items.length, offset: 0, limit: 20, ...changes });
 
-describe('Autorización explícita', () => {
-  it('con AUTORIZADO conserva los registros', () => {
-    expect(interpretTrackingResponse(response(), 'c-1')).toMatchObject({ outcome: TRACKING_OUTCOME.OK, total: 1 });
+describe('interpretTrackingResponse (RF-142, contrato real)', () => {
+  it('200 con participantes: solo los campos del contrato, en el orden del servidor', () => {
+    const second = item({ codigo_participante: 'P-00000001', nivel_progreso: 'COMPLETADO', tasa_adherencia: 1, alertas_activas: 0, alertas_atendidas: 3, tipos_alerta_activa: [] });
+    const result = interpretTrackingResponse(page([item(), second], { total: 25 }));
+
+    expect(result).toEqual({
+      outcome: TRACKING_OUTCOME.OK,
+      entries: [
+        {
+          code: 'P-7F3A91C2',
+          progressLevel: 'EN_AVANCE',
+          adherence: 0.41,
+          activeAlertCount: 2,
+          attendedAlertCount: 0,
+          activeAlertTypes: ['INACTIVIDAD', 'CRAVING_ELEVADO'],
+        },
+        {
+          code: 'P-00000001',
+          progressLevel: 'COMPLETADO',
+          adherence: 1,
+          activeAlertCount: 0,
+          attendedAlertCount: 3,
+          activeAlertTypes: [],
+        },
+      ],
+      total: 25,
+      offset: 0,
+      limit: 20,
+    });
+  });
+
+  it('no exige campos de autorización ni de cohorte que el contrato no tiene', () => {
+    expect(interpretTrackingResponse(page()).outcome).toBe(TRACKING_OUTCOME.OK);
+  });
+
+  it('descarta cualquier campo ajeno (UUID, correo, textos)', () => {
+    const result = interpretTrackingResponse(
+      page([item({ id_usuario: 'c0000000-0000-4000-8000-000000000001', correo: 'a@b.co', texto_diario: 'x' })]),
+    );
+
+    expect(JSON.stringify(result)).not.toMatch(/c0000000|@|texto|id_usuario/);
+  });
+
+  it('sin indicadores calculados: null se conserva como null, nunca como 0', () => {
+    const [entry] = interpretTrackingResponse(page([item({ nivel_progreso: null, tasa_adherencia: null })])).entries;
+
+    expect(entry.progressLevel).toBeNull();
+    expect(entry.adherence).toBeNull();
+  });
+
+  it.each([0, 1, 0.5])('adherencia %s dentro de 0–1', (value) => {
+    expect(interpretTrackingResponse(page([item({ tasa_adherencia: value })])).outcome).toBe(TRACKING_OUTCOME.OK);
+  });
+
+  it('listado vacío (cohorte sin participantes, con mensaje)', () => {
+    const result = interpretTrackingResponse({ items: [], total: 0, offset: 0, limit: 20, mensaje: 'No se encontraron participantes.' });
+
+    expect(result).toMatchObject({ outcome: TRACKING_OUTCOME.OK, entries: [], total: 0 });
+    expect(isOutOfRange(result)).toBe(false);
+  });
+
+  it('página fuera de rango: sin filas con total > 0', () => {
+    expect(isOutOfRange(interpretTrackingResponse({ items: [], total: 3, offset: 20, limit: 20 }))).toBe(true);
   });
 
   it.each([
-    ['DENEGADO', { access: TRACKING_ACCESS.DENIED }],
-    ['sin campo de acceso', { access: undefined }],
-    ['valor desconocido', { access: 'SI' }],
-    ['booleano', { access: true }],
-  ])('%s: denegado y sin ningún registro, aunque la respuesta los traiga', (_, changes) => {
-    const result = interpretTrackingResponse(response(changes), 'c-1');
-
-    expect(result).toEqual({ outcome: TRACKING_OUTCOME.DENIED });
-    expect(JSON.stringify(result)).not.toContain('X-1');
-  });
-
-  it('una respuesta vacía o nula se trata como denegada', () => {
-    expect(interpretTrackingResponse(null, 'c-1').outcome).toBe(TRACKING_OUTCOME.DENIED);
-    expect(interpretTrackingResponse(undefined, 'c-1').outcome).toBe(TRACKING_OUTCOME.DENIED);
-  });
-});
-
-describe('Correspondencia con la cohorte', () => {
-  it('una respuesta de otra cohorte se bloquea entera', () => {
-    const result = interpretTrackingResponse(response({ cohortId: 'c-2' }), 'c-1');
-
-    expect(result).toEqual({ outcome: TRACKING_OUTCOME.INCONSISTENT });
-  });
-
-  it('un registro de otra cohorte se descarta y se cuenta', () => {
-    const result = interpretTrackingResponse(
-      response({ items: [item(), item({ cohortId: 'c-2', code: 'AJENO' }), item({ cohortId: undefined, code: 'SIN' })] }),
-      'c-1',
-    );
-
-    expect(result.entries.map(({ code }) => code)).toEqual(['X-1']);
-    expect(result.blockedCount).toBe(2);
-  });
-});
-
-describe('Lista explícita de campos', () => {
-  it('conserva solo código, progreso, adherencia y alertas activas', () => {
-    const result = interpretTrackingResponse(
-      response({
-        items: [item({
-          participantId: 'uuid-interno',
-          correoElectronico: 'persona@example.com',
-          nombre: 'Nombre Apellido',
-          participationStatus: 'PENDIENTE_VALIDACION',
-          textoDiario: 'texto',
-          mensajesChat: ['hola'],
-        })],
-      }),
-      'c-1',
-    );
-
-    expect(result.entries).toEqual([{ code: 'X-1', reference: null, progress: 40, adherence: 70, activeAlertCount: 1 }]);
-    expect(Object.isFrozen(result.entries[0])).toBe(true);
-  });
-
-  it('valores fuera de rango o de otro tipo quedan como no disponibles, sin estimarlos', () => {
-    const [entry] = interpretTrackingResponse(
-      response({ items: [item({ code: 7, progress: 140, adherence: '80', activeAlertCount: -1 })] }),
-      'c-1',
-    ).entries;
-
-    expect(entry).toEqual({ code: '', reference: null, progress: null, adherence: null, activeAlertCount: null });
-  });
-
-  it('total y offset inválidos se sustituyen por valores seguros', () => {
-    const result = interpretTrackingResponse(response({ total: 'muchos', offset: -1 }), 'c-1');
-
-    expect(result).toMatchObject({ total: 1, offset: 0 });
-  });
-});
-
-describe('Referencia opaca de la ficha (RF-128)', () => {
-  it('conserva la referencia recibida como texto, sin derivarla de otros campos', () => {
-    const [entry] = interpretTrackingResponse(response({ items: [item({ reference: ' seg-abc123 ', participantId: 'uuid-interno' })] }), 'c-1').entries;
-
-    expect(entry.reference).toBe('seg-abc123');
-  });
-
-  it.each([[undefined], [''], ['   '], [42], [{ id: 'x' }]])('una referencia ausente o inválida (%s) queda como null', (reference) => {
-    const [entry] = interpretTrackingResponse(response({ items: [item({ reference })] }), 'c-1').entries;
-
-    expect(entry.reference).toBeNull();
+    ['nulo', null],
+    ['sin items', { total: 0, offset: 0, limit: 20 }],
+    ['total negativo', page([], { total: -1 })],
+    ['limit 0', page([], { limit: 0 })],
+    ['más filas que el límite', page([item(), item({ codigo_participante: 'P-00000001' })], { limit: 1 })],
+    ['más filas que el total', page([item()], { total: 0 })],
+    ['adherencia como porcentaje', page([item({ tasa_adherencia: 41 })])],
+    ['adherencia negativa', page([item({ tasa_adherencia: -0.1 })])],
+    ['nivel desconocido', page([item({ nivel_progreso: 'EXPERTO' })])],
+    ['nivel como número', page([item({ nivel_progreso: 50 })])],
+    ['conteo decimal', page([item({ alertas_activas: 1.5 })])],
+    ['conteo ausente', page([item({ alertas_atendidas: undefined })])],
+    ['tipo de alerta desconocido', page([item({ tipos_alerta_activa: ['RECAIDA'] })])],
+    ['alertas activas sin tipos', page([item({ alertas_activas: 1, tipos_alerta_activa: [] })])],
+    ['código con correo', page([item({ codigo_participante: 'persona@correo.com' })])],
+    ['código vacío', page([item({ codigo_participante: '' })])],
+    ['código repetido', page([item(), item()], { total: 2 })],
+  ])('respuesta inválida (%s): no se presenta a medias', (_, data) => {
+    expect(interpretTrackingResponse(data)).toEqual({ outcome: TRACKING_OUTCOME.INVALID });
   });
 });

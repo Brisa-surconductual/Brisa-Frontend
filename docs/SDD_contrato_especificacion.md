@@ -471,6 +471,8 @@ Leyenda de estado: **Cubierto** (UI + contrato + pruebas) · **Parcial** (falta 
 | RF-140 | Dashboard principal | `administracion` · `CohortDashboard`, montado en `PsychologyHomePage` (`/app/administrativo`) | Integrado con el backend. Proveedores M05, M06 y M07 pendientes (ver nota). |
 | RF-141 | Evolución temporal de indicadores por unidad del cronograma | `administracion` · `CohortEvolutionPage` (`/app/administrativo/cohortes/:idCohorte/evolucion`) | Integrada con el backend. Proveedor M05 y filtros RF-135 pendientes (ver nota). |
 | RF-144 | Exportación CSV de indicadores agregados de la cohorte activa | `administracion` · `CohortExportButton` en `CohortDetailPage` | Integrado con el endpoint de RF-144 (ver nota) |
+| RF-142 | Listado de participantes de una cohorte con sus indicadores | `administracion` · `ParticipantTrackingPage` (`/app/administrativo/cohortes/:idCohorte/seguimiento`) | Integrado con el endpoint real y probado con HTTP simulado; M05 todavía simulado en el backend (ver nota) |
+| RF-128 | Ficha individual de seguimiento de un participante | `administracion` · `ParticipantTrackingProfilePage` (`/app/administrativo/cohortes/:idCohorte/seguimiento/:codigoParticipante`) | Integrada con el endpoint real y probada con HTTP simulado; secciones RF-129 a RF-131 y M04 solo en demostración (ver nota) |
 | RF-145 | Exportación CSV individual del historial cuantitativo de un participante | `administracion` · `ParticipantExportButton` y `ParticipantExportDialog` en `ParticipantTrackingProfilePage` | Implementada contra el endpoint real y probada con HTTP simulado; deshabilitada hasta que la ficha (RF-128) tenga una fuente real con el seudónimo A7 (ver nota) |
 | RF-146 | Bandeja de alertas pendientes por cohorte | `administracion` · `PendingAlertsPage` (`/app/administrativo/cohortes/:idCohorte/alertas/pendientes`) | Integrada con el endpoint real, probada con HTTP simulado; M05 todavía simulado en el backend (ver nota) |
 | RF-147 | Marcar alerta como atendida (irreversible, con motivo) | `administracion` · `AttendAlertDialog` en `PendingAlertsPage` | Integrada con el endpoint real, probada con HTTP simulado; prueba contra backend de integración pendiente (ver nota) |
@@ -591,10 +593,9 @@ Nota RF-38 (trazabilidad administrativa de sesiones del chat; rama `feat/m03-rf3
   - **PWA:** sin `runtimeCaching`, solo precachea el app shell (C-PWA-2), y el backend responde `no-store`.
   - **Sin escritura ni descarga:** no hay edición, eliminación, reenvío, descarga ni exportación.
 - **Dependencia del código A7 (M08):**
-  - Ninguna fuente real de M08 entrega hoy el código A7 auténtico. La ficha RF-128 está en «integración pendiente» y su demostración usa códigos ficticios `PART-XXXX`.
-  - La referencia `seg-…` de la ruta es opaca y no se convierte en código.
-  - `ParticipantSessionsLink` en la ficha solo aparece con un participante confirmado, una fuente real (ni demostración ni integración pendiente) y un código con formato `P-` y 8 hexadecimales. Hoy no se muestra en ningún modo.
-  - **Lo que debe suministrar la fuente real de la ficha:** el campo `code` con el seudónimo A7 de `administrativo.seudonimos_participante` del mismo participante consultado, autorizado y aislado como el resto de la ficha. Hasta entonces, las páginas solo son accesibles escribiendo la ruta con un código A7.
+  - **Actualización (v0.13):** la ficha RF-128 ya está integrada con el backend (ver «Nota RF-142 y RF-128»). El código A7 sale del listado RF-142, se comprueba su pertenencia activa a la cohorte y lo confirma la respuesta del perfil (200 con el mismo `codigo_participante`, o 204).
+  - `ParticipantSessionsLink` aparece en la ficha con un participante confirmado por la API real (perfil o sin perfil) y un código con formato `P-` y 8 hexadecimales. En la demostración no aparece: sus códigos `PART-XXXX` son ficticios.
+  - Ya no existe la referencia opaca `seg-…`: la ruta de la ficha lleva el código del participante.
 - **RF-148:** `readOnlyRestriction.guard.test.jsx` sustituye la invariante temporal «el M08 aún no hace ninguna petición HTTP» por una lista explícita de adaptadores permitidos, como preveía. Solo están los dos de RF-38: en `api/`, solo `apiClient.get` y hacia `/chat/admin/`. Las reglas permanentes contra escrituras siguen vigentes, y `utils/chatTraceabilityRoutes.js` se declara como referencia de consulta.
 - **Estado:**
   - **Implementado:** lo anterior.
@@ -748,16 +749,59 @@ Nota RF-145 (M08, etapa 4, tarea 2; rama `feat/m08-etapa4-juan`). Contrato confi
 - **Resultados:** «Descarga iniciada» indica que el navegador recibió el archivo, no que quedó guardado. Cada error muestra un mensaje propio, sin códigos técnicos, y aclara que no se descargó ningún archivo; el 403 explica que la cuenta no tiene autorización para exportar la información individual.
 - **Cancelación e identidad:** salir de la ficha o cambiar de participante aborta la petición en curso y descarta su resultado. La acción se monta de nuevo por participante.
 - **Auditoría:** la hace siempre el backend, en la misma transacción que genera el CSV; si falla, responde 500 y no envía el archivo. El frontend no registra nada aparte ni puede verificar esa transacción.
-- **Dependencia de identidad (RF-128 / RF-142):** hoy la ficha solo tiene la fuente de demostración o el modo de integración pendiente (`data/trackingSource.js`); ninguna fuente real entrega el seudónimo.
-  - Por eso la acción se muestra **deshabilitada**: «Disponible cuando la ficha muestre el código verificado del participante» con la integración pendiente, y «No disponible en la demostración» con `VITE_M08_DEMO=true`.
+- **Dependencia de identidad (RF-128 / RF-142), actualizada en v0.13:** la ficha ya consulta el backend real (ver «Nota RF-142 y RF-128»).
+  - La acción se **habilita** cuando la API real confirma al participante (perfil 200 del mismo código, o 204), tras comprobar su pertenencia activa a la cohorte. Usa la misma condición que el acceso a las sesiones del chat (RF-38).
+  - Sigue **deshabilitada** en la demostración («No disponible en la demostración») y con un código que no sea A7 («Disponible cuando la ficha muestre el código verificado del participante»).
+  - Tras un 403, 404, 409, una respuesta inconsistente o fuera de la cohorte, la ficha no confirma el código y la acción no se muestra.
   - En la demostración no se pide ningún archivo ni se genera un CSV ficticio que aparente estar auditado. No hay simulador.
-  - Se habilitará sola cuando RF-128 tenga fuente real, porque usa la misma condición que el acceso a las sesiones del chat (RF-38): participante confirmado, sin demostración ni integración pendiente.
-  - **Esta dependencia impide hoy una prueba manual completa desde la ficha.**
+  - Las validaciones del CSV, el modal, la descarga y el tratamiento de errores no cambiaron.
 - **RF-148:** `api/participantExportApi.js` se añade a la lista explícita de adaptadores HTTP de la guarda. Solo hace GET y su ruta no apunta a un recurso protegido.
 - **Estado:**
   - **Implementado:** lo anterior.
   - **Verificado con pruebas automatizadas** (Vitest en `node`, HTTP simulado): API, intérprete del CSV, fuente, hook, modal (contenido, foco y teclado), botón y montaje en la ficha. Los casos 403 y 500 se prueban con dobles de transporte, sin tocar permisos reales ni la auditoría.
-  - **Pendiente:** fuente real de la ficha con el seudónimo A7; prueba contra un backend de integración con permiso individual vigente; revisión visual en navegador (360 a 1440 px, claro y oscuro).
+  - **Pendiente:** prueba contra un backend de integración con permiso individual vigente; revisión visual en navegador (360 a 1440 px, claro y oscuro).
+
+Nota RF-142 y RF-128 (M08, etapa 4; rama `feat/m08-etapa4-juan`). Integración del recorrido de seguimiento con los endpoints existentes. Contrato confirmado leyendo el backend (`IndicadoresParticipantesController`, `SeguimientoIndividualController`, sus DTO, casos de uso, políticas y excepciones).
+
+- **Rutas:**
+  - Listado: `/app/administrativo/cohortes/:idCohorte/seguimiento` (`ParticipantTrackingPage`).
+  - Ficha: `/app/administrativo/cohortes/:idCohorte/seguimiento/:codigoParticipante` (`ParticipantTrackingProfilePage`). El segmento final es el código del participante que entregó el listado; ya no hay referencia opaca `seg-…`.
+- **RF-142 · `GET /admin/cohortes/{id_cohorte}/participantes/indicadores`** (`api/seguimientoParticipantesApi.js`, por `apiClient`). Roles `ADMINISTRATIVO` y `COORDINADOR_PSI`, alcance `COMPLETA`, sin permiso individual.
+  - **Parámetros:** `nivel_progreso` (INICIAL, EN_AVANCE, AVANZADO, COMPLETADO), `adherencia_min` y `adherencia_max` (0 a 1, mínimo ≤ máximo), `con_alertas` (true o false), `orden_campo` (codigo_participante, nivel_progreso, tasa_adherencia, alertas_activas, alertas_atendidas), `orden_direccion` (ASC o DESC), `offset` y `limit` (1 a 100; 20 por defecto). Solo se envía lo definido; un rango de adherencia contradictorio no se envía.
+  - **Respuesta 200:** `{ items: [{ codigo_participante, nivel_progreso, tasa_adherencia, alertas_activas, alertas_atendidas, tipos_alerta_activa }], total, offset, limit, mensaje? }`, sin envoltura `{ data }`. Una cohorte sin participantes activos responde `items: []`, `total: 0` y `mensaje`.
+  - **Política del backend:** los filtros se combinan; con un rango de adherencia queda fuera quien no tiene adherencia; el nivel se ordena por su orden canónico; las filas sin dato van al final; el desempate es por código. El frontend no filtra ni ordena.
+  - **Errores:** 400 `PARAMETRO_INVALIDO`, 401, 403, 404 `COHORTE_NO_ENCONTRADA`, 500 `ERROR_LISTADO_INDICADORES`, 503 `M05_NO_DISPONIBLE`, error de red o respuesta inválida. Ninguno deja registros visibles. 401 lleva a `/login`; 503, 500, red y respuesta inválida ofrecen reintentar; 400 ofrece limpiar los filtros.
+  - **Presentación:** el nivel es una categoría (Inicial, En avance, Avanzado, Completado), nunca un porcentaje. La adherencia 0.41 se muestra como «41 %» solo en la presentación. `null` se muestra «No disponible», nunca 0. También se muestran las alertas activas con sus tipos y las atendidas. Página fuera de rango (`items: []` con `total > 0`): se pide la última página.
+- **RF-128 · `GET /admin/participantes/{codigo_participante}/perfil-seguimiento`.** Exige `ACCESO_INDIVIDUAL` vigente al `ADMINISTRATIVO`; `COORDINADOR_PSI` pasa sin permiso por decisión del backend (`PermisoIndividualGuard`). El frontend no otorga, simula ni evade permisos.
+  - **Respuesta 200:** `codigo_participante`, `indicadores_adherencia { tasa_adherencia, dias_con_registro }`, `indicadores_progreso { nivel_progreso, unidades_completadas }`, `tendencia_consumo`, `alertas_activas [{ id_alerta, tipo_alerta, fecha_generacion, estado_resolucion }]`, `fecha_actualizacion` y `modo_consulta: "SOLO_LECTURA"`. 204 sin perfil.
+  - **Interpretación directa del DTO:** no se exige ni se inventa un campo de autorización. La autorización es la respuesta 200 tras las guardas. El perfil debe declarar el mismo `codigo_participante` pedido (si no, se bloquea entero) y `modo_consulta` SOLO_LECTURA. Lista explícita de campos; un tipo distinto del contrato invalida la ficha.
+  - **Errores:** 403 `SIN_PERMISO_INDIVIDUAL`, 404 `PARTICIPANTE_NO_ENCONTRADO`, 409 `INCONSISTENCIA_PARTICIPANTE`, 503 `M05_NO_DISPONIBLE`, 500 `ERROR_CONSULTA_SEGUIMIENTO`, red o respuesta inválida. Ninguno muestra datos; 401 lleva a `/login`.
+  - **Estados de resolución:** `alertas_activas` puede traer `ATENDIDA` (RF-147) y `PENDIENTE`; se añadieron sus etiquetas.
+- **Identidad y pertenencia a la cohorte (decisión de seguridad):** el perfil individual no declara la cohorte. Antes de pedirlo, `data/trackingSource.js` hace dos comprobaciones:
+  - Solo acepta un seudónimo A7 (`P-` y 8 hexadecimales, normalizado). Con una referencia `seg-…`, un UUID, un correo o un código ficticio no se hace ninguna petición.
+  - Comprueba que el código es miembro **ACTIVO** de la cohorte de la ruta. Usa la fuente autorizada que ya existía, `GET /admin/cohortes/{id_cohorte}/participantes` (membresías de RF-125: mismos roles, sin datos individuales de seguimiento). Solo se usan `codigo_participante` y `estado`.
+  - Si no es miembro activo, se muestra «Participante fuera de la cohorte» y el perfil no se pide. Vale también para el acceso directo por URL: no se confía en el estado de navegación del navegador.
+  - **Coste:** dos peticiones por ficha. El backend audita cada consulta individual.
+- **Aislamiento:** la ficha se monta de nuevo por cohorte y código. Cada consulta se cancela (`AbortController`) al cambiar de participante o salir, y su resultado tardío se descarta. Al empezar una consulta se borran el código y el perfil anteriores.
+- **Secciones de la ficha:** el historial de alertas (RF-129), la progresión narrativa (RF-130), la interacción con notificaciones (RF-131) y la ubicación temporal (M04) no se integran en esta etapa. En la API no se consultan y un aviso discreto indica que aún no están disponibles, sin ocultar el perfil. En la demostración siguen como estaban.
+- **Modo de demostración** (`VITE_M08_DEMO=true`): la fuente ficticia del listado y de la ficha responde con las mismas formas del contrato real y rechaza con `{ status, codigo }`, sin HTTP.
+  - **Conversión:** los perfiles ficticios conservan su progreso y adherencia numéricos (0 a 100). El nivel se deriva por tramos de 25 puntos y la adherencia se divide entre 100; es una convención solo de la demostración.
+  - **Códigos:** los ficticios (`PART-XXXX`) abren la ficha de demostración; no son A7. Por eso RF-38 y RF-145 siguen deshabilitados allí.
+  - **Separación:** el modo se fija al montar la página; los datos ficticios nunca se mezclan con los del backend y no llegan al build de producción.
+- **Diferencias con el contrato provisional anterior (eliminadas):**
+  - Campos `access`, `cohortId` y `reference` en las respuestas.
+  - Progreso y adherencia como porcentajes de 0 a 100.
+  - Filtros por umbral mínimo de progreso.
+  - Orden por `progreso`, `adherencia` o `alertas` en minúsculas.
+  - Página de 5 registros.
+  - Referencia opaca `seg-…` en la ruta.
+  - Modo «integración pendiente».
+- **RF-148:** `api/seguimientoParticipantesApi.js` se añade a la lista explícita de adaptadores HTTP de la guarda. Solo hace GET y sus rutas no apuntan a recursos protegidos.
+- **Dependencia de M05:** el backend consume M05 con `MockSeguimientoIndividualAdapter`, un adaptador simulado. La integración con el M05 real **no se ha probado** y no se declara hasta que ese adaptador sea reemplazado.
+- **Estado:**
+  - **Implementado:** lo anterior.
+  - **Verificado con pruebas automatizadas** (Vitest en `node`, red simulada): adaptador, consulta, intérpretes, clasificación de errores, fuente real (incluida la comprobación de pertenencia), demostración, hooks, páginas y el recorrido completo listado → ficha.
+  - **Pendiente:** prueba contra un backend de integración; revisión visual en navegador (360 a 1440 px, claro y oscuro); integración de RF-129 a RF-131 y de M04.
 
 Nota: en el Excel hay códigos duplicados o irregulares (RF-75 aparece en M05 y M07; `RF93` sin guion; RF-146 no aparece; títulos vacíos en RF-54, RF-55, RF-89, RF-90, RF-92; RF-109 y RF-110 con el mismo título). Se registran como **aclaraciones pendientes** (sección 7) y no se resuelven por suposición.
 
@@ -889,3 +933,4 @@ Aplicar SDD retroactivamente a todo el código sería inviable. Se adopta así:
 | v0.10 | 2026-11-25 | Inicio del estudiante centrado en el chat: tarjeta «Tu espacio terapéutico», estado del programa y contenido vigente compactos, «Otras herramientas para ti» sin el chat y navegación del estudiante con Inicio, Chat y Contenido. |
 | v0.11 | 2026-11-26 | RF-146 y RF-147: bandeja de alertas pendientes por cohorte y atención irreversible con motivo (10 a 500 caracteres), integradas con los endpoints reales; dependencia del adaptador simulado de M05, separación de RF-129 y RF-140 y sin escrituras en modo de demostración. |
 | v0.12 | 2026-11-26 | RF-145: exportación CSV individual desde la ficha de seguimiento, con confirmación previa, validación completa del CSV y descarga del archivo original; deshabilitada sin seudónimo A7 de una fuente real y en modo de demostración. |
+| v0.13 | 2026-11-26 | RF-142 y RF-128: listado de seguimiento y ficha individual integrados con los endpoints reales; ruta de la ficha por código del participante, comprobación de pertenencia activa a la cohorte antes de pedir el perfil, demostración con las formas del contrato real, y RF-38 y RF-145 habilitados con el código confirmado por la API. |

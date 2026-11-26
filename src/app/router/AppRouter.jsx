@@ -328,7 +328,7 @@ export function AppRouter() {
               />
 
               <Route
-                path="administrativo/cohortes/:idCohorte/seguimiento/:referencia"
+                path="administrativo/cohortes/:idCohorte/seguimiento/:codigoParticipante"
                 element={<ParticipantTrackingProfilePage />}
               />
 

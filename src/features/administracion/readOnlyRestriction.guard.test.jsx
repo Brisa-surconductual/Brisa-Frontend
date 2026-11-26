@@ -135,6 +135,8 @@ describe('RF-148: límites del módulo administrativo', () => {
       // RF-145: exportación CSV individual (solo GET).
       'api/participantExportApi.js',
       'api/participantesCohorteApi.js',
+      // RF-142 / RF-128: listado de indicadores y ficha individual (solo GET).
+      'api/seguimientoParticipantesApi.js',
       'api/vistasAgregadasApi.js',
     ]);
     const { code } = http.find(({ name }) => name === 'api/observeReadOnlyRejections.js');

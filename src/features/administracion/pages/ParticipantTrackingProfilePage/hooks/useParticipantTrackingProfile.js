@@ -3,12 +3,11 @@ import { useEffect, useRef, useState } from 'react';
 import { getCohort } from '../../../data/cohortSource.js';
 import { getParticipantTrackingProfile, getTrackingSourceMode } from '../../../data/trackingSource.js';
 import { CURRENT_FRESHNESS, freshnessBlockingStatus, interpretFreshness } from '../../../services/dataFreshness.js';
+import { PROFILE_STATUS, classifyProfileError } from '../../../services/trackingErrors.js';
 import { interpretProfileResponse } from '../../../services/trackingProfileResponse.js';
-import {
-  PROFILE_OUTCOME,
-  TRACKING_QUERY_ERROR,
-  TRACKING_SOURCE_MODE,
-} from '../../../types/participantTracking.js';
+import { PROFILE_OUTCOME, TRACKING_SOURCE_MODE } from '../../../types/participantTracking.js';
+
+export { PROFILE_STATUS };
 
 // Fuente actual; estable entre renders para no repetir la consulta.
 const DEFAULT_SOURCE = Object.freeze({
@@ -17,58 +16,36 @@ const DEFAULT_SOURCE = Object.freeze({
   getProfile: getParticipantTrackingProfile,
 });
 
-/*
- * Situación de la ficha. Equivalencias documentales con RF-128:
- * NO_PROFILE 204, DENIED 403, NOT_FOUND 404, INCONSISTENT 409,
- * UNAVAILABLE 503, ERROR 500. OUTSIDE_COHORT y COHORT_NOT_FOUND no
- * tienen código en RF-128 (decisión provisional de la interfaz).
- */
-export const PROFILE_STATUS = Object.freeze({
-  READY: 'READY',
-  NO_PROFILE: 'NO_PROFILE',
-  DENIED: 'DENIED',
-  NOT_FOUND: 'NOT_FOUND',
-  COHORT_NOT_FOUND: 'COHORT_NOT_FOUND',
-  OUTSIDE_COHORT: 'OUTSIDE_COHORT',
-  INCONSISTENT: 'INCONSISTENT',
-  UNAVAILABLE: 'UNAVAILABLE',
-  // RF-149: degradado sin fecha confiable del último dato.
-  STALE_UNDATED: 'STALE_UNDATED',
-  ERROR: 'ERROR',
-});
-
-const STATUS_BY_CODE = Object.freeze({
-  [TRACKING_QUERY_ERROR.ACCESS_DENIED]: PROFILE_STATUS.DENIED,
-  [TRACKING_QUERY_ERROR.PARTICIPANT_NOT_FOUND]: PROFILE_STATUS.NOT_FOUND,
-  [TRACKING_QUERY_ERROR.COHORT_NOT_FOUND]: PROFILE_STATUS.COHORT_NOT_FOUND,
-  [TRACKING_QUERY_ERROR.OUTSIDE_COHORT]: PROFILE_STATUS.OUTSIDE_COHORT,
-  [TRACKING_QUERY_ERROR.MODULE_UNAVAILABLE]: PROFILE_STATUS.UNAVAILABLE,
-});
-
 const STATUS_BY_OUTCOME = Object.freeze({
   [PROFILE_OUTCOME.OK]: PROFILE_STATUS.READY,
   [PROFILE_OUTCOME.NO_PROFILE]: PROFILE_STATUS.NO_PROFILE,
-  [PROFILE_OUTCOME.DENIED]: PROFILE_STATUS.DENIED,
   [PROFILE_OUTCOME.INCONSISTENT]: PROFILE_STATUS.INCONSISTENT,
+  [PROFILE_OUTCOME.INVALID]: PROFILE_STATUS.ERROR,
 });
 
 /*
- * Ficha individual de seguimiento (RF-128), solo consulta. Muestra datos
- * solo si la fuente autoriza explícitamente y la respuesta corresponde a
- * la cohorte y la referencia pedidas (services/trackingProfileResponse).
- * Los estados se deciden por código, nunca por texto; un fallo o una
- * denegación no dejan datos visibles ni se sustituyen por ficticios.
- * Al abrir la ficha el foco va a su título.
+ * Ficha individual de seguimiento (RF-128), solo consulta.
+ *
+ * - `participantCode` es el código de la ruta. En la API solo se consulta
+ *   con un seudónimo A7, después de comprobar que es miembro activo de
+ *   la cohorte de la ruta (data/trackingSource.js).
+ * - Los datos solo se muestran tras una respuesta 200 que declare el
+ *   mismo participante (services/trackingProfileResponse.js). Un 403, un
+ *   404, un 409, una respuesta inconsistente o inválida no dejan ningún
+ *   dato visible ni se sustituyen por ficticios.
+ * - El código confirmado (`code`) solo existe con perfil o sin perfil
+ *   (204): es el único que pueden usar las acciones de la ficha.
+ * - Cada consulta se cancela al cambiar de participante y su resultado
+ *   tardío se descarta. Al abrir la ficha el foco va a su título.
  */
-export function useParticipantTrackingProfile({ cohortId, reference, source = DEFAULT_SOURCE } = {}) {
+export function useParticipantTrackingProfile({ cohortId, participantCode, source = DEFAULT_SOURCE } = {}) {
   const [mode] = useState(() => source.getMode());
-  const isIntegrationPending = mode === TRACKING_SOURCE_MODE.PENDING_INTEGRATION;
 
   const [cohort, setCohort] = useState(null);
   const [code, setCode] = useState(null);
   const [profile, setProfile] = useState(null);
   const [status, setStatus] = useState(null);
-  const [isLoading, setIsLoading] = useState(!isIntegrationPending);
+  const [isLoading, setIsLoading] = useState(true);
   const [attempt, setAttempt] = useState(0);
   // RF-149: marca de modo degradado de la respuesta mostrada.
   const [freshness, setFreshness] = useState(CURRENT_FRESHNESS);
@@ -80,8 +57,6 @@ export function useParticipantTrackingProfile({ cohortId, reference, source = DE
 
   // Datos de la cohorte para el encabezado (no son datos del participante).
   useEffect(() => {
-    if (isIntegrationPending) return undefined;
-
     let active = true;
 
     source.getCohort(cohortId).then(
@@ -92,26 +67,27 @@ export function useParticipantTrackingProfile({ cohortId, reference, source = DE
     return () => {
       active = false;
     };
-  }, [attempt, cohortId, isIntegrationPending, source]);
+  }, [attempt, cohortId, source]);
 
   useEffect(() => {
-    if (isIntegrationPending) return undefined;
-
     let active = true;
+    const controller = new AbortController();
 
     async function load() {
       setIsLoading(true);
       setStatus(null);
+      setCode(null);
+      setProfile(null);
       setFreshness(CURRENT_FRESHNESS);
 
       try {
-        const response = await source.getProfile(cohortId, reference);
-        const result = interpretProfileResponse(response, { cohortId, reference });
+        const response = await source.getProfile(cohortId, participantCode, { signal: controller.signal });
+        const result = interpretProfileResponse(response, { code: participantCode });
         if (!active) return;
 
         const visible = result.outcome === PROFILE_OUTCOME.OK || result.outcome === PROFILE_OUTCOME.NO_PROFILE;
-        // La marca solo cuenta tras autorizar y aislar la respuesta (RF-149).
-        const freshnessOf = visible ? interpretFreshness(response) : CURRENT_FRESHNESS;
+        // La marca solo cuenta tras aceptar y aislar la respuesta (RF-149).
+        const freshnessOf = visible && response ? interpretFreshness(response) : CURRENT_FRESHNESS;
         const blocked = freshnessBlockingStatus(freshnessOf);
 
         setCode(visible && !blocked ? result.code : null);
@@ -124,18 +100,19 @@ export function useParticipantTrackingProfile({ cohortId, reference, source = DE
         setCode(null);
         setProfile(null);
         setFreshness(CURRENT_FRESHNESS);
-        setStatus(STATUS_BY_CODE[error?.code] ?? PROFILE_STATUS.ERROR);
-      } finally {
-        if (active) setIsLoading(false);
+        setStatus(classifyProfileError(error));
       }
+
+      if (active) setIsLoading(false);
     }
 
     void load();
 
     return () => {
       active = false;
+      controller.abort();
     };
-  }, [attempt, cohortId, isIntegrationPending, reference, source]);
+  }, [attempt, cohortId, participantCode, source]);
 
   return {
     cohort,
@@ -145,7 +122,6 @@ export function useParticipantTrackingProfile({ cohortId, reference, source = DE
     freshness,
     isLoading,
     isDemo: mode === TRACKING_SOURCE_MODE.DEMO,
-    isIntegrationPending,
     headingRef,
     retry: () => setAttempt((value) => value + 1),
   };

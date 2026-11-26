@@ -29,7 +29,6 @@ const BASE = Object.freeze({
   freshness: { stale: false },
   isLoading: false,
   isDemo: false,
-  isIntegrationPending: false,
   headingRef: { current: null },
   retry: vi.fn(),
 });
@@ -37,9 +36,9 @@ const BASE = Object.freeze({
 function render(changes = {}) {
   hook.value = { ...BASE, ...changes };
   return renderToStaticMarkup(
-    <MemoryRouter initialEntries={['/app/administrativo/cohortes/c-1/seguimiento/seg-0001']}>
+    <MemoryRouter initialEntries={['/app/administrativo/cohortes/c-1/seguimiento/P-1A2B3C4D']}>
       <Routes>
-        <Route path="/app/administrativo/cohortes/:idCohorte/seguimiento/:referencia" element={<ParticipantTrackingProfilePage />} />
+        <Route path="/app/administrativo/cohortes/:idCohorte/seguimiento/:codigoParticipante" element={<ParticipantTrackingProfilePage />} />
       </Routes>
     </MemoryRouter>,
   ).replaceAll('<!-- -->', '');
@@ -77,8 +76,8 @@ describe('Ficha de seguimiento → exportación CSV individual (RF-145)', () => 
     expect(html).not.toContain('Confirmar exportación');
   });
 
-  it('integración pendiente: visible, deshabilitada y con aviso discreto', () => {
-    const html = render({ isIntegrationPending: true, code: null, status: null });
+  it('código que no es un seudónimo A7: visible, deshabilitada y con aviso discreto', () => {
+    const html = render({ code: 'PART-0004' });
 
     expect(exportButton(html)).toContain('disabled=""');
     expect(textOf(html)).toContain('Disponible cuando la ficha muestre el código verificado del participante.');
