@@ -471,7 +471,7 @@ Leyenda de estado: **Cubierto** (UI + contrato + pruebas) · **Parcial** (falta 
 | RF-140 | Dashboard principal | `administracion` · `CohortDashboard`, montado en `PsychologyHomePage` (`/app/administrativo`) | Integrado con el backend. Proveedores M05, M06 y M07 pendientes (ver nota). |
 | RF-141 | Evolución temporal de indicadores por unidad del cronograma | `administracion` · `CohortEvolutionPage` (`/app/administrativo/cohortes/:idCohorte/evolucion`) | Integrada con el backend. Proveedor M05 y filtros RF-135 pendientes (ver nota). |
 | RF-144 | Exportación CSV de indicadores agregados de la cohorte activa | `administracion` · `CohortExportButton` en `CohortDetailPage` | Integrado con el endpoint de RF-144 (ver nota) |
-| RF-142 | Listado de participantes de una cohorte con sus indicadores | `administracion` · `ParticipantTrackingPage` (`/app/administrativo/cohortes/:idCohorte/seguimiento`) | Integrado con el endpoint real y probado con HTTP simulado; M05 todavía simulado en el backend (ver nota) |
+| RF-142 | Listado de participantes de una cohorte con sus indicadores | `administracion` · `ParticipantTrackingPage` (`/app/administrativo/cohortes/:idCohorte/seguimiento`) | Integrado con el endpoint real y probado con HTTP simulado; tabla ordenable, consulta en la URL y debounce de 300 ms (v0.14). Pendiente: rendimiento HTTP y de extremo a extremo; M05 todavía simulado en el backend (ver notas) |
 | RF-128 | Ficha individual de seguimiento de un participante | `administracion` · `ParticipantTrackingProfilePage` (`/app/administrativo/cohortes/:idCohorte/seguimiento/:codigoParticipante`) | Integrada con el endpoint real y probada con HTTP simulado; secciones RF-129 a RF-131 y M04 solo en demostración (ver nota) |
 | RF-145 | Exportación CSV individual del historial cuantitativo de un participante | `administracion` · `ParticipantExportButton` y `ParticipantExportDialog` en `ParticipantTrackingProfilePage` | Implementada contra el endpoint real y probada con HTTP simulado; deshabilitada hasta que la ficha (RF-128) tenga una fuente real con el seudónimo A7 (ver nota) |
 | RF-146 | Bandeja de alertas pendientes por cohorte | `administracion` · `PendingAlertsPage` (`/app/administrativo/cohortes/:idCohorte/alertas/pendientes`) | Integrada con el endpoint real, probada con HTTP simulado; M05 todavía simulado en el backend (ver nota) |
@@ -803,6 +803,58 @@ Nota RF-142 y RF-128 (M08, etapa 4; rama `feat/m08-etapa4-juan`). Integración d
   - **Verificado con pruebas automatizadas** (Vitest en `node`, red simulada): adaptador, consulta, intérpretes, clasificación de errores, fuente real (incluida la comprobación de pertenencia), demostración, hooks, páginas y el recorrido completo listado → ficha.
   - **Pendiente:** prueba contra un backend de integración; revisión visual en navegador (360 a 1440 px, claro y oscuro); integración de RF-129 a RF-131 y de M04.
 
+Nota de cierre RF-142 (v0.14; rama `feat/m08-etapa4-juan`, sobre `bfe5efb`). Auditoría de los criterios del listado y corrección solo de las brechas comprobadas. No cambia RF-128, RF-145, RF-146 ni RF-147, ni el backend.
+
+- **Brechas encontradas y corregidas:**
+  - **Debounce:** no existía. Los cambios de filtros y orden se guardan como borrador y llegan a la consulta 300 ms después del último (`TRACKING_DEBOUNCE_MS`). Paginar, limpiar los filtros y ordenar desde un encabezado de columna son inmediatos.
+  - **URL:** la consulta solo vivía en el estado del hook. Ahora vive en la URL: `?nivel=…&adherencia_min=…&adherencia_max=…&alertas=…&orden=…&direccion=…&pagina=…` (`services/trackingQuery.js`: `parseTrackingSearch`, `toTrackingSearch`). La adherencia va en % (25, 50, 75) y la página empieza en 1.
+  - **Presentación:** solo había tarjetas. Desde `lg` (1024 px) el listado es una tabla accesible (`components/TrackingTable`): `caption`, encabezados `scope="col"` con un botón de orden y `aria-sort`, y filas encabezadas por el código. Por debajo de `lg` se mantienen las tarjetas. Ambas pintan las mismas filas de la misma respuesta; no hay una segunda pantalla ni una segunda consulta.
+  - **Controles durante la carga:** antes se bloqueaban. Ahora siguen disponibles, porque la consulta anterior se cancela.
+- **Reglas de la URL:**
+  - Solo se leen sus siete parámetros, y cada valor pasa por la misma normalización que los controles.
+  - Un parámetro ajeno (por ejemplo `correo` o `incluir_texto`) o un valor inválido se descarta y nunca llega al backend.
+  - La URL se reescribe en su forma canónica con `replace`, sin entrada nueva en el historial.
+  - Una página no numérica, menor que 1 o mayor que 10 000 equivale a la 1.
+  - Un cambio de filtro u orden vuelve a la página 1.
+- **Navegación sin recarga:** la URL cambia con `navigate` de React Router, nunca con `window.location`. Los cambios de filtros, orden y página añaden una entrada al historial, así que atrás y adelante restituyen la consulta. Un borrador pendiente hecho sobre otra URL deja de valer.
+- **Sin peticiones duplicadas:** la consulta se identifica por su forma canónica, así que dos URL equivalentes no repiten la petición. Una consulta nueva cancela la anterior (`AbortController`) y descarta su respuesta tardía.
+- **Volver de la ficha:** al volver de la ficha con el botón atrás del navegador se recupera el listado con sus filtros. El enlace «Volver» de la ficha (RF-128) no se modificó.
+- **Ruta de la ficha (decisión):** se conserva `/app/administrativo/cohortes/:idCohorte/seguimiento/:codigoParticipante` y no se adopta `/admin/participantes/:codigo`. Motivos:
+  - `/admin/...` es el prefijo de la API del backend. Las vistas administrativas del frontend viven en `/app/administrativo/` con las guardas de RF-122.
+  - El perfil no declara la cohorte. La cohorte de la ruta es la que permite comprobar, antes de pedir el perfil, que el código es miembro **ACTIVO** de ella, también con acceso directo por URL. Una ruta global solo contaría con el permiso individual del backend.
+  - Esta ruta mantiene el regreso a la cohorte y el contexto que usan RF-38 y RF-145.
+- **Seguridad de la proyección:**
+  - El frontend construye solo `nivel_progreso`, `adherencia_min`, `adherencia_max`, `con_alertas`, `orden_campo`, `orden_direccion`, `offset` y `limit`.
+  - Cada registro expone solo `code`, `progressLevel`, `adherence`, `activeAlertCount`, `attendedAlertCount` y `activeAlertTypes`.
+  - `services/trackingContract.test.js` fija esas listas recorriendo todas las consultas posibles (más de 5000). Falla si se añade un parámetro o un campo, o si algún nombre o valor coincide con el patrón restringido del backend.
+- **Saneamiento en el backend:** no se modificó y ya tiene pruebas automatizadas:
+  - `campos-restringidos.policy.spec.ts`.
+  - `indicadores-participantes.controller.http.spec.ts`: responde 200 sanitizado y el caso de uso recibe los campos restringidos.
+  - `listar-indicadores-participantes.use-case.spec.ts`: audita `INTENTO_EXTRACCION_RESTRINGIDA` con severidad ALTA, estado DENEGADA y `campos_descartados`, y responde 200.
+  - La comprobación del registro de auditoría en un entorno real queda para un entorno de integración controlado y depende de Samuel (backend). Procedimiento: con una cuenta de prueba, una petición con `incluir_texto=true&texto_diario=1&mensajes_chat=1&correo=1`; esperar 200 sin esos campos y una fila de auditoría ALTA. No se ejecutó contra la base compartida.
+- **Rendimiento (criterio p95 ≤ 2000 ms):**
+  - **Frontend con transporte simulado (medido).** Prueba: `pages/ParticipantTrackingPage/trackingPerformance.test.jsx`, con 500 participantes sintéticos.
+    - Recorrido medido: fuente real en modo API, `apiClient` simulado que filtra, ordena y pagina con la política del backend, validación del contrato y render de la tabla y las tarjetas.
+    - Mediciones: 30 por escenario tras 5 de calentamiento, en Node con Vitest, en el equipo de desarrollo.
+    - Resultado (2026-11-26): p95 entre 9 y 46 ms; máximo 65 ms.
+      - Consulta inicial: p95 43,8 ms.
+      - Filtros combinados con orden DESC: p95 14,6 ms.
+      - Orden por nivel, página 5: p95 45,6 ms.
+      - Última página: p95 9,5 ms.
+    - Para ver los valores: `npx vitest run src/features/administracion/pages/ParticipantTrackingPage/trackingPerformance.test.jsx --silent=false`.
+    - Excluye la red, el backend, M05, la base de datos y el pintado del navegador; **no demuestra que el backend cumpla los 2 s**.
+  - **HTTP del backend (no medido).** El backend tiene una prueba unitaria de 500 participantes sin N+1, que mide una sola ejecución con dependencias simuladas, no un p95.
+    - Medición pendiente en el entorno de integración, con una cohorte de 500 participantes activos preparada por backend.
+    - Procedimiento: al menos 30 peticiones GET por escenario (los cuatro anteriores), con `curl -s -o /dev/null -w "%{time_total}\n"` y el token de una cuenta de prueba; calcular p50 y p95.
+    - Depende de Samuel. M05 sigue simulado (`MockSeguimientoIndividualAdapter`), así que el resultado no representaría el M05 real.
+  - **De extremo a extremo (no medido).** Mismo entorno, desde el cambio de filtro hasta la tabla pintada: herramientas de rendimiento del navegador, 30 mediciones. Incluye los 300 ms del debounce, que forman parte del diseño.
+- **Pruebas añadidas o ajustadas:**
+  - Hook: URL → consulta, URL no canónica, URL equivalentes sin repetir la petición, debounce de 300 ms (299 ms sin navegar, 300 ms con una sola navegación), reinicio del plazo, borrador obsoleto tras atrás o adelante, paginación, limpieza y orden por columna inmediatos.
+  - Página: tabla y tarjetas, `aria-sort`, enlaces a la ficha, ausencia de campos de entrada y de datos personales en la tabla, y paso de `search` y `navigate` del router.
+  - Consulta: forma canónica, valores inválidos y orden por columna.
+  - Más las pruebas de contrato y de rendimiento.
+- **Pendiente:** las mediciones HTTP y de extremo a extremo y la auditoría real (Samuel, entorno de integración); la revisión visual en navegador de la tabla (1024 a 1440 px) y de las tarjetas (360 a 1023 px), en claro y oscuro.
+
 Nota: en el Excel hay códigos duplicados o irregulares (RF-75 aparece en M05 y M07; `RF93` sin guion; RF-146 no aparece; títulos vacíos en RF-54, RF-55, RF-89, RF-90, RF-92; RF-109 y RF-110 con el mismo título). Se registran como **aclaraciones pendientes** (sección 7) y no se resuelven por suposición.
 
 ---
@@ -934,3 +986,4 @@ Aplicar SDD retroactivamente a todo el código sería inviable. Se adopta así:
 | v0.11 | 2026-11-26 | RF-146 y RF-147: bandeja de alertas pendientes por cohorte y atención irreversible con motivo (10 a 500 caracteres), integradas con los endpoints reales; dependencia del adaptador simulado de M05, separación de RF-129 y RF-140 y sin escrituras en modo de demostración. |
 | v0.12 | 2026-11-26 | RF-145: exportación CSV individual desde la ficha de seguimiento, con confirmación previa, validación completa del CSV y descarga del archivo original; deshabilitada sin seudónimo A7 de una fuente real y en modo de demostración. |
 | v0.13 | 2026-11-26 | RF-142 y RF-128: listado de seguimiento y ficha individual integrados con los endpoints reales; ruta de la ficha por código del participante, comprobación de pertenencia activa a la cohorte antes de pedir el perfil, demostración con las formas del contrato real, y RF-38 y RF-145 habilitados con el código confirmado por la API. |
+| v0.14 | 2026-11-26 | Cierre de RF-142: debounce de 300 ms, filtros, orden y página en la URL (canónica, con atrás y adelante), tabla accesible con columnas ordenables en pantallas anchas, prueba de contrato de la proyección y medición de rendimiento del frontend con 500 participantes y transporte simulado; se conserva la ruta contextual de la ficha. |

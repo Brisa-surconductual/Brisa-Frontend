@@ -49,6 +49,7 @@ const BASE = Object.freeze({
   canGoBack: false,
   canGoForward: false,
   filters: INITIAL_TRACKING_QUERY.filters,
+  sort: null,
   sortValue: '',
   hasFilters: false,
   isLoading: false,
@@ -57,6 +58,7 @@ const BASE = Object.freeze({
   isDemo: false,
   setFilter: vi.fn(),
   setSort: vi.fn(),
+  setColumnSort: vi.fn(),
   clearFilters: vi.fn(),
   goBack: vi.fn(),
   goForward: vi.fn(),
@@ -77,9 +79,18 @@ function render(changes, entryPath = '/app/administrativo/cohortes/c-1/seguimien
 const textOf = (html) => html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
 const withList = (changes = {}) =>
   render({ entries: ENTRIES, total: 26, range: { from: 1, to: 4 }, pageCount: 2, canGoForward: true, ...changes });
+// Tarjetas (pantallas estrechas) y tabla (anchas) presentan las mismas filas.
+const cardsOf = (html) => html.slice(html.indexOf('<ol'), html.indexOf('</ol>'));
+const tableOf = (html) => html.slice(html.indexOf('<table'), html.indexOf('</table>'));
 const cardOf = (html, code) => {
-  const start = html.indexOf(`>${code}</span>`);
-  return html.slice(html.lastIndexOf('<article', start), html.indexOf('</article>', start));
+  const cards = cardsOf(html);
+  const start = cards.indexOf(`>${code}</span>`);
+  return cards.slice(cards.lastIndexOf('<article', start), cards.indexOf('</article>', start));
+};
+const rowOf = (html, code) => {
+  const table = tableOf(html);
+  const start = table.indexOf(`>${code}</span>`);
+  return table.slice(table.lastIndexOf('<tr', start), table.indexOf('</tr>', start));
 };
 
 afterEach(() => {
@@ -92,7 +103,7 @@ describe('Seguimiento por cohorte (RF-142): presentación', () => {
   it('pide los datos con el identificador de la ruta y enlaza de vuelta a la cohorte', () => {
     const html = render({});
 
-    expect(hook.args).toEqual({ cohortId: 'c-1' });
+    expect(hook.args).toEqual({ cohortId: 'c-1', search: '', navigate: expect.any(Function) });
     expect(html).toContain('href="/app/administrativo/cohortes/c-1"');
     expect(html).toMatch(/<h1[^>]*>Seguimiento de participantes<\/h1>/);
     expect(html.match(/<h1/g)).toHaveLength(1);
@@ -142,7 +153,7 @@ describe('Seguimiento por cohorte (RF-142): presentación', () => {
 
   it('cada tarjeta enlaza a su ficha con el código auténtico, y solo a ella', () => {
     const html = withList();
-    const list = html.slice(html.indexOf('<ol'), html.indexOf('</ol>'));
+    const list = cardsOf(html);
 
     expect(list.match(/<a /g)).toHaveLength(4);
     expect(list).toMatch(/href="\/app\/administrativo\/cohortes\/c-1\/seguimiento\/P-7F3A91C2"[^>]*>Ver ficha<span class="sr-only"> de P-7F3A91C2<\/span>/);
@@ -158,6 +169,77 @@ describe('Seguimiento por cohorte (RF-142): presentación', () => {
 
   it('no muestra datos personales ni internos', () => {
     expect(textOf(withList())).not.toMatch(/@|uuid|demo-participante|Correo|Nombre/i);
+  });
+});
+
+describe('Tabla con columnas ordenables (pantallas anchas)', () => {
+  it('una sola respuesta, dos presentaciones: tabla desde lg y tarjetas por debajo', () => {
+    const html = withList();
+
+    expect(html).toMatch(/<div class="hidden lg:block"><div[^>]*><table/);
+    expect(cardsOf(html)).toMatch(/^<ol class="[^"]*lg:hidden/);
+    expect(tableOf(html).match(/<tr /g)).toHaveLength(1 + ENTRIES.length);
+    expect(cardsOf(html).match(/<article/g)).toHaveLength(ENTRIES.length);
+  });
+
+  it('encabezados de columna con ámbito y botón de orden; filas encabezadas por el código', () => {
+    const table = tableOf(withList());
+
+    expect(table).toMatch(/<caption class="sr-only">/);
+    for (const label of ['Código', 'Nivel de progreso', 'Tasa de adherencia', 'Alertas activas', 'Alertas atendidas']) {
+      expect(table).toMatch(new RegExp(`<th scope="col" aria-sort="[a-z]+"[^>]*><button type="button"[^>]*>${label}<svg`));
+    }
+    expect(table.match(/<th scope="row"/g)).toHaveLength(ENTRIES.length);
+  });
+
+  it('sin orden explícito, la columna de código se anuncia ascendente (orden del backend)', () => {
+    const table = tableOf(withList({ sort: null }));
+
+    expect(table.match(/aria-sort="ascending"/g)).toHaveLength(1);
+    expect(table).toMatch(/aria-sort="ascending"[^>]*><button[^>]*>Código</);
+    expect(table.match(/aria-sort="none"/g)).toHaveLength(4);
+  });
+
+  it('el orden activo se anuncia en su columna', () => {
+    const table = tableOf(withList({ sort: { field: 'tasa_adherencia', direction: 'DESC' } }));
+
+    expect(table).toMatch(/aria-sort="descending"[^>]*><button[^>]*>Tasa de adherencia</);
+    expect(table).toMatch(/aria-sort="none"[^>]*><button[^>]*>Código</);
+  });
+
+  it('cada fila muestra los mismos indicadores que su tarjeta', () => {
+    const html = withList();
+
+    expect(textOf(rowOf(html, 'P-7F3A91C2'))).toMatch(/P-7F3A91C2 En avance 41 % 2 Inactividad · Craving elevado 0 Ver ficha/);
+    expect(textOf(rowOf(html, 'P-00000003'))).toMatch(/No disponible No disponible Ninguna 0/);
+    expect(rowOf(html, 'P-00000003')).not.toContain('width:');
+    expect(rowOf(html, 'P-00000004')).toContain('width:0%');
+  });
+
+  it('cada fila enlaza a su ficha con el código auténtico; sin código válido, sin enlace', () => {
+    const html = withList();
+
+    expect(tableOf(html).match(/<a /g)).toHaveLength(ENTRIES.length);
+    expect(rowOf(html, 'P-7F3A91C2')).toMatch(/href="\/app\/administrativo\/cohortes\/c-1\/seguimiento\/P-7F3A91C2"/);
+    const invalid = withList({ entries: [entry('PART-0004', { detailCode: null })], total: 1 });
+    expect(rowOf(invalid, 'PART-0004')).not.toContain('<a ');
+    expect(textOf(rowOf(invalid, 'PART-0004'))).toContain('Ficha no disponible');
+  });
+
+  it('la tabla no tiene campos de entrada ni datos personales', () => {
+    const table = tableOf(withList());
+
+    expect(table).not.toMatch(/<input|<textarea|<select|<form|seg-/);
+    expect(textOf(table)).not.toMatch(/@|uuid|Correo|Nombre|diario|chat/i);
+  });
+});
+
+describe('Consulta en la URL', () => {
+  it('pasa al hook la búsqueda de la URL y el navegador del router (sin recargar el documento)', () => {
+    render({}, '/app/administrativo/cohortes/c-1/seguimiento?nivel=INICIAL&pagina=2');
+
+    expect(hook.args.search).toBe('?nivel=INICIAL&pagina=2');
+    expect(hook.args.navigate).toEqual(expect.any(Function));
   });
 });
 
@@ -203,13 +285,15 @@ describe('Filtros, orden y paginación', () => {
 });
 
 describe('Estados de la pantalla', () => {
-  it('cargando: aviso accesible, controles bloqueados y sin registros', () => {
+  it('cargando: aviso accesible y sin registros; los controles siguen disponibles (la consulta anterior se cancela)', () => {
     const html = render({ isLoading: true });
 
     expect(html).toContain('aria-busy="true"');
     expect(html).toMatch(/role="status"[^>]*>Cargando indicadores de seguimiento/);
-    expect(html).toMatch(/<select[^>]*disabled=""/);
+    expect(html).toContain('<select');
+    expect(html).not.toMatch(/<select[^>]*disabled=""/);
     expect(html).not.toContain('<article');
+    expect(html).not.toContain('<table');
   });
 
   it('listado vacío: cohorte sin participantes', () => {

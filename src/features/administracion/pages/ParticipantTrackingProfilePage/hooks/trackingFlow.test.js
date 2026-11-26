@@ -110,8 +110,8 @@ describe('Recorrido RF-142 → RF-128 en la API real', () => {
       [`/participantes/${CODE}/perfil-seguimiento`]: { status: 200, data: PROFILE },
     });
 
-    // Listado: useState mode(0), query(1), cohort(2), page(3), loading(4)...; efecto 1 = consulta.
-    await runEffect(useParticipantTracking, { cohortId: COHORT }, 1, 4);
+    // Listado: useState mode(0), query(1), cohort(2), page(3), loading(4)...; efecto 3 = consulta.
+    await runEffect(useParticipantTracking, { cohortId: COHORT }, 3, 4);
     const [entry] = last(3).entries;
     expect(apiClient.get).toHaveBeenCalledWith(`/admin/cohortes/${COHORT}/participantes/indicadores`, {
       params: { offset: 0, limit: 20 },
@@ -182,7 +182,7 @@ describe('Recorrido RF-142 → RF-128 en la API real', () => {
       [`/cohortes/${COHORT}/participantes`]: { status: 200, data: MEMBERS },
       [`/participantes/${CODE}/perfil-seguimiento`]: { status: 200, data: PROFILE },
     });
-    await runEffect(useParticipantTracking, { cohortId: COHORT }, 1, 4);
+    await runEffect(useParticipantTracking, { cohortId: COHORT }, 3, 4);
     await runEffect(useParticipantTrackingProfile, { cohortId: COHORT, participantCode: CODE }, 2, 5);
 
     for (const method of ['post', 'put', 'patch', 'delete']) expect(apiClient[method]).not.toHaveBeenCalled();

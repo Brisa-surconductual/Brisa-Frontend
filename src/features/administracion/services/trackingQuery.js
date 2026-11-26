@@ -142,3 +142,75 @@ export function toTrackingParams(query) {
     limit: query.limit,
   };
 }
+
+/*
+ * Estado del listado en la URL (?nivel=…&adherencia_min=…&pagina=…), para
+ * compartirlo, recargarlo y recorrerlo con atrás y adelante. Solo se leen
+ * los parámetros de esta lista, y cada valor pasa por la misma
+ * normalización que un cambio en los controles: lo desconocido o
+ * inválido se descarta y nunca llega al backend.
+ */
+export const TRACKING_SEARCH_PARAM = Object.freeze({
+  LEVEL: 'nivel',
+  ADHERENCE_MIN: 'adherencia_min',
+  ADHERENCE_MAX: 'adherencia_max',
+  ALERTS: 'alertas',
+  SORT_FIELD: 'orden',
+  SORT_DIRECTION: 'direccion',
+  PAGE: 'pagina',
+});
+
+// Límite de páginas aceptado desde la URL; más allá, la primera.
+const MAX_SEARCH_PAGE = 10_000;
+
+export function parseTrackingSearch(search) {
+  const params = new URLSearchParams(search ?? '');
+  const get = (name) => params.get(name);
+  const rawPage = get(TRACKING_SEARCH_PARAM.PAGE) ?? '';
+  const page = /^[1-9][0-9]{0,4}$/.test(rawPage) ? Number(rawPage) : 1;
+  const pageIndex = page <= MAX_SEARCH_PAGE ? page - 1 : 0;
+
+  return normalizeTrackingQuery({
+    filters: {
+      level: get(TRACKING_SEARCH_PARAM.LEVEL),
+      adherenceMin: get(TRACKING_SEARCH_PARAM.ADHERENCE_MIN),
+      adherenceMax: get(TRACKING_SEARCH_PARAM.ADHERENCE_MAX),
+      alerts: get(TRACKING_SEARCH_PARAM.ALERTS),
+    },
+    sort: { field: get(TRACKING_SEARCH_PARAM.SORT_FIELD), direction: get(TRACKING_SEARCH_PARAM.SORT_DIRECTION) },
+    offset: pageIndex * TRACKING_PAGE_SIZE,
+  });
+}
+
+// Forma canónica (sin «?»): mismo orden siempre; lo predeterminado se omite.
+export function toTrackingSearch(query) {
+  const { level, adherenceMin, adherenceMax, alerts } = query.filters;
+  const params = new URLSearchParams();
+  const page = Math.floor(query.offset / query.limit) + 1;
+
+  if (level) params.set(TRACKING_SEARCH_PARAM.LEVEL, level);
+  if (adherenceMin !== null) params.set(TRACKING_SEARCH_PARAM.ADHERENCE_MIN, String(adherenceMin));
+  if (adherenceMax !== null) params.set(TRACKING_SEARCH_PARAM.ADHERENCE_MAX, String(adherenceMax));
+  if (alerts) params.set(TRACKING_SEARCH_PARAM.ALERTS, alerts);
+  if (query.sort) {
+    params.set(TRACKING_SEARCH_PARAM.SORT_FIELD, query.sort.field);
+    params.set(TRACKING_SEARCH_PARAM.SORT_DIRECTION, query.sort.direction);
+  }
+  if (page > 1) params.set(TRACKING_SEARCH_PARAM.PAGE, String(page));
+
+  return params.toString();
+}
+
+// Orden efectivo: sin orden explícito, el del backend (código, ascendente).
+export function effectiveSort(sort) {
+  return sort ?? Object.freeze({ field: TRACKING_SORT_FIELD.CODE, direction: SORT_DIRECTION.ASC });
+}
+
+// Encabezado de columna: la misma columna invierte la dirección; otra
+// empieza en ascendente.
+export function nextColumnSort(sort, field) {
+  const current = effectiveSort(sort);
+  const direction = current.field === field && current.direction === SORT_DIRECTION.ASC ? SORT_DIRECTION.DESC : SORT_DIRECTION.ASC;
+
+  return Object.freeze({ field, direction });
+}

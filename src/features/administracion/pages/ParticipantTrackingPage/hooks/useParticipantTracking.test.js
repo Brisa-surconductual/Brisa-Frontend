@@ -1,17 +1,17 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { toApiError } from '@/shared/utils/apiError.js';
 
-import { INITIAL_TRACKING_QUERY } from '../../../services/trackingQuery.js';
+import { INITIAL_TRACKING_QUERY, toTrackingParams } from '../../../services/trackingQuery.js';
 import { TRACKING_PAGE_SIZE, TRACKING_SOURCE_MODE } from '../../../types/participantTracking.js';
-import { TRACKING_PROBLEM, useParticipantTracking } from './useParticipantTracking.js';
+import { TRACKING_DEBOUNCE_MS, TRACKING_PROBLEM, useParticipantTracking } from './useParticipantTracking.js';
 
 /*
  * React mínimo para entorno node: useState devuelve el estado inicial
  * (o el fijado en `react.values` por posición) con un setter espía;
  * useEffect se guarda para ejecutarlo.
  */
-const react = vi.hoisted(() => ({ setters: [], effects: [], values: {}, index: 0 }));
+const react = vi.hoisted(() => ({ setters: [], effects: [], deps: [], values: {}, index: 0 }));
 
 vi.mock('react', async (importOriginal) => ({
   ...(await importOriginal()),
@@ -23,22 +23,25 @@ vi.mock('react', async (importOriginal) => ({
     const value = position in react.values ? react.values[position] : initial;
     return [typeof value === 'function' ? value() : value, setter];
   },
-  useEffect(effect) {
+  useEffect(effect, deps) {
     react.effects.push(effect);
+    react.deps.push(deps);
   },
 }));
 
 // Orden de los useState del hook.
-const QUERY = 1;
+const DRAFT = 1;
 const COHORT = 2;
 const PAGE = 3;
 const LOADING = 4;
 const PROBLEM = 5;
 const ATTEMPT = 6;
 
-// Orden de los efectos: cohorte, indicadores.
+// Orden de los efectos: cohorte, URL canónica, debounce, indicadores.
 const COHORT_EFFECT = 0;
-const TRACKING_EFFECT = 1;
+const CANONICAL_EFFECT = 1;
+const DEBOUNCE_EFFECT = 2;
+const TRACKING_EFFECT = 3;
 
 const ITEM = Object.freeze({
   codigo_participante: 'P-7F3A91C2',
@@ -62,16 +65,19 @@ function source({ mode = TRACKING_SOURCE_MODE.API, list, getCohort } = {}) {
   };
 }
 
+const navigate = vi.fn();
+
 function renderHookWith(args, values = {}, hook = useParticipantTracking) {
   react.setters = [];
   react.effects = [];
+  react.deps = [];
   react.index = 0;
   react.values = values;
-  return hook({ cohortId: 'c-1', ...args });
+  return hook({ cohortId: 'c-1', navigate, ...args });
 }
 
-async function loadWith(src, values = {}) {
-  renderHookWith({ source: src }, values);
+async function loadWith(src, values = {}, search = '') {
+  renderHookWith({ source: src, search }, values);
   const cleanup = react.effects[TRACKING_EFFECT]();
   await vi.waitFor(() => expect(src.list).toHaveBeenCalled());
   await new Promise((resolve) => setTimeout(resolve, 0));
@@ -82,6 +88,11 @@ const lastValue = (position) => react.setters[position].mock.lastCall?.[0];
 
 beforeEach(() => {
   react.values = {};
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+  vi.clearAllMocks();
 });
 
 describe('useParticipantTracking (RF-142): consulta real', () => {
@@ -163,18 +174,17 @@ describe('useParticipantTracking (RF-142): consulta real', () => {
 
   it('página fuera de rango: pide la última página existente, sin inventar filas', async () => {
     const src = source({ list: vi.fn().mockResolvedValue(body([], { total: 41, offset: 60 })) });
-    await loadWith(src, { [QUERY]: { ...INITIAL_TRACKING_QUERY, offset: 60 } });
+    await loadWith(src, {}, '?pagina=4');
 
-    const update = react.setters[QUERY].mock.lastCall[0];
-    expect(update({ ...INITIAL_TRACKING_QUERY, offset: 60 }).offset).toBe(40);
+    expect(navigate).toHaveBeenCalledWith({ search: 'pagina=3' }, { replace: true });
     expect(react.setters[PAGE]).not.toHaveBeenCalled();
   });
 
   it('página vacía en la última posición válida: respuesta inválida, sin bucle', async () => {
     const src = source({ list: vi.fn().mockResolvedValue(body([], { total: 41, offset: 40 })) });
-    await loadWith(src, { [QUERY]: { ...INITIAL_TRACKING_QUERY, offset: 40 } });
+    await loadWith(src, {}, '?pagina=3');
 
-    expect(react.setters[QUERY]).not.toHaveBeenCalled();
+    expect(navigate).not.toHaveBeenCalled();
     expect(lastValue(PROBLEM)).toBe(TRACKING_PROBLEM.INVALID_RESPONSE);
   });
 
@@ -203,25 +213,168 @@ describe('useParticipantTracking (RF-142): consulta real', () => {
 });
 
 describe('useParticipantTracking (RF-142): controles', () => {
-  it('filtros, orden y paginación pasan por la consulta normalizada', () => {
+  it('filtros y orden quedan como borrador hasta el debounce; paginar es inmediato', () => {
     const result = renderHookWith({ source: source() }, { [PAGE]: { entries: [], total: 45, offset: 0 } });
 
     result.setFilter('level', 'AVANZADO');
-    expect(react.setters[QUERY].mock.lastCall[0](INITIAL_TRACKING_QUERY).filters.level).toBe('AVANZADO');
+    expect(react.setters[DRAFT].mock.lastCall[0](null).query.filters.level).toBe('AVANZADO');
     result.setSort('alertas_activas:DESC');
-    expect(react.setters[QUERY].mock.lastCall[0](INITIAL_TRACKING_QUERY).sort).toEqual({ field: 'alertas_activas', direction: 'DESC' });
+    expect(react.setters[DRAFT].mock.lastCall[0](null).query.sort).toEqual({ field: 'alertas_activas', direction: 'DESC' });
+    expect(navigate).not.toHaveBeenCalled();
+
     result.goForward();
-    expect(react.setters[QUERY].mock.lastCall[0](INITIAL_TRACKING_QUERY).offset).toBe(20);
+    expect(navigate).toHaveBeenLastCalledWith({ search: 'pagina=2' });
     result.retry();
     expect(react.setters[ATTEMPT].mock.lastCall[0](0)).toBe(1);
   });
 
+  it('un cambio de filtro sobre la página 3 vuelve a la primera', () => {
+    const result = renderHookWith({ source: source(), search: '?pagina=3' });
+
+    result.setFilter('alerts', 'true');
+    const draft = react.setters[DRAFT].mock.lastCall[0](null);
+    expect(draft).toMatchObject({ base: 'pagina=3', query: { offset: 0, filters: { alerts: 'true' } } });
+  });
+
   it('rango y páginas a partir del total del servidor', () => {
     const result = renderHookWith(
-      { source: source() },
-      { [QUERY]: { ...INITIAL_TRACKING_QUERY, offset: 20 }, [PAGE]: { entries: [{ code: 'P-00000001' }], total: 21, offset: 20 } },
+      { source: source(), search: '?pagina=2' },
+      { [PAGE]: { entries: [{ code: 'P-00000001' }], total: 21, offset: 20 } },
     );
 
     expect(result).toMatchObject({ range: { from: 21, to: 21 }, pageNumber: 2, pageCount: 2, canGoBack: true, canGoForward: false });
+  });
+
+  it('encabezado de columna: orden inmediato y primera página', () => {
+    const result = renderHookWith({ source: source(), search: '?nivel=INICIAL&pagina=2' });
+
+    result.setColumnSort({ field: 'tasa_adherencia', direction: 'ASC' });
+    expect(navigate).toHaveBeenLastCalledWith({ search: 'nivel=INICIAL&orden=tasa_adherencia&direccion=ASC' });
+  });
+
+  it('limpiar filtros: inmediato, conserva el orden y descarta el borrador', () => {
+    const result = renderHookWith({ source: source(), search: '?nivel=INICIAL&orden=codigo_participante&direccion=DESC&pagina=2' });
+
+    result.clearFilters();
+    expect(navigate).toHaveBeenLastCalledWith({ search: 'orden=codigo_participante&direccion=DESC' });
+    expect(react.setters[DRAFT]).toHaveBeenLastCalledWith(null);
+  });
+
+  it('los controles muestran el borrador pendiente, no la URL', () => {
+    const draft = { ...INITIAL_TRACKING_QUERY, filters: { ...INITIAL_TRACKING_QUERY.filters, level: 'AVANZADO' } };
+    const result = renderHookWith({ source: source() }, { [DRAFT]: { base: '', query: draft } });
+
+    expect(result.filters.level).toBe('AVANZADO');
+    expect(result.hasFilters).toBe(true);
+  });
+});
+
+describe('useParticipantTracking (RF-142): URL y debounce', () => {
+  it('la URL fija filtros, orden y página de la consulta', async () => {
+    const src = source();
+    await loadWith(src, {}, '?nivel=AVANZADO&adherencia_min=50&alertas=true&orden=tasa_adherencia&direccion=DESC&pagina=2');
+
+    expect(toTrackingParams(src.list.mock.calls[0][1])).toEqual({
+      nivel_progreso: 'AVANZADO',
+      adherencia_min: 0.5,
+      con_alertas: 'true',
+      orden_campo: 'tasa_adherencia',
+      orden_direccion: 'DESC',
+      offset: 20,
+      limit: TRACKING_PAGE_SIZE,
+    });
+    react.effects[CANONICAL_EFFECT]();
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('parámetros ajenos o inválidos en la URL: se descartan y la URL se reescribe sin historial', async () => {
+    const src = source();
+    await loadWith(src, {}, '?correo=a@b.c&incluir_texto=true&texto_diario=1&nivel=EXPERTO&pagina=-3&adherencia_min=50&orden=correo&direccion=DESC');
+
+    expect(toTrackingParams(src.list.mock.calls[0][1])).toEqual({ adherencia_min: 0.5, offset: 0, limit: TRACKING_PAGE_SIZE });
+    react.effects[CANONICAL_EFFECT]();
+    expect(navigate).toHaveBeenCalledWith({ search: 'adherencia_min=50' }, { replace: true });
+  });
+
+  it('URL equivalentes: misma clave de consulta, sin petición duplicada', () => {
+    const src = source();
+    renderHookWith({ source: src, search: '?nivel=AVANZADO&correo=x' });
+    const first = react.deps[TRACKING_EFFECT];
+    renderHookWith({ source: src, search: 'nivel=AVANZADO' });
+    const second = react.deps[TRACKING_EFFECT];
+
+    expect(first).toEqual(second);
+    first.forEach((dep, index) => expect(Object.is(dep, second[index])).toBe(true));
+  });
+
+  it(`debounce de ${TRACKING_DEBOUNCE_MS} ms: el borrador llega a la URL tras la espera, con entrada en el historial`, () => {
+    vi.useFakeTimers();
+    const draft = { ...INITIAL_TRACKING_QUERY, filters: { ...INITIAL_TRACKING_QUERY.filters, level: 'AVANZADO' } };
+    renderHookWith({ source: source() }, { [DRAFT]: { base: '', query: draft } });
+
+    react.effects[DEBOUNCE_EFFECT]();
+    vi.advanceTimersByTime(TRACKING_DEBOUNCE_MS - 1);
+    expect(navigate).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(1);
+    expect(navigate).toHaveBeenCalledTimes(1);
+    expect(navigate).toHaveBeenCalledWith({ search: 'nivel=AVANZADO' });
+  });
+
+  it('un cambio antes del plazo reinicia la espera: el borrador anterior no sale', () => {
+    vi.useFakeTimers();
+    const draft = { ...INITIAL_TRACKING_QUERY, filters: { ...INITIAL_TRACKING_QUERY.filters, level: 'INICIAL' } };
+    renderHookWith({ source: source() }, { [DRAFT]: { base: '', query: draft } });
+
+    const cancel = react.effects[DEBOUNCE_EFFECT]();
+    vi.advanceTimersByTime(200);
+    cancel();
+    vi.advanceTimersByTime(TRACKING_DEBOUNCE_MS);
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('sin borrador no hay espera ni navegación', () => {
+    vi.useFakeTimers();
+    renderHookWith({ source: source() });
+
+    expect(react.effects[DEBOUNCE_EFFECT]()).toBeUndefined();
+    vi.advanceTimersByTime(TRACKING_DEBOUNCE_MS);
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('borrador igual a la URL: se descarta sin navegar', () => {
+    vi.useFakeTimers();
+    renderHookWith({ source: source(), search: '?nivel=AVANZADO' }, {
+      [DRAFT]: { base: 'nivel=AVANZADO', query: { ...INITIAL_TRACKING_QUERY, filters: { ...INITIAL_TRACKING_QUERY.filters, level: 'AVANZADO' } } },
+    });
+
+    react.effects[DEBOUNCE_EFFECT]();
+    vi.advanceTimersByTime(TRACKING_DEBOUNCE_MS);
+    expect(navigate).not.toHaveBeenCalled();
+    expect(react.setters[DRAFT]).toHaveBeenLastCalledWith(null);
+  });
+
+  it('atrás o adelante: un borrador hecho sobre otra URL deja de valer; manda la URL nueva', async () => {
+    vi.useFakeTimers();
+    const stale = { base: 'alertas=true', query: { ...INITIAL_TRACKING_QUERY, filters: { ...INITIAL_TRACKING_QUERY.filters, level: 'INICIAL' } } };
+    const src = source();
+    const result = renderHookWith({ source: src, search: '?alertas=false' }, { [DRAFT]: stale });
+
+    expect(result.filters).toMatchObject({ alerts: 'false', level: null });
+    expect(react.effects[DEBOUNCE_EFFECT]()).toBeUndefined();
+    react.effects[CANONICAL_EFFECT]();
+    vi.advanceTimersByTime(TRACKING_DEBOUNCE_MS);
+    expect(navigate).not.toHaveBeenCalled();
+
+    react.effects[TRACKING_EFFECT]();
+    expect(src.list.mock.calls[0][1].filters.alerts).toBe('false');
+  });
+
+  it('el borrador se encadena sobre la misma URL: dos cambios seguidos se combinan', () => {
+    const result = renderHookWith({ source: source(), search: '?alertas=true' });
+    const pending = { base: 'alertas=true', query: { ...INITIAL_TRACKING_QUERY, filters: { ...INITIAL_TRACKING_QUERY.filters, alerts: 'true', level: 'INICIAL' } } };
+
+    result.setFilter('adherenceMin', '50');
+    expect(react.setters[DRAFT].mock.lastCall[0](pending).query.filters).toMatchObject({ alerts: 'true', level: 'INICIAL', adherenceMin: 50 });
+    expect(react.setters[DRAFT].mock.lastCall[0]({ ...pending, base: 'otra=1' }).query.filters).toMatchObject({ alerts: 'true', level: null, adherenceMin: 50 });
   });
 });

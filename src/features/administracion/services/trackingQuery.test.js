@@ -2,11 +2,15 @@ import { describe, expect, it } from 'vitest';
 
 import {
   INITIAL_TRACKING_QUERY,
+  effectiveSort,
   hasActiveFilters,
   lastPageOffset,
+  nextColumnSort,
   normalizeTrackingQuery,
+  parseTrackingSearch,
   sortToValue,
   toTrackingParams,
+  toTrackingSearch,
   valueToSort,
   withFilter,
   withOffset,
@@ -103,5 +107,52 @@ describe('trackingQuery (RF-142, parámetros reales)', () => {
     expect(hasActiveFilters(query)).toBe(true);
     expect(withoutFilters(query)).toMatchObject({ filters: INITIAL_TRACKING_QUERY.filters, sort: { field: 'nivel_progreso', direction: 'ASC' } });
     expect(hasActiveFilters(withoutFilters(query))).toBe(false);
+  });
+});
+
+describe('trackingQuery (RF-142): URL del listado', () => {
+  it('URL vacía: consulta inicial, y la consulta inicial no añade parámetros', () => {
+    expect(parseTrackingSearch('')).toEqual(INITIAL_TRACKING_QUERY);
+    expect(parseTrackingSearch(undefined)).toEqual(INITIAL_TRACKING_QUERY);
+    expect(toTrackingSearch(INITIAL_TRACKING_QUERY)).toBe('');
+  });
+
+  it('forma canónica: orden fijo y página solo desde la 2', () => {
+    const query = parseTrackingSearch('?pagina=3&direccion=DESC&orden=alertas_activas&alertas=false&adherencia_max=75&nivel=INICIAL');
+
+    expect(toTrackingSearch(query)).toBe('nivel=INICIAL&adherencia_max=75&alertas=false&orden=alertas_activas&direccion=DESC&pagina=3');
+    expect(query.offset).toBe(40);
+  });
+
+  it.each([
+    ['pagina=0', ''],
+    ['pagina=-2', ''],
+    ['pagina=2.5', ''],
+    ['pagina=1e3', ''],
+    ['pagina=abc', ''],
+    ['pagina=10001', ''],
+    ['pagina=10000', 'pagina=10000'],
+    ['nivel=en_avance', ''],
+    ['adherencia_min=0.5', ''],
+    ['adherencia_min=40', ''],
+    ['alertas=1', ''],
+    ['orden=tasa_adherencia', ''],
+    ['orden=correo&direccion=ASC', ''],
+    ['direccion=DESC', ''],
+    ['adherencia_min=75&adherencia_max=25', 'adherencia_min=75'],
+  ])('valor no válido o incompleto en la URL (%s): se descarta → «%s»', (search, canonical) => {
+    expect(toTrackingSearch(parseTrackingSearch(search))).toBe(canonical);
+  });
+
+  it('el primer valor de un parámetro repetido es el que cuenta', () => {
+    expect(parseTrackingSearch('nivel=AVANZADO&nivel=INICIAL').filters.level).toBe('AVANZADO');
+  });
+
+  it('orden por columna: la misma columna invierte; otra empieza ascendente', () => {
+    expect(effectiveSort(null)).toEqual({ field: 'codigo_participante', direction: 'ASC' });
+    expect(nextColumnSort(null, 'codigo_participante')).toEqual({ field: 'codigo_participante', direction: 'DESC' });
+    expect(nextColumnSort(null, 'tasa_adherencia')).toEqual({ field: 'tasa_adherencia', direction: 'ASC' });
+    expect(nextColumnSort({ field: 'tasa_adherencia', direction: 'ASC' }, 'tasa_adherencia')).toEqual({ field: 'tasa_adherencia', direction: 'DESC' });
+    expect(nextColumnSort({ field: 'tasa_adherencia', direction: 'DESC' }, 'tasa_adherencia')).toEqual({ field: 'tasa_adherencia', direction: 'ASC' });
   });
 });

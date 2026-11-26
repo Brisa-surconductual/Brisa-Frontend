@@ -1,4 +1,4 @@
-import { Link, Navigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   AlertTriangle,
   ArrowLeft,
@@ -19,6 +19,8 @@ import { ReadOnlyNotice } from '../../components/ReadOnlyNotice/index.js';
 import { TrackingControls } from '../../components/TrackingControls/index.js';
 import { TrackingEntryCard } from '../../components/TrackingEntryCard/index.js';
 import { TrackingPagination } from '../../components/TrackingPagination/index.js';
+import { TrackingTable } from '../../components/TrackingTable/index.js';
+import { effectiveSort, nextColumnSort } from '../../services/trackingQuery.js';
 import { getCohortDetailPath, getParticipantTrackingPath } from '../../utils/cohortRoutes.js';
 
 import { TRACKING_PROBLEM, useParticipantTracking } from './hooks/useParticipantTracking.js';
@@ -70,11 +72,17 @@ export function ParticipantTrackingPage() {
  * (/cohortes/:idCohorte/seguimiento, RF-142). Solo consulta: no ofrece
  * editar indicadores. Cada participante enlaza a su ficha individual
  * (RF-128) con su código seudonimizado. La página solo compone; el
- * estado vive en useParticipantTracking.
+ * estado vive en useParticipantTracking y la consulta, en la URL (filtros,
+ * orden y página se conservan al recargar o al volver de una ficha).
+ * En pantallas anchas los registros se muestran en una tabla con
+ * encabezados ordenables; en las estrechas, como tarjetas. Ambas vistas
+ * presentan las mismas filas de la misma respuesta.
  */
 function ParticipantTracking() {
   const { idCohorte } = useParams();
   const cohortId = idCohorte ?? null;
+  const { search } = useLocation();
+  const navigate = useNavigate();
   const {
     cohort,
     entries,
@@ -85,6 +93,7 @@ function ParticipantTracking() {
     canGoBack,
     canGoForward,
     filters,
+    sort,
     sortValue,
     hasFilters,
     isLoading,
@@ -93,11 +102,12 @@ function ParticipantTracking() {
     isDemo,
     setFilter,
     setSort,
+    setColumnSort,
     clearFilters,
     goBack,
     goForward,
     retry,
-  } = useParticipantTracking({ cohortId });
+  } = useParticipantTracking({ cohortId, search, navigate });
 
   if (problem === TRACKING_PROBLEM.SESSION_REQUIRED) return <Navigate to={LOGIN_PATH} replace />;
 
@@ -105,6 +115,10 @@ function ParticipantTracking() {
   const isReady = !isLoading && !problem;
   const isEmpty = isReady && total === 0;
   const notice = !isLoading && problem ? PROBLEM_NOTICE[problem] : null;
+  const rows = entries.map((entry) => ({
+    entry,
+    detailPath: cohortId && entry.detailCode ? getParticipantTrackingPath(cohortId, entry.detailCode) : null,
+  }));
 
   return (
     <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-[var(--space-6)] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]">
@@ -159,7 +173,6 @@ function ParticipantTracking() {
             filters={filters}
             sortValue={sortValue}
             hasFilters={hasFilters}
-            disabled={isLoading}
             onFilter={setFilter}
             onSort={setSort}
             onClearFilters={clearFilters}
@@ -232,13 +245,18 @@ function ParticipantTracking() {
 
         {isReady && entries.length > 0 && (
           <>
-            <ol className="m-0 grid list-none grid-cols-1 gap-[var(--space-4)] p-0 md:grid-cols-2 xl:grid-cols-3">
-              {entries.map((entry) => (
+            <div className="hidden lg:block">
+              <TrackingTable
+                rows={rows}
+                sort={effectiveSort(sort)}
+                onSort={(field) => setColumnSort(nextColumnSort(sort, field))}
+              />
+            </div>
+
+            <ol className="m-0 grid list-none grid-cols-1 gap-[var(--space-4)] p-0 md:grid-cols-2 lg:hidden">
+              {rows.map(({ entry, detailPath }) => (
                 <li key={entry.code}>
-                  <TrackingEntryCard
-                    entry={entry}
-                    detailPath={cohortId && entry.detailCode ? getParticipantTrackingPath(cohortId, entry.detailCode) : null}
-                  />
+                  <TrackingEntryCard entry={entry} detailPath={detailPath} />
                 </li>
               ))}
             </ol>
