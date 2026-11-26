@@ -15,7 +15,9 @@ export function FaqSection() {
 
   function handleKeyDown(event) {
     const buttons = [
-      ...event.currentTarget.querySelectorAll('[data-faq-trigger]'),
+      ...event.currentTarget
+        .closest('.lp-accordion')
+        .querySelectorAll('[data-faq-trigger]'),
     ];
     const current = buttons.indexOf(document.activeElement);
     const target = {
@@ -47,10 +49,7 @@ export function FaqSection() {
           />
         </div>
 
-        <div
-          className="lp-accordion"
-          onKeyDown={handleKeyDown}
-        >
+        <div className="lp-accordion">
           {FAQ.items.map((item) => {
             const open = openId === item.id;
 
@@ -68,6 +67,7 @@ export function FaqSection() {
                     aria-expanded={open}
                     aria-controls={`lp-faq-panel-${item.id}`}
                     onClick={() => setOpenId(open ? null : item.id)}
+                    onKeyDown={handleKeyDown}
                   >
                     <span>{item.q}</span>
                     <ChevronDown

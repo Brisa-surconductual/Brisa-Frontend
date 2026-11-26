@@ -40,7 +40,7 @@ export function useChatEntryPage() {
   useEffect(() => {
     let cancelado = false;
 
-    cargarSesion(dispatch, () => cancelado);
+    void cargarSesion(dispatch, () => cancelado);
 
     return () => {
       cancelado = true;
@@ -49,7 +49,7 @@ export function useChatEntryPage() {
 
   function retry() {
     dispatch({ type: 'CARGANDO' });
-    cargarSesion(dispatch);
+    void cargarSesion(dispatch);
   }
 
   return {

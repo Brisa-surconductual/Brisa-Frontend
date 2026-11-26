@@ -46,7 +46,7 @@ export function useGroupTreesPage() {
   useEffect(() => {
     let cancelado = false;
 
-    cargarListado(dispatch, { estado, page }, () => cancelado);
+    void cargarListado(dispatch, { estado, page }, () => cancelado);
 
     return () => {
       cancelado = true;

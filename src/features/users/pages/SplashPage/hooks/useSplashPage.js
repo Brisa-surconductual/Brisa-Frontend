@@ -20,7 +20,7 @@ export function useSplashPage() {
   // ya no vuelve y el botón pasa a abrir la hoja de instrucciones.
   function openInstall(event) {
     if (install.modo === INSTALL_MODE.NATIVO) {
-      install.instalar();
+      void install.instalar();
       return;
     }
 

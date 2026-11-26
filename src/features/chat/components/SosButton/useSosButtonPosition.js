@@ -29,10 +29,10 @@ function leerAreasSeguras() {
   document.body.appendChild(sonda);
   const estilo = getComputedStyle(sonda);
   const areas = {
-    superior: parseFloat(estilo.paddingTop) || 0,
-    derecha: parseFloat(estilo.paddingRight) || 0,
-    inferior: parseFloat(estilo.paddingBottom) || 0,
-    izquierda: parseFloat(estilo.paddingLeft) || 0,
+    superior: Number.parseFloat(estilo.paddingTop) || 0,
+    derecha: Number.parseFloat(estilo.paddingRight) || 0,
+    inferior: Number.parseFloat(estilo.paddingBottom) || 0,
+    izquierda: Number.parseFloat(estilo.paddingLeft) || 0,
   };
   sonda.remove();
   return areas;

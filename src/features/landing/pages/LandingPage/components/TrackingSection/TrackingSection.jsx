@@ -51,7 +51,9 @@ function GoalTabs() {
     const next = (index + step + tabs.length) % tabs.length;
 
     setSelected(tabs[next].id);
-    event.currentTarget.querySelectorAll('[role="tab"]')[next]?.focus();
+    const tablist = event.currentTarget.closest('[role="tablist"]');
+
+    tablist.querySelectorAll('[role="tab"]')[next]?.focus();
   }
 
   return (
@@ -61,7 +63,6 @@ function GoalTabs() {
         role="tablist"
         aria-label={TRACKING.goalsTitle}
         className="lp-tabs"
-        onKeyDown={handleKeyDown}
       >
         {tabs.map((tab) => (
           <button
@@ -74,6 +75,7 @@ function GoalTabs() {
             tabIndex={tab.id === selected ? 0 : -1}
             className="lp-tab"
             onClick={() => setSelected(tab.id)}
+            onKeyDown={handleKeyDown}
           >
             {tab.label}
           </button>

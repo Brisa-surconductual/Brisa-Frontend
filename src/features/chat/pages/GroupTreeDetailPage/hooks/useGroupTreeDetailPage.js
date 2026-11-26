@@ -97,7 +97,7 @@ export function useGroupTreeDetailPage() {
   useEffect(() => {
     let cancelado = false;
 
-    cargarArbol(dispatch, flowId, () => cancelado);
+    void cargarArbol(dispatch, flowId, () => cancelado);
 
     return () => {
       cancelado = true;

@@ -68,7 +68,7 @@ export function usePersonalizedTreesPage() {
   useEffect(() => {
     let cancelado = false;
 
-    cargarArboles(dispatch, () => cancelado);
+    void cargarArboles(dispatch, () => cancelado);
 
     return () => {
       cancelado = true;
@@ -94,7 +94,7 @@ export function usePersonalizedTreesPage() {
       return;
     }
 
-    run(action, target);
+    void run(action, target);
   }
 
   return {

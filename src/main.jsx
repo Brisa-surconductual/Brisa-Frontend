@@ -22,7 +22,7 @@ import App from './App.jsx';
 listenInstallPrompt(window);
 
 if (import.meta.env.PROD) {
-  import('./app/pwa/registerServiceWorker.js').then(
+  void import('./app/pwa/registerServiceWorker.js').then(
     ({ registerServiceWorker }) => registerServiceWorker(),
   );
 }
