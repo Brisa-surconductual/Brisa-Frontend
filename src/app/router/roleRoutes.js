@@ -5,7 +5,7 @@ export const LOGIN_PATH = '/login';
 const ROLE_HOME_PATH = Object.freeze({
   [USER_ROLE.ESTUDIANTE]: '/app/estudiante',
   [USER_ROLE.ADMINISTRATIVO]: '/app/administrativo',
-  // Mismo área que ADMINISTRATIVO (FE-336b): el backend acepta a ambos roles.
+  // Misma área que ADMINISTRATIVO (FE-336b): el backend acepta a ambos roles.
   [USER_ROLE.COORDINADOR_PSI]: '/app/administrativo',
 });
 

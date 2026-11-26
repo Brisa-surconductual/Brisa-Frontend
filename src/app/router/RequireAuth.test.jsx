@@ -84,6 +84,19 @@ describe('Guarda de acceso por rol', () => {
     expect(element.props.to).toBe('/app/administrativo');
   });
 
+  it('un administrativo en una ruta de estudiante vuelve a su inicio administrativo', () => {
+    authState = {
+      isLoading: false,
+      isAuthenticated: true,
+      role: USER_ROLE.ADMINISTRATIVO,
+    };
+
+    const element = decide(STUDENT_ONLY);
+
+    expect(element.type).toBe(Navigate);
+    expect(element.props.to).toBe('/app/administrativo');
+  });
+
   it('un estudiante sigue sin acceder al área administrativa', () => {
     authState = {
       isLoading: false,
