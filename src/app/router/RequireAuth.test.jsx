@@ -12,6 +12,11 @@ vi.mock('@/app/providers/index.js', () => ({
 }));
 
 const ADMIN_ONLY = Object.freeze([USER_ROLE.ADMINISTRATIVO]);
+const ADMIN_AREA = Object.freeze([
+  USER_ROLE.ADMINISTRATIVO,
+  USER_ROLE.COORDINADOR_PSI,
+]);
+const STUDENT_ONLY = Object.freeze([USER_ROLE.ESTUDIANTE]);
 
 /*
  * RequireAuth solo lee el contexto: se invoca directamente y se
@@ -54,6 +59,55 @@ describe('Guarda de acceso por rol', () => {
     };
 
     expect(decide(ADMIN_ONLY).type).toBe(Outlet);
+  });
+
+  it('un coordinador de psicología accede al área administrativa', () => {
+    authState = {
+      isLoading: false,
+      isAuthenticated: true,
+      role: USER_ROLE.COORDINADOR_PSI,
+    };
+
+    expect(decide(ADMIN_AREA).type).toBe(Outlet);
+  });
+
+  it('un coordinador en una ruta de estudiante vuelve a su inicio administrativo', () => {
+    authState = {
+      isLoading: false,
+      isAuthenticated: true,
+      role: USER_ROLE.COORDINADOR_PSI,
+    };
+
+    const element = decide(STUDENT_ONLY);
+
+    expect(element.type).toBe(Navigate);
+    expect(element.props.to).toBe('/app/administrativo');
+  });
+
+  it('un administrativo en una ruta de estudiante vuelve a su inicio administrativo', () => {
+    authState = {
+      isLoading: false,
+      isAuthenticated: true,
+      role: USER_ROLE.ADMINISTRATIVO,
+    };
+
+    const element = decide(STUDENT_ONLY);
+
+    expect(element.type).toBe(Navigate);
+    expect(element.props.to).toBe('/app/administrativo');
+  });
+
+  it('un estudiante sigue sin acceder al área administrativa', () => {
+    authState = {
+      isLoading: false,
+      isAuthenticated: true,
+      role: USER_ROLE.ESTUDIANTE,
+    };
+
+    const element = decide(ADMIN_AREA);
+
+    expect(element.type).toBe(Navigate);
+    expect(element.props.to).toBe('/app/estudiante');
   });
 
   it('mientras se verifica la sesión al recargar no muestra la página', () => {
