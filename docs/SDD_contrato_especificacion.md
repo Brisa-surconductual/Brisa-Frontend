@@ -471,6 +471,7 @@ Leyenda de estado: **Cubierto** (UI + contrato + pruebas) · **Parcial** (falta 
 | RF-140 | Dashboard principal | `administracion` · `CohortDashboard`, montado en `PsychologyHomePage` (`/app/administrativo`) | Integrado con el backend. Proveedores M05, M06 y M07 pendientes (ver nota). |
 | RF-141 | Evolución temporal de indicadores por unidad del cronograma | `administracion` · `CohortEvolutionPage` (`/app/administrativo/cohortes/:idCohorte/evolucion`) | Integrada con el backend. Proveedor M05 y filtros RF-135 pendientes (ver nota). |
 | RF-144 | Exportación CSV de indicadores agregados de la cohorte activa | `administracion` · `CohortExportButton` en `CohortDetailPage` | Integrado con el endpoint de RF-144 (ver nota) |
+| RF-145 | Exportación CSV individual del historial cuantitativo de un participante | `administracion` · `ParticipantExportButton` y `ParticipantExportDialog` en `ParticipantTrackingProfilePage` | Implementada contra el endpoint real y probada con HTTP simulado; deshabilitada hasta que la ficha (RF-128) tenga una fuente real con el seudónimo A7 (ver nota) |
 | RF-146 | Bandeja de alertas pendientes por cohorte | `administracion` · `PendingAlertsPage` (`/app/administrativo/cohortes/:idCohorte/alertas/pendientes`) | Integrada con el endpoint real, probada con HTTP simulado; M05 todavía simulado en el backend (ver nota) |
 | RF-147 | Marcar alerta como atendida (irreversible, con motivo) | `administracion` · `AttendAlertDialog` en `PendingAlertsPage` | Integrada con el endpoint real, probada con HTTP simulado; prueba contra backend de integración pendiente (ver nota) |
 | RF-38 | Trazabilidad de la interacción conversacional (consulta administrativa) | `administracion` · `ParticipantSessionsPage`, `SessionTraceabilityPage` (`/app/administrativo/chat/participantes/:codigoParticipante/sesiones[/:idSesion/trazabilidad]`) | Parcial: integración HTTP real implementada y probada con HTTP simulado; verificación contra el backend desplegado y código A7 de M08 pendientes (ver nota) |
@@ -729,6 +730,35 @@ Nota RF-146 y RF-147 (M08, etapa 4, tarea 1; rama `feat/m08-etapa4-juan`). Contr
   - **Verificado con pruebas automatizadas** (Vitest en `node`, HTTP simulado): adaptador, reglas puras, fuente, hook, página, acceso desde la cohorte, rutas y guarda RF-148.
   - **Pendiente:** prueba contra un backend de integración con una sesión administrativa (no se ejecutó) y revisión visual en navegador (360 a 1440 px, claro y oscuro).
 
+Nota RF-145 (M08, etapa 4, tarea 2; rama `feat/m08-etapa4-juan`). Contrato confirmado leyendo el backend (`ExportacionIndividualController`, su caso de uso, la entidad del CSV y sus excepciones): Psicología exporta en CSV, para interconsultas, el historial cuantitativo por unidad temporal de un participante.
+
+- **Dónde:** acción «Exportar CSV» (`components/ParticipantExportButton`) en la ficha de seguimiento (`ParticipantTrackingProfilePage`), debajo del acceso a las sesiones del chat. La ficha sigue siendo de consulta: es su único botón y solo lee.
+- **Contrato · `GET /admin/participantes/{codigo_participante}/exportacion.csv`:** va por `apiClient` con `responseType: 'blob'` y la cookie de sesión, nunca con `window.open` ni un enlace directo.
+  - **Identificador:** solo el seudónimo A7 (`P-` y 8 hexadecimales, normalizado a mayúsculas). Una referencia opaca (`seg-…`), un UUID, un correo o un código ficticio (`PART-…`) se rechazan sin petición.
+  - **Permisos:** el backend exige `ACCESO_INDIVIDUAL` al `ADMINISTRATIVO`; `COORDINADOR_PSI` tiene una excepción. El frontend no decide ni simula permisos.
+  - **Respuesta 200:** `text/csv; charset=utf-8`, `Cache-Control: no-store` y `Content-Disposition: attachment; filename="seguimiento_individual_YYYYMMDD.csv"` (fecha de Colombia, calculada por el backend). El cuerpo es UTF-8 con BOM, RFC 4180, separador coma y CRLF.
+  - **Columnas exactas, en orden:** `orden_unidad_temporal`, `nombre_unidad`, `fecha_inicio_unidad`, `fecha_fin_unidad`, `nivel_progreso`, `tasa_adherencia`, `craving_promedio`, `alertas_generadas`, `alertas_atendidas`. Sin seudónimo, sin texto de diario ni de chat. Un dato ausente llega como «No disponible».
+  - **Errores** (`{ status, codigo, mensaje }`; con `blob` el JSON llega como Blob y se lee como JSON, nunca se descarga): 400 código mal formado; 401 sesión; 403 `SIN_PERMISO_INDIVIDUAL`; 404 `PARTICIPANTE_NO_ENCONTRADO`; 409 `INCONSISTENCIA_PARTICIPANTE`; 422 `SIN_INDICADORES`; 500 `EXPORTACION_ABORTADA`; 503 `M05_NO_DISPONIBLE`.
+  - **CORS:** el backend expone `Content-Disposition` (`exposedHeaders` en `main.ts`). Si no llegara, la respuesta se trata como inválida: no se inventa un nombre.
+- **Capas:** `api/participantExportApi.js` (petición y clasificación de errores), `services/participantExportResponse.js` (validación del 200), `data/participantExportSource.js` (modo), `hooks/useParticipantExport.js` (estado), `components/ParticipantExportDialog` y `components/ParticipantExportButton` (presentación). Se reutiliza `utils/downloadCsv.js` de RF-144; sus columnas y reglas no.
+- **Validación del 200 antes de descargar:** nombre exacto del contrato; tipo `text/csv`; BOM en los tres primeros bytes; UTF-8 válido; CSV RFC 4180 bien formado; encabezado con las nueve columnas en su orden; al menos una fila; cada fila con nueve celdas; orden y conteos de alertas enteros no negativos, con atendidas ≤ generadas. Se descarga el mismo Blob recibido: bytes, BOM y MIME intactos. La URL temporal se libera tras el clic.
+- **Confirmación:** al pulsar «Exportar CSV» se abre un `<dialog>` modal nativo. Identifica al participante solo por su seudónimo y advierte que el archivo contiene información personal y sensible, que la descarga queda registrada en la auditoría y que el CSV solo trae indicadores cuantitativos.
+  - Ofrece «Cancelar» (recibe el foco al abrir) y «Confirmar exportación». Al cerrar, el foco vuelve al botón. Mientras se genera el archivo no se puede cerrar.
+  - Abrir o cancelar no hace ninguna petición. El GET sale solo al confirmar, una vez a la vez: el doble clic no duplica la petición ni el registro de auditoría.
+- **Resultados:** «Descarga iniciada» indica que el navegador recibió el archivo, no que quedó guardado. Cada error muestra un mensaje propio, sin códigos técnicos, y aclara que no se descargó ningún archivo; el 403 explica que la cuenta no tiene autorización para exportar la información individual.
+- **Cancelación e identidad:** salir de la ficha o cambiar de participante aborta la petición en curso y descarta su resultado. La acción se monta de nuevo por participante.
+- **Auditoría:** la hace siempre el backend, en la misma transacción que genera el CSV; si falla, responde 500 y no envía el archivo. El frontend no registra nada aparte ni puede verificar esa transacción.
+- **Dependencia de identidad (RF-128 / RF-142):** hoy la ficha solo tiene la fuente de demostración o el modo de integración pendiente (`data/trackingSource.js`); ninguna fuente real entrega el seudónimo.
+  - Por eso la acción se muestra **deshabilitada**: «Disponible cuando la ficha muestre el código verificado del participante» con la integración pendiente, y «No disponible en la demostración» con `VITE_M08_DEMO=true`.
+  - En la demostración no se pide ningún archivo ni se genera un CSV ficticio que aparente estar auditado. No hay simulador.
+  - Se habilitará sola cuando RF-128 tenga fuente real, porque usa la misma condición que el acceso a las sesiones del chat (RF-38): participante confirmado, sin demostración ni integración pendiente.
+  - **Esta dependencia impide hoy una prueba manual completa desde la ficha.**
+- **RF-148:** `api/participantExportApi.js` se añade a la lista explícita de adaptadores HTTP de la guarda. Solo hace GET y su ruta no apunta a un recurso protegido.
+- **Estado:**
+  - **Implementado:** lo anterior.
+  - **Verificado con pruebas automatizadas** (Vitest en `node`, HTTP simulado): API, intérprete del CSV, fuente, hook, modal (contenido, foco y teclado), botón y montaje en la ficha. Los casos 403 y 500 se prueban con dobles de transporte, sin tocar permisos reales ni la auditoría.
+  - **Pendiente:** fuente real de la ficha con el seudónimo A7; prueba contra un backend de integración con permiso individual vigente; revisión visual en navegador (360 a 1440 px, claro y oscuro).
+
 Nota: en el Excel hay códigos duplicados o irregulares (RF-75 aparece en M05 y M07; `RF93` sin guion; RF-146 no aparece; títulos vacíos en RF-54, RF-55, RF-89, RF-90, RF-92; RF-109 y RF-110 con el mismo título). Se registran como **aclaraciones pendientes** (sección 7) y no se resuelven por suposición.
 
 ---
@@ -858,3 +888,4 @@ Aplicar SDD retroactivamente a todo el código sería inviable. Se adopta así:
 | v0.9 | 2026-11-23 | RF-43: botón SOS rojo con token propio y arrastrable (puntero y teclado), con ajuste al borde y límites de pantalla. |
 | v0.10 | 2026-11-25 | Inicio del estudiante centrado en el chat: tarjeta «Tu espacio terapéutico», estado del programa y contenido vigente compactos, «Otras herramientas para ti» sin el chat y navegación del estudiante con Inicio, Chat y Contenido. |
 | v0.11 | 2026-11-26 | RF-146 y RF-147: bandeja de alertas pendientes por cohorte y atención irreversible con motivo (10 a 500 caracteres), integradas con los endpoints reales; dependencia del adaptador simulado de M05, separación de RF-129 y RF-140 y sin escrituras en modo de demostración. |
+| v0.12 | 2026-11-26 | RF-145: exportación CSV individual desde la ficha de seguimiento, con confirmación previa, validación completa del CSV y descarga del archivo original; deshabilitada sin seudónimo A7 de una fuente real y en modo de demostración. |
