@@ -22,6 +22,7 @@ export const DEMO_SCENARIO_VARIABLES = Object.freeze([
   'VITE_M08_DASHBOARD_SCENARIO',
   'VITE_M08_EVOLUTION_SCENARIO',
   'VITE_M08_EXPORT_SCENARIO',
+  'VITE_M08_PERMISSION_SCENARIO',
 ]);
 
 export function resetDemoScenarios(vi) {
