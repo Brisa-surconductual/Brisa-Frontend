@@ -131,12 +131,15 @@ describe('Ficha individual (RF-128): presentación', () => {
     expect(textOf(render({ profile: { ...PROFILE, updatedAt: null } }))).toContain('Fecha de actualización no disponible');
   });
 
-  it('solo consulta: sin formularios, campos ni botones; ningún enlace aparte de volver', () => {
+  it('solo consulta: sin formularios ni campos; solo el botón de exportar y ningún enlace aparte de volver', () => {
     const html = render({});
 
-    expect(html).not.toMatch(/<form|<input|<select|<textarea|<button/);
+    expect(html).not.toMatch(/<form|<input|<select|<textarea/);
+    // RF-145: el único botón es la exportación CSV, que solo lee.
+    expect((html.match(/<button[\s\S]*?<\/button>/g) ?? []).map((button) => textOf(button).trim()))
+      .toEqual(['Exportar CSV del historial de seguimiento']);
     expect(html.match(/<a /g)).toHaveLength(1);
-    expect(textOf(html)).not.toMatch(/Editar|Eliminar|Exportar|Marcar como atendida|Resolver|Descartar\b|Atender/);
+    expect(textOf(html)).not.toMatch(/Editar|Eliminar|Marcar como atendida|Resolver|Descartar\b|Atender/);
   });
 
   it('no muestra datos personales, internos ni contenido de diario o chat', () => {

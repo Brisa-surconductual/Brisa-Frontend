@@ -172,7 +172,10 @@ describe('Consulta temporal M04 en la ficha', () => {
   it('solo consulta: sin botones, formularios ni enlaces para cronogramas o pausas', () => {
     const html = render();
 
-    expect(html).not.toMatch(/<form|<input|<select|<textarea|<button/);
+    expect(html).not.toMatch(/<form|<input|<select|<textarea/);
+    // RF-145: el único botón es la exportación CSV, que solo lee.
+    expect((html.match(/<button[\s\S]*?<\/button>/g) ?? []).map((button) => textOf(button).trim()))
+      .toEqual(['Exportar CSV del historial de seguimiento']);
     expect(html.match(/<a /g)).toHaveLength(1);
     expect(textOf(html)).not.toMatch(/Registrar pausa|Editar|Anular|Asignar|Reprogramar|Finalizar/);
   });

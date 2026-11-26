@@ -307,7 +307,10 @@ describe('Solo lectura y privacidad', () => {
   it('sin formularios, campos ni botones; ningún enlace nuevo; sin acciones de modificación', () => {
     const html = render();
 
-    expect(html).not.toMatch(/<form|<input|<select|<textarea|<button/);
+    expect(html).not.toMatch(/<form|<input|<select|<textarea/);
+    // RF-145: el único botón es la exportación CSV, que solo lee.
+    expect((html.match(/<button[\s\S]*?<\/button>/g) ?? []).map((button) => textOf(button).trim()))
+      .toEqual(['Exportar CSV del historial de seguimiento']);
     expect(html.match(/<a /g)).toHaveLength(1);
     expect(textOf(html)).not.toMatch(/Editar|Eliminar|Desbloquear|Reenviar|Enviar notificación|Cambiar fase|Avanzar|Marcar/);
   });

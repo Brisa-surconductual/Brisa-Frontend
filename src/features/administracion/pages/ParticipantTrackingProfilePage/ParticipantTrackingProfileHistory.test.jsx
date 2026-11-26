@@ -193,7 +193,10 @@ describe('Estados de la sección', () => {
   it('solo consulta: sin botones, formularios ni enlaces nuevos; sin acciones sobre las alertas', () => {
     const html = render();
 
-    expect(html).not.toMatch(/<form|<input|<select|<textarea|<button/);
+    expect(html).not.toMatch(/<form|<input|<select|<textarea/);
+    // RF-145: el único botón es la exportación CSV, que solo lee.
+    expect((html.match(/<button[\s\S]*?<\/button>/g) ?? []).map((button) => textOf(button).trim()))
+      .toEqual(['Exportar CSV del historial de seguimiento']);
     expect(html.match(/<a /g)).toHaveLength(1);
     expect(textOf(html)).not.toMatch(/Marcar como atendida|Atender|Resolver|Descartar\b|Eliminar|Editar|Reabrir/);
   });

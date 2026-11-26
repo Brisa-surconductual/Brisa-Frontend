@@ -27,6 +27,7 @@ import { CohortNotice } from '../../components/CohortNotice/index.js';
 import { ConsumptionTrendBadge } from '../../components/ConsumptionTrendBadge/index.js';
 import { NarrativeProgressSection } from '../../components/NarrativeProgressSection/index.js';
 import { NotificationInteractionSection } from '../../components/NotificationInteractionSection/index.js';
+import { ParticipantExportButton } from '../../components/ParticipantExportButton/index.js';
 import { ParticipantSessionsLink } from '../../components/ParticipantSessionsLink/index.js';
 import { ProfileIndicator } from '../../components/ProfileIndicator/index.js';
 import { ReadOnlyNotice } from '../../components/ReadOnlyNotice/index.js';
@@ -49,7 +50,8 @@ import { useTemporalLocation } from './hooks/useTemporalLocation.js';
  * (/cohortes/:idCohorte/seguimiento/:referencia, RF-128). Solo consulta:
  * no ofrece crear, editar ni eliminar indicadores, alertas, progresión,
  * notificaciones, cronogramas ni pausas. Fuera de alcance: gestión o
- * resolución de alertas (RF-147). Incluye como secciones propias, cada
+ * resolución de alertas (RF-147). La exportación CSV individual (RF-145)
+ * solo lee y se confirma en un modal antes de pedir el archivo. Incluye como secciones propias, cada
  * una con su propia autorización, sus propios errores y su propio límite
  * de error, el historial de alertas (RF-129), la progresión narrativa
  * (RF-130, M06), la interacción con notificaciones (RF-131, M07) y la
@@ -131,6 +133,9 @@ function ParticipantTrackingProfile({ cohortId, reference }) {
   // RF-38: acceso a las sesiones del chat solo con un código de una fuente
   // real (nunca la demostración ni la referencia opaca de la ruta).
   const authenticCode = participantConfirmed && !isDemo && !isIntegrationPending;
+  // RF-145: la exportación se muestra con el participante confirmado o,
+  // deshabilitada y con su aviso, mientras la ficha no tenga fuente real.
+  const showExport = !isLoading && (participantConfirmed || isIntegrationPending);
   // RF-149: la ficha degradada se muestra con su advertencia.
   const profileStale = participantConfirmed && isStale(freshness);
   // Las demás secciones se consultan salvo denegación o problema de identidad.
@@ -188,6 +193,10 @@ function ParticipantTrackingProfile({ cohortId, reference }) {
         authentic={authenticCode}
         returnTo={cohortId && reference ? getParticipantTrackingPath(cohortId, reference) : null}
       />
+
+      {showExport && (
+        <ParticipantExportButton key={authenticCode ? code : 'sin-codigo'} participantCode={code} authentic={authenticCode} />
+      )}
 
       {!isIntegrationPending && (
         <ReadOnlyNotice>

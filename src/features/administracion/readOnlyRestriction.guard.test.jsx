@@ -132,6 +132,8 @@ describe('RF-148: límites del módulo administrativo', () => {
       'api/cohortesApi.js',
       'api/listAuditRecords.js',
       'api/observeReadOnlyRejections.js',
+      // RF-145: exportación CSV individual (solo GET).
+      'api/participantExportApi.js',
       'api/participantesCohorteApi.js',
       'api/vistasAgregadasApi.js',
     ]);
