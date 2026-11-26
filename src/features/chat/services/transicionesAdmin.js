@@ -265,13 +265,19 @@ export function destinosOcupadosDelOrigen(
   };
 }
 
+const CONFIG_TRANSICION_POR_DEFECTO = Object.freeze({ tipo: null });
+const OCUPADOS_POR_DEFECTO = Object.freeze({
+  destinoPorDefecto: '',
+  destinosEspecificos: Object.freeze([]),
+});
+
 // Devuelve un objeto con un mensaje por campo inválido ({} si todo es válido).
 // `ocupados` (de `destinosOcupadosDelOrigen`) evita que una transición
 // específica y "cualquier otra respuesta" lleven al mismo nodo (RF-25).
 export function validarTransicion(
   valores,
-  config = { tipo: null },
-  ocupados = { destinoPorDefecto: '', destinosEspecificos: [] },
+  config = CONFIG_TRANSICION_POR_DEFECTO,
+  ocupados = OCUPADOS_POR_DEFECTO,
 ) {
   const errores = {};
 

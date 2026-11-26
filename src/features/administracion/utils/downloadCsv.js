@@ -4,6 +4,11 @@ export const UTF8_BOM = '﻿';
 
 export const CSV_MIME_TYPE = 'text/csv;charset=utf-8';
 
+// Se arma en cada llamada (no al importar) para leer los globales vigentes.
+function defaultCsvEnv() {
+  return { document, URL, Blob };
+}
+
 /*
  * Entrega un CSV al navegador para su descarga. Solo inicia la descarga:
  * guardar el archivo en el disco lo decide el navegador o el usuario. La
@@ -12,7 +17,7 @@ export const CSV_MIME_TYPE = 'text/csv;charset=utf-8';
  */
 export function startCsvDownload(
   { fileName, content, blob },
-  env = { document, URL, Blob },
+  env = defaultCsvEnv(),
 ) {
   const file =
     blob ?? new env.Blob([UTF8_BOM, content], { type: CSV_MIME_TYPE });

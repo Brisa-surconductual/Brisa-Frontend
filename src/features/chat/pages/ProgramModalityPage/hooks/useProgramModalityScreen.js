@@ -30,7 +30,7 @@ export function useProgramModalityScreen() {
   useEffect(() => {
     let cancelado = false;
 
-    cargarElegibilidad(dispatch, () => cancelado);
+    void cargarElegibilidad(dispatch, () => cancelado);
 
     return () => {
       cancelado = true;

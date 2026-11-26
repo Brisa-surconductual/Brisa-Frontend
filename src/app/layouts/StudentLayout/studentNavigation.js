@@ -41,6 +41,13 @@ export const STUDENT_NAV_ITEMS = Object.freeze([
 const isWithin = (path, prefix) =>
   path === prefix || path.startsWith(`${prefix}/`);
 
+// Quita las barras finales sin regex (evita backtracking sobre rutas largas).
+function quitarBarrasFinales(ruta) {
+  let fin = ruta.length;
+  while (fin > 0 && ruta[fin - 1] === '/') fin -= 1;
+  return ruta.slice(0, fin);
+}
+
 /*
  * El chat queda activo en su entrada y en sus conversaciones
  * ordinarias (`/chat/sesion/...`, sin conexión). La intervención
@@ -48,7 +55,7 @@ const isWithin = (path, prefix) =>
  * terapéutica: no marca ninguna sección.
  */
 export function getActiveStudentSection(pathname) {
-  const path = pathname.replace(/\/+$/, '');
+  const path = quitarBarrasFinales(pathname);
 
   if (path === STUDENT_HOME) return STUDENT_SECTION.INICIO;
   if (isWithin(path, STUDENT_CHAT)) return STUDENT_SECTION.CHAT;

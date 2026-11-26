@@ -45,7 +45,7 @@ export function AdministrativePauseHistoryPage() {
         setIsLoading(false);
       }
     };
-    fetchPauses();
+    void fetchPauses();
   }, []);
 
   function handleAnnulPause(pause) {

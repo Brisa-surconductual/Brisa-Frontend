@@ -1,7 +1,16 @@
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// Equivale a /^[^\s@]+@[^\s@]+\.[^\s@]+$/ sin backtracking: sin espacios,
+// una sola @, parte local no vacía y un punto con texto antes y después en el
+// dominio.
+function hasEmailShape(value) {
+  if (/\s/.test(value)) return false;
+  const parts = value.split('@');
+  if (parts.length !== 2) return false;
+  const [local, domain] = parts;
+  return local.length > 0 && domain.slice(1, -1).includes('.');
+}
 
 export function isValidEmail(value) {
-  return EMAIL_PATTERN.test(value.trim());
+  return hasEmailShape(value.trim());
 }
 
 /*

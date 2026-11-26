@@ -156,7 +156,7 @@ export function AuthProvider({ children }) {
       }
     }
 
-    rehydrateSession();
+    void rehydrateSession();
 
     return () => {
       isMounted = false;

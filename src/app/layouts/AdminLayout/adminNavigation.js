@@ -87,6 +87,13 @@ const HOME_TABS = Object.freeze([
   ADMIN_SECTION.AJUSTES,
 ]);
 
+// Quita las barras finales sin regex (evita backtracking sobre rutas largas).
+function quitarBarrasFinales(ruta) {
+  let fin = ruta.length;
+  while (fin > 0 && ruta[fin - 1] === '/') fin -= 1;
+  return ruta.slice(0, fin);
+}
+
 /*
  * Sección activa según la URL. Todas las páginas internas de
  * cronogramas y de chat cuentan como su sección. En el panel
@@ -94,7 +101,7 @@ const HOME_TABS = Object.freeze([
  * valor desconocido equivale al Dashboard.
  */
 export function getActiveAdminSection(pathname, search = '') {
-  const path = pathname.replace(/\/+$/, '');
+  const path = quitarBarrasFinales(pathname);
 
   if (path.startsWith(`${ADMIN_HOME}/cronograma`)) {
     return ADMIN_SECTION.CRONOGRAMA;
