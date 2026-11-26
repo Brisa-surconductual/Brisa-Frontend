@@ -78,7 +78,8 @@ function AdminNavList({ activeSection, variant, onNavigate, firstLinkRef }) {
 
 /*
  * Layout del área administrativa. Va dentro de ProtectedLayout y
- * de la guarda de rol ADMINISTRATIVO: no protege por sí mismo.
+ * de la guarda de rol del área administrativa (ADMINISTRATIVO y
+ * COORDINADOR_PSI): no protege por sí mismo.
  */
 export function AdminLayout() {
   const location = useLocation();

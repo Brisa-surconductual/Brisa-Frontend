@@ -111,14 +111,15 @@ const ADMIN_PATHS = Object.freeze([
 
 describe('Rutas administrativas protegidas', () => {
   it.each(ADMIN_PATHS)(
-    '%s exige sesión, rol ADMINISTRATIVO y control de inactividad',
+    '%s exige sesión, rol del área administrativa y control de inactividad',
     (pathname) => {
       const matches = match(pathname);
 
       expect(guardRoles(matches)).toEqual([
         null,
-        [USER_ROLE.ADMINISTRATIVO],
+        [USER_ROLE.ADMINISTRATIVO, USER_ROLE.COORDINADOR_PSI],
       ]);
+      expect(guardRoles(matches)[1]).not.toContain(USER_ROLE.ESTUDIANTE);
       expect(hasProtectedLayout(matches)).toBe(true);
     },
   );

@@ -68,6 +68,12 @@ import { RequireAuth } from './RequireAuth.jsx';
 import { RoleHomeRedirect } from './RoleHomeRedirect.jsx';
 
 
+// Roles del área administrativa: el backend acepta a ambos en sus rutas /admin (FE-336b).
+const ADMIN_AREA_ROLES = Object.freeze([
+  USER_ROLE.ADMINISTRATIVO,
+  USER_ROLE.COORDINADOR_PSI,
+]);
+
 export function AppRouter() {
   return (
     <BrowserRouter>
@@ -200,9 +206,7 @@ export function AppRouter() {
             <Route
               element={
                 <RequireAuth
-                  allowedRoles={[
-                    USER_ROLE.ADMINISTRATIVO,
-                  ]}
+                  allowedRoles={ADMIN_AREA_ROLES}
                 />
               }
             >
