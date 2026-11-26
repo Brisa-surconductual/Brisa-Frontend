@@ -43,8 +43,10 @@ const PROFILE_STATE = Object.freeze({
   cohort: { id: 'c-1', name: 'Cohorte de prueba' },
   code: 'X-1',
   profile: {
-    progress: available(21),
-    adherence: available(34),
+    progressLevel: 'INICIAL',
+    completedUnits: 1,
+    adherence: 0.34,
+    daysWithRecord: 8,
     trend: 'ESTABLE',
     activeAlerts: [],
     updatedAt: '2026-03-09T06:00:00-05:00',
@@ -52,7 +54,6 @@ const PROFILE_STATE = Object.freeze({
   status: PROFILE_STATUS.READY,
   isLoading: false,
   isDemo: true,
-  isIntegrationPending: false,
   headingRef: { current: null },
   retry: vi.fn(),
 });
@@ -100,9 +101,9 @@ function render({ profile = {}, history = {}, narrative = {}, notifications = {}
   hooks.narrative = section(NARRATIVE, 'narrative', narrative);
   hooks.notifications = section(INTERACTION, 'interaction', notifications);
   return clean(renderToStaticMarkup(
-    <MemoryRouter initialEntries={['/app/administrativo/cohortes/c-1/seguimiento/ref-1']}>
+    <MemoryRouter initialEntries={['/app/administrativo/cohortes/c-1/seguimiento/PART-0001']}>
       <Routes>
-        <Route path="/app/administrativo/cohortes/:idCohorte/seguimiento/:referencia" element={<ParticipantTrackingProfilePage />} />
+        <Route path="/app/administrativo/cohortes/:idCohorte/seguimiento/:codigoParticipante" element={<ParticipantTrackingProfilePage />} />
       </Routes>
     </MemoryRouter>,
   ));
@@ -130,8 +131,8 @@ describe('Integración con la ficha', () => {
   it('cada sección consulta con la cohorte y la referencia de la ruta, solo con la ficha confirmada', () => {
     render();
 
-    expect(hooks.args.narrative).toEqual({ cohortId: 'c-1', reference: 'ref-1', enabled: true });
-    expect(hooks.args.notifications).toEqual({ cohortId: 'c-1', reference: 'ref-1', enabled: true });
+    expect(hooks.args.narrative).toEqual({ cohortId: 'c-1', reference: 'PART-0001', enabled: true });
+    expect(hooks.args.notifications).toEqual({ cohortId: 'c-1', reference: 'PART-0001', enabled: true });
   });
 
   it('participante sin perfil (204 de RF-128): la ficha confirmó el acceso y ambas secciones se consultan', () => {
@@ -148,7 +149,7 @@ describe('Integración con la ficha', () => {
     ['inexistente', { status: PROFILE_STATUS.NOT_FOUND, profile: null, code: null }],
     ['inconsistente', { status: PROFILE_STATUS.INCONSISTENT, profile: null, code: null }],
     ['fuera de la cohorte', { status: PROFILE_STATUS.OUTSIDE_COHORT, profile: null, code: null }],
-    ['integración pendiente', { isIntegrationPending: true, isDemo: false, status: null, profile: null, code: null }],
+    ['en la API real (secciones aún no integradas)', { isDemo: false }],
   ])('ficha %s: no consulta M06 ni M07 ni muestra ningún dato protegido', (_, profile) => {
     const html = render({ profile });
 
@@ -307,7 +308,10 @@ describe('Solo lectura y privacidad', () => {
   it('sin formularios, campos ni botones; ningún enlace nuevo; sin acciones de modificación', () => {
     const html = render();
 
-    expect(html).not.toMatch(/<form|<input|<select|<textarea|<button/);
+    expect(html).not.toMatch(/<form|<input|<select|<textarea/);
+    // RF-145: el único botón es la exportación CSV, que solo lee.
+    expect((html.match(/<button[\s\S]*?<\/button>/g) ?? []).map((button) => textOf(button).trim()))
+      .toEqual(['Exportar CSV del historial de seguimiento']);
     expect(html.match(/<a /g)).toHaveLength(1);
     expect(textOf(html)).not.toMatch(/Editar|Eliminar|Desbloquear|Reenviar|Enviar notificación|Cambiar fase|Avanzar|Marcar/);
   });
@@ -317,6 +321,6 @@ describe('Solo lectura y privacidad', () => {
   });
 
   it('no muestra datos personales, identificadores, nivel de gamificación ni contenido de mensajes', () => {
-    expect(render()).not.toMatch(/@|uuid|demo-participante|ref-1"|nivel|mensaje ficticio|evento|diario|chat/i);
+    expect(render()).not.toMatch(/@|uuid|demo-participante|seg-|nivel(?! de progreso)|mensaje ficticio|evento|diario|chat/i);
   });
 });

@@ -124,13 +124,19 @@ describe('RF-148: límites del módulo administrativo', () => {
     );
 
     expect(http.map(({ name }) => name).sort()).toEqual([
+      // RF-146 / RF-147: bandeja de alertas pendientes y su atención.
+      'api/alertasPendientesApi.js',
       'api/chatTraceability/fetchParticipantSessions.js',
       'api/chatTraceability/fetchSessionTraceability.js',
       'api/cohortExportApi.js',
       'api/cohortesApi.js',
       'api/listAuditRecords.js',
       'api/observeReadOnlyRejections.js',
+      // RF-145: exportación CSV individual (solo GET).
+      'api/participantExportApi.js',
       'api/participantesCohorteApi.js',
+      // RF-142 / RF-128: listado de indicadores y ficha individual (solo GET).
+      'api/seguimientoParticipantesApi.js',
       'api/vistasAgregadasApi.js',
     ]);
     const { code } = http.find(({ name }) => name === 'api/observeReadOnlyRejections.js');

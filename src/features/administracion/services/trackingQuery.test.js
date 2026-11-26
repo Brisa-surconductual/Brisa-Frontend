@@ -1,76 +1,158 @@
 import { describe, expect, it } from 'vitest';
 
-import { TRACKING_PAGE_SIZE } from '../types/participantTracking.js';
 import {
   INITIAL_TRACKING_QUERY,
+  effectiveSort,
   hasActiveFilters,
+  lastPageOffset,
+  nextColumnSort,
   normalizeTrackingQuery,
+  parseTrackingSearch,
   sortToValue,
+  toTrackingParams,
+  toTrackingSearch,
   valueToSort,
   withFilter,
+  withOffset,
   withPage,
   withSort,
   withoutFilters,
 } from './trackingQuery.js';
 
-describe('Parámetros de la consulta de seguimiento (RF-142)', () => {
-  it('la consulta inicial no filtra, no ordena y empieza en la primera página', () => {
+describe('trackingQuery (RF-142, parámetros reales)', () => {
+  it('consulta inicial: sin filtros, orden del backend, primera página de 20', () => {
     expect(INITIAL_TRACKING_QUERY).toEqual({
-      filters: { progressMin: null, adherenceMin: null, alerts: null },
+      filters: { level: null, adherenceMin: null, adherenceMax: null, alerts: null },
       sort: null,
       offset: 0,
-      limit: TRACKING_PAGE_SIZE,
+      limit: 20,
     });
-    expect(hasActiveFilters(INITIAL_TRACKING_QUERY)).toBe(false);
+    expect(toTrackingParams(INITIAL_TRACKING_QUERY)).toEqual({ offset: 0, limit: 20 });
   });
 
-  it('solo admite umbrales, filtros de alertas, órdenes y offsets conocidos', () => {
-    const query = normalizeTrackingQuery({
-      filters: { progressMin: '50', adherenceMin: '33', alerts: 'cualquiera', extra: 'x' },
-      sort: { field: 'correo', direction: 'asc' },
-      offset: -5,
-      limit: 1000,
+  it('filtros combinados, orden y paginación con los nombres del backend', () => {
+    let query = withFilter(INITIAL_TRACKING_QUERY, 'level', 'EN_AVANCE');
+    query = withFilter(query, 'adherenceMin', '25');
+    query = withFilter(query, 'adherenceMax', '75');
+    query = withFilter(query, 'alerts', 'true');
+    query = withSort(query, valueToSort('tasa_adherencia:DESC'));
+    query = withPage(query, 1, 45);
+
+    expect(toTrackingParams(query)).toEqual({
+      nivel_progreso: 'EN_AVANCE',
+      adherencia_min: 0.25,
+      adherencia_max: 0.75,
+      con_alertas: 'true',
+      orden_campo: 'tasa_adherencia',
+      orden_direccion: 'DESC',
+      offset: 20,
+      limit: 20,
     });
-
-    expect(query).toEqual({
-      filters: { progressMin: 50, adherenceMin: null, alerts: null },
-      sort: null,
-      offset: 0,
-      limit: TRACKING_PAGE_SIZE,
-    });
   });
 
-  it('un filtro u orden nuevo vuelve a la primera página', () => {
-    const onPage2 = normalizeTrackingQuery({ offset: TRACKING_PAGE_SIZE });
-
-    expect(withFilter(onPage2, 'alerts', 'con-alertas')).toMatchObject({ offset: 0, filters: { alerts: 'con-alertas' } });
-    expect(withSort(onPage2, { field: 'progreso', direction: 'desc' })).toMatchObject({ offset: 0, sort: { field: 'progreso', direction: 'desc' } });
+  it('con_alertas=false también se envía', () => {
+    expect(toTrackingParams(withFilter(INITIAL_TRACKING_QUERY, 'alerts', 'false')).con_alertas).toBe('false');
   });
 
-  it('el valor vacío de un selector quita el filtro', () => {
-    const filtered = withFilter(INITIAL_TRACKING_QUERY, 'progressMin', '75');
-
-    expect(hasActiveFilters(filtered)).toBe(true);
-    expect(withFilter(filtered, 'progressMin', '').filters.progressMin).toBeNull();
-    expect(withoutFilters(withFilter(filtered, 'alerts', 'sin-alertas')).filters).toEqual({ progressMin: null, adherenceMin: null, alerts: null });
+  it.each([
+    ['nivel desconocido', 'level', 'EXPERTO'],
+    ['umbral no ofrecido', 'adherenceMin', '33'],
+    ['umbral negativo', 'adherenceMax', '-25'],
+    ['alertas desconocidas', 'alerts', 'si'],
+  ])('ignora valores no admitidos (%s): nunca los reenvía', (_, name, value) => {
+    expect(toTrackingParams(withFilter(INITIAL_TRACKING_QUERY, name, value))).toEqual({ offset: 0, limit: 20 });
   });
 
-  it('pagina por offset y limit sin salirse del total', () => {
-    const first = INITIAL_TRACKING_QUERY;
-    const second = withPage(first, 1, 12);
+  it('mínimo mayor que el máximo: se descarta el otro límite, nunca se envía un rango inválido', () => {
+    const withMax = withFilter(INITIAL_TRACKING_QUERY, 'adherenceMax', '25');
+    const conflict = withFilter(withMax, 'adherenceMin', '75');
 
-    expect(second.offset).toBe(TRACKING_PAGE_SIZE);
-    expect(withPage(second, -1, 12).offset).toBe(0);
-    expect(withPage(first, -1, 12)).toBe(first);
-    expect(withPage(normalizeTrackingQuery({ offset: 10 }), 1, 12)).toMatchObject({ offset: 10 });
-    expect(withPage(first, 1, 0)).toBe(first);
+    expect(conflict.filters).toMatchObject({ adherenceMin: 75, adherenceMax: null });
+    expect(withFilter(withFilter(INITIAL_TRACKING_QUERY, 'adherenceMin', '75'), 'adherenceMax', '25').filters)
+      .toMatchObject({ adherenceMin: null, adherenceMax: 25 });
+    expect(normalizeTrackingQuery({ filters: { adherenceMin: 75, adherenceMax: 25 } }).filters.adherenceMax).toBeNull();
   });
 
-  it('convierte el orden a valor de selector y de vuelta', () => {
-    expect(sortToValue(null)).toBe('');
-    expect(sortToValue({ field: 'adherencia', direction: 'asc' })).toBe('adherencia-asc');
-    expect(valueToSort('alertas-desc')).toEqual({ field: 'alertas', direction: 'desc' });
+  it('un cambio de filtro u orden vuelve a la primera página', () => {
+    const second = withPage(INITIAL_TRACKING_QUERY, 1, 45);
+
+    expect(withFilter(second, 'level', 'INICIAL').offset).toBe(0);
+    expect(withSort(second, valueToSort('alertas_activas:ASC')).offset).toBe(0);
+  });
+
+  it('orden: valores del selector y desconocidos', () => {
+    expect(sortToValue(valueToSort('alertas_atendidas:DESC'))).toBe('alertas_atendidas:DESC');
+    expect(valueToSort('correo:ASC')).toBeNull();
+    expect(valueToSort('tasa_adherencia:asc')).toBeNull();
     expect(valueToSort('')).toBeNull();
-    expect(valueToSort('nombre-asc')).toBeNull();
+  });
+
+  it('paginación: no pasa de los extremos', () => {
+    expect(withPage(INITIAL_TRACKING_QUERY, -1, 45)).toBe(INITIAL_TRACKING_QUERY);
+    const last = withPage(withPage(INITIAL_TRACKING_QUERY, 1, 45), 1, 45);
+    expect(last.offset).toBe(40);
+    expect(withPage(last, 1, 45)).toBe(last);
+  });
+
+  it('última página que existe', () => {
+    expect(lastPageOffset(41, 20)).toBe(40);
+    expect(lastPageOffset(40, 20)).toBe(20);
+    expect(lastPageOffset(0, 20)).toBe(0);
+    expect(withOffset(INITIAL_TRACKING_QUERY, 40).offset).toBe(40);
+  });
+
+  it('limpiar filtros conserva el orden', () => {
+    const query = withSort(withFilter(INITIAL_TRACKING_QUERY, 'level', 'AVANZADO'), valueToSort('nivel_progreso:ASC'));
+
+    expect(hasActiveFilters(query)).toBe(true);
+    expect(withoutFilters(query)).toMatchObject({ filters: INITIAL_TRACKING_QUERY.filters, sort: { field: 'nivel_progreso', direction: 'ASC' } });
+    expect(hasActiveFilters(withoutFilters(query))).toBe(false);
+  });
+});
+
+describe('trackingQuery (RF-142): URL del listado', () => {
+  it('URL vacía: consulta inicial, y la consulta inicial no añade parámetros', () => {
+    expect(parseTrackingSearch('')).toEqual(INITIAL_TRACKING_QUERY);
+    expect(parseTrackingSearch(undefined)).toEqual(INITIAL_TRACKING_QUERY);
+    expect(toTrackingSearch(INITIAL_TRACKING_QUERY)).toBe('');
+  });
+
+  it('forma canónica: orden fijo y página solo desde la 2', () => {
+    const query = parseTrackingSearch('?pagina=3&direccion=DESC&orden=alertas_activas&alertas=false&adherencia_max=75&nivel=INICIAL');
+
+    expect(toTrackingSearch(query)).toBe('nivel=INICIAL&adherencia_max=75&alertas=false&orden=alertas_activas&direccion=DESC&pagina=3');
+    expect(query.offset).toBe(40);
+  });
+
+  it.each([
+    ['pagina=0', ''],
+    ['pagina=-2', ''],
+    ['pagina=2.5', ''],
+    ['pagina=1e3', ''],
+    ['pagina=abc', ''],
+    ['pagina=10001', ''],
+    ['pagina=10000', 'pagina=10000'],
+    ['nivel=en_avance', ''],
+    ['adherencia_min=0.5', ''],
+    ['adherencia_min=40', ''],
+    ['alertas=1', ''],
+    ['orden=tasa_adherencia', ''],
+    ['orden=correo&direccion=ASC', ''],
+    ['direccion=DESC', ''],
+    ['adherencia_min=75&adherencia_max=25', 'adherencia_min=75'],
+  ])('valor no válido o incompleto en la URL (%s): se descarta → «%s»', (search, canonical) => {
+    expect(toTrackingSearch(parseTrackingSearch(search))).toBe(canonical);
+  });
+
+  it('el primer valor de un parámetro repetido es el que cuenta', () => {
+    expect(parseTrackingSearch('nivel=AVANZADO&nivel=INICIAL').filters.level).toBe('AVANZADO');
+  });
+
+  it('orden por columna: la misma columna invierte; otra empieza ascendente', () => {
+    expect(effectiveSort(null)).toEqual({ field: 'codigo_participante', direction: 'ASC' });
+    expect(nextColumnSort(null, 'codigo_participante')).toEqual({ field: 'codigo_participante', direction: 'DESC' });
+    expect(nextColumnSort(null, 'tasa_adherencia')).toEqual({ field: 'tasa_adherencia', direction: 'ASC' });
+    expect(nextColumnSort({ field: 'tasa_adherencia', direction: 'ASC' }, 'tasa_adherencia')).toEqual({ field: 'tasa_adherencia', direction: 'DESC' });
+    expect(nextColumnSort({ field: 'tasa_adherencia', direction: 'DESC' }, 'tasa_adherencia')).toEqual({ field: 'tasa_adherencia', direction: 'ASC' });
   });
 });

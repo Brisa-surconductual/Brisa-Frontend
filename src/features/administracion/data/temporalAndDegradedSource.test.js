@@ -122,7 +122,8 @@ describe('Consulta temporal M04 de demostración', () => {
 
 describe('Modo degradado simulado (RF-149) en M05, M06 y M07', () => {
   const SOURCES = Object.freeze([
-    ['M05 ficha', 'VITE_M08_PROFILE_SCENARIO', () => getParticipantTrackingProfile(COHORT, REF(4))],
+    // La ficha real (RF-128) se pide por código y no lleva campo de acceso.
+    ['M05 ficha', 'VITE_M08_PROFILE_SCENARIO', () => getParticipantTrackingProfile(COHORT, 'PART-0004')],
     ['M05 historial', 'VITE_M08_ALERT_HISTORY_SCENARIO', () => getParticipantAlertHistory(COHORT, REF(4))],
     ['M06', 'VITE_M08_NARRATIVE_SCENARIO', () => getParticipantNarrativeProgress(COHORT, REF(4))],
     ['M07', 'VITE_M08_NOTIFICATIONS_SCENARIO', () => getParticipantNotificationInteraction(COHORT, REF(4))],
@@ -132,7 +133,7 @@ describe('Modo degradado simulado (RF-149) en M05, M06 y M07', () => {
     enableDemo({ [variable]: 'desactualizado' });
     const response = await query();
 
-    expect(response.access).toBe(TRACKING_ACCESS.GRANTED);
+    expect(response.access === TRACKING_ACCESS.GRANTED || response.modo_consulta === 'SOLO_LECTURA').toBe(true);
     expect(interpretFreshness(response)).toEqual({ state: FRESHNESS_STATE.STALE, lastAvailableAt: DEMO_LAST_AVAILABLE_AT });
   });
 
@@ -162,7 +163,7 @@ describe('Modo degradado simulado (RF-149) en M05, M06 y M07', () => {
 
     expect(await codeOf(getParticipantNarrativeProgress(COHORT, REF(4)))).toBe(TRACKING_QUERY_ERROR.MODULE_UNAVAILABLE);
     expect(interpretFreshness(await getParticipantNotificationInteraction(COHORT, REF(4))).state).toBe(FRESHNESS_STATE.STALE);
-    expect((await getParticipantTrackingProfile(COHORT, REF(4))).access).toBe(TRACKING_ACCESS.GRANTED);
+    expect((await getParticipantTrackingProfile(COHORT, 'PART-0004')).modo_consulta).toBe('SOLO_LECTURA');
     expect((await temporalOf(REF(4))).outcome).toBe(SECTION_OUTCOME.OK);
   });
 });

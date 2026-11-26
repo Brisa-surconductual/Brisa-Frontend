@@ -1,22 +1,29 @@
+import { listCohortParticipants } from '../api/participantesCohorteApi.js';
+import {
+  fetchCohortParticipantIndicators,
+  fetchParticipantTrackingProfile,
+} from '../api/seguimientoParticipantesApi.js';
+import { normalizeParticipantCode } from '../services/chatTraceabilityIds.js';
+import { TRACKING_CLIENT_ERROR, trackingError } from '../services/trackingErrors.js';
+import { toTrackingParams } from '../services/trackingQuery.js';
+import { PARTICIPATION_STATUS } from '../types/participantStatus.js';
 import { TRACKING_SOURCE_MODE } from '../types/participantTracking.js';
 import { isCohortDemoEnabled } from '../utils/cohortDemoMode.js';
 
 /*
- * Fuente de indicadores de seguimiento por cohorte (RF-142) que consume
- * el hook. Separada de la elegibilidad (RF-125) y de la auditoría.
+ * Fuente del seguimiento de participantes: listado por cohorte (RF-142)
+ * y ficha individual (RF-128).
  *
- * Hoy solo existe la demostración de desarrollo; sin ella el modo es
- * PENDING_INTEGRATION y no se consulta nada. Al autorizarse la
- * integración, `listCohortTracking` delegará en un adaptador de `api/`
- * con la misma firma. PENDIENTE de confirmar con el backend:
- *   - ruta y nombres de parámetros (RF-142 sugiere id_cohorte,
- *     filtro_indicador, valor_filtro, orden_campo, paginacion_offset,
- *     paginacion_limit);
- *   - forma de la respuesta y del campo de autorización explícita;
- *   - códigos de error (403, 404) y su forma.
- * Un error nunca se responderá con datos ficticios.
+ * - API (sin demostración): endpoints reales del backend
+ *   (api/seguimientoParticipantesApi.js).
+ * - DEMO (`VITE_M08_DEMO=true`, solo desarrollo): fuente ficticia que
+ *   responde con las mismas formas del contrato real. Sus datos nunca se
+ *   mezclan con los del backend: el modo se fija al montar la página.
+ *
+ * El historial de alertas (RF-129) sigue solo en la demostración: no se
+ * integra en esta etapa.
  */
-const NOT_INTEGRATED = 'La consulta de seguimiento aún no está integrada.';
+const NOT_INTEGRATED = 'La consulta del historial de alertas aún no está integrada.';
 
 /*
  * Único punto que carga la demostración de seguimiento. El import
@@ -31,41 +38,67 @@ async function loadTrackingDemoSource() {
   return import('./trackingDemoSource.js');
 }
 
-export function getTrackingSourceMode() {
-  return isCohortDemoEnabled()
-    ? TRACKING_SOURCE_MODE.DEMO
-    : TRACKING_SOURCE_MODE.PENDING_INTEGRATION;
+export function getTrackingSourceMode(enabled = isCohortDemoEnabled()) {
+  return enabled ? TRACKING_SOURCE_MODE.DEMO : TRACKING_SOURCE_MODE.API;
 }
 
 /*
- * `query`: { filters, sort, offset, limit } normalizado
- * (services/trackingQuery.js). Devuelve la página con su autorización
- * explícita, o rechaza con `error.code` (TRACKING_QUERY_ERROR).
+ * Página del listado. `query` es la consulta normalizada
+ * (services/trackingQuery.js). Devuelve el cuerpo del contrato o rechaza
+ * con { status, codigo }.
  */
-export async function listCohortTracking(cohortId, query) {
-  return (await loadTrackingDemoSource()).listCohortTracking(cohortId, query);
+export async function listCohortTracking(cohortId, query, options) {
+  if (getTrackingSourceMode() === TRACKING_SOURCE_MODE.DEMO) {
+    return (await loadTrackingDemoSource()).listCohortTracking(cohortId, query);
+  }
+
+  return fetchCohortParticipantIndicators(cohortId, toTrackingParams(query), options);
 }
 
 /*
- * Ficha individual de seguimiento (RF-128). Devuelve el perfil con su
- * autorización explícita, su cohorte y su referencia (para comprobar el
- * aislamiento), o rechaza con `error.code` (TRACKING_QUERY_ERROR).
- * PENDIENTE de confirmar con el backend: ruta, forma de la respuesta y
- * de cada indicador, y cómo se traduce el 204 (sin cuerpo) a un
- * resultado sin perfil.
+ * Pertenencia a la cohorte. El perfil individual no declara la cohorte,
+ * así que antes de pedirlo se comprueba con una fuente autorizada que ya
+ * existe: las membresías de la cohorte (`GET /admin/cohortes/:id/participantes`,
+ * mismos roles que el listado y sin datos individuales de seguimiento).
+ * Solo un miembro ACTIVO, como en el listado, abre la ficha. El estado de
+ * navegación del navegador no se usa para esta comprobación.
  */
-export async function getParticipantTrackingProfile(cohortId, reference) {
-  return (await loadTrackingDemoSource()).getParticipantTrackingProfile(cohortId, reference);
+async function assertActiveMember(cohortId, code) {
+  const members = await listCohortParticipants(cohortId);
+
+  if (members === null) throw trackingError(404, 'COHORTE_NO_ENCONTRADA');
+
+  const member = members.find((item) => normalizeParticipantCode(item.code) === code);
+
+  if (!member || member.participationStatus !== PARTICIPATION_STATUS.ACTIVE) {
+    throw trackingError(null, TRACKING_CLIENT_ERROR.OUTSIDE_COHORT);
+  }
 }
 
 /*
- * Historial de alertas del participante (RF-129). Consulta propia, con
- * su propia autorización explícita: la de la ficha no la implica.
- * Devuelve { access, cohortId, reference, alerts } o rechaza con
- * `error.code` (TRACKING_QUERY_ERROR). PENDIENTE de confirmar con el
- * backend: ruta, si llega en la misma respuesta que la ficha o aparte,
- * la forma de cada alerta (¿declara el participante?), el permiso que
- * exige, el sentido del orden y cómo se traduce el 204 (sin cuerpo).
+ * Ficha individual. En la API solo se acepta un seudónimo A7: con
+ * cualquier otro identificador (referencia `seg-…`, UUID, correo, código
+ * ficticio) no se hace ninguna petición. Devuelve el cuerpo del contrato,
+ * null (204) o rechaza con { status, codigo }.
+ */
+export async function getParticipantTrackingProfile(cohortId, participantCode, options) {
+  if (getTrackingSourceMode() === TRACKING_SOURCE_MODE.DEMO) {
+    return (await loadTrackingDemoSource()).getParticipantTrackingProfile(cohortId, participantCode);
+  }
+
+  const code = normalizeParticipantCode(participantCode);
+  if (!code) throw trackingError(null, TRACKING_CLIENT_ERROR.INVALID_CODE);
+
+  await assertActiveMember(cohortId, code);
+
+  return fetchParticipantTrackingProfile(code, options);
+}
+
+/*
+ * Historial de alertas del participante (RF-129), solo en la
+ * demostración. Consulta propia, con su propia autorización explícita:
+ * la de la ficha no la implica. Devuelve { access, cohortId, reference,
+ * alerts } o rechaza con `error.code` (TRACKING_QUERY_ERROR).
  */
 export async function getParticipantAlertHistory(cohortId, reference) {
   return (await loadTrackingDemoSource()).getParticipantAlertHistory(cohortId, reference);

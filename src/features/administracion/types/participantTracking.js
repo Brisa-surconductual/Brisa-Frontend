@@ -1,23 +1,26 @@
 /*
- * Consulta de indicadores de seguimiento por cohorte (RF-142).
+ * Seguimiento de participantes: listado por cohorte (RF-142), ficha
+ * individual (RF-128) y secciones de la ficha.
  *
- * Constantes PROVISIONALES de la interfaz: los valores, nombres de
- * parámetros y códigos definitivos deben confirmarse con el backend.
- * Los indicadores provienen del módulo de seguimiento (M05, RF-77);
- * no son los estados de elegibilidad de RF-125.
+ * El listado y la ficha siguen el contrato real del backend
+ * (`GET /admin/cohortes/:id/participantes/indicadores` y
+ * `GET /admin/participantes/:codigo/perfil-seguimiento`). Las secciones
+ * de la ficha (RF-129 a RF-131 y M04) siguen con su forma PROVISIONAL,
+ * solo en la demostración. Los indicadores provienen del módulo de
+ * seguimiento (M05); no son los estados de elegibilidad de RF-125.
  */
 
-// Origen de los indicadores que ve la interfaz.
+// Origen del listado y de la ficha.
 export const TRACKING_SOURCE_MODE = Object.freeze({
+  API: 'API',
   DEMO: 'DEMO',
-  PENDING_INTEGRATION: 'PENDING_INTEGRATION',
 });
 
 /*
- * Autorización explícita que debe incluir cada respuesta. El rol
- * ADMINISTRATIVO no basta para ver información individual (RF-04 frente
- * a RF-142): solo AUTORIZADO permite mostrar registros; cualquier otro
- * valor, o su ausencia, se trata como denegado.
+ * Autorización explícita PROVISIONAL de las secciones de la ficha que aún
+ * no están integradas (RF-129 a RF-131, M04). No se aplica al listado ni
+ * a la ficha: en el backend real la autorización la deciden sus guardas,
+ * y una respuesta 200 no lleva un campo de acceso.
  */
 export const TRACKING_ACCESS = Object.freeze({
   GRANTED: 'AUTORIZADO',
@@ -72,9 +75,12 @@ export const TRACKING_ALERT_SOURCE = Object.freeze({
  */
 export const ALERT_RESOLUTION_STATUS = Object.freeze({
   ACTIVE: 'ACTIVA',
+  PENDING: 'PENDIENTE',
   IN_REVIEW: 'EN_REVISION',
   RESOLVED: 'RESUELTA',
   DISMISSED: 'DESCARTADA',
+  // Atendida desde la gestión administrativa (RF-147).
+  ATTENDED: 'ATENDIDA',
 });
 
 // Resultado de interpretar la respuesta del historial (RF-129).
@@ -116,41 +122,53 @@ export const INDICATOR_STATE = Object.freeze({
   NOT_CALCULABLE: 'NOT_CALCULABLE',
 });
 
+// Niveles de progreso de M05 (RF-70), en su orden canónico.
+export const PROGRESS_LEVELS = Object.freeze(['INICIAL', 'EN_AVANCE', 'AVANZADO', 'COMPLETADO']);
+
+// Modo de consulta que declara la ficha real (RF-128).
+export const READ_ONLY_MODE = 'SOLO_LECTURA';
+
 // Resultado de interpretar la respuesta de la ficha (RF-128).
 export const PROFILE_OUTCOME = Object.freeze({
   OK: 'OK',
+  // 204: M05 no tiene perfil del participante.
   NO_PROFILE: 'NO_PROFILE',
-  DENIED: 'DENIED',
+  // El perfil declara otro participante que el pedido.
   INCONSISTENT: 'INCONSISTENT',
+  // La respuesta no cumple el contrato.
+  INVALID: 'INVALID',
 });
 
-// Resultado de interpretar una respuesta (services/trackingResponse.js).
+// Resultado de interpretar una página del listado (RF-142).
 export const TRACKING_OUTCOME = Object.freeze({
   OK: 'OK',
-  DENIED: 'DENIED',
-  INCONSISTENT: 'INCONSISTENT',
+  INVALID: 'INVALID',
 });
 
-// Indicadores por los que RF-142 permite ordenar.
+// Campos de orden del listado (`orden_campo`).
 export const TRACKING_SORT_FIELD = Object.freeze({
-  PROGRESS: 'progreso',
-  ADHERENCE: 'adherencia',
-  ACTIVE_ALERTS: 'alertas',
+  CODE: 'codigo_participante',
+  PROGRESS: 'nivel_progreso',
+  ADHERENCE: 'tasa_adherencia',
+  ACTIVE_ALERTS: 'alertas_activas',
+  ATTENDED_ALERTS: 'alertas_atendidas',
 });
 
+// Dirección del orden (`orden_direccion`).
 export const SORT_DIRECTION = Object.freeze({
-  ASC: 'asc',
-  DESC: 'desc',
+  ASC: 'ASC',
+  DESC: 'DESC',
 });
 
-// Filtro por alertas activas.
+// Filtro por alertas activas sin atender (`con_alertas`).
 export const TRACKING_ALERT_FILTER = Object.freeze({
-  WITH_ALERTS: 'con-alertas',
-  WITHOUT_ALERTS: 'sin-alertas',
+  WITH_ALERTS: 'true',
+  WITHOUT_ALERTS: 'false',
 });
 
-// Umbrales mínimos (en %) para filtrar progreso y adherencia.
+// Umbrales de adherencia que ofrecen los filtros, en %. Se envían como
+// fracción entre 0 y 1 (`adherencia_min`, `adherencia_max`).
 export const TRACKING_THRESHOLDS = Object.freeze([25, 50, 75]);
 
-// Registros por página (paginación por offset y limit). PROVISIONAL.
-export const TRACKING_PAGE_SIZE = 5;
+// Registros por página: el predeterminado del backend (máximo 100).
+export const TRACKING_PAGE_SIZE = 20;

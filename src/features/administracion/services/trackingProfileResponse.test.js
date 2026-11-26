@@ -1,125 +1,112 @@
 import { describe, expect, it } from 'vitest';
 
-import { INDICATOR_STATE, PROFILE_OUTCOME, TRACKING_ACCESS } from '../types/participantTracking.js';
+import { PROFILE_OUTCOME } from '../types/participantTracking.js';
+
 import { interpretProfileResponse } from './trackingProfileResponse.js';
 
-const REQUEST = Object.freeze({ cohortId: 'c-1', reference: 'ref-1' });
+const CODE = 'P-7F3A91C2';
 
-const response = (changes = {}, profileChanges = {}) => ({
-  access: TRACKING_ACCESS.GRANTED,
-  cohortId: 'c-1',
-  reference: 'ref-1',
-  code: 'X-1',
-  profile: {
-    progress: 62.5,
-    adherence: 70,
-    trend: 'REDUCCION',
-    activeAlerts: [{ type: 'INACTIVIDAD', generatedAt: '2026-03-08T07:30:00-05:00' }],
-    updatedAt: '2026-03-09T06:00:00-05:00',
-    ...profileChanges,
-  },
+const body = (changes = {}) => ({
+  codigo_participante: CODE,
+  indicadores_adherencia: { tasa_adherencia: 0.41, dias_con_registro: 10 },
+  indicadores_progreso: { nivel_progreso: 'EN_AVANCE', unidades_completadas: 4 },
+  tendencia_consumo: 'REDUCCION',
+  alertas_activas: [
+    {
+      id_alerta: 'a0000000-0000-4000-8000-000000000001',
+      tipo_alerta: 'INACTIVIDAD',
+      fecha_generacion: '2026-11-20T14:00:00Z',
+      estado_resolucion: 'ACTIVA',
+    },
+    {
+      id_alerta: 'a0000000-0000-4000-8000-000000000002',
+      tipo_alerta: 'CRAVING_ELEVADO',
+      fecha_generacion: '2026-11-12T22:15:00Z',
+      estado_resolucion: 'ATENDIDA',
+    },
+  ],
+  fecha_actualizacion: '2026-11-22T05:00:00Z',
+  modo_consulta: 'SOLO_LECTURA',
   ...changes,
 });
 
-describe('Autorización explícita (RF-128)', () => {
-  it('con AUTORIZADO conserva el perfil', () => {
-    expect(interpretProfileResponse(response(), REQUEST).outcome).toBe(PROFILE_OUTCOME.OK);
-  });
-
-  it.each([
-    ['DENEGADO', { access: TRACKING_ACCESS.DENIED }],
-    ['sin campo de acceso', { access: undefined }],
-    ['valor desconocido', { access: 'SI' }],
-    ['booleano', { access: true }],
-  ])('%s: denegado, sin código ni indicadores aunque la respuesta los traiga', (_, changes) => {
-    const result = interpretProfileResponse(response(changes), REQUEST);
-
-    expect(result).toEqual({ outcome: PROFILE_OUTCOME.DENIED });
-    expect(JSON.stringify(result)).not.toMatch(/X-1|62|REDUCCION|INACTIVIDAD/);
-  });
-
-  it('una respuesta nula se trata como denegada', () => {
-    expect(interpretProfileResponse(null, REQUEST).outcome).toBe(PROFILE_OUTCOME.DENIED);
-  });
-});
-
-describe('Aislamiento por participante y cohorte', () => {
-  it('información de otro participante (409 de RF-128): se bloquea entera', () => {
-    expect(interpretProfileResponse(response({ reference: 'ref-2' }), REQUEST)).toEqual({ outcome: PROFILE_OUTCOME.INCONSISTENT });
-  });
-
-  it('información de otra cohorte: se bloquea entera', () => {
-    expect(interpretProfileResponse(response({ cohortId: 'c-2' }), REQUEST)).toEqual({ outcome: PROFILE_OUTCOME.INCONSISTENT });
-  });
-
-  it('sin referencia o cohorte declaradas no se puede verificar: se bloquea', () => {
-    expect(interpretProfileResponse(response({ reference: undefined }), REQUEST).outcome).toBe(PROFILE_OUTCOME.INCONSISTENT);
-    expect(interpretProfileResponse(response({ cohortId: undefined }), REQUEST).outcome).toBe(PROFILE_OUTCOME.INCONSISTENT);
-  });
-});
-
-describe('Sin perfil (204 de RF-128)', () => {
-  it.each([[null], [undefined], ['texto']])('perfil %s: sin perfil, pero conserva el código para el encabezado', (profile) => {
-    expect(interpretProfileResponse(response({ profile }), REQUEST)).toEqual({ outcome: PROFILE_OUTCOME.NO_PROFILE, code: 'X-1', profile: null });
-  });
-});
-
-describe('Lista explícita de campos', () => {
-  it('conserva solo código e indicadores de RF-128 y descarta todo lo demás', () => {
-    const result = interpretProfileResponse(
-      response(
-        { participantId: 'uuid-interno', email: 'persona@example.com', nombre: 'Nombre Apellido', participationStatus: 'ACTIVO' },
-        { cravingLevel: 5, diaryText: 'texto privado', chat: ['hola'], indicadoresDetalle: { a: 1 } },
-      ),
-      REQUEST,
-    );
-
-    expect(result).toEqual({
+describe('interpretProfileResponse (RF-128, contrato real)', () => {
+  it('200 válido: interpreta el DTO directamente', () => {
+    expect(interpretProfileResponse(body(), { code: CODE })).toEqual({
       outcome: PROFILE_OUTCOME.OK,
-      code: 'X-1',
+      code: CODE,
       profile: {
-        progress: { state: INDICATOR_STATE.AVAILABLE, value: 62.5 },
-        adherence: { state: INDICATOR_STATE.AVAILABLE, value: 70 },
+        progressLevel: 'EN_AVANCE',
+        completedUnits: 4,
+        adherence: 0.41,
+        daysWithRecord: 10,
         trend: 'REDUCCION',
-        activeAlerts: [{ type: 'INACTIVIDAD', generatedAt: '2026-03-08T07:30:00-05:00' }],
-        updatedAt: '2026-03-09T06:00:00-05:00',
+        activeAlerts: [
+          { id: 'a0000000-0000-4000-8000-000000000001', type: 'INACTIVIDAD', generatedAt: '2026-11-20T14:00:00Z', status: 'ACTIVA' },
+          { id: 'a0000000-0000-4000-8000-000000000002', type: 'CRAVING_ELEVADO', generatedAt: '2026-11-12T22:15:00Z', status: 'ATENDIDA' },
+        ],
+        updatedAt: '2026-11-22T05:00:00Z',
       },
     });
-    expect(JSON.stringify(result)).not.toMatch(/uuid-interno|@|Nombre|ACTIVO|cravingLevel|texto privado|hola|indicadoresDetalle/);
-    expect(Object.isFrozen(result.profile)).toBe(true);
   });
 
-  it('las alertas solo conservan tipo y fecha', () => {
-    const { profile } = interpretProfileResponse(
-      response({}, { activeAlerts: [{ type: 'CRAVING_ELEVADO', generatedAt: 'x', nivel: 5, nota: 'clínica' }, null, 'basura'] }),
-      REQUEST,
+  it('no exige un campo de autorización: la autorización es el 200 tras las guardas', () => {
+    expect(interpretProfileResponse(body(), { code: CODE }).outcome).toBe(PROFILE_OUTCOME.OK);
+    expect(interpretProfileResponse(body({ access: 'DENEGADO' }), { code: CODE }).outcome).toBe(PROFILE_OUTCOME.OK);
+  });
+
+  it('acepta el código pedido en minúsculas o con espacios', () => {
+    expect(interpretProfileResponse(body(), { code: ' p-7f3a91c2 ' }).code).toBe(CODE);
+  });
+
+  it('descarta campos ajenos (UUID internos, correo, textos clínicos)', () => {
+    const result = interpretProfileResponse(
+      body({ id_usuario: 'u-1', correo: 'a@b.co', texto_diario: 'Texto', nivel_craving: 9 }),
+      { code: CODE },
     );
 
-    expect(profile.activeAlerts).toEqual([{ type: 'CRAVING_ELEVADO', generatedAt: 'x' }]);
+    expect(JSON.stringify(result)).not.toMatch(/u-1|@|Texto|craving_|nivel_craving/);
   });
-});
 
-describe('Indicadores tal como llegan', () => {
+  it('204: sin perfil, conserva solo el código pedido', () => {
+    expect(interpretProfileResponse(null, { code: CODE })).toEqual({ outcome: PROFILE_OUTCOME.NO_PROFILE, code: CODE, profile: null });
+  });
+
+  it('aislamiento: un perfil de otro participante se bloquea entero', () => {
+    expect(interpretProfileResponse(body({ codigo_participante: 'P-00000001' }), { code: CODE })).toEqual({
+      outcome: PROFILE_OUTCOME.INCONSISTENT,
+    });
+  });
+
+  it('indicadores ausentes: no disponibles, nunca 0', () => {
+    const { profile } = interpretProfileResponse(
+      body({
+        indicadores_adherencia: { tasa_adherencia: null, dias_con_registro: null },
+        indicadores_progreso: { nivel_progreso: null, unidades_completadas: null },
+      }),
+      { code: CODE },
+    );
+
+    expect(profile).toMatchObject({ progressLevel: null, completedUnits: null, adherence: null, daysWithRecord: null });
+  });
+
   it.each([
-    ['número', 37.25, { state: INDICATOR_STATE.AVAILABLE, value: 37.25 }],
-    ['cero', 0, { state: INDICATOR_STATE.AVAILABLE, value: 0 }],
-    ['fuera de 0-100 (sin suponer unidades)', 140, { state: INDICATOR_STATE.AVAILABLE, value: 140 }],
-    ['NO_CALCULABLE', 'NO_CALCULABLE', { state: INDICATOR_STATE.NOT_CALCULABLE, value: null }],
-    ['null', null, { state: INDICATOR_STATE.NOT_AVAILABLE, value: null }],
-    ['texto numérico', '80', { state: INDICATOR_STATE.NOT_AVAILABLE, value: null }],
-    ['infinito', Infinity, { state: INDICATOR_STATE.NOT_AVAILABLE, value: null }],
-    ['objeto (conjunto JSON sin contrato)', { valor: 3 }, { state: INDICATOR_STATE.NOT_AVAILABLE, value: null }],
-  ])('%s', (_, value, expected) => {
-    expect(interpretProfileResponse(response({}, { progress: value }), REQUEST).profile.progress).toEqual(expected);
+    ['no es objeto', 'texto'],
+    ['sin código', body({ codigo_participante: undefined })],
+    ['sin modo de solo lectura', body({ modo_consulta: undefined })],
+    ['otro modo de consulta', body({ modo_consulta: 'EDICION' })],
+    ['sin indicadores de adherencia', body({ indicadores_adherencia: null })],
+    ['sin indicadores de progreso', body({ indicadores_progreso: 'EN_AVANCE' })],
+    ['adherencia como porcentaje', body({ indicadores_adherencia: { tasa_adherencia: 41, dias_con_registro: 10 } })],
+    ['días negativos', body({ indicadores_adherencia: { tasa_adherencia: 0.4, dias_con_registro: -1 } })],
+    ['nivel como porcentaje', body({ indicadores_progreso: { nivel_progreso: 62.5, unidades_completadas: 4 } })],
+    ['alertas que no son lista', body({ alertas_activas: null })],
+    ['alerta que no es objeto', body({ alertas_activas: ['INACTIVIDAD'] })],
+  ])('respuesta inválida (%s): ningún dato', (_, data) => {
+    expect(interpretProfileResponse(data, { code: CODE })).toEqual({ outcome: PROFILE_OUTCOME.INVALID });
   });
 
-  it('tendencia y fechas ausentes quedan como null; alertas que no son lista, como no disponibles', () => {
-    const { profile } = interpretProfileResponse(response({}, { trend: 7, updatedAt: '', activeAlerts: 'ninguna' }), REQUEST);
-
-    expect(profile).toMatchObject({ trend: null, updatedAt: null, activeAlerts: null });
-  });
-
-  it('una tendencia fuera del enumerado se conserva tal cual, sin interpretarla', () => {
-    expect(interpretProfileResponse(response({}, { trend: 'ESTABILIZACION' }), REQUEST).profile.trend).toBe('ESTABILIZACION');
+  it('sin código pedido no se interpreta nada', () => {
+    expect(interpretProfileResponse(body(), { code: null })).toEqual({ outcome: PROFILE_OUTCOME.INVALID });
   });
 });

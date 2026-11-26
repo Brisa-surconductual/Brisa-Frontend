@@ -1,4 +1,4 @@
-import { Link, useParams } from 'react-router-dom';
+import { Link, Navigate, useParams } from 'react-router-dom';
 import {
   Activity,
   AlertTriangle,
@@ -11,7 +11,8 @@ import {
   FileQuestion,
   FlaskConical,
   Gauge,
-  PlugZap,
+  Hourglass,
+  KeyRound,
   RefreshCw,
   SearchX,
   ShieldAlert,
@@ -27,6 +28,7 @@ import { CohortNotice } from '../../components/CohortNotice/index.js';
 import { ConsumptionTrendBadge } from '../../components/ConsumptionTrendBadge/index.js';
 import { NarrativeProgressSection } from '../../components/NarrativeProgressSection/index.js';
 import { NotificationInteractionSection } from '../../components/NotificationInteractionSection/index.js';
+import { ParticipantExportButton } from '../../components/ParticipantExportButton/index.js';
 import { ParticipantSessionsLink } from '../../components/ParticipantSessionsLink/index.js';
 import { ProfileIndicator } from '../../components/ProfileIndicator/index.js';
 import { ReadOnlyNotice } from '../../components/ReadOnlyNotice/index.js';
@@ -37,6 +39,7 @@ import { isStale } from '../../services/dataFreshness.js';
 import { allowsDependentSections } from '../../services/profileSectionGate.js';
 import { getCohortTrackingPath, getParticipantTrackingPath } from '../../utils/cohortRoutes.js';
 import { formatAuditTimestamp } from '../../utils/formatAuditTimestamp.js';
+import { adherenceLabel, progressLevelLabel } from '../../utils/trackingLabels.js';
 
 import { useAlertHistory } from './hooks/useAlertHistory.js';
 import { useNarrativeProgress } from './hooks/useNarrativeProgress.js';
@@ -46,10 +49,13 @@ import { useTemporalLocation } from './hooks/useTemporalLocation.js';
 
 /*
  * Ficha individual de seguimiento
- * (/cohortes/:idCohorte/seguimiento/:referencia, RF-128). Solo consulta:
+ * (/cohortes/:idCohorte/seguimiento/:codigoParticipante, RF-128). Solo
+ * consulta, con el código seudonimizado que entregó el listado (RF-142);
+ * en la API, solo un seudónimo A7 de un miembro activo de la cohorte:
  * no ofrece crear, editar ni eliminar indicadores, alertas, progresión,
  * notificaciones, cronogramas ni pausas. Fuera de alcance: gestión o
- * resolución de alertas (RF-147). Incluye como secciones propias, cada
+ * resolución de alertas (RF-147). La exportación CSV individual (RF-145)
+ * solo lee y se confirma en un modal antes de pedir el archivo. Incluye como secciones propias, cada
  * una con su propia autorización, sus propios errores y su propio límite
  * de error, el historial de alertas (RF-129), la progresión narrativa
  * (RF-130, M06), la interacción con notificaciones (RF-131, M07) y la
@@ -59,6 +65,10 @@ import { useTemporalLocation } from './hooks/useTemporalLocation.js';
  * advertencia de desactualización que marque el backend. La caída de
  * M05 no impide consultar las demás secciones; una denegación o un
  * problema de identidad de la ficha sí (services/profileSectionGate).
+ * Las secciones de historial, narrativa, notificaciones y ubicación
+ * temporal solo existen en la demostración: en la API aún no están
+ * integradas y se indica sin ocultar el perfil.
+ *
  * La página solo compone; el estado vive en los hooks.
  */
 const RETRY_STATUSES = Object.freeze([
@@ -78,6 +88,10 @@ const STATUS_NOTICE = Object.freeze({
     tone: 'warning', icon: ShieldX, role: 'alert', title: 'Acceso denegado',
     message: 'No tiene permisos para consultar perfiles de seguimiento individuales.',
   }),
+  [PROFILE_STATUS.INVALID_CODE]: Object.freeze({
+    tone: 'neutral', icon: KeyRound, role: 'alert', title: 'Identificador no válido',
+    message: 'El identificador del participante no es válido. Abre la ficha desde el seguimiento de la cohorte.',
+  }),
   [PROFILE_STATUS.NOT_FOUND]: Object.freeze({
     tone: 'neutral', icon: SearchX, role: 'alert', title: 'Participante no encontrado',
     message: 'El participante seleccionado no existe.',
@@ -88,7 +102,7 @@ const STATUS_NOTICE = Object.freeze({
   }),
   [PROFILE_STATUS.OUTSIDE_COHORT]: Object.freeze({
     tone: 'neutral', icon: UserX, role: 'alert', title: 'Participante fuera de la cohorte',
-    message: 'El participante ya no pertenece a esta cohorte. Su información de seguimiento no se muestra aquí.',
+    message: 'El participante no es un miembro activo de esta cohorte. Su información de seguimiento no se muestra aquí.',
   }),
   [PROFILE_STATUS.INCONSISTENT]: Object.freeze({
     tone: 'danger', icon: ShieldAlert, role: 'alert', title: 'Información no mostrada',
@@ -108,19 +122,30 @@ const STATUS_NOTICE = Object.freeze({
   }),
 });
 
+const unitsLabel = (value) =>
+  value === null ? null : `${value} ${value === 1 ? 'unidad completada' : 'unidades completadas'}`;
+
+const daysLabel = (value) => (value === null ? null : `${value} ${value === 1 ? 'día con registro' : 'días con registro'}`);
+
 // La ficha de cada participante se monta de nuevo al cambiar la ruta, para
 // que ningún dato de una ficha anterior quede visible ni un instante.
 export function ParticipantTrackingProfilePage() {
-  const { idCohorte, referencia } = useParams();
+  const { idCohorte, codigoParticipante } = useParams();
   const cohortId = idCohorte ?? null;
-  const reference = referencia ?? null;
+  const participantCode = codigoParticipante ?? null;
 
-  return <ParticipantTrackingProfile key={`${cohortId}|${reference}`} cohortId={cohortId} reference={reference} />;
+  return (
+    <ParticipantTrackingProfile
+      key={`${cohortId}|${participantCode}`}
+      cohortId={cohortId}
+      participantCode={participantCode}
+    />
+  );
 }
 
-function ParticipantTrackingProfile({ cohortId, reference }) {
-  const { cohort, code, profile, status, freshness, isLoading, isDemo, isIntegrationPending, headingRef, retry } =
-    useParticipantTrackingProfile({ cohortId, reference });
+function ParticipantTrackingProfile({ cohortId, participantCode }) {
+  const { cohort, code, profile, status, freshness, isLoading, isDemo, headingRef, retry } =
+    useParticipantTrackingProfile({ cohortId, participantCode });
 
   const cohortName = cohort?.name?.trim();
   const notice = !isLoading ? STATUS_NOTICE[status] : null;
@@ -128,13 +153,17 @@ function ParticipantTrackingProfile({ cohortId, reference }) {
   const updatedLabel = showProfile ? formatAuditTimestamp(profile.updatedAt) : null;
   const participantConfirmed = !isLoading && (status === PROFILE_STATUS.READY || status === PROFILE_STATUS.NO_PROFILE);
   const showCode = participantConfirmed && code;
-  // RF-38: acceso a las sesiones del chat solo con un código de una fuente
-  // real (nunca la demostración ni la referencia opaca de la ruta).
-  const authenticCode = participantConfirmed && !isDemo && !isIntegrationPending;
+  // RF-38 y RF-145: el código confirmado por la API real (perfil o 204,
+  // tras comprobar la pertenencia a la cohorte) es auténtico; nunca el de
+  // la demostración.
+  const authenticCode = participantConfirmed && !isDemo;
   // RF-149: la ficha degradada se muestra con su advertencia.
   const profileStale = participantConfirmed && isStale(freshness);
-  // Las demás secciones se consultan salvo denegación o problema de identidad.
-  const sectionsEnabled = allowsDependentSections({ status, isLoading });
+  // Las secciones dependientes solo existen en la demostración, y se
+  // consultan salvo denegación o problema de identidad.
+  const sectionsEnabled = isDemo && allowsDependentSections({ status, isLoading });
+  const sectionsPending = !isDemo && participantConfirmed;
+  const reference = participantCode;
   const history = useAlertHistory({
     cohortId,
     reference,
@@ -145,6 +174,8 @@ function ParticipantTrackingProfile({ cohortId, reference }) {
   const narrative = useNarrativeProgress({ cohortId, reference, enabled: sectionsEnabled });
   const notifications = useNotificationInteraction({ cohortId, reference, enabled: sectionsEnabled });
   const temporal = useTemporalLocation({ cohortId, reference, enabled: sectionsEnabled });
+
+  if (status === PROFILE_STATUS.SESSION_REQUIRED) return <Navigate to="/login" replace />;
 
   return (
     <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-[var(--space-6)] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-7)] md:py-[var(--space-8)]">
@@ -186,31 +217,26 @@ function ParticipantTrackingProfile({ cohortId, reference }) {
       <ParticipantSessionsLink
         participantCode={code}
         authentic={authenticCode}
-        returnTo={cohortId && reference ? getParticipantTrackingPath(cohortId, reference) : null}
+        returnTo={cohortId && code ? getParticipantTrackingPath(cohortId, code) : null}
       />
 
-      {!isIntegrationPending && (
-        <ReadOnlyNotice>
-          Consulta de solo lectura: los indicadores, las alertas, su historial,
-          la progresión narrativa y la interacción con notificaciones provienen
-          de los módulos de seguimiento, gamificación y notificaciones, y no
-          pueden modificarse desde aquí. Solo se muestra el código
-          seudonimizado del participante.
-        </ReadOnlyNotice>
+      {participantConfirmed && (
+        <ParticipantExportButton key={authenticCode ? code : 'sin-codigo'} participantCode={code} authentic={authenticCode} />
       )}
+
+      <ReadOnlyNotice>
+        Consulta de solo lectura: los indicadores, las alertas, su historial,
+        la progresión narrativa y la interacción con notificaciones provienen
+        de los módulos de seguimiento, gamificación y notificaciones, y no
+        pueden modificarse desde aquí. Solo se muestra el código
+        seudonimizado del participante.
+      </ReadOnlyNotice>
 
       {isDemo && (
         <CohortNotice tone="warning" icon={FlaskConical} title="Datos de demostración" role="note">
           Ficha ficticia del modo de desarrollo. No representa datos reales de
           seguimiento ni se calcula a partir de la elegibilidad de la cohorte.
-          La autorización mostrada también es simulada.
-        </CohortNotice>
-      )}
-
-      {isIntegrationPending && (
-        <CohortNotice tone="info" icon={PlugZap} title="Información aún no disponible" role="status">
-          La consulta del perfil de seguimiento individual todavía no está
-          disponible. No se muestra ningún dato del participante.
+          Las negativas de acceso también son simuladas.
         </CohortNotice>
       )}
 
@@ -277,15 +303,17 @@ function ParticipantTrackingProfile({ cohortId, reference }) {
             <dl className="m-0 grid grid-cols-1 gap-[var(--space-4)] md:grid-cols-3">
               <ProfileIndicator
                 icon={Gauge}
-                label="Progreso"
-                description="Valor principal reportado por el módulo de seguimiento."
-                indicator={profile.progress}
+                label="Nivel de progreso"
+                value={profile.progressLevel === null ? null : progressLevelLabel(profile.progressLevel)}
+                detail={unitsLabel(profile.completedUnits)}
+                description="Categoría reportada por el módulo de seguimiento."
               />
               <ProfileIndicator
                 icon={Activity}
-                label="Adherencia"
-                description="Valor principal reportado por el módulo de seguimiento."
-                indicator={profile.adherence}
+                label="Tasa de adherencia"
+                value={profile.adherence === null ? null : adherenceLabel(profile.adherence)}
+                detail={daysLabel(profile.daysWithRecord)}
+                description="Reportada por el módulo de seguimiento."
               />
               <div className="flex flex-col gap-[var(--space-3)] rounded-[var(--radius-xl)] border border-[var(--surface-border)] bg-[var(--surface-card)] p-[var(--space-5)] shadow-[var(--shadow-sm)]">
                 <dt className="inline-flex items-center gap-[var(--space-2)] text-[length:var(--font-size-sm)] font-semibold text-[var(--text-secondary)]">
@@ -313,6 +341,14 @@ function ParticipantTrackingProfile({ cohortId, reference }) {
             <ActiveAlertList alerts={profile.activeAlerts} />
           </section>
         </>
+      )}
+
+      {sectionsPending && (
+        <CohortNotice tone="info" icon={Hourglass} title="Otras secciones aún no disponibles" role="note">
+          El historial de alertas, la progresión narrativa, la interacción con
+          notificaciones y la ubicación temporal todavía no están disponibles
+          en esta ficha.
+        </CohortNotice>
       )}
 
       {sectionsEnabled && (

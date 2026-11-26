@@ -35,8 +35,15 @@ export function getCohortEvolutionPath(cohortId) {
   return `${getCohortDetailPath(cohortId)}/evolucion`;
 }
 
-// Ficha individual (RF-128). `reference` es la referencia OPACA que da la
-// fuente: nunca un correo, documento, nombre ni UUID interno.
-export function getParticipantTrackingPath(cohortId, reference) {
-  return `${getCohortTrackingPath(cohortId)}/${encodeURIComponent(reference)}`;
+// Bandeja de alertas pendientes (RF-146) y su atención (RF-147). Solo
+// lleva el identificador de la cohorte.
+export function getCohortPendingAlertsPath(cohortId) {
+  return `${getCohortDetailPath(cohortId)}/alertas/pendientes`;
+}
+
+// Ficha individual (RF-128). Lleva el código seudonimizado que entregó
+// el listado (en la API, el seudónimo A7): nunca un correo, documento,
+// nombre ni UUID interno.
+export function getParticipantTrackingPath(cohortId, participantCode) {
+  return `${getCohortTrackingPath(cohortId)}/${encodeURIComponent(participantCode)}`;
 }

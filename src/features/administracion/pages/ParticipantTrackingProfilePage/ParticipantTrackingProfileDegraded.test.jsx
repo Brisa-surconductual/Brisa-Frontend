@@ -52,12 +52,11 @@ const available = (value) => ({ state: INDICATOR_STATE.AVAILABLE, value });
 const PROFILE = Object.freeze({
   cohort: { id: 'c-1', name: 'Cohorte de prueba' },
   code: 'X-1',
-  profile: { progress: available(21), adherence: available(34), trend: 'ESTABLE', activeAlerts: [], updatedAt: AT },
+  profile: { progressLevel: 'INICIAL', completedUnits: 1, adherence: 0.34, daysWithRecord: 8, trend: 'ESTABLE', activeAlerts: [], updatedAt: AT },
   status: PROFILE_STATUS.READY,
   freshness: CURRENT_FRESHNESS,
   isLoading: false,
   isDemo: true,
-  isIntegrationPending: false,
   headingRef: { current: null },
   retry: vi.fn(),
 });
@@ -100,9 +99,9 @@ function render({ profile = {}, history = {}, narrative = {}, notifications = {}
   }, notifications);
   hooks.temporal = ready('temporal', TEMPORAL, temporal);
   return clean(renderToStaticMarkup(
-    <MemoryRouter initialEntries={['/app/administrativo/cohortes/c-1/seguimiento/ref-1']}>
+    <MemoryRouter initialEntries={['/app/administrativo/cohortes/c-1/seguimiento/PART-0001']}>
       <Routes>
-        <Route path="/app/administrativo/cohortes/:idCohorte/seguimiento/:referencia" element={<ParticipantTrackingProfilePage />} />
+        <Route path="/app/administrativo/cohortes/:idCohorte/seguimiento/:codigoParticipante" element={<ParticipantTrackingProfilePage />} />
       </Routes>
     </MemoryRouter>,
   ));
@@ -117,7 +116,7 @@ describe('Consulta temporal M04 en la ficha', () => {
     const html = render();
 
     expect(html.indexOf('id="interaccion-notificaciones"')).toBeLessThan(html.indexOf('id="ubicacion-temporal"'));
-    expect(hooks.args.temporal).toEqual({ cohortId: 'c-1', reference: 'ref-1', enabled: true });
+    expect(hooks.args.temporal).toEqual({ cohortId: 'c-1', reference: 'PART-0001', enabled: true });
   });
 
   it('muestra unidad vigente, tiempo efectivo transcurrido y estado del cronograma', () => {
@@ -172,7 +171,10 @@ describe('Consulta temporal M04 en la ficha', () => {
   it('solo consulta: sin botones, formularios ni enlaces para cronogramas o pausas', () => {
     const html = render();
 
-    expect(html).not.toMatch(/<form|<input|<select|<textarea|<button/);
+    expect(html).not.toMatch(/<form|<input|<select|<textarea/);
+    // RF-145: el único botón es la exportación CSV, que solo lee.
+    expect((html.match(/<button[\s\S]*?<\/button>/g) ?? []).map((button) => textOf(button).trim()))
+      .toEqual(['Exportar CSV del historial de seguimiento']);
     expect(html.match(/<a /g)).toHaveLength(1);
     expect(textOf(html)).not.toMatch(/Registrar pausa|Editar|Anular|Asignar|Reprogramar|Finalizar/);
   });
@@ -211,7 +213,7 @@ describe('Modo degradado (RF-149): advertencia por sección', () => {
     expect(header.indexOf('Modo degradado: datos desactualizados')).toBeLessThan(header.indexOf('id="indicadores-principales"'));
     expect(textOf(header)).toContain('Los datos de seguimiento no están actualizados en tiempo real');
     expect(header.match(/Desactualizado/g)).toHaveLength(2);
-    expect(header).toContain('Progreso');
+    expect(header).toContain('Nivel de progreso');
   });
 
   it('una advertencia de datos desactualizados no se muestra en estados sin datos', () => {
@@ -306,10 +308,11 @@ describe('Independencia de las secciones (RF-149)', () => {
     expect(html).not.toMatch(/historial-alertas|progresion-narrativa|interaccion-notificaciones|ubicacion-temporal|Modo degradado|Unidad de prueba|Fase de prueba/);
   });
 
-  it('integración pendiente: ninguna sección ni advertencia', () => {
-    const html = render({ profile: { isIntegrationPending: true, isDemo: false, status: null, profile: null, code: null } });
+  it('en la API real: ninguna sección consultada ni advertencia, con aviso de secciones no disponibles', () => {
+    const html = render({ profile: { isDemo: false }, narrative: { freshness: STALE } });
 
-    expect(textOf(html)).toContain('Información aún no disponible');
+    for (const key of ['history', 'narrative', 'notifications', 'temporal']) expect(hooks.args[key].enabled).toBe(false);
+    expect(textOf(html)).toContain('Otras secciones aún no disponibles');
     expect(html).not.toMatch(/ubicacion-temporal|Modo degradado/);
   });
 });
@@ -335,6 +338,6 @@ describe('Límite de error por sección', () => {
 
 describe('Privacidad', () => {
   it('no muestra datos personales, identificadores, motivos de pausa ni contenido clínico', () => {
-    expect(render({ narrative: { freshness: STALE } })).not.toMatch(/@|uuid|demo-participante|ref-1"|motivo|diario|chat/i);
+    expect(render({ narrative: { freshness: STALE } })).not.toMatch(/@|uuid|demo-participante|seg-|motivo|diario|chat/i);
   });
 });

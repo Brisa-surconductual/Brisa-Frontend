@@ -20,17 +20,28 @@ vi.mock('./hooks/useParticipantTracking.js', async (importOriginal) => {
   };
 });
 
+const entry = (code, changes = {}) =>
+  Object.freeze({
+    code,
+    detailCode: code,
+    progressLevel: 'EN_AVANCE',
+    adherence: 0.41,
+    activeAlertCount: 0,
+    attendedAlertCount: 0,
+    activeAlertTypes: [],
+    ...changes,
+  });
+
 const ENTRIES = Object.freeze([
-  Object.freeze({ code: 'X-1', progress: 82, adherence: 91, activeAlertCount: 0 }),
-  Object.freeze({ code: 'X-2', progress: 46.4, adherence: 58, activeAlertCount: 1 }),
-  Object.freeze({ code: 'X-3', progress: null, adherence: null, activeAlertCount: null }),
-  Object.freeze({ code: 'X-4', progress: 21, adherence: 34, activeAlertCount: 3 }),
+  entry('P-00000001', { progressLevel: 'COMPLETADO', adherence: 0.91 }),
+  entry('P-7F3A91C2', { activeAlertCount: 2, activeAlertTypes: ['INACTIVIDAD', 'CRAVING_ELEVADO'] }),
+  entry('P-00000003', { progressLevel: null, adherence: null }),
+  entry('P-00000004', { progressLevel: 'INICIAL', adherence: 0, activeAlertCount: 1, attendedAlertCount: 2, activeAlertTypes: ['INACTIVIDAD'] }),
 ]);
 
 const BASE = Object.freeze({
   cohort: { id: 'c-1', name: 'Cohorte de prueba' },
   entries: [],
-  blockedCount: 0,
   total: 0,
   range: { from: 0, to: 0 },
   pageNumber: 1,
@@ -38,24 +49,26 @@ const BASE = Object.freeze({
   canGoBack: false,
   canGoForward: false,
   filters: INITIAL_TRACKING_QUERY.filters,
+  sort: null,
   sortValue: '',
   hasFilters: false,
   isLoading: false,
   problem: null,
-  isDemo: true,
-  isIntegrationPending: false,
+  canRetry: false,
+  isDemo: false,
   setFilter: vi.fn(),
   setSort: vi.fn(),
+  setColumnSort: vi.fn(),
   clearFilters: vi.fn(),
   goBack: vi.fn(),
   goForward: vi.fn(),
   retry: vi.fn(),
 });
 
-function render(changes, entry = '/app/administrativo/cohortes/c-1/seguimiento') {
+function render(changes, entryPath = '/app/administrativo/cohortes/c-1/seguimiento') {
   hook.value = changes ? { ...BASE, ...changes } : null;
   return renderToStaticMarkup(
-    <MemoryRouter initialEntries={[entry]}>
+    <MemoryRouter initialEntries={[entryPath]}>
       <Routes>
         <Route path="/app/administrativo/cohortes/:idCohorte/seguimiento" element={<ParticipantTrackingPage />} />
       </Routes>
@@ -65,10 +78,19 @@ function render(changes, entry = '/app/administrativo/cohortes/c-1/seguimiento')
 
 const textOf = (html) => html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
 const withList = (changes = {}) =>
-  render({ entries: ENTRIES, total: 6, range: { from: 1, to: 4 }, pageCount: 2, canGoForward: true, ...changes });
+  render({ entries: ENTRIES, total: 26, range: { from: 1, to: 4 }, pageCount: 2, canGoForward: true, ...changes });
+// Tarjetas (pantallas estrechas) y tabla (anchas) presentan las mismas filas.
+const cardsOf = (html) => html.slice(html.indexOf('<ol'), html.indexOf('</ol>'));
+const tableOf = (html) => html.slice(html.indexOf('<table'), html.indexOf('</table>'));
 const cardOf = (html, code) => {
-  const start = html.indexOf(`>${code}</span>`);
-  return html.slice(html.lastIndexOf('<article', start), html.indexOf('</article>', start));
+  const cards = cardsOf(html);
+  const start = cards.indexOf(`>${code}</span>`);
+  return cards.slice(cards.lastIndexOf('<article', start), cards.indexOf('</article>', start));
+};
+const rowOf = (html, code) => {
+  const table = tableOf(html);
+  const start = table.indexOf(`>${code}</span>`);
+  return table.slice(table.lastIndexOf('<tr', start), table.indexOf('</tr>', start));
 };
 
 afterEach(() => {
@@ -81,7 +103,7 @@ describe('Seguimiento por cohorte (RF-142): presentación', () => {
   it('pide los datos con el identificador de la ruta y enlaza de vuelta a la cohorte', () => {
     const html = render({});
 
-    expect(hook.args).toEqual({ cohortId: 'c-1' });
+    expect(hook.args).toEqual({ cohortId: 'c-1', search: '', navigate: expect.any(Function) });
     expect(html).toContain('href="/app/administrativo/cohortes/c-1"');
     expect(html).toMatch(/<h1[^>]*>Seguimiento de participantes<\/h1>/);
     expect(html.match(/<h1/g)).toHaveLength(1);
@@ -89,78 +111,166 @@ describe('Seguimiento por cohorte (RF-142): presentación', () => {
     expect(textOf(html)).toContain('«Cohorte de prueba»');
   });
 
-  it('identifica la consulta como de solo lectura y los datos como demostración', () => {
+  it('identifica la consulta como de solo lectura; el aviso de demostración solo en la demostración', () => {
     const text = textOf(withList());
 
     expect(text).toContain('Información de solo lectura');
     expect(text).toContain('no pueden modificarse desde aquí');
-    expect(text).toContain('Datos de demostración');
-    expect(text).toContain('ni se calculan a partir de la elegibilidad');
+    expect(text).not.toContain('Datos de demostración');
+    expect(textOf(withList({ isDemo: true }))).toContain('Datos de demostración');
   });
 
-  it('muestra código, nivel de progreso, adherencia y alertas activas de cada participante', () => {
+  it('200 con participantes: código, nivel como categoría, adherencia en % y alertas activas y atendidas', () => {
     const html = withList();
-    const text = textOf(cardOf(html, 'X-2'));
+    const text = textOf(cardOf(html, 'P-7F3A91C2'));
 
     expect(html.match(/<article/g)).toHaveLength(4);
-    expect(text).toMatch(/Nivel de progreso 46 %/);
-    expect(text).toMatch(/Tasa de adherencia 58 %/);
-    expect(text).toMatch(/Alertas activas 1 alerta activa/);
-    expect(textOf(cardOf(html, 'X-1'))).toContain('Sin alertas activas');
-    expect(textOf(cardOf(html, 'X-4'))).toContain('3 alertas activas');
+    expect(text).toMatch(/Nivel de progreso En avance/);
+    expect(text).toMatch(/Tasa de adherencia 41 %/);
+    expect(text).toMatch(/Alertas activas 2 alertas activas Inactividad · Craving elevado/);
+    expect(text).toMatch(/Alertas atendidas 0/);
+    expect(textOf(cardOf(html, 'P-00000001'))).toMatch(/Completado .*91 %.*Sin alertas activas/);
+    expect(textOf(cardOf(html, 'P-00000004'))).toMatch(/Inicial .*0 %.*1 alerta activa Inactividad.*Alertas atendidas 2/);
   });
 
-  it('un indicador ausente se indica como no disponible, sin barra ni estimación', () => {
-    const card = cardOf(withList(), 'X-3');
+  it('el nivel no se presenta como porcentaje', () => {
+    expect(textOf(cardOf(withList(), 'P-7F3A91C2'))).not.toMatch(/En avance \d|Nivel de progreso \d/);
+  });
 
-    expect(textOf(card).match(/No disponible/g)).toHaveLength(3);
-    expect(card).not.toContain('width:');
+  it('sin indicadores: no disponibles, sin barra; una adherencia 0 sí se muestra como 0 %', () => {
+    const html = withList();
+    const missing = cardOf(html, 'P-00000003');
+
+    expect(textOf(missing)).toMatch(/Nivel de progreso No disponible/);
+    expect(textOf(missing)).toMatch(/Tasa de adherencia No disponible/);
+    expect(missing).not.toContain('width:');
+    expect(cardOf(html, 'P-00000004')).toContain('width:0%');
   });
 
   it('las alertas usan texto e ícono, no solo color', () => {
-    expect(cardOf(withList(), 'X-4')).toMatch(/<svg[^>]*aria-hidden="true"[\s\S]*3 alertas activas/);
+    expect(cardOf(withList(), 'P-7F3A91C2')).toMatch(/<svg[^>]*aria-hidden="true"[\s\S]*2 alertas activas/);
   });
 
-  it('no ofrece escritura: sin botones ni campos de edición; sin referencia no hay enlace a la ficha', () => {
+  it('cada tarjeta enlaza a su ficha con el código auténtico, y solo a ella', () => {
     const html = withList();
-    const list = html.slice(html.indexOf('<ol'), html.indexOf('</ol>'));
+    const list = cardsOf(html);
 
-    expect(list).not.toMatch(/<a |<button|<input|<textarea|<form/);
-    expect(textOf(html)).not.toMatch(/Editar|Eliminar|Exportar|Ver ficha|Marcar como atendida/);
+    expect(list.match(/<a /g)).toHaveLength(4);
+    expect(list).toMatch(/href="\/app\/administrativo\/cohortes\/c-1\/seguimiento\/P-7F3A91C2"[^>]*>Ver ficha<span class="sr-only"> de P-7F3A91C2<\/span>/);
+    expect(list).not.toMatch(/seg-|<button|<input|<textarea|<form/);
   });
 
-  it('con referencia opaca, cada tarjeta enlaza a su ficha (RF-128) y solo a ella', () => {
-    const entries = ENTRIES.map((entry, index) => ({ ...entry, reference: index === 2 ? null : `seg-ref${index}` }));
-    const html = withList({ entries });
-    const list = html.slice(html.indexOf('<ol'), html.indexOf('</ol>'));
+  it('sin código válido para la ficha no hay enlace, y se explica', () => {
+    const html = withList({ entries: [entry('PART-0004', { detailCode: null })], total: 1 });
 
-    expect(list.match(/<a /g)).toHaveLength(3);
-    expect(list).toMatch(/href="\/app\/administrativo\/cohortes\/c-1\/seguimiento\/seg-ref0"[^>]*>Ver ficha<span class="sr-only"> de X-1<\/span>/);
-    expect(cardOf(html, 'X-3')).not.toContain('Ver ficha');
-    expect(list).not.toMatch(/<button|<input|<textarea|<form/);
+    expect(html).not.toContain('Ver ficha');
+    expect(textOf(cardOf(html, 'PART-0004'))).toContain('el código no tiene el formato esperado');
+  });
+
+  it('no muestra datos personales ni internos', () => {
+    expect(textOf(withList())).not.toMatch(/@|uuid|demo-participante|Correo|Nombre/i);
+  });
+});
+
+describe('Tabla con columnas ordenables (pantallas anchas)', () => {
+  it('una sola respuesta, dos presentaciones: tabla desde lg y tarjetas por debajo', () => {
+    const html = withList();
+
+    expect(html).toMatch(/<div class="hidden lg:block"><div[^>]*><table/);
+    expect(cardsOf(html)).toMatch(/^<ol class="[^"]*lg:hidden/);
+    expect(tableOf(html).match(/<tr /g)).toHaveLength(1 + ENTRIES.length);
+    expect(cardsOf(html).match(/<article/g)).toHaveLength(ENTRIES.length);
+  });
+
+  it('encabezados de columna con ámbito y botón de orden; filas encabezadas por el código', () => {
+    const table = tableOf(withList());
+
+    expect(table).toMatch(/<caption class="sr-only">/);
+    for (const label of ['Código', 'Nivel de progreso', 'Tasa de adherencia', 'Alertas activas', 'Alertas atendidas']) {
+      expect(table).toMatch(new RegExp(`<th scope="col" aria-sort="[a-z]+"[^>]*><button type="button"[^>]*>${label}<svg`));
+    }
+    expect(table.match(/<th scope="row"/g)).toHaveLength(ENTRIES.length);
+  });
+
+  it('sin orden explícito, la columna de código se anuncia ascendente (orden del backend)', () => {
+    const table = tableOf(withList({ sort: null }));
+
+    expect(table.match(/aria-sort="ascending"/g)).toHaveLength(1);
+    expect(table).toMatch(/aria-sort="ascending"[^>]*><button[^>]*>Código</);
+    expect(table.match(/aria-sort="none"/g)).toHaveLength(4);
+  });
+
+  it('el orden activo se anuncia en su columna', () => {
+    const table = tableOf(withList({ sort: { field: 'tasa_adherencia', direction: 'DESC' } }));
+
+    expect(table).toMatch(/aria-sort="descending"[^>]*><button[^>]*>Tasa de adherencia</);
+    expect(table).toMatch(/aria-sort="none"[^>]*><button[^>]*>Código</);
+  });
+
+  it('cada fila muestra los mismos indicadores que su tarjeta', () => {
+    const html = withList();
+
+    expect(textOf(rowOf(html, 'P-7F3A91C2'))).toMatch(/P-7F3A91C2 En avance 41 % 2 Inactividad · Craving elevado 0 Ver ficha/);
+    expect(textOf(rowOf(html, 'P-00000003'))).toMatch(/No disponible No disponible Ninguna 0/);
+    expect(rowOf(html, 'P-00000003')).not.toContain('width:');
+    expect(rowOf(html, 'P-00000004')).toContain('width:0%');
+  });
+
+  it('cada fila enlaza a su ficha con el código auténtico; sin código válido, sin enlace', () => {
+    const html = withList();
+
+    expect(tableOf(html).match(/<a /g)).toHaveLength(ENTRIES.length);
+    expect(rowOf(html, 'P-7F3A91C2')).toMatch(/href="\/app\/administrativo\/cohortes\/c-1\/seguimiento\/P-7F3A91C2"/);
+    const invalid = withList({ entries: [entry('PART-0004', { detailCode: null })], total: 1 });
+    expect(rowOf(invalid, 'PART-0004')).not.toContain('<a ');
+    expect(textOf(rowOf(invalid, 'PART-0004'))).toContain('Ficha no disponible');
+  });
+
+  it('la tabla no tiene campos de entrada ni datos personales', () => {
+    const table = tableOf(withList());
+
+    expect(table).not.toMatch(/<input|<textarea|<select|<form|seg-/);
+    expect(textOf(table)).not.toMatch(/@|uuid|Correo|Nombre|diario|chat/i);
+  });
+});
+
+describe('Consulta en la URL', () => {
+  it('pasa al hook la búsqueda de la URL y el navegador del router (sin recargar el documento)', () => {
+    render({}, '/app/administrativo/cohortes/c-1/seguimiento?nivel=INICIAL&pagina=2');
+
+    expect(hook.args.search).toBe('?nivel=INICIAL&pagina=2');
+    expect(hook.args.navigate).toEqual(expect.any(Function));
   });
 });
 
 describe('Filtros, orden y paginación', () => {
-  it('ofrece filtros por progreso, adherencia y alertas, y orden por indicador', () => {
+  it('ofrece los filtros reales: nivel, adherencia mínima y máxima, alertas y orden por cualquier indicador', () => {
     const html = withList();
 
     expect(html).toMatch(/role="search"[^>]*aria-label="Filtrar y ordenar participantes"/);
-    for (const label of ['Nivel de progreso', 'Tasa de adherencia', 'Alertas activas', 'Ordenar por']) {
+    for (const label of ['Nivel de progreso', 'Adherencia mínima', 'Adherencia máxima', 'Alertas activas', 'Ordenar por']) {
       expect(html).toContain(`>${label}</label>`);
     }
-    expect(html).toContain('50 % o más');
-    expect(html).toContain('Con alertas activas');
-    expect(html).toContain('Progreso: de mayor a menor');
-    expect(html).not.toMatch(/Nombre|Correo/);
+    for (const option of ['Inicial', 'En avance', 'Avanzado', 'Completado', '50 % o más', '75 % o menos', 'Con alertas activas', 'Sin alertas activas']) {
+      expect(html).toContain(`>${option}</option>`);
+    }
+    for (const value of ['codigo_participante:DESC', 'nivel_progreso:DESC', 'tasa_adherencia:ASC', 'alertas_activas:DESC', 'alertas_atendidas:ASC']) {
+      expect(html).toContain(`value="${value}"`);
+    }
   });
 
-  it('refleja los filtros activos y ofrece limpiarlos', () => {
-    const html = withList({ filters: { progressMin: 50, adherenceMin: null, alerts: 'con-alertas' }, sortValue: 'progreso-desc', hasFilters: true });
+  it('refleja los filtros combinados activos y ofrece limpiarlos', () => {
+    const html = withList({
+      filters: { level: 'AVANZADO', adherenceMin: 25, adherenceMax: 75, alerts: 'true' },
+      sortValue: 'tasa_adherencia:DESC',
+      hasFilters: true,
+    });
 
-    expect(html).toMatch(/<option value="50" selected="">/);
-    expect(html).toMatch(/<option value="con-alertas" selected="">/);
-    expect(html).toMatch(/<option value="progreso-desc" selected="">/);
+    expect(html).toMatch(/<option value="AVANZADO" selected="">/);
+    expect(html).toMatch(/<option value="25" selected="">/);
+    expect(html).toMatch(/<option value="75" selected="">/);
+    expect(html).toMatch(/<option value="true" selected="">/);
+    expect(html).toMatch(/<option value="tasa_adherencia:DESC" selected="">/);
     expect(textOf(html)).toContain('Limpiar filtros');
   });
 
@@ -168,23 +278,25 @@ describe('Filtros, orden y paginación', () => {
     const html = withList();
 
     expect(html).toMatch(/<nav aria-label="Paginación del seguimiento"/);
-    expect(html).toMatch(/aria-live="polite"[^>]*>1–4 de 6 participantes · página 1 de 2/);
+    expect(html).toMatch(/aria-live="polite"[^>]*>1–4 de 26 participantes · página 1 de 2/);
     expect(html).toMatch(/<button[^>]*disabled=""[^>]*>.*Anterior/);
     expect(html).not.toMatch(/<button[^>]*disabled=""[^>]*>Siguiente/);
   });
 });
 
 describe('Estados de la pantalla', () => {
-  it('cargando: aviso accesible, controles bloqueados y sin registros', () => {
+  it('cargando: aviso accesible y sin registros; los controles siguen disponibles (la consulta anterior se cancela)', () => {
     const html = render({ isLoading: true });
 
     expect(html).toContain('aria-busy="true"');
     expect(html).toMatch(/role="status"[^>]*>Cargando indicadores de seguimiento/);
-    expect(html).toMatch(/<select[^>]*disabled=""/);
+    expect(html).toContain('<select');
+    expect(html).not.toMatch(/<select[^>]*disabled=""/);
     expect(html).not.toContain('<article');
+    expect(html).not.toContain('<table');
   });
 
-  it('cohorte sin participantes', () => {
+  it('listado vacío: cohorte sin participantes', () => {
     const html = render({});
 
     expect(html).toMatch(/role="status"[\s\S]*No se encontraron participantes registrados para la cohorte seleccionada\./);
@@ -192,61 +304,46 @@ describe('Estados de la pantalla', () => {
   });
 
   it('resultado vacío tras filtrar: lo distingue y ofrece limpiar filtros', () => {
-    const html = render({ hasFilters: true, filters: { progressMin: 75, adherenceMin: null, alerts: null } });
+    const html = render({ hasFilters: true, filters: { ...INITIAL_TRACKING_QUERY.filters, level: 'COMPLETADO' } });
 
     expect(textOf(html)).toContain('Ningún participante coincide con los filtros aplicados.');
     expect(textOf(html)).not.toContain('No se encontraron participantes registrados');
   });
 
-  it('cohorte inexistente: alerta y sin controles', () => {
-    const html = render({ problem: TRACKING_PROBLEM.NOT_FOUND, cohort: null });
+  it.each([
+    [TRACKING_PROBLEM.INVALID_QUERY, 'Los filtros aplicados no son válidos.', true, 'Limpiar filtros'],
+    [TRACKING_PROBLEM.DENIED, 'No cuenta con autorización para consultar los indicadores', false, null],
+    [TRACKING_PROBLEM.NOT_FOUND, 'La cohorte solicitada no existe en el sistema.', false, null],
+    [TRACKING_PROBLEM.UNAVAILABLE, 'El módulo de seguimiento no se encuentra disponible en este momento.', true, 'Reintentar'],
+    [TRACKING_PROBLEM.INVALID_RESPONSE, 'no tiene el formato esperado. Por seguridad no se muestra ningún registro.', true, 'Reintentar'],
+    [TRACKING_PROBLEM.ERROR, 'No pudimos cargar los indicadores de seguimiento.', true, 'Reintentar'],
+  ])('%s: alerta sin registros', (problem, message, controls, action) => {
+    const canRetry = action === 'Reintentar';
+    const html = render({ problem, canRetry });
 
-    expect(html).toMatch(/role="alert"[\s\S]*La cohorte solicitada no existe en el sistema\./);
-    expect(html).not.toContain('role="search"');
-  });
-
-  it('acceso denegado: alerta, sin controles ni registros, y aclara que en la demo es simulado', () => {
-    const html = render({ problem: TRACKING_PROBLEM.DENIED, entries: [], total: 0 });
-
-    expect(html).toMatch(/role="alert"[\s\S]*Acceso denegado/);
-    expect(textOf(html)).toContain('Resultado simulado por la fuente de demostración');
-    expect(html).not.toContain('role="search"');
+    expect(html).toMatch(/role="alert"/);
+    expect(textOf(html)).toContain(message);
     expect(html).not.toContain('<article');
+    expect(html.includes('role="search"')).toBe(controls);
+    if (action) expect(textOf(html)).toContain(action);
+    if (!canRetry) expect(html).not.toContain('Reintentar');
   });
 
-  it('respuesta de otra cohorte: alerta sin registros', () => {
-    const html = render({ problem: TRACKING_PROBLEM.INCONSISTENT });
-
-    expect(textOf(html)).toContain('La información recibida no corresponde a la cohorte solicitada.');
-    expect(html).not.toContain('<article');
+  it('acceso denegado en la demostración: aclara que es simulado', () => {
+    expect(textOf(render({ problem: TRACKING_PROBLEM.DENIED, isDemo: true }))).toContain('Resultado simulado por la fuente de demostración');
+    expect(textOf(render({ problem: TRACKING_PROBLEM.DENIED }))).not.toContain('simulado');
   });
 
-  it('registros de otra cohorte ocultos: alerta con su número, y solo se muestran los propios', () => {
-    const html = withList({ blockedCount: 1 });
-
-    expect(html).toMatch(/role="alert"[\s\S]*Se ocultó 1 registro que no corresponde a esta cohorte/);
-    expect(html.match(/<article/g)).toHaveLength(4);
+  it('sesión vencida (401): lleva al inicio de sesión sin pintar el listado', () => {
+    expect(render({ problem: TRACKING_PROBLEM.SESSION_REQUIRED })).toBe('');
   });
 
-  it('error de consulta: alerta con reintento', () => {
-    const html = render({ problem: TRACKING_PROBLEM.ERROR });
-
-    expect(html).toMatch(/role="alert"[\s\S]*Indicadores no disponibles/);
-    expect(html).toContain('Reintentar');
-    expect(html).not.toContain('<article');
-  });
-
-  it('integración pendiente: sin registros, filtros, aviso de demo ni de solo lectura', () => {
-    const html = render({ isIntegrationPending: true, isDemo: false, isLoading: false });
-
-    expect(html).toMatch(/role="status"[\s\S]*Información aún no disponible/);
-    expect(html).not.toMatch(/role="search"|<article|Datos de demostración/);
-  });
-
-  it('con el hook real y sin modo demo, muestra la integración pendiente', () => {
+  it('con el hook real en la API: cargando, sin datos de demostración', () => {
     vi.stubEnv('DEV', true);
     vi.stubEnv('VITE_M08_DEMO', 'false');
+    const html = render(null);
 
-    expect(render(null)).toContain('Información aún no disponible');
+    expect(html).toContain('Cargando indicadores de seguimiento');
+    expect(html).not.toMatch(/Datos de demostración|<article/);
   });
 });
