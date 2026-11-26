@@ -4,6 +4,7 @@ import { apiClient } from '@/shared/utils/apiClient.jsx';
 
 import {
   grantPermission,
+  listBeneficiaries,
   listPermissions,
   revokePermission,
 } from './individualPermissionsApi.js';
@@ -56,14 +57,18 @@ describe('listPermissions', () => {
     });
   });
 
-  it('un código desconocido es una página vacía, no un 404', async () => {
-    apiClient.get.mockResolvedValue({
-      data: { items: [], total: 0, offset: 0, limit: 20 },
-    });
+  it('un código desconocido se lanza como 404 normalizado (D38)', async () => {
+    apiClient.get.mockRejectedValue(
+      failWith(404, {
+        status: 404,
+        codigo: 'PARTICIPANTE_NO_ENCONTRADO',
+        mensaje: 'El participante seleccionado no existe.',
+      }),
+    );
 
-    await expect(listPermissions(CODE)).resolves.toMatchObject({
-      items: [],
-      total: 0,
+    await expect(listPermissions(CODE)).rejects.toMatchObject({
+      status: 404,
+      codigo: 'PARTICIPANTE_NO_ENCONTRADO',
     });
   });
 
@@ -256,5 +261,72 @@ describe('Rechazos que no son los esperados (status y codigo deben coincidir)', 
     apiClient.get.mockResolvedValue({ data: undefined });
 
     await expect(listPermissions(CODE)).rejects.toThrow('no es válido');
+  });
+});
+
+describe('listBeneficiaries (D37)', () => {
+  const items = [
+    { id_usuario: BENEFICIARY, correo_electronico: 'ana@usco.edu.co' },
+  ];
+
+  it('GET de beneficiarios con offset y limit 100 por defecto; devuelve la página', async () => {
+    apiClient.get.mockResolvedValue({
+      data: { items, total: 1, offset: 0, limit: 100 },
+    });
+
+    await expect(listBeneficiaries()).resolves.toEqual({
+      items,
+      total: 1,
+      offset: 0,
+      limit: 100,
+    });
+    expect(apiClient.get).toHaveBeenCalledWith(
+      '/admin/permisos-individuales/beneficiarios',
+      { params: { offset: 0, limit: 100 } },
+    );
+  });
+
+  it('envía el offset y el limit pedidos', async () => {
+    apiClient.get.mockResolvedValue({
+      data: { items: [], total: 105, offset: 100, limit: 50 },
+    });
+
+    await listBeneficiaries({ offset: 100, limit: 50 });
+
+    expect(apiClient.get.mock.calls[0][1].params).toEqual({
+      offset: 100,
+      limit: 50,
+    });
+  });
+
+  it.each([
+    ['sin items', { total: 0, offset: 0, limit: 100 }],
+    ['con total inválido', { items: [], total: -1, offset: 0, limit: 100 }],
+    ['con limit inválido', { items: [], total: 0, offset: 0, limit: 0 }],
+  ])('rechaza una respuesta %s', async (_, data) => {
+    apiClient.get.mockResolvedValue({ data });
+
+    await expect(listBeneficiaries()).rejects.toThrow('no es válido');
+  });
+
+  it('lanza el error normalizado (403, 500 y sin conexión)', async () => {
+    apiClient.get.mockRejectedValueOnce(failWith(403, { message: 'No' }));
+    await expect(listBeneficiaries()).rejects.toMatchObject({ status: 403 });
+
+    apiClient.get.mockRejectedValueOnce(
+      failWith(500, {
+        codigo: 'ERROR_PERSISTENCIA_PERMISOS',
+        mensaje: 'Falla.',
+      }),
+    );
+    await expect(listBeneficiaries()).rejects.toMatchObject({
+      status: 500,
+      codigo: 'ERROR_PERSISTENCIA_PERMISOS',
+    });
+
+    apiClient.get.mockRejectedValueOnce(new Error('Network Error'));
+    await expect(listBeneficiaries()).rejects.toMatchObject({
+      codigo: 'SIN_CONEXION',
+    });
   });
 });

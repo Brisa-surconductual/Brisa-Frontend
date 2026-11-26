@@ -83,7 +83,35 @@ export async function listPermissions(code, page) {
   if (scenario === PERMISSION_DEMO_SCENARIO.ERROR) {
     throw new Error('Error simulado del modo de demostración.');
   }
-  return getStore().list(code, page);
+  const result = getStore().list(code, page);
+  if (result === null) {
+    // El mismo 404 normalizado que la API (D38).
+    throw toApiError({
+      response: {
+        status: 404,
+        data: {
+          status: 404,
+          codigo: PERMISSION_ERROR.PARTICIPANT_NOT_FOUND,
+          mensaje: 'El participante seleccionado no existe.',
+        },
+      },
+    });
+  }
+  return result;
+}
+
+// D37: respeta los escenarios `carga` y `error`, igual que la lista.
+export async function listBeneficiaries(page) {
+  const scenario = getPermissionDemoScenario();
+  if (scenario === PERMISSION_DEMO_SCENARIO.LOADING)
+    return new Promise(() => {});
+
+  await pause();
+
+  if (scenario === PERMISSION_DEMO_SCENARIO.ERROR) {
+    throw new Error('Error simulado del modo de demostración.');
+  }
+  return getStore().listBeneficiaries(page);
 }
 
 export async function grantPermission(request) {

@@ -4,9 +4,12 @@ import { PERMISSION_SCOPE } from '../types/permissionScope.js';
 import { PERMISSION_FORM_MESSAGE } from '../utils/individualPermissionMessages.js';
 import {
   endOfDayInBogota,
+  normalizeBeneficiary,
+  normalizeBeneficiaryList,
   normalizePermiso,
   normalizePermissionList,
   readGrantError,
+  readPermissionErrorMessage,
   toGrantRequest,
   validatePermissionForm,
 } from './individualPermission.js';
@@ -22,6 +25,7 @@ const raw = (overrides = {}) => ({
   vigente: true,
   revocado_en: null,
   id_usuario_beneficiario: BENEFICIARY,
+  correo_beneficiario: 'ana@usco.edu.co',
   ...overrides,
 });
 
@@ -38,7 +42,7 @@ describe('normalizePermiso', () => {
       endDate: '2026-12-01',
       revokedAt: null,
       beneficiaryId: BENEFICIARY,
-      beneficiaryName: null,
+      beneficiaryEmail: 'ana@usco.edu.co',
     });
     expect(Object.isFrozen(permiso)).toBe(true);
   });
@@ -360,4 +364,99 @@ describe('Listado: solo vigentes y marcas con zona (D29, D31)', () => {
       ).toThrow();
     },
   );
+});
+
+describe('beneficiaryEmail (D36)', () => {
+  it('lo lee de correo_beneficiario', () => {
+    expect(normalizePermiso(raw()).beneficiaryEmail).toBe('ana@usco.edu.co');
+  });
+
+  it.each([
+    ['falta (el 201 no lo trae)', undefined],
+    ['está vacío', '   '],
+    ['no es texto', 42],
+  ])('es null si %s, sin descartar el permiso', (_, value) => {
+    expect(
+      normalizePermiso(raw({ correo_beneficiario: value })).beneficiaryEmail,
+    ).toBeNull();
+  });
+});
+
+describe('normalizeBeneficiary y normalizeBeneficiaryList (D37)', () => {
+  const row = (overrides = {}) => ({
+    id_usuario: BENEFICIARY,
+    correo_electronico: 'ana@usco.edu.co',
+    ...overrides,
+  });
+
+  it('devuelve { id, email } congelado', () => {
+    const beneficiary = normalizeBeneficiary(row());
+
+    expect(beneficiary).toEqual({ id: BENEFICIARY, email: 'ana@usco.edu.co' });
+    expect(Object.isFrozen(beneficiary)).toBe(true);
+  });
+
+  it('pasa el id a minúsculas (el backend compara la autoconcesión distinguiendo mayúsculas)', () => {
+    expect(
+      normalizeBeneficiary(row({ id_usuario: BENEFICIARY.toUpperCase() })).id,
+    ).toBe(BENEFICIARY);
+  });
+
+  it.each([
+    ['null', null],
+    ['sin id', row({ id_usuario: undefined })],
+    ['con id que no es UUID', row({ id_usuario: 'ana' })],
+    ['sin correo', row({ correo_electronico: '' })],
+    ['con correo que no es texto', row({ correo_electronico: { value: 'x' } })],
+  ])('rechaza un beneficiario %s', (_, value) => {
+    expect(() => normalizeBeneficiary(value)).toThrow();
+  });
+
+  it('la lista descarta y cuenta lo inválido, sin romperse', () => {
+    const result = normalizeBeneficiaryList([
+      row(),
+      row({ id_usuario: 'x' }),
+      null,
+    ]);
+
+    expect(result.beneficiaries).toHaveLength(1);
+    expect(result.discarded).toBe(2);
+    expect(Object.isFrozen(result.beneficiaries)).toBe(true);
+  });
+
+  it('rechaza lo que no es una lista', () => {
+    expect(() => normalizeBeneficiaryList(undefined)).toThrow('no es válido');
+    expect(() => normalizeBeneficiaryList({ items: [] })).toThrow(
+      'no es válido',
+    );
+  });
+});
+
+describe('readPermissionErrorMessage (D28)', () => {
+  it('muestra el mensaje del backend si el sobre trae codigo', () => {
+    expect(
+      readPermissionErrorMessage({
+        codigo: 'PERMISO_YA_VIGENTE',
+        mensaje: 'Del backend.',
+      }),
+    ).toBe('Del backend.');
+  });
+
+  it('un error sin codigo del backend (DESCONOCIDO) usa el texto genérico', () => {
+    expect(
+      readPermissionErrorMessage({
+        codigo: 'DESCONOCIDO',
+        mensaje: 'must be a UUID',
+      }),
+    ).toBe('No se pudo completar la operación con el permiso.');
+  });
+
+  it('sin mensaje usa el respaldo del código; con undefined, el genérico', () => {
+    expect(
+      readPermissionErrorMessage({ codigo: 'PERMISO_NO_ENCONTRADO' }),
+    ).toBe('El permiso ya no existe. Se actualizó la lista.');
+    expect(readPermissionErrorMessage(undefined)).toBe(
+      'No se pudo completar la operación con el permiso.',
+    );
+  });
 });

@@ -74,8 +74,10 @@ export function normalizePermiso(raw) {
     endDate: bogotaDate(endsAt),
     revokedAt: optionalInstant(raw.revocado_en, 'revocado_en'),
     beneficiaryId: beneficiary(raw.id_usuario_beneficiario),
-    // A-076: el GET aún no trae el nombre; no se lee ningún campo inventado.
-    beneficiaryName: null,
+    // D36: la etiqueta del beneficiario es su correo (la base no tiene nombre; A-076).
+    beneficiaryEmail: isText(raw.correo_beneficiario)
+      ? raw.correo_beneficiario
+      : null,
   });
 }
 
@@ -107,6 +109,42 @@ export function normalizePermissionList(rows) {
   }
 
   return Object.freeze({ permissions: Object.freeze(permissions), discarded });
+}
+
+// Un elemento de `GET .../beneficiarios` → `{ id, email }` (D37). El id sale en minúsculas:
+// el backend compara la autoconcesión distinguiendo mayúsculas.
+export function normalizeBeneficiary(raw) {
+  if (!raw || typeof raw !== 'object') throw new Error('Beneficiario vacío.');
+  if (!isUuid(raw.id_usuario))
+    throw new Error('Beneficiario sin id_usuario válido.');
+  if (!isText(raw.correo_electronico))
+    throw new Error('Beneficiario sin correo.');
+  return Object.freeze({
+    id: raw.id_usuario.toLowerCase(),
+    email: raw.correo_electronico,
+  });
+}
+
+// Igual que `normalizePermissionList`: lo inválido se descarta y se cuenta.
+export function normalizeBeneficiaryList(rows) {
+  if (!Array.isArray(rows))
+    throw new Error('El listado de beneficiarios no es válido.');
+
+  const beneficiaries = [];
+  let discarded = 0;
+
+  for (const row of rows) {
+    try {
+      beneficiaries.push(normalizeBeneficiary(row));
+    } catch {
+      discarded += 1;
+    }
+  }
+
+  return Object.freeze({
+    beneficiaries: Object.freeze(beneficiaries),
+    discarded,
+  });
 }
 
 // Validación del cliente antes de enviar. `tomorrow` es `YYYY-MM-DD` en Bogotá.
@@ -168,10 +206,15 @@ const FIELD_BY_CODE = Object.freeze({
 export function readGrantError(error) {
   return Object.freeze({
     field: FIELD_BY_CODE[error?.codigo] ?? null,
-    // D28: sin `codigo` del backend (400 de Nest, guardas) → texto de respaldo.
-    message:
-      isText(error?.mensaje) && error?.codigo !== API_ERROR_CLIENTE.DESCONOCIDO
-        ? error.mensaje
-        : getPermissionErrorMessage(error?.codigo),
+    message: readPermissionErrorMessage(error),
   });
+}
+
+// D28: el `mensaje` del backend solo se muestra si el sobre trae `codigo` (no en un 400 de
+// Nest ni en las guardas); si no, el texto de respaldo del código.
+export function readPermissionErrorMessage(error) {
+  return isText(error?.mensaje) &&
+    error?.codigo !== API_ERROR_CLIENTE.DESCONOCIDO
+    ? error.mensaje
+    : getPermissionErrorMessage(error?.codigo);
 }

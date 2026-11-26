@@ -6,7 +6,7 @@
  * - vigentes (predeterminado): P-1A2B3C4D con dos permisos vigentes, uno
  *   vencido y uno revocado (estos dos no deben aparecer); P-5E6F7A8B sin
  *   permisos; P-9C0D1E2F con 25 (dos páginas); un código desconocido da
- *   lista vacía en el GET y 404 al conceder. El coordinador de la demo es
+ *   404 en el GET y al conceder. El coordinador de la demo es
  *   DEMO_CURRENT_USER_ID (conceder a ese id da 422 de autoconcesión);
  * - vacio: P-1A2B3C4D sin permisos;
  * - carga: la lista no termina de cargar;

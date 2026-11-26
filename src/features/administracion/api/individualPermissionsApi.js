@@ -42,27 +42,16 @@ const rejection = ({ status, codigo, mensaje }) => ({
 
 // Mismo valor que el `limit` por defecto del backend (máximo 100: D27).
 export const PERMISSIONS_PAGE_SIZE = 20;
+// El selector de beneficiarios pide la página más grande permitida (D37, D44).
+export const BENEFICIARIES_PAGE_SIZE = 100;
 
 const isCount = (value, min) => Number.isInteger(value) && value >= min;
 
-/*
- * Una página de permisos vigentes: `{ items, total, offset, limit }`. Con un
- * código desconocido el backend responde 200 con `items: []`, no 404.
- */
-export async function listPermissions(
-  code,
-  { offset = 0, limit = PERMISSIONS_PAGE_SIZE } = {},
-) {
+// GET de una página `{ items, total, offset, limit }`, validada; los errores salen normalizados.
+async function getPage(path, params, invalidMessage) {
   let data;
   try {
-    ({ data } = await apiClient.get(PERMISSIONS_PATH, {
-      params: {
-        codigo_participante: code,
-        solo_vigentes: true,
-        offset,
-        limit,
-      },
-    }));
+    ({ data } = await apiClient.get(path, { params }));
   } catch (error) {
     throw toApiError(error);
   }
@@ -72,13 +61,41 @@ export async function listPermissions(
     !isCount(data.offset, 0) ||
     !isCount(data.limit, 1)
   )
-    throw new Error('El listado de permisos no es válido.');
+    throw new Error(invalidMessage);
   return {
     items: data.items,
     total: data.total,
     offset: data.offset,
     limit: data.limit,
   };
+}
+
+/*
+ * Una página de permisos vigentes. Con un código desconocido el backend
+ * responde 404 `PARTICIPANTE_NO_ENCONTRADO` (D38): se deja pasar como error
+ * normalizado y `data/individualPermissionSource.js` lo convierte en `null`.
+ */
+export function listPermissions(
+  code,
+  { offset = 0, limit = PERMISSIONS_PAGE_SIZE } = {},
+) {
+  return getPage(
+    PERMISSIONS_PATH,
+    { codigo_participante: code, solo_vigentes: true, offset, limit },
+    'El listado de permisos no es válido.',
+  );
+}
+
+// Administrativos activos a quienes se puede conceder (solo `COORDINADOR_PSI`). D37.
+export function listBeneficiaries({
+  offset = 0,
+  limit = BENEFICIARIES_PAGE_SIZE,
+} = {}) {
+  return getPage(
+    `${PERMISSIONS_PATH}/beneficiarios`,
+    { offset, limit },
+    'El listado de beneficiarios no es válido.',
+  );
 }
 
 // `request` sale de `toGrantRequest` (incluye `id_usuario_beneficiario`).

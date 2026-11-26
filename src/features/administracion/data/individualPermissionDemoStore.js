@@ -10,8 +10,8 @@ import { addDays } from '../utils/tomorrowInBogota.js';
  * backend (PR #87, D22) y en el mismo orden al conceder: autoconcesión
  * (422) → vigencia (422) → participante (404) → rol del beneficiario (422)
  * → mismo beneficiario, participante y alcance sin revocar (409). La lista
- * pagina y solo trae los vigentes; con un código desconocido responde una
- * página vacía (el backend no da 404 en el GET). Revocar solo rechaza si ya
+ * pagina y solo trae los vigentes; con un código desconocido responde `null`
+ * (el backend da 404 `PARTICIPANTE_NO_ENCONTRADO`, D38). Revocar solo rechaza si ya
  * tenía `revocado_en`: un permiso vencido sin revocar se revoca con 200.
  * `now` se inyecta para las pruebas.
  */
@@ -24,10 +24,30 @@ const uuid = (n) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 // El coordinador de la sesión de demostración: no puede concederse permisos.
 export const DEMO_CURRENT_USER_ID = uuid(1);
 
-// Los únicos usuarios con rol ADMINISTRATIVO: los beneficiarios válidos.
+// Administrativos con cuenta ACTIVA (los que ofrece el endpoint de beneficiarios). Son 105 para
+// que la demostración muestre el aviso de más de 100 (D44).
 export const DEMO_ADMINISTRATIVOS = Object.freeze(
-  Array.from({ length: 13 }, (_, i) => uuid(100 + i)),
+  Array.from({ length: 105 }, (_, i) =>
+    Object.freeze({
+      id_usuario: uuid(100 + i),
+      correo_electronico: `admin${String(i + 1).padStart(3, '0')}@brisa.local`,
+    }),
+  ),
 );
+
+// Administrativo con la cuenta no activa: no se ofrece, pero el POST lo acepta (A-079).
+export const DEMO_INACTIVE_ADMINISTRATIVO = Object.freeze({
+  id_usuario: uuid(300),
+  correo_electronico: 'admin.bloqueado@brisa.local',
+});
+
+const ALL_ADMINISTRATIVOS = [
+  ...DEMO_ADMINISTRATIVOS,
+  DEMO_INACTIVE_ADMINISTRATIVO,
+];
+const emailOf = (id) =>
+  ALL_ADMINISTRATIVOS.find((a) => a.id_usuario === id)?.correo_electronico ??
+  null;
 
 export const DEMO_PERMISSION_ID = Object.freeze({
   ACTIVE_1: uuid(1001),
@@ -49,16 +69,18 @@ const isActive = (record, now) =>
   (record.fecha_fin_vigencia === null ||
     Date.parse(record.fecha_fin_vigencia) > now.getTime());
 
-// Elemento del GET: el registro con `vigente` calculado.
+// Elemento del GET: el registro con `vigente` y el correo del beneficiario (D36).
 const toListItem = (record, now) => ({
   ...record,
+  correo_beneficiario: emailOf(record.id_usuario_beneficiario),
   vigente: isActive(record, now),
 });
 
-// 201 del POST: sin el beneficiario ni `revocado_en`.
+// 201 del POST: sin el beneficiario, su correo ni `revocado_en`.
 function toGrantResponse(record, now) {
   const response = toListItem(record, now);
   delete response.id_usuario_beneficiario;
+  delete response.correo_beneficiario;
   delete response.revocado_en;
   return response;
 }
@@ -78,9 +100,9 @@ export function createPermissionStore({
   const allRecords = () => [...byCode.values()].flat();
 
   function list(code, { offset = 0, limit = PAGE_SIZE_DEFAULT } = {}) {
-    const active = (byCode.get(code) ?? []).filter((record) =>
-      isActive(record, now()),
-    );
+    const records = byCode.get(code);
+    if (!records) return null;
+    const active = records.filter((record) => isActive(record, now()));
     return {
       items: active
         .slice(offset, offset + limit)
@@ -103,7 +125,7 @@ export function createPermissionStore({
       return reject(422, PERMISSION_ERROR.INVALID_VALIDITY);
     const records = byCode.get(code);
     if (!records) return reject(404, PERMISSION_ERROR.PARTICIPANT_NOT_FOUND);
-    if (!DEMO_ADMINISTRATIVOS.includes(beneficiaryId))
+    if (!ALL_ADMINISTRATIVOS.some((a) => a.id_usuario === beneficiaryId))
       return reject(422, PERMISSION_ERROR.INVALID_ROLE);
     if (
       records.some(
@@ -149,7 +171,20 @@ export function createPermissionStore({
     };
   }
 
-  return { list, grant, revoke };
+  // Solo cuentas activas, por correo ascendente (como el backend).
+  function listBeneficiaries({ offset = 0, limit = 100 } = {}) {
+    const sorted = [...DEMO_ADMINISTRATIVOS].sort((a, b) =>
+      a.correo_electronico.localeCompare(b.correo_electronico),
+    );
+    return {
+      items: sorted.slice(offset, offset + limit),
+      total: sorted.length,
+      offset,
+      limit,
+    };
+  }
+
+  return { list, grant, revoke, listBeneficiaries };
 }
 
 /*
@@ -173,7 +208,8 @@ export function createDemoPermissions(today, { empty = false } = {}) {
   });
   const main = 'P-1A2B3C4D';
   const { INDIVIDUAL_ACCESS, NARRATIVE_PROGRESSION } = PERMISSION_SCOPE;
-  const [first, second] = DEMO_ADMINISTRATIVOS;
+  const first = DEMO_ADMINISTRATIVOS[0].id_usuario;
+  const second = DEMO_ADMINISTRATIVOS[1].id_usuario;
 
   return {
     [main]: empty
@@ -217,7 +253,7 @@ export function createDemoPermissions(today, { empty = false } = {}) {
         'P-9C0D1E2F',
         uuid(3000 + i),
         i < 13 ? INDIVIDUAL_ACCESS : NARRATIVE_PROGRESSION,
-        DEMO_ADMINISTRATIVOS[i % 13],
+        DEMO_ADMINISTRATIVOS[i % 13].id_usuario,
         null,
       ),
     ),

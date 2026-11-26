@@ -9,6 +9,7 @@ import {
 } from './individualPermissionDemoStore.js';
 import {
   grantPermission,
+  listBeneficiaries,
   listPermissions,
   revokePermission,
 } from './individualPermissionSource.js';
@@ -36,7 +37,7 @@ const RAW = Object.freeze({
 const request = (
   code,
   alcance = 'ACCESO_INDIVIDUAL',
-  beneficiary = DEMO_ADMINISTRATIVOS[5],
+  beneficiary = DEMO_ADMINISTRATIVOS[5].id_usuario,
 ) => ({
   codigo_participante: code,
   alcance,
@@ -122,12 +123,14 @@ describe('Fuente de permisos en demostración', () => {
       DEMO_PERMISSION_ID.ACTIVE_1,
       DEMO_PERMISSION_ID.ACTIVE_2,
     ]);
-    expect(permissions[0].beneficiaryId).toBe(DEMO_ADMINISTRATIVOS[0]);
+    expect(permissions[0].beneficiaryId).toBe(
+      DEMO_ADMINISTRATIVOS[0].id_usuario,
+    );
     expect(total).toBe(2);
     expect(transport.get).not.toHaveBeenCalled();
   });
 
-  it('pagina P-9C0D1E2F y un código desconocido da lista vacía', async () => {
+  it('pagina P-9C0D1E2F y un código desconocido da null', async () => {
     enableDemo();
 
     const first = await listPermissions('P-9C0D1E2F');
@@ -138,10 +141,7 @@ describe('Fuente de permisos en demostración', () => {
 
     expect([first.permissions.length, first.total]).toEqual([20, 25]);
     expect(second.permissions).toHaveLength(5);
-    await expect(listPermissions('P-00000000')).resolves.toMatchObject({
-      permissions: [],
-      total: 0,
-    });
+    await expect(listPermissions('P-00000000')).resolves.toBeNull();
   });
 
   it('concede, choca con el permiso vigente y revoca', async () => {
@@ -305,10 +305,119 @@ describe('Demo: lo recién concedido sale primero (D32)', () => {
     enableDemo();
 
     const granted = await grantPermission(
-      request('P-1A2B3C4D', 'PROGRESION_NARRATIVA', DEMO_ADMINISTRATIVOS[7]),
+      request(
+        'P-1A2B3C4D',
+        'PROGRESION_NARRATIVA',
+        DEMO_ADMINISTRATIVOS[7].id_usuario,
+      ),
     );
     const { permissions } = await listPermissions('P-1A2B3C4D');
 
     expect(permissions[0].id).toBe(granted.permission.id);
+  });
+});
+
+describe('Fuente con la API: 404 del GET y beneficiarios (D37, D38)', () => {
+  it('un 404 PARTICIPANTE_NO_ENCONTRADO del GET es null', async () => {
+    transport.get.mockRejectedValue({
+      response: {
+        status: 404,
+        data: {
+          status: 404,
+          codigo: 'PARTICIPANTE_NO_ENCONTRADO',
+          mensaje: 'No.',
+        },
+      },
+    });
+
+    await expect(listPermissions('P-1A2B3C4D')).resolves.toBeNull();
+  });
+
+  it('otro 404 u otro error del GET se relanza', async () => {
+    transport.get.mockRejectedValueOnce({
+      response: { status: 404, data: { codigo: 'OTRO' } },
+    });
+    await expect(listPermissions('P-1A2B3C4D')).rejects.toMatchObject({
+      status: 404,
+      codigo: 'OTRO',
+    });
+  });
+
+  it('listBeneficiaries normaliza, descarta lo inválido y conserva la paginación', async () => {
+    transport.get.mockResolvedValue({
+      data: {
+        items: [
+          {
+            id_usuario: ID.toUpperCase(),
+            correo_electronico: 'ana@usco.edu.co',
+          },
+          { id_usuario: 'no', correo_electronico: 'x@x' },
+        ],
+        total: 2,
+        offset: 0,
+        limit: 100,
+      },
+    });
+
+    const result = await listBeneficiaries();
+
+    expect(result.beneficiaries).toEqual([
+      { id: ID, email: 'ana@usco.edu.co' },
+    ]);
+    expect(result).toMatchObject({
+      discarded: 1,
+      total: 2,
+      offset: 0,
+      limit: 100,
+    });
+  });
+
+  it.each([
+    ['limit 0', { limit: 0 }],
+    ['limit 101', { limit: 101 }],
+    ['offset negativo', { offset: -1 }],
+  ])(
+    'listBeneficiaries lanza con %s sin llamar al backend',
+    async (_, page) => {
+      await expect(listBeneficiaries(page)).rejects.toThrow('no válido');
+      expect(transport.get).not.toHaveBeenCalled();
+    },
+  );
+});
+
+describe('Beneficiarios en demostración (D37, D44)', () => {
+  it('ofrece 105 activos, ordenados por correo, en una página de 100 y otra de 5', async () => {
+    enableDemo();
+
+    const first = await listBeneficiaries({ offset: 0, limit: 100 });
+    const second = await listBeneficiaries({ offset: 100, limit: 100 });
+
+    expect(first.beneficiaries).toHaveLength(100);
+    expect(first.total).toBe(105);
+    expect(second.beneficiaries).toHaveLength(5);
+    const emails = [...first.beneficiaries, ...second.beneficiaries].map(
+      ({ email }) => email,
+    );
+    expect(emails).toEqual([...emails].sort((a, b) => a.localeCompare(b)));
+    expect(transport.get).not.toHaveBeenCalled();
+  });
+
+  it('no ofrece al administrativo con la cuenta no activa', async () => {
+    enableDemo();
+
+    const { beneficiaries } = await listBeneficiaries({
+      offset: 0,
+      limit: 100,
+    });
+
+    expect(beneficiaries.map(({ email }) => email)).not.toContain(
+      'admin.bloqueado@brisa.local',
+    );
+  });
+
+  it('en el escenario error la lista de beneficiarios falla', async () => {
+    enableDemo('error');
+
+    await expect(listBeneficiaries()).rejects.toThrow('simulado');
   });
 });

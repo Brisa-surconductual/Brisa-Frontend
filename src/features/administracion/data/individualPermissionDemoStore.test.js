@@ -10,13 +10,14 @@ import {
   createPermissionStore,
   DEMO_ADMINISTRATIVOS,
   DEMO_CURRENT_USER_ID,
+  DEMO_INACTIVE_ADMINISTRATIVO,
   DEMO_PERMISSION_ID,
 } from './individualPermissionDemoStore.js';
 
 // 10:00 del 25 de noviembre en Bogotá.
 const NOW = new Date('2026-11-25T15:00:00.000Z');
 const TODAY = '2026-11-25';
-const BENEFICIARY = DEMO_ADMINISTRATIVOS[5];
+const BENEFICIARY = DEMO_ADMINISTRATIVOS[5].id_usuario;
 
 const createStore = (options) =>
   createPermissionStore({
@@ -49,7 +50,7 @@ describe('Semilla de permisos de demostración', () => {
     expect(page.items[0]).toHaveProperty('revocado_en', null);
     expect(page.items[0]).toHaveProperty(
       'id_usuario_beneficiario',
-      DEMO_ADMINISTRATIVOS[0],
+      DEMO_ADMINISTRATIVOS[0].id_usuario,
     );
     expect(page).toMatchObject({ total: 2, offset: 0, limit: 20 });
   });
@@ -60,15 +61,17 @@ describe('Semilla de permisos de demostración', () => {
     );
 
     expect(discarded).toBe(0);
-    expect(permissions[0].beneficiaryId).toBe(DEMO_ADMINISTRATIVOS[0]);
+    expect(permissions[0].beneficiaryId).toBe(
+      DEMO_ADMINISTRATIVOS[0].id_usuario,
+    );
     expect(permissions[1].endDate).toBe(addDays(TODAY, 30));
   });
 
-  it('P-5E6F7A8B no tiene permisos y un código desconocido da página vacía', () => {
+  it('P-5E6F7A8B no tiene permisos y un código desconocido da null (el 404)', () => {
     const store = createStore();
 
     expect(store.list('P-5E6F7A8B')).toMatchObject({ items: [], total: 0 });
-    expect(store.list('P-00000000')).toMatchObject({ items: [], total: 0 });
+    expect(store.list('P-00000000')).toBeNull();
   });
 
   it('el escenario vacío deja a P-1A2B3C4D sin permisos', () => {
@@ -133,7 +136,7 @@ describe('Conceder en la demostración', () => {
   it('409 con el mismo beneficiario y alcance; otro beneficiario sí puede', () => {
     const store = createStore();
     const same = grantRequest('P-1A2B3C4D', 'ACCESO_INDIVIDUAL', {
-      beneficiary: DEMO_ADMINISTRATIVOS[0],
+      beneficiary: DEMO_ADMINISTRATIVOS[0].id_usuario,
     });
 
     expect(store.grant(same)).toEqual({
@@ -154,7 +157,7 @@ describe('Conceder en la demostración', () => {
     expect(
       store.grant(
         grantRequest('P-1A2B3C4D', 'ACCESO_INDIVIDUAL', {
-          beneficiary: DEMO_ADMINISTRATIVOS[1],
+          beneficiary: DEMO_ADMINISTRATIVOS[1].id_usuario,
         }),
       ).ok,
     ).toBe(true);
@@ -291,7 +294,7 @@ describe('Orden de las comprobaciones y regla del índice (D22)', () => {
     expect(
       createStore().grant(
         grantRequest('P-1A2B3C4D', 'PROGRESION_NARRATIVA', {
-          beneficiary: DEMO_ADMINISTRATIVOS[0],
+          beneficiary: DEMO_ADMINISTRATIVOS[0].id_usuario,
         }),
       ).ok,
     ).toBe(true);
@@ -300,7 +303,7 @@ describe('Orden de las comprobaciones y regla del índice (D22)', () => {
   it('se puede volver a conceder tras revocar', () => {
     const store = createStore();
     const same = grantRequest('P-1A2B3C4D', 'ACCESO_INDIVIDUAL', {
-      beneficiary: DEMO_ADMINISTRATIVOS[0],
+      beneficiary: DEMO_ADMINISTRATIVOS[0].id_usuario,
     });
 
     expect(store.grant(same).ok).toBe(false);
@@ -331,10 +334,55 @@ describe('Orden de las comprobaciones y regla del índice (D22)', () => {
     const store = createStore();
     const granted = store.grant(
       grantRequest('P-1A2B3C4D', 'PROGRESION_NARRATIVA', {
-        beneficiary: DEMO_ADMINISTRATIVOS[4],
+        beneficiary: DEMO_ADMINISTRATIVOS[4].id_usuario,
       }),
     );
 
     expect(ids(store.list('P-1A2B3C4D'))[0]).toBe(granted.data.id_permiso);
+  });
+});
+
+describe('Correo del beneficiario y lista de beneficiarios (D36, D37)', () => {
+  it('cada elemento del GET trae correo_beneficiario; el 201 no', () => {
+    const store = createStore();
+    const [item] = store.list('P-1A2B3C4D').items;
+
+    expect(item.correo_beneficiario).toBe(
+      DEMO_ADMINISTRATIVOS[0].correo_electronico,
+    );
+
+    const created = store.grant(
+      grantRequest('P-5E6F7A8B', 'ACCESO_INDIVIDUAL'),
+    );
+    expect(created.data).not.toHaveProperty('correo_beneficiario');
+  });
+
+  it('listBeneficiaries trae solo cuentas activas, por correo, con paginación', () => {
+    const store = createStore();
+    const page = store.listBeneficiaries({ offset: 100, limit: 100 });
+
+    expect(page.total).toBe(105);
+    expect(page.items).toHaveLength(5);
+    expect(page.items[0]).toEqual({
+      id_usuario: expect.any(String),
+      correo_electronico: expect.any(String),
+    });
+    expect(
+      store
+        .listBeneficiaries({ offset: 0, limit: 105 })
+        .items.some(
+          (b) => b.id_usuario === DEMO_INACTIVE_ADMINISTRATIVO.id_usuario,
+        ),
+    ).toBe(false);
+  });
+
+  it('el POST sí acepta al administrativo con la cuenta no activa (A-079)', () => {
+    expect(
+      createStore().grant(
+        grantRequest('P-5E6F7A8B', 'ACCESO_INDIVIDUAL', {
+          beneficiary: DEMO_INACTIVE_ADMINISTRATIVO.id_usuario,
+        }),
+      ).ok,
+    ).toBe(true);
   });
 });
